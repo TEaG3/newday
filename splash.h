@@ -7,7 +7,7 @@ void splash_stop(void);               // waits for the last frame
 // the screen itself, between gfx_begin and gfx_end, for a caller that draws its own frames (s: seconds)
 void splash_draw(float s);
 extern const char *splash_ver; // "1.0": the corner label and the hardware label
-void splash_mark(float cx, float cy, float r); // the ∅ mark (ring + acid slash), for other screens' headers
+void splash_mark(float cx, float cy, float r, unsigned ring, unsigned slash); // the ∅ mark (ring + slash), for other screens too
 // the NULD look for the other screens (the canvas "NULD — identidad"): palette, backdrop, wordmark, HUD corners
 #define NULD_BG 0x06070A
 #define NULD_STEEL 0x1A1D23

@@ -35,6 +35,7 @@
 #include "fmcb.h"
 #include "update.h"
 #include "splash.h"
+#include "torres.h"
 
 #define NULD_VERSION "v1.2.14" // tools/make_release.py checks it against the release tag
 #include "lang.h"
@@ -45,16 +46,27 @@
 #include <fileXio_rpc.h>
 #include <io_common.h>
 
-// ---- palette (NULD, splash.h): black, steel, mist, signal and one acid accent; no gradients, no glows ----
-#define BG NULD_BG
-#define PANEL 0x0C0E12 // panels, cards
-#define ROW 0x161A21   // the selected row
-#define EDGE 0x2A303A  // 1 px frames
-#define DIM 0x4A515C   // off, unchecked
-#define TEXT NULD_FG
-#define TEXT2 0xA9B0BA
-#define LABEL NULD_MUTED
-#define ACID NULD_ACID
+// ---- themes (v1.3): a palette each, and what only one of them draws (theme_id). Torres, the default: prisms of
+// light in a blue night (torres.c). NULD, the look of v1.2 (splash.h): black, steel, mist and one acid accent ----
+typedef struct { unsigned bg, panel, row, edge, dim, text, text2, label, accent, steel, inv; } theme;
+enum { TH_TORRES, TH_NULD, TH_N };
+static const char *const theme_key[TH_N] = {"torres", "nuld"};
+static const theme themes[TH_N] = {
+	{0x01030F, 0x050C2E, 0x16296B, 0x4962A5, 0x3A4A80, 0xE8EEFF, 0xC3D0F5, 0xA6B8EA, 0x8FD8FF, 0x13235A, 0x031236},
+	{NULD_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, NULD_FG, 0xA9B0BA, NULD_MUTED, NULD_ACID, NULD_STEEL, NULD_BG}};
+static theme thm;                // the one in use: set in main before the first frame that is not black
+static int theme_id = TH_TORRES; // [ui] tema (load_config)
+#define BG thm.bg
+#define PANEL thm.panel // panels, cards
+#define ROW thm.row     // the selected row
+#define EDGE thm.edge   // 1 px frames
+#define DIM thm.dim     // off, unchecked
+#define TEXT thm.text
+#define TEXT2 thm.text2
+#define LABEL thm.label
+#define ACID thm.accent // the accent: NULD's acid, Torres's ice
+#define STEEL thm.steel // filled chips, bar tracks
+#define INV thm.inv     // text over TEXT or the accent
 
 #define LW 256 // selected cover = <serial>.c16
 #define LH 368
@@ -804,6 +816,7 @@ static void disc_thread(void *arg)
 static const char *const config_template[LANG_N] = {
 	"; NULD - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
 	"\n[ui]\n; idioma de la interfaz y de estos comentarios: es = español, en = inglés (english), pt = portugués (português)\nidioma = es\n"
+	"; tema: torres = prismas de luz en una noche azul, nuld = negro y verde ácido (el de v1.2)\ntema = torres\n"
 	"\n[juegos]\n; dónde buscar juegos de PS2 (carpetas DVD y CD), separados por comas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, o APA con particiones de HD Loader. udpbd usa la IP fija de [red];\n"
 	"; udpfs, el servidor de abajo. mx4sio y mmce no van juntos. Configuración, portadas, Neutrino, POPS\n"
@@ -841,6 +854,7 @@ static const char *const config_template[LANG_N] = {
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 	"; NULD - configuration, read at boot\n"
 	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = en\n"
+	"; tema (theme): torres = prisms of light in a blue night, nuld = black and acid green (v1.2's)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = internal exFAT disk, or APA with HD Loader partitions. udpbd uses the fixed IP of [red];\n"
 	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
@@ -878,6 +892,7 @@ static const char *const config_template[LANG_N] = {
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 	"; NULD - configuração, lida ao iniciar\n"
 	"\n[ui]\n; idioma da interface e destes comentários: es = espanhol (español), en = inglês (english), pt = português\nidioma = pt\n"
+	"; tema: torres = prismas de luz numa noite azul, nuld = preto e verde ácido (o da v1.2)\ntema = torres\n"
 	"\n[juegos]\n; onde procurar jogos de PS2 (pastas DVD e CD), separados por vírgulas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, ou APA com partições do HD Loader. udpbd usa o IP fixo de [red];\n"
 	"; udpfs, o servidor abaixo. mx4sio e mmce não funcionam juntos. Configuração, capas, Neutrino, POPS\n"
@@ -940,6 +955,7 @@ static void load_config(void) // loader thread, before the splash sound
 		ini_parse(&cfg, config_template[0]);
 	}
 	lang = lang_of(ini_get(&cfg, "ui", "idioma", "es")); // phase 18: first, the rest may show text
+	theme_id = !strcasecmp(ini_get(&cfg, "ui", "tema", theme_key[TH_TORRES]), theme_key[TH_NULD]) ? TH_NULD : TH_TORRES;
 	// phase 18: the comments follow idioma. A file NULD (or ORBIT, until v1.1) wrote (its first line names the
 	// language) in the other language is written again from that language's template with every value kept
 	// (ini_render); a file the user wrote from scratch is left alone
@@ -1065,8 +1081,8 @@ static void opt_value(int i, int row, char *out, int n)
 
 // ---- sound: tools/sfx.py WAVs -> SPU2 ADPCM (adpenc, Makefile), played on free SPU2 voices by audsrv ----
 #define SND(n) extern unsigned char sfx_##n[]; extern unsigned int size_sfx_##n
-SND(splash); SND(move); SND(edge); SND(confirm); SND(panel);
-enum { S_SPLASH, S_MOVE, S_EDGE, S_CONFIRM, S_PANEL, S_N };
+SND(splash); SND(move); SND(edge); SND(confirm); SND(panel); SND(torres);
+enum { S_SPLASH, S_MOVE, S_EDGE, S_CONFIRM, S_PANEL, S_TORRES, S_N }; // S_TORRES: the Torres theme's splash
 static audsrv_adpcm_t snd[S_N];
 static volatile int sound; // loader: 0 not ready yet, 1 ready, -1 unavailable
 
@@ -1076,7 +1092,7 @@ static int sound_init(void) // loader thread, right after the modules: the splas
 	audsrv_adpcm_init();
 	audsrv_set_volume(MAX_VOLUME);
 	struct { unsigned char *d; unsigned *n; } src[S_N] = {{sfx_splash, &size_sfx_splash}, {sfx_move, &size_sfx_move},
-		{sfx_edge, &size_sfx_edge}, {sfx_confirm, &size_sfx_confirm}, {sfx_panel, &size_sfx_panel}};
+		{sfx_edge, &size_sfx_edge}, {sfx_confirm, &size_sfx_confirm}, {sfx_panel, &size_sfx_panel}, {sfx_torres, &size_sfx_torres}};
 	for (int i = 0; i < S_N; i++) { // the IOP DMAs the sample out of EE RAM: aligned, written-back copy
 		void *b = memalign(64, *src[i].n);
 		if (!b) return -1;
@@ -1529,12 +1545,19 @@ static void splash(int t, float fade)
 	if (stage == 0) snprintf(st, sizeof(st), L("Iniciando USB", "Starting USB"));
 	else if (stage == 1) snprintf(st, sizeof(st), L("Leyendo memory cards", "Reading memory cards"));
 	else snprintf(st, sizeof(st), L("Cargando juegos  %02d / %02d", "Loading games  %02d / %02d"), done_n, total_n);
-	splash_msg(st);
 	gfx_begin();
-	splash_draw(t / 60.f);
-	gfx_alpha(0x80);
-	gfx_rect(490, 524, 300, 2, EDGE);
-	gfx_rect(490, 524, (int)(300 * shown), 2, ACID);
+	if (theme_id == TH_TORRES) { // its own splash (torres.c); the status and the progress come in with the name
+		gfx_alpha((int)(0x80 * torres_splash(t / 60.f)));
+		gfx_tracking(3), text_c(&gfx_font_mono, 430, st, LABEL), gfx_tracking(0);
+		gfx_rect(490, 468, 300, 2, EDGE);
+		gfx_rect(490, 468, (int)(300 * shown), 2, ACID);
+	} else {
+		splash_msg(st);
+		splash_draw(t / 60.f);
+		gfx_alpha(0x80);
+		gfx_rect(490, 524, 300, 2, EDGE);
+		gfx_rect(490, 524, (int)(300 * shown), 2, ACID);
+	}
 	if (fade > 0) { gfx_alpha((int)(0x80 * fade)); gfx_rect(0, 0, GFX_W, GFX_H, 0); }
 	gfx_end();
 	gfx_flip();
@@ -1599,7 +1622,7 @@ static void generic_cover(int i, int x, int y, int w, int h, int a) // no cover 
 static int tag(int x, const char *t, int icon, unsigned edge, unsigned ink, int filled) // returns the next x
 {
 	int pad = icon != -1 ? 8 + 18 + 6 : 12, w = pad + gfx_text_width(&gfx_font_mono, t) + 12;
-	if (filled) gfx_rect(x, 86, w, 26, edge), ink = BG;
+	if (filled) gfx_rect(x, 86, w, 26, edge), ink = INV;
 	else frame1(x, 86, w, 26, edge);
 	if (icon >= 0) gfx_icon(icon, x + 8, 90, ink);
 	gfx_text(&gfx_font_mono, x + pad, 91, t, ink);
@@ -1613,7 +1636,7 @@ static void panel(int x, int y, int w, int h, int icon, const char *title) // �
 	gfx_alpha(0x80);
 	gfx_rect(x, y, w, h, PANEL);
 	frame1(x, y, w, h, EDGE);
-	splash_hud(x - 6, y - 6, w + 12, h + 12, 22);
+	if (theme_id == TH_NULD) splash_hud(x - 6, y - 6, w + 12, h + 12, 22);
 	gfx_icon(icon, x + 24, y + 24, ACID);
 	gfx_text(&gfx_font_ui, x + 52, y + 21, title, TEXT);
 	gfx_rect(x + 24, y + 58, w - 48, 1, EDGE);
@@ -1625,8 +1648,8 @@ static void value_tag(int xr, int ry, const char *a, int sel, int on, int arrows
 {
 	int pw = gfx_text_width(&gfx_font_ui, a) + 64, px = xr - pw;
 	if (sel && on) gfx_rect(px, ry + 5, pw, 30, ACID);
-	else gfx_rect(px, ry + 5, pw, 30, on ? NULD_STEEL : PANEL), frame1(px, ry + 5, pw, 30, on ? EDGE : ROW);
-	unsigned ink = sel && on ? BG : on ? TEXT : LABEL;
+	else gfx_rect(px, ry + 5, pw, 30, on ? STEEL : PANEL), frame1(px, ry + 5, pw, 30, on ? EDGE : ROW);
+	unsigned ink = sel && on ? INV : on ? TEXT : LABEL;
 	if (arrows) {
 		gfx_text(&gfx_font_ui, px + 12, ry + 8, "<", ink);
 		gfx_text(&gfx_font_ui, px + pw - 12 - gfx_text_width(&gfx_font_ui, ">"), ry + 8, ">", ink);
@@ -1727,7 +1750,8 @@ static void draw_cover(int i)
 	const box *b = &shown_box[i];
 	int x = (int)lroundf(b->x), y = (int)lroundf(b->y), w = (int)lroundf(b->w), h = (int)lroundf(b->h);
 	if (b->a < 0.01f || w < 8 || x + w + 60 < 0 || x - 60 > GFX_W || y > GFX_H || y + h < 0) return;
-	if (b->f > 0.01f) { // acid HUD corners, faded with the focus; their margin scales with the cover
+	if (b->f > 0.01f && theme_id == TH_TORRES) torres_orbs(x, y, w, h, b->f * b->a, 0); // the orbs passing behind
+	else if (b->f > 0.01f) { // NULD: acid HUD corners, faded with the focus; their margin scales with the cover
 		int g = 12 * w / LW;
 		gfx_alpha((int)(0x80 * b->f * b->a));
 		splash_hud(x - g, y - g, w + 2 * g, h + 2 * g, 30 * w / LW);
@@ -1744,13 +1768,23 @@ static void draw_cover(int i)
 	for (int j = 2; !im[k] && j >= 0; j--) k = j; // not read (yet): the biggest one there is
 	if (!im[k]) generic_cover(i, x, y, w, h, (int)(0x80 * b->a));
 	else gfx_image(im[k], iw[k], ih[k], x, y, w, h);
-	frame1(x, y, w, h, b->f > 0.5f ? 0x3A4150 : 0x232833);
+	if (theme_id == TH_NULD) { frame1(x, y, w, h, b->f > 0.5f ? 0x3A4150 : 0x232833); return; }
+	frame1(x, y, w, h, EDGE);
+	if (b->f > 0.01f) { // Torres: a 2 px frame of ice, and the orbs passing in front
+		gfx_alpha((int)(0x80 * b->f * b->a));
+		frame1(x - 1, y - 1, w + 2, h + 2, ACID), frame1(x - 2, y - 2, w + 4, h + 4, ACID);
+		torres_orbs(x, y, w, h, b->f * b->a, 1);
+	}
 }
 
 static void list_rows(int sel, float lscroll, float pill_y, float pres) // the list's text side; pres: 0..1 presence
 {
 	char t[96];
 	if (pres < 0.01f) return;
+	if (theme_id == TH_TORRES) { // a pane of night behind the rows: the towers' light would cross the text
+		gfx_alpha((int)(0x4D * ease(pres))), gfx_rect(LX - 18, LY0 - 16, LWID + 36, LVIS * LROW + 26, PANEL);
+		gfx_alpha((int)(0x80 * ease(pres))), frame1(LX - 18, LY0 - 16, LWID + 36, LVIS * LROW + 26, EDGE);
+	}
 	float pa = pres * edge_fade(pill_y, LROW - 6, LY0 - 4, LY0 + LVIS * LROW + 4, 26);
 	gfx_alpha((int)(0x80 * pa)); // the cursor's row, gliding to the selection
 	sel_row(LX, (int)pill_y, LWID, LROW - 6);
@@ -1996,9 +2030,9 @@ static void wiz_chips(int x, int ry, int sel) // the sources row's checkboxes, r
 	for (int k = 0; k < W_NCHIP; k++) {
 		const char *t = src_label[(int)w_chip[k]];
 		int on = w_val[W_SRC] & 1u << w_chip[k], cw = gfx_text_width(&gfx_font_mono, t) + 24, cur = sel && k == w_cur;
-		if (on) gfx_rect(x - w, ry + 5, cw, 30, cur ? ACID : NULD_STEEL); // checked: solid; unchecked: a frame, dim text
+		if (on) gfx_rect(x - w, ry + 5, cw, 30, cur ? ACID : STEEL); // checked: solid; unchecked: a frame, dim text
 		else frame1(x - w, ry + 5, cw, 30, cur ? ACID : ROW);
-		gfx_text(&gfx_font_mono, x - w + 12, ry + 11, t, on ? (cur ? BG : TEXT) : cur ? TEXT2 : DIM);
+		gfx_text(&gfx_font_mono, x - w + 12, ry + 11, t, on ? (cur ? INV : TEXT) : cur ? TEXT2 : DIM);
 		w -= cw + 6;
 	}
 }
@@ -2016,7 +2050,7 @@ static void wiz_panel(void) // design: the △ options panel
 			int size = upd.f[upd_k].size, got = upd_phase == 1 ? net_got : upd_done, pct = size > 0 ? (int)(100LL * got / size) : 0;
 			pct = pct > 100 ? 100 : pct;
 			int bx = x + 28, by = y + h - 70, bw = w - 56 - 70;
-			gfx_rect(bx, by + 4, bw, 6, NULD_STEEL);
+			gfx_rect(bx, by + 4, bw, 6, STEEL);
 			gfx_rect(bx, by + 4, bw * pct / 100, 6, upd_phase == 1 ? ACID : TEXT);
 			snprintf(a, sizeof(a), "%d%%", pct);
 			gfx_text(&gfx_font_mono, x + w - 28 - gfx_text_width(&gfx_font_mono, a), by - 3, a, TEXT);
@@ -2099,9 +2133,9 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 {
 	char a[96], b[96];
 	static int amb; // frames on the home screen: the floor flows towards the viewer
-	(void)s;
 	gfx_begin();
-	splash_floor(amb++ / 120.f, TEXT, 0x12);
+	if (theme_id == TH_TORRES) torres_bg(s);
+	else splash_floor(amb++ / 120.f, TEXT, 0x12);
 
 	list_rows(sel, lscroll, pill_y, lpres);
 	for (int i = 0; i < ncv; i++)
@@ -2110,7 +2144,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 
 	// header: the mark, the title, its tags; the saves card on the right — always the selected game, fading in
 	gfx_alpha(0x80);
-	splash_mark(92, 73, 24);
+	splash_mark(92, 73, 24, TEXT, ACID);
 	if (ncv && k > 0) {
 		int cx = GFX_W - 64;
 		if (is_ps2(sel) && *cv[sel].serial) { // saves card: PS2 games only (PS1 saves live in POPS VMCs, apps have none)
@@ -2194,7 +2228,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 			}
 			int pw = gfx_text_width(&gfx_font_mono, filter_name[fl]) + 18, on = fl == filter;
 			if (on) gfx_rect(tx, 655, pw, 22, ACID);
-			gfx_text(&gfx_font_mono, tx + 9, 658, filter_name[fl], on ? BG : TEXT2);
+			gfx_text(&gfx_font_mono, tx + 9, 658, filter_name[fl], on ? INV : TEXT2);
 			tx += pw + 6;
 		}
 	}
@@ -2261,7 +2295,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		gfx_alpha(0x80);
 		gfx_text(&gfx_font_mono, 64, 162, overlay, TEXT);
 	}
-	splash_scan();
+	if (theme_id == TH_NULD) splash_scan();
 	if (fade > 0) { gfx_alpha((int)(0x80 * fade)); gfx_rect(0, 0, GFX_W, GFX_H, 0); }
 	gfx_end();
 }
@@ -2321,8 +2355,9 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 	vmc_file(i, path, sizeof(path));
 	if (exists(path)) return 1;
 	gfx_begin();
-	splash_floor(0, TEXT, 0x12);
-	splash_mark(640, 278, 28);
+	if (theme_id == TH_TORRES) torres_bg(0);
+	else splash_floor(0, TEXT, 0x12);
+	splash_mark(640, 278, 28, TEXT, ACID);
 	text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 	gfx_tracking(3);
 	text_c(&gfx_font_mono, 400, L("CREANDO MEMORY CARD VIRTUAL (8 MB)", "CREATING VIRTUAL MEMORY CARD (8 MB)"), LABEL);
@@ -2378,11 +2413,13 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	launch_err = NULL;
 	const char *how[4] = {L("INICIANDO CON NEUTRINO", "STARTING WITH NEUTRINO"), L("INICIANDO CON POPSTARTER", "STARTING WITH POPSTARTER"), L("INICIANDO APLICACIÓN", "STARTING APPLICATION"),
 	                             L("INICIANDO DISCO", "STARTING DISC")};
-	for (int t = 0; t < 40; t++) { // let the confirm sound play while the screen fades to the entry's name
+	int torres = theme_id == TH_TORRES; // its towers sink and its orbs close into one light where NULD's mark is
+	for (int t = 0; t < (torres ? 64 : 40); t++) { // let the confirm sound play while the screen fades to the entry's name
 		gfx_begin();
-		splash_floor(t / 60.f, TEXT, 0x12);
+		if (torres) torres_launch(t / 60.f);
+		else splash_floor(t / 60.f, TEXT, 0x12);
 		gfx_alpha((int)(0x80 * span(t, 0, 20)));
-		splash_mark(640, 278, 28);
+		if (!torres) splash_mark(640, 278, 28, TEXT, ACID);
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
 		text_c(&gfx_font_mono, 400, how[(int)cv[i].kind], LABEL);
@@ -2516,6 +2553,7 @@ int main(int argc, char *argv[])
 	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/launcher.elf");
 	if (!gfx_init()) printf("gfx_init: VRAM pool too small\n");
 	splash_ver = NULD_VERSION + 1; // "1.2"
+	thm = themes[TH_TORRES];
 	ChangeThreadPriority(GetThreadId(), 0x20); // render thread above the loader
 	ee_thread_t th = { .func = loader, .stack = loader_stack, .stack_size = sizeof(loader_stack), .gp_reg = &_gp,
 	                   .initial_priority = 0x40 };
@@ -2531,11 +2569,13 @@ int main(int argc, char *argv[])
 	for (;; t++) {
 		if (start < 0 && t >= HOLD && (stage >= 1 || t >= HOLD + 360)) { // audio + config ready (or 6 s more): go together
 			start = t;
-			gfx_crt(crt); // config.ini is read by now (or never will be: 720p)
-			play(S_SPLASH, 100);
+			thm = themes[theme_id]; // config.ini is read by now (or never will be: Torres, 720p)
+			if (theme_id == TH_TORRES) torres_init(); // about a second, the screen still black
+			gfx_crt(crt);
+			play(theme_id == TH_TORRES ? S_TORRES : S_SPLASH, 100);
 		}
 		int tt = start < 0 ? -1 : t - start;
-		if (end < 0 && stage == 3 && tt >= 240 && shown > 0.98f) end = tt;
+		if (end < 0 && stage == 3 && tt >= (theme_id == TH_TORRES ? 330 : 240) && shown > 0.98f) end = tt; // Torres: its camera lands at 5 s
 		if (end >= 0 && tt - end > 20) break;
 		u32 f0 = cycles();
 		if (tt >= 0) splash(tt, end < 0 ? 0 : span(tt, end, end + 20));
@@ -2730,6 +2770,12 @@ int main(int argc, char *argv[])
 			med = build[WINDOW / 2], max = build[WINDOW - 1];
 			windows++;
 			printf("window %u: median %u us max %u us missed %u\n", windows, med, max, missed);
+#ifdef TORRES_BENCH // one part left out per window: what each costs on the console
+			static const char var[6] = {0, 1, 2, 4, 8, 16};
+			FILE *bf = usb && windows <= 12 ? fopen(LOG_TXT, "a") : NULL;
+			if (bf) fprintf(bf, "torres bench %d: median %u us  max %u us  missed %u\n", torres_bench, med, max, missed), fclose(bf);
+			torres_bench = var[windows % 6];
+#endif
 			FILE *fp = usb && windows <= 3 ? fopen(LOG_TXT, "a") : NULL;
 			if (fp) {
 				fprintf(fp, "nuld window %u (%d frames, %d covers, overlay %d): median %u us  max %u us  missed vsync %u  "

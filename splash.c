@@ -58,14 +58,14 @@ void splash_vtext(const vfont *f, float x, float base, float cap, float track, c
 	}
 }
 
-void splash_mark(float cx, float cy, float r)
+void splash_mark(float cx, float cy, float r, unsigned ring, unsigned slash)
 {
 	float t = r * 0.18f;
 	np = 0;
 	for (int i = -1; i <= 49; i++) P(cx + (r - t / 2) * cosf(i * 2 * PI / 48), cy + (r - t / 2) * sinf(i * 2 * PI / 48));
-	stroke(t, FG);
+	stroke(t, ring);
 	float d = r * 0.985f;
-	seg(cx - d, cy + d, cx + d, cy - d, t, ACID);
+	seg(cx - d, cy + d, cx + d, cy - d, t, slash);
 }
 
 // ---- the four variants (canvas board "Logo alterno"), centred on (640, 300); dx shifts them for the glitch ----
@@ -74,7 +74,7 @@ static void variant(int k, float dx, float s)
 {
 	if (k == 0) { // A: the ring + NULD in Michroma (128 px type: 96 px caps)
 		float cap = 96, ww = splash_vtext_w(&vfont_michroma, cap, 0.06f, "NULD"), x = 640 - (132 + 40 + ww) / 2 + dx;
-		splash_mark(x + 66, 300, 66);
+		splash_mark(x + 66, 300, 66, FG, ACID);
 		splash_vtext(&vfont_michroma, x + 172, 300 + cap / 2, cap, 0.06f, "NULD", FG);
 	} else if (k == 1) { // B: $ nulld in IBM Plex Mono 500 (132 px type) + a block cursor
 		float fs = 132, cap = fs * vfont_plex_medium.cap / vfont_plex_medium.upm, base = 300 + cap / 2;
@@ -92,7 +92,7 @@ static void variant(int k, float dx, float s)
 		gfx_rect(x, y, bw, 2, FG), gfx_rect(x, y + top + bot, bw, 2, FG);
 		gfx_rect(x, y, 2, top + bot + 2, FG), gfx_rect(x + bw - 2, y, 2, top + bot + 2, FG);
 		gfx_rect(x, y + top, bw, 2, FG);
-		splash_mark(x + 34 + 52, y + top / 2 + 2, 52);
+		splash_mark(x + 34 + 52, y + top / 2 + 2, 52, FG, ACID);
 		float cap = 88 * 0.686f;
 		splash_vtext(&vfont_archivo_heavy, x + 34 + 104 + 32, y + top / 2 + 2 + cap / 2, cap, 0.02f, "NULD", FG);
 		static const unsigned char bars[30] = {3, 1, 2, 1, 4, 1, 1, 3, 2, 1, 1, 2, 4, 1, 3, 1, 2, 2, 1, 4, 1, 1, 3, 1, 2, 1, 4, 2, 1, 3};
