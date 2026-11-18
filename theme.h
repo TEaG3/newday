@@ -27,7 +27,13 @@ typedef struct {
 	void (*launch)(float u);  // behind the title when something starts
 	void (*over)(void);       // over everything, last (scanlines)
 } theme_def;
-extern const theme_def themes[TH_N];
+#define TH_MAX (TH_N + 8) // the built-in ones and up to eight folders of <home>/themes (docs/themes.md)
+extern theme_def themes[TH_MAX];
+extern int themes_n;
+// <dir>/<folder>/theme.ini: a built-in theme (base) under another name, with its own palette and, with fondo.jpg or
+// fondo.png in the folder, that picture as the ground instead of the base's scene. Once, before a theme is chosen
+void themes_load(const char *dir);
+void themes_enter(int id); // before a theme's first frame (may take seconds: a backdrop is dithered, a picture decoded)
 // the selected cover as it is drawn (CT16, w x h), every frame it is there: for the themes that take from it
 void themes_cover(const unsigned short *pix, int w, int h);
 unsigned themes_accent(void); // TF_ACCENT: the cover's colour, eased

@@ -152,12 +152,12 @@ void splash_scan(void)
 	gfx_alpha(0x80);
 }
 
-void splash_hud(int x, int y, int w, int h, int len)
+void splash_hud(int x, int y, int w, int h, int len, unsigned c)
 {
-	gfx_rect(x, y, len, 2, ACID), gfx_rect(x, y, 2, len, ACID);
-	gfx_rect(x + w - len, y, len, 2, ACID), gfx_rect(x + w - 2, y, 2, len, ACID);
-	gfx_rect(x, y + h - 2, len, 2, ACID), gfx_rect(x, y + h - len, 2, len, ACID);
-	gfx_rect(x + w - len, y + h - 2, len, 2, ACID), gfx_rect(x + w - 2, y + h - len, 2, len, ACID);
+	gfx_rect(x, y, len, 2, c), gfx_rect(x, y, 2, len, c);
+	gfx_rect(x + w - len, y, len, 2, c), gfx_rect(x + w - 2, y, 2, len, c);
+	gfx_rect(x, y + h - 2, len, 2, c), gfx_rect(x, y + h - len, 2, len, c);
+	gfx_rect(x + w - len, y + h - 2, len, 2, c), gfx_rect(x + w - 2, y + h - len, 2, len, c);
 }
 
 void splash_draw(float s)
@@ -196,7 +196,7 @@ void splash_draw(float s)
 		p = e ? e + 1 : p + n;
 	}
 	// HUD corners and the edge labels
-	splash_hud(24, 24, GFX_W - 48, GFX_H - 48, 28);
+	splash_hud(24, 24, GFX_W - 48, GFX_H - 48, 28, ACID);
 	gfx_tracking(1);
 	char ver[24];
 	snprintf(ver, sizeof(ver), "NULD %s", splash_ver);

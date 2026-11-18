@@ -20,4 +20,4 @@ void splash_scan(void);                          // CRT scanlines over everythin
 // "$nuld"): cap px tall, track in em after each letter, from x on the baseline
 float splash_vtext_w(const vfont *f, float cap, float track, const char *s);
 void splash_vtext(const vfont *f, float x, float base, float cap, float track, const char *s, unsigned rgb);
-void splash_hud(int x, int y, int w, int h, int len); // acid corner brackets around a box, at the current alpha
+void splash_hud(int x, int y, int w, int h, int len, unsigned c); // corner brackets around a box, at the current alpha

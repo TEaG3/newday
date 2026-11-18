@@ -10,3 +10,5 @@
 void cover_half(const unsigned short *big, unsigned short *half, int sq); // 2x2 linear-light means + Floyd-Steinberg
 // JPEG or PNG bytes -> both cover sizes as CT16 pixels (no .c16 header); 0 if the file cannot be decoded
 int cover_from_image(const unsigned char *jpg, int n, unsigned short *big, unsigned short *small, int sq);
+// JPEG or PNG bytes -> RGB, 3 bytes a pixel (malloc'd: the caller frees it); NULL if the file cannot be decoded
+unsigned char *cover_rgb(const unsigned char *jpg, int n, int *w, int *h);

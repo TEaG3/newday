@@ -55,11 +55,11 @@ static const theme_def *T = &themes[TH_TORRES];
 static void theme_set(int id) // render thread; a theme with a backdrop to dither takes about a second
 {
 	theme_id = id, T = &themes[id], thm = T->pal;
-	if (T->init) T->init();
+	themes_enter(id);
 }
 static int theme_of(const char *key)
 {
-	for (int i = 0; i < TH_N; i++)
+	for (int i = 0; i < themes_n; i++)
 		if (!strcasecmp(key, themes[i].key)) return i;
 	return TH_TORRES;
 }
@@ -824,7 +824,7 @@ static const char *const config_template[LANG_N] = {
 	"; NULD - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
 	"\n[ui]\n; idioma de la interfaz y de estos comentarios: es = español, en = inglés (english), pt = portugués (português)\nidioma = es\n"
 	"; tema: torres (prismas de luz en una noche azul), nuld (negro y verde ácido, el de v1.2), cristal, aurora, liquid,\n"
-	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. También se elige en la configuración (START)\ntema = torres\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. También se elige en la configuración (START);\n; o el nombre de una carpeta de nuld/themes (un tema hecho por alguien: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; dónde buscar juegos de PS2 (carpetas DVD y CD), separados por comas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, o APA con particiones de HD Loader. udpbd usa la IP fija de [red];\n"
 	"; udpfs, el servidor de abajo. mx4sio y mmce no van juntos. Configuración, portadas, Neutrino, POPS\n"
@@ -863,7 +863,7 @@ static const char *const config_template[LANG_N] = {
 	"; NULD - configuration, read at boot\n"
 	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = en\n"
 	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
-	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START)\ntema = torres\n"
+	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in nuld/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = internal exFAT disk, or APA with HD Loader partitions. udpbd uses the fixed IP of [red];\n"
 	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
@@ -902,7 +902,7 @@ static const char *const config_template[LANG_N] = {
 	"; NULD - configuração, lida ao iniciar\n"
 	"\n[ui]\n; idioma da interface e destes comentários: es = espanhol (español), en = inglês (english), pt = português\nidioma = pt\n"
 	"; tema: torres (prismas de luz numa noite azul), nuld (preto e verde ácido, o da v1.2), cristal, aurora, liquid,\n"
-	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START)\ntema = torres\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START);\n; ou o nome de uma pasta de nuld/themes (um tema feito por alguém: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; onde procurar jogos de PS2 (pastas DVD e CD), separados por vírgulas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, ou APA com partições do HD Loader. udpbd usa o IP fixo de [red];\n"
 	"; udpfs, o servidor abaixo. mx4sio e mmce não funcionam juntos. Configuração, capas, Neutrino, POPS\n"
@@ -965,6 +965,9 @@ static void load_config(void) // loader thread, before the splash sound
 		ini_parse(&cfg, config_template[0]);
 	}
 	lang = lang_of(ini_get(&cfg, "ui", "idioma", "es")); // phase 18: first, the rest may show text
+	char tdir[40];
+	snprintf(tdir, sizeof(tdir), "%s/%s/themes", homedev, home_dir);
+	themes_load(tdir); // the community's (docs/themes.md)
 	theme_id = theme_of(ini_get(&cfg, "ui", "tema", "torres"));
 #ifdef THEME_FORCE
 	theme_id = THEME_FORCE;
@@ -1651,7 +1654,7 @@ static void panel(int x, int y, int w, int h, int icon, const char *title) // �
 	gfx_alpha(0x80);
 	gfx_rect(x, y, w, h, PANEL);
 	frame1(x, y, w, h, EDGE);
-	if (theme_id == TH_NULD) splash_hud(x - 6, y - 6, w + 12, h + 12, 22);
+	if (theme_id == TH_NULD) splash_hud(x - 6, y - 6, w + 12, h + 12, 22, ACID);
 	gfx_icon(icon, x + 24, y + 24, ACID);
 	gfx_text(&gfx_font_ui, x + 52, y + 21, title, TEXT);
 	gfx_rect(x + 24, y + 58, w - 48, 1, EDGE);
@@ -2021,7 +2024,7 @@ static void wiz_change(int d) // left / right on the selected row
 {
 	int r = wiz, *v = &w_val[r];
 	if (r == W_LANG) *v = (*v + d + LANG_N) % LANG_N, lang = *v; // the panel itself switches language at once
-	else if (r == W_THEME) *v = (*v + d + TH_N) % TH_N, theme_set(*v); // shown at once behind the panel, as the language
+	else if (r == W_THEME) *v = (*v + d + themes_n) % themes_n, theme_set(*v); // shown at once behind the panel, as the language
 	else if (r == W_SRC) w_cur = w_cur + d < 0 ? 0 : w_cur + d >= W_NCHIP ? W_NCHIP - 1 : w_cur + d; // the cursor
 	else if (r == W_MC || r == W_VIDEO) *v = (*v + d + 3) % 3;
 	else if (r == W_NET) *v = *w_ip ? !*v : 0;

@@ -14,6 +14,9 @@
 #include "splash.h"
 #include "torres.h"
 #include "theme.h"
+#include "ini.h"
+#include "cover.h"
+#include <dirent.h>
 
 #define TAU 6.2831853f
 #define W GFX_W
@@ -21,6 +24,7 @@
 #define WHITE 0xFFFFFF
 
 static float now; // the scenes' clock, seconds
+static int cur;   // the theme in use (themes_enter)
 
 static void tick(void) { now += 1 / 60.f; }
 static float clampf(float v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
@@ -185,7 +189,7 @@ static void nuld_sel(float x, float y, float w, float h, float f, int front)
 	int g = (int)(12 * w / 256);
 	if (front) return;
 	gfx_alpha((int)(0x80 * f));
-	splash_hud((int)x - g, (int)y - g, (int)w + 2 * g, (int)h + 2 * g, (int)(30 * w / 256));
+	splash_hud((int)x - g, (int)y - g, (int)w + 2 * g, (int)h + 2 * g, (int)(30 * w / 256), themes[cur].pal.accent);
 	gfx_alpha(0x80);
 }
 static void nuld_launch(float u) { splash_floor(u, NULD_FG, 0x12); }
@@ -793,7 +797,7 @@ static void papel_launch(float u) // an ink rule draws itself
 
 // key, name, palette {bg, panel, row, edge, dim, text, text2, label, accent, steel, inv}, list pane, card, flags,
 // splash frames, status y, init, bg, sel, splash, launch, over
-const theme_def themes[TH_N] = {
+theme_def themes[TH_MAX] = {
 	{"torres", "Torres", {0x01030F, 0x050C2E, 0x16296B, 0x4962A5, 0x3A4A80, 0xE8EEFF, 0xC3D0F5, 0xA6B8EA, 0x8FD8FF, 0x13235A, 0x031236},
 	 0x4D, 0x80, TF_PIANO, 330, 430, torres_init, torres_bg, torres_orbs, torres_splash, torres_launch, NULL},
 	{"nuld", "NULD", {NULD_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, NULD_FG, 0xA9B0BA, NULD_MUTED, NULD_ACID, NULD_STEEL, NULD_BG},
@@ -819,3 +823,101 @@ const theme_def themes[TH_N] = {
 	{"papel", "Papel", {PAPER, 0xFBFAF6, 0xFFFFFF, 0xCFC9BD, 0xB0AA9E, INK, 0x45423B, 0x666158, RED, 0xE4DFD4, 0xF4F1EA},
 	 0, 0x80, TF_FLAT | TF_MARK | TF_PIANO, 240, 430, NULL, papel_bg, papel_sel, papel_splash, papel_launch, NULL},
 };
+int themes_n = TH_N;
+
+// ---- the community's themes (docs/themes.md): a folder each, theme.ini and maybe a picture ----
+static char u_key[TH_MAX - TH_N][32], u_name[TH_MAX - TH_N][32], u_img[TH_MAX - TH_N][96]; // u_img: "" without a picture
+static unsigned short *img; // the picture of theme img_of, dithered, in tiles
+static int img_of = -1;
+typedef struct { unsigned char *rgb; int w, h; } rgb_src;
+static void rgb_col(int x, int y, float *c, void *u)
+{ // ponytail: the nearest pixel; exact at 1280x720, the size the guide asks for. Lanczos (cover.c) if other sizes matter
+	const rgb_src *s = u;
+	const unsigned char *p = s->rgb + ((y * s->h / H) * s->w + x * s->w / W) * 3;
+	c[0] = p[0], c[1] = p[1], c[2] = p[2];
+}
+static void image_load(int id) // about 6 MB while it runs, 1.8 MB kept; anything missing: the theme's flat colour
+{
+	if (img_of == id) return;
+	img_of = -1;
+	FILE *f = fopen(u_img[id - TH_N], "rb");
+	if (!f) return;
+	fseek(f, 0, SEEK_END);
+	long n = ftell(f);
+	rewind(f);
+	unsigned char *raw = n > 0 && n <= 4 << 20 ? malloc(n) : NULL;
+	rgb_src s = {NULL, 0, 0};
+	if (raw && fread(raw, 1, n, f) == (size_t)n) s.rgb = cover_rgb(raw, n, &s.w, &s.h);
+	fclose(f);
+	free(raw);
+	unsigned short *lin = s.rgb ? malloc(W * H * 2) : NULL;
+	if (lin && (img || (img = memalign(64, W * H * 2)))) {
+		gfx_fs_dither(lin, W, H, rgb_col, &s);
+		gfx_tiles_from(img, lin, W, H);
+		SyncDCache(img, img + W * H);
+		img_of = id;
+	}
+	free(lin);
+	free(s.rgb);
+}
+static void image_bg(float turn)
+{
+	(void)turn;
+	tick();
+	gfx_alpha(0x80), gfx_dither(0);
+	if (img_of == cur) gfx_image_tiled(img, W, H, 0, 0);
+	else gfx_rect(0, 0, W, H, themes[cur].pal.bg);
+}
+static unsigned hex(const char *s, unsigned def) // "RRGGBB"; anything else: def
+{
+	char *e;
+	unsigned v = strtoul(s, &e, 16);
+	return e - s == 6 && !*e ? v : def;
+}
+void themes_load(const char *dir)
+{
+	static ini t;
+	static const char *const col[11] = {"fondo", "panel", "fila", "borde", "tenue", "texto", "texto2", "etiqueta", "acento", "acero", "inverso"};
+	char path[96];
+	DIR *d = opendir(dir);
+	struct dirent *e;
+	while (d && (e = readdir(d)) && themes_n < TH_MAX) {
+		int u = themes_n - TH_N, base = TH_NULD, taken = 0;
+		if (e->d_name[0] == '.' || strlen(e->d_name) > 31) continue;
+		snprintf(path, sizeof(path), "%s/%s/theme.ini", dir, e->d_name);
+		if (!ini_load(&t, path)) continue;
+		for (int i = 0; i < themes_n; i++) {
+			if (i < TH_N && !strcasecmp(ini_get(&t, "", "base", "nuld"), themes[i].key)) base = i;
+			taken |= !strcasecmp(e->d_name, themes[i].key);
+		}
+		if (taken) continue; // a built-in theme's name
+		theme_def *th = &themes[themes_n];
+		*th = themes[base];
+		snprintf(u_key[u], sizeof(u_key[u]), "%s", e->d_name);
+		snprintf(u_name[u], sizeof(u_name[u]), "%s", ini_get(&t, "", "nombre", e->d_name));
+		th->key = u_key[u], th->name = u_name[u];
+		unsigned *p = &th->pal.bg;
+		for (int i = 0; i < 11; i++) p[i] = hex(ini_get(&t, "colores", col[i], ""), p[i]);
+		const char *ac = ini_get(&t, "colores", "acento", ""); // "portada": the selected cover's colour
+		if (!strcasecmp(ac, "portada")) th->flags |= TF_ACCENT;
+		else if (*ac) th->flags &= ~TF_ACCENT;
+		u_img[u][0] = 0;
+		for (int k = 0; k < 2 && !u_img[u][0]; k++) {
+			snprintf(path, sizeof(path), "%s/%s/fondo.%s", dir, e->d_name, k ? "png" : "jpg");
+			FILE *f = fopen(path, "rb");
+			if (f) fclose(f), strcpy(u_img[u], path);
+		}
+		if (u_img[u][0]) { // the picture is the ground: the rows of the list get a pane over it
+			th->bg = image_bg;
+			if (th->pane < 0x50) th->pane = 0x50;
+		}
+		themes_n++;
+	}
+	if (d) closedir(d);
+}
+void themes_enter(int id)
+{
+	cur = id;
+	if (themes[id].init) themes[id].init(); // the base's: its splash and its launch screen may draw what it makes
+	if (id >= TH_N && u_img[id - TH_N][0]) image_load(id);
+}

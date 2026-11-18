@@ -136,6 +136,7 @@ body.paper { background: var(--fg); color: var(--bg); }
 .paper .chapter > header h2 { margin: 14px 0 0; font-size: 24px; line-height: 1.2; }
 .paper .chapter > div { flex: 1 1 560px; min-width: 0; }
 .paper .chapter p { margin: 0 0 18px; }
+.paper .chapter h3 { margin: 10px 0 14px; font-size: 19px; }
 .paper .chapter li { margin-bottom: 10px; }
 .paper pre { margin: 0 0 20px; background: var(--bg); color: var(--fg); font: 14px/1.7 var(--mono); padding: 20px 24px; overflow-x: auto; }
 .paper table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
