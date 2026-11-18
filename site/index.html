@@ -11,7 +11,8 @@
 <meta name="theme-color" content="#06070A">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
-<script src="splash.js" defer></script>
+<script src="preview.js" defer></script>
+<script src="demo.js" defer></script>
 <script src="gallery.js" defer></script>
 <script src="release.js" defer></script>
 </head>
@@ -25,6 +26,8 @@
     <a href="#features">Features</a>
     <a href="#screens">Screens</a>
     <a href="manual.html">Manual</a>
+    <a href="themes.html">Theme maker</a>
+    <a href="changelog.html">Changelog</a>
     <a href="https://github.com/danielnuld/nuld">Source</a>
     <a class="btn solid small" href="https://github.com/danielnuld/nuld/releases/latest" data-zip><span data-zip-name>Download</span></a>
   </div>
@@ -42,13 +45,20 @@
         </div>
       </div>
     </div>
-    <figure style="margin: 0">
+    <figure style="margin: 0" id="live">
       <div class="screen">
-        <canvas data-nuld-splash data-version="1.2" role="img" aria-label="NULD's loading screen, animated as on the console: a wire sphere over a perspective floor and the four logo variants taking turns with a glitch cut"></canvas>
+        <canvas id="preview" width="1280" height="720" role="img" aria-label="NULD's home screen, animated: covers in a carousel, a grid or a list, in the theme picked below"></canvas>
+      </div>
+      <div class="tabs demo-keys" data-themes aria-label="Theme"></div>
+      <div class="tabs demo-keys">
+        <span data-views aria-label="View"></span>
+        <span class="gap"></span>
+        <button type="button" data-splash>Loading screen</button>
+        <button type="button" data-launch>Launch a game</button>
       </div>
       <figcaption class="caption">
-        <span>The loading screen, redrawn in your browser from the launcher's own splash.c.</span>
-        <span>Free software under GPL-3.0. Called ORBIT until v1.1.</span>
+        <span>The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.</span>
+        <span><a href="themes.html">Make your own theme</a></span>
       </figcaption>
     </figure>
   </header>
@@ -69,7 +79,8 @@
           <tr><td class="n">08</td><td class="name">Every source Neutrino reads</td><td class="text">USB, internal HDD (exFAT or HD Loader), MX4SIO, i.Link, MMCE, UDPBD and udpfs, mixed in one list. Discs, PS1 games through POPStarter, and homebrew from APPS/ too.</td></tr>
           <tr><td class="n">09</td><td class="name">Per-game options</td><td class="text">Force 480p or 1080i, Neutrino's compatibility modes, which memory card. Remembered per game.</td></tr>
           <tr><td class="n">10</td><td class="name">Setup and updates on the PS2</td><td class="text">A wizard writes config.ini and FreeMcBoot's autoboot. With the cable in, NULD installs a new release only after every file matches a signed manifest.</td></tr>
-          <tr><td class="n">11</td><td class="name">Spanish or English</td><td class="text">One setting changes the menus, the in-game menu and the comments in the config file.</td></tr>
+          <tr><td class="n">11</td><td class="name">Spanish, English or Portuguese</td><td class="text">One setting changes the menus, the in-game menu and the comments in the config file.</td></tr>
+          <tr><td class="n">12</td><td class="name">Twelve themes, and yours</td><td class="text">Each theme has its own colours, animated background, loading screen and launch screen. A folder with eleven colours and a picture is a new one: the <a href="themes.html">theme maker</a> builds it in the browser.</td></tr>
         </tbody>
       </table>
     </div>
@@ -77,23 +88,19 @@
 
   <section id="screens">
     <div class="wrap gallery-head">
-      <h2>Screens</h2>
-      <span class="count">Captured from the launcher at 1280×720. Select one to see it full size.</span>
+      <h2>More screens</h2>
+      <span class="count">Captured from the launcher at 1280×720, in the NULD theme. Select one to see it full size.</span>
       <div class="btns">
         <button class="btn small" type="button" data-strip-step="-1" aria-label="Previous screens">Previous</button>
         <button class="btn small" type="button" data-strip-step="1" aria-label="Next screens">Next</button>
       </div>
     </div>
     <div class="strip" data-strip tabindex="0" aria-label="Screenshots, scrolls sideways">
-      <figure><button type="button"><img src="img/home-carousel.jpg" alt="Carousel view: Beyond Good and Evil selected, with its serial, media, source and video mode tags" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">□</span>Carousel, with the game's serial, media, source and video mode.</figcaption></figure>
-      <figure><button type="button"><img src="img/home-grid.jpg" alt="Grid view: fourteen PS2 covers, the selected one framed by acid corners" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">□</span>Grid: the whole library at a glance.</figcaption></figure>
-      <figure><button type="button"><img src="img/home-list.jpg" alt="List view: titles and serials on the left, the selected cover on the right" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">□</span>List, with the cover beside it.</figcaption></figure>
       <figure><button type="button"><img src="img/save-icon.jpg" alt="God of War selected: the saves card shows 1 save on memory card 1 with its 3D icon" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">mc1</span>The newest save on the memory card, with its 3D icon turning on the card.</figcaption></figure>
       <figure><button type="button"><img src="img/achievements-tag.jpg" alt="Black selected, with an Achievements 56 tag next to its serial, media, source and video tags" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">ra</span>Black has a set: 56 achievements, found by the game's rcheevos hash.</figcaption></figure>
       <figure><button type="button"><img src="img/achievements.jpg" alt="Achievements panel for Black: 0 of 56, 0 of 600 points, each achievement with its points" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">○</span>The achievements and your progress, from the xeRAbora client at home.</figcaption></figure>
       <figure><button type="button"><img src="img/options.jpg" alt="Per-game options panel: video mode, video compatibility, memory card and Neutrino's compatibility modes" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">△</span>Per-game options: video mode, compatibility and memory card.</figcaption></figure>
       <figure><button type="button"><img src="img/setup.jpg" alt="Setup wizard in Spanish: language, game sources, memory card, video, network, boot stub and FreeMcBoot" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">start</span>The setup wizard, here in Spanish, writes config.ini and FreeMcBoot's autoboot.</figcaption></figure>
-      <figure><button type="button"><img src="img/splash-wordmark.jpg" alt="Loading screen caught in a glitch cut: the NULD// wordmark split into shifted bands" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">boot</span>The console's loading screen, caught in a glitch cut.</figcaption></figure>
     </div>
   </section>
 
@@ -104,7 +111,7 @@
       <table class="files">
         <tbody>
           <tr><td><a class="acid" href="https://github.com/danielnuld/nuld/releases/latest" data-zip><span data-zip-name>NULD zip</span></a></td><td>launcher.elf, Neutrino with NULD's in-game menu and achievements agent, the folders, the optional home server and a quick start</td><td data-zip-size></td></tr>
-          <tr><td><a href="https://github.com/danielnuld/nuld/releases">all releases</a></td><td>Release notes and SHA-256 checksums</td><td></td></tr>
+          <tr><td><a href="https://github.com/danielnuld/nuld/releases">all releases</a></td><td>Release notes and SHA-256 checksums. What changed in each: the <a href="changelog.html">changelog</a></td><td></td></tr>
           <tr><td><a href="https://github.com/danielnuld/orbit-jellyfin/releases">jfplay.elf</a></td><td>Optional: your Jellyfin movies and series on the PS2, with subtitles</td><td></td></tr>
           <tr><td><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9">xeRAbora v0.1.0-alpha.9</a></td><td>Optional, for achievements: the client NULD is tested with, on a PC or server at home</td><td></td></tr>
         </tbody>

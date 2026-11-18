@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NULD theme maker</title>
+<meta name="description" content="Make a theme for NULD, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.">
+<meta name="theme-color" content="#06070A">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css">
+<script src="preview.js" defer></script>
+<script src="themes.js" defer></script>
+</head>
+<body>
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10.5" fill="none" stroke="#E6E8EC" stroke-width="3"/><line x1="2" y1="24" x2="24" y2="2" stroke="#C8FF2E" stroke-width="3"/></svg>
+      <span>NULD</span>
+    </a>
+    <a href="./#features">Features</a>
+    <a href="manual.html">Manual</a>
+    <a href="themes.html" aria-current="page">Theme maker</a>
+    <a href="changelog.html">Changelog</a>
+    <a href="https://github.com/danielnuld/nuld">Source</a>
+  </div>
+</nav>
+
+<main class="wrap maker">
+  <header class="maker-head">
+    <h1>Theme maker</h1>
+    <p class="lead">Pick the colours, add a picture if you want one, and download a folder for <code>nuld/themes/</code> on your USB drive. Nothing is uploaded: it all happens in this page.</p>
+  </header>
+
+  <div class="maker-grid">
+    <form class="maker-form" id="form" autocomplete="off">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="name" maxlength="24" value="Ocaso" spellcheck="false">
+      </label>
+      <label class="field">
+        <span>Base <small>the built-in theme yours takes its loading screen, launch screen and selection from</small></span>
+        <select id="base"></select>
+      </label>
+      <button type="button" class="btn small" id="reset">Back to the base's colours</button>
+
+      <fieldset>
+        <legend>Colours</legend>
+        <div id="colours"></div>
+        <label class="check"><input type="checkbox" id="cover-accent"> The accent follows the selected cover's colour</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Background picture <small>optional</small></legend>
+        <p class="hint">It takes the place of the base's animated background. Any picture works here: it is cropped to 1280 x 720 and saved as a JPG. Keep it calm where the text goes.</p>
+        <div class="btns">
+          <label class="btn small">Choose a picture<input type="file" id="picture" accept="image/*" hidden></label>
+          <button type="button" class="btn small" id="no-picture" hidden>Remove it</button>
+        </div>
+      </fieldset>
+    </form>
+
+    <div class="maker-view">
+      <div class="tabs" role="tablist" aria-label="Screen">
+        <button type="button" role="tab" aria-selected="true" data-view="carousel">Carousel</button>
+        <button type="button" role="tab" aria-selected="false" data-view="grid">Grid</button>
+        <button type="button" role="tab" aria-selected="false" data-view="list">List</button>
+        <button type="button" role="tab" aria-selected="false" data-view="setup">Setup panel</button>
+        <span class="gap"></span>
+        <button type="button" id="see-splash">Loading screen</button>
+        <button type="button" id="see-launch">Launch a game</button>
+      </div>
+      <div class="screen"><canvas id="preview" width="1280" height="720" role="img" aria-label="Preview of NULD's home screen with your theme, animated"></canvas></div>
+      <p class="caption"><span>The home screen with your theme. Click its sides to change game.</span><span>The loading and launch screens are the base's.</span></p>
+      <ul class="warnings" id="warnings" aria-live="polite"></ul>
+      <div class="btns">
+        <button type="button" class="btn solid" id="download">Download the theme</button>
+        <button type="button" class="btn" id="copy">Copy theme.ini</button>
+      </div>
+      <pre class="ini" id="ini" aria-label="theme.ini"></pre>
+      <ol class="howto">
+        <li>Unzip the download into <code>nuld/themes/</code> on the drive NULD starts from.</li>
+        <li>On the PS2: START, then <b>Theme</b>, and move right until yours shows up.</li>
+        <li><b>Save and restart</b> keeps it. The <a href="manual.html#themes">manual</a> has the details.</li>
+      </ol>
+    </div>
+  </div>
+
+  <footer class="site">
+    <span>NULD is free software under GPL-3.0. Themes need NULD v1.3 or newer.</span>
+    <span>PlayStation is a trademark of Sony Interactive Entertainment. NULD is not affiliated with Sony.</span>
+  </footer>
+</main>
+</body>
+</html>
