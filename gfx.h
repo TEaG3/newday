@@ -30,6 +30,10 @@ void gfx_stroke(const float *px, const float *py, int n, float width, unsigned r
 void gfx_add(int on);        // 1: what follows adds its light to the picture (Cs * As + Cd); 0: normal blending
 // gouraud quad for lights: 4 corners (x y pairs) in order round it, a colour per corner, at the current alpha
 void gfx_quad(const float *xy, const unsigned *rgb);
+// gouraud triangle strip, n corners (x y pairs) with a colour each, at the current alpha (curtains, ribbons of light)
+void gfx_strip(const float *xy, const unsigned *rgb, int n);
+void gfx_fade(int x, int y, int w, int h, unsigned rgb, int a0, int a1); // a rect whose alpha goes a0 -> a1 downwards
+void gfx_tint(unsigned rgb);  // gfx_image multiplies its pixels by this colour until the next call (white: as they are)
 void gfx_scissor(int x0, int y0, int x1, int y1); // draw only inside this rectangle (inclusive) until the next call
 // vector glyph (logo_data.c): triangles + contours (AA edges), font units y up, at (ox + x * s, oy - y * s)
 void gfx_vmesh(const short *v, int nv, const unsigned short *tri, int ntri, const unsigned short *ctr, int nctr,

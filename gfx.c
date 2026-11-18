@@ -471,6 +471,26 @@ void gfx_quad(const float *xy, const unsigned *rgb)
 	for (int k = 0; k < 4; k++) rgba(rgb[(int)o[k]]), xyz16((int)(xy[2 * o[k]] * 16), (int)(xy[2 * o[k] + 1] * 16));
 }
 
+void gfx_strip(const float *xy, const unsigned *rgb, int n)
+{
+	if (n < 3 || !room(1 + 2 * n)) return;
+	prim(GS_PRIM_TRIANGLE_STRIP, 1, 0, 1, 0);
+	for (int k = 0; k < n; k++) rgba(rgb[k]), xyz16((int)(xy[2 * k] * 16), (int)(xy[2 * k + 1] * 16));
+}
+
+void gfx_fade(int x, int y, int w, int h, unsigned rgb, int a0, int a1)
+{
+	if (!room(9)) return;
+	prim(GS_PRIM_TRIANGLE_STRIP, 1, 0, 1, 0);
+	rgba_a(rgb, a0); xyz16(x << 4, y << 4);
+	rgba_a(rgb, a1); xyz16(x << 4, (y + h) << 4);
+	rgba_a(rgb, a0); xyz16((x + w) << 4, y << 4);
+	rgba_a(rgb, a1); xyz16((x + w) << 4, (y + h) << 4);
+}
+
+static unsigned tint = 0xFFFFFF;
+void gfx_tint(unsigned rgb) { tint = rgb; }
+
 void gfx_scissor(int x0, int y0, int x1, int y1)
 {
 	if (!room(1)) return;
@@ -588,7 +608,7 @@ void gfx_image(const void *pix, int w, int h, int x, int y, int dw, int dh)
 		dma_channel_send_chain(DMA_CHANNEL_GIF, pk->data, e - pk->data, 0, 0);
 		dma_wait_fast();
 		tquad16(tex0, x << 4, (y << 4) + r0 * dh * 16 / h, (x + dw) << 4, (y << 4) + (r0 + bh) * dh * 16 / h, 0, 0,
-		        w << 4, bh << 4, 0xFFFFFF, 0xFFFFFF, scaled);
+		        w << 4, bh << 4, tint, tint, scaled);
 	}
 }
 
