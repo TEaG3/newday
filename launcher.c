@@ -1855,8 +1855,8 @@ static void options_panel(int i, int row) // △ menu: the game's Neutrino optio
 }
 
 // ---- setup wizard (#15): the config.ini basics, the boot stub on a chosen memory card and how FreeMcBoot 1.966
-// starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts NULD so
-// every setting takes effect. ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
+// starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts NULD only
+// when the sources or the network changed (read at boot). ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
 enum { W_UPD, W_LANG, W_THEME, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
 static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS}; // checkboxes
 #define W_NCHIP (int)sizeof(w_chip)
@@ -1874,6 +1874,7 @@ static char *fmcb_txt[2];           // each card's FREEMCB.CNF with FMCB_ROOM by
 static int fmcb_len[2];
 static char w_ip[24], w_sum[UPD_MAXF + 2][100]; // the fixed IP config.ini has ("" none); what saving / updating did
 static int w_nsum;
+static int w_restart, w_quiet; // the save changed what is only read at boot (sources, network); nothing to report: just close
 
 static int w_fmcb_card(void) // the FREEMCB.CNF to edit: the chosen card's, else the other's; -1 none
 {
@@ -1907,6 +1908,7 @@ static void wiz_save(void) // icon thread
 	char list[64] = ""; // hdd also covers HD Loader disks (src_mask)
 	for (int k = 0; k < W_NCHIP; k++)
 		if (w_val[W_SRC] & 1u << w_chip[k]) snprintf(list + strlen(list), sizeof(list) - strlen(list), "%s%s", *list ? ", " : "", src_key[(int)w_chip[k]]);
+	w_restart = src_mask(list) != src_want || strcasecmp(w_val[W_NET] ? w_ip : "dhcp", ini_get(&cfg, "red", "ip", "dhcp"));
 	ini_set(&cfg, "juegos", "origen", list);
 	ini_set(&cfg, "memorycard", "modo", w_mcm[w_val[W_MC]]);
 	ini_set(&cfg, "video", "modo", w_vid[w_val[W_VIDEO]]);
@@ -1917,8 +1919,9 @@ static void wiz_save(void) // icon thread
 	if (f) ok &= fclose(f) == 0;
 	snprintf(w_sum[0], 100, "%s: %s", CONFIG, ok ? L("guardado", "saved") : L("ERROR al guardar", "ERROR saving"));
 	w_nsum = 1;
+	w_quiet = ok && !w_restart && !w_val[W_FMCB];
 	int c = w_val[W_CARD], stub = c >= 0 && stub_write(c), v = w_val[W_FMCB], fp = w_fmcb_card();
-	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/NULD.ELF: %s", c, stub ? "ok" : "ERROR");
+	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/NULD.ELF: %s", c, stub ? "ok" : "ERROR"), w_quiet &= stub;
 	if (v > 0 && fp >= 0 && stub) {
 		char *t = fmcb_txt[fp], key[24];
 		int bn, max = fmcb_len[fp] + FMCB_ROOM;
@@ -1992,7 +1995,7 @@ static void wiz_job(void) // icon thread, woken by wiz_open and by Save
 			free(b);
 		}
 	else if (job == 2) wiz_save();
-	else if (job == 3) update_install(), job = 2; // its summary, like a save
+	else if (job == 3) update_install(), w_restart = 1, w_quiet = 0, job = 2; // its summary, like a save
 	if (job) w_job = 0, w_done = job;
 }
 
@@ -2016,7 +2019,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 		else snprintf(a, n, L("Entrada en el menú de FMCB", "Item in FMCB's menu"));
 		break;
 	case W_UPD: snprintf(a, n, L("Actualizar NULD a %s", "Update NULD to %s"), upd.version); break;
-	default: snprintf(a, n, "%s", L("Guardar y reiniciar", "Save and restart"));
+	default: snprintf(a, n, "%s", L("Guardar", "Save"));
 	}
 }
 
@@ -2068,7 +2071,7 @@ static void wiz_panel(void) // design: the △ options panel
 	int ry = y + 70;
 	if (w_done == 2 || w_job == 3) { // the summary (an update fills it as it goes)
 		for (int k = 0; k < w_nsum; k++, ry += 40) gfx_text(&gfx_font_mono, x + 28, ry + 10, w_sum[k], TEXT);
-		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, L("X: reiniciar NULD", "X: restart NULD"), ACID);
+		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, w_restart ? L("X: reiniciar NULD", "X: restart NULD") : L("X: cerrar", "X: close"), ACID);
 		else if (upd_phase && upd_k >= 0) { // the current file: its download, then its write to the USB
 			int size = upd.f[upd_k].size, got = upd_phase == 1 ? net_got : upd_done, pct = size > 0 ? (int)(100LL * got / size) : 0;
 			pct = pct > 100 ? 100 : pct;
@@ -2658,7 +2661,10 @@ int main(int argc, char *argv[])
 		if (ra_down && !ra_told) ra_told = 1, toast = 240, toast_msg = ra_down == 1 ? L("Logros: sin red", "Achievements: no network") : L("Logros: sin servidor", "Achievements: no server");
 		if (w_first && usb && booted) w_first = 0, wiz_open(), play(S_PANEL, 70); // first boot (#15)
 		if (wiz >= 0) { // setup wizard owns the pad until ○ / Save (#15)
-			if (w_done == 2) { if (pressed & PAD_CROSS) restart_self(); }
+			if (w_done == 2) { // saved: NULD starts again only if the sources or the network changed
+				if (w_quiet) wiz = -1, toast = 180, toast_msg = L("Configuración guardada", "Setup saved");
+				else if (pressed & PAD_CROSS) { if (w_restart) restart_self(); else wiz = -1, play(S_PANEL, 70); }
+			}
 			else if (w_job != 2) {
 				if (pressed & PAD_DOWN) { if (wiz < W_ROWS - 1) wiz++, play(S_MOVE, 70); else play(S_EDGE, 80); }
 				if (pressed & PAD_UP) { if (wiz > (upd_avail ? W_UPD : W_LANG)) wiz--, play(S_MOVE, 70); else play(S_EDGE, 80); }

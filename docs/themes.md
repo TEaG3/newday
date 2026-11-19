@@ -16,7 +16,7 @@ mass:/nuld/themes/
 
 - Copy the folder to `nuld/themes/` on the device NULD starts from (the USB stick, or the MMCE card).
 - Start NULD, press **START**, go to **Theme** and move left / right: your theme comes after the built-in ones, and
-  is shown at once behind the panel. **Save and restart** keeps it.
+  is shown at once behind the panel. **Save** keeps it.
 - Up to **8** theme folders are read. A folder with the name of a built-in theme (`torres`, `nuld`, ...) is skipped.
 - The folder's name: 31 characters at most, plain letters and digits are the safe choice.
 

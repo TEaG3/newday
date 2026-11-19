@@ -190,7 +190,7 @@
       text(MONO, x + 12, 270, s, on ? P.texto : P.tenue), x -= 6;
     }
     value(304, 'Per-game virtual', 0), value(350, '480p', 0), value(396, 'DHCP', 0);
-    text(UI, 640, 470, 'Save and restart', ACC, 'center');
+    text(UI, 640, 470, 'Save', ACC, 'center');
     rect(294, 520, 692, 6, P.acero), rect(294, 520, 240, 6, ACC); // a bar and its track
     text(MONO, 294, 540, 'COVERS 7 / 16', P.etiqueta);
     g.textAlign = 'left', g.textBaseline = 'alphabetic';
