@@ -12,12 +12,18 @@ Themes: twelve looks for the launcher, a selector in the setup panel, and themes
   [manual](https://danielnuld.github.io/nuld/manual.html#themes) and in `docs/themes.md`.
 - **Theme maker.** A [page](https://danielnuld.github.io/nuld/themes.html) that builds that folder in the browser,
   with a live preview of the home screen, and downloads it as a zip.
+- **Saving the setup no longer restarts NULD.** Language, theme, memory card and video apply at once; it only
+  starts again when the game sources or the network changed.
 - **A loading sound for the new themes**: air rising and a low piano strike in a hall. NULD keeps its own.
+
+## Fixed
+
+- After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.
 
 ## Known issues
 
-- Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten were sized
-  by the same rules and checked on PCSX2.
+- Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on
+  the same console without visible stutter, but were not timed.
 
 ## Updating
 
