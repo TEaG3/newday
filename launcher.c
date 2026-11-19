@@ -35,8 +35,10 @@
 #include "fmcb.h"
 #include "update.h"
 #include "splash.h"
+#include "torres.h"
+#include "theme.h"
 
-#define NULD_VERSION "v1.2.14" // tools/make_release.py checks it against the release tag
+#define NULD_VERSION "v1.3" // tools/make_release.py checks it against the release tag
 #include "lang.h"
 #include "achievements.h"
 #include "third_party/neutrino-igr/raagent/ra_watch.h"
@@ -45,16 +47,33 @@
 #include <fileXio_rpc.h>
 #include <io_common.h>
 
-// ---- palette (NULD, splash.h): black, steel, mist, signal and one acid accent; no gradients, no glows ----
-#define BG NULD_BG
-#define PANEL 0x0C0E12 // panels, cards
-#define ROW 0x161A21   // the selected row
-#define EDGE 0x2A303A  // 1 px frames
-#define DIM 0x4A515C   // off, unchecked
-#define TEXT NULD_FG
-#define TEXT2 0xA9B0BA
-#define LABEL NULD_MUTED
-#define ACID NULD_ACID
+// ---- themes (v1.3, theme.h): a palette each, and what only that theme draws behind the same layout (T). Torres
+// is the default; NULD is the look of v1.2 ----
+static palette thm;              // the colours in use: set in main before the first frame that is not black
+static int theme_id = TH_TORRES; // [ui] tema (load_config)
+static const theme_def *T = &themes[TH_TORRES];
+static void theme_set(int id) // render thread; a theme with a backdrop to dither takes about a second
+{
+	theme_id = id, T = &themes[id], thm = T->pal;
+	themes_enter(id);
+}
+static int theme_of(const char *key)
+{
+	for (int i = 0; i < themes_n; i++)
+		if (!strcasecmp(key, themes[i].key)) return i;
+	return TH_TORRES;
+}
+#define BG thm.bg
+#define PANEL thm.panel // panels, cards
+#define ROW thm.row     // the selected row
+#define EDGE thm.edge   // 1 px frames
+#define DIM thm.dim     // off, unchecked
+#define TEXT thm.text
+#define TEXT2 thm.text2
+#define LABEL thm.label
+#define ACID thm.accent // the accent: NULD's acid, Torres's ice
+#define STEEL thm.steel // filled chips, bar tracks
+#define INV thm.inv     // text over TEXT or the accent
 
 #define LW 256 // selected cover = <serial>.c16
 #define LH 368
@@ -773,11 +792,12 @@ static int disc_cnf(char *cnf, int max) // cdrom0:\SYSTEM.CNF;1 through libcdvd 
 static void disc_thread(void *arg)
 {
 	(void)arg;
-	int last = -1;
+	int last = -1, said = -1; // said: the language the title was written in (the setup panel changes it)
 	sceCdInit(SCECdINoD);
 	for (;; sleep(1)) {
 		int st = disc_state(sceCdGetDiskType());
-		if (st == last || disc_new) continue;
+		if ((st == last && lang == said) || disc_new) continue;
+		said = lang;
 		entry *d = &disc_stage;
 		memset(d, 0, sizeof(*d));
 		d->kind = K_DISC, d->disc = st;
@@ -804,6 +824,8 @@ static void disc_thread(void *arg)
 static const char *const config_template[LANG_N] = {
 	"; NULD - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
 	"\n[ui]\n; idioma de la interfaz y de estos comentarios: es = español, en = inglés (english), pt = portugués (português)\nidioma = es\n"
+	"; tema: torres (prismas de luz en una noche azul), nuld (negro y verde ácido, el de v1.2), cristal, aurora, liquid,\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. También se elige en la configuración (START);\n; o el nombre de una carpeta de nuld/themes (un tema hecho por alguien: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; dónde buscar juegos de PS2 (carpetas DVD y CD), separados por comas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, o APA con particiones de HD Loader. udpbd usa la IP fija de [red];\n"
 	"; udpfs, el servidor de abajo. mx4sio y mmce no van juntos. Configuración, portadas, Neutrino, POPS\n"
@@ -841,6 +863,8 @@ static const char *const config_template[LANG_N] = {
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 	"; NULD - configuration, read at boot\n"
 	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = en\n"
+	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
+	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in nuld/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = internal exFAT disk, or APA with HD Loader partitions. udpbd uses the fixed IP of [red];\n"
 	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
@@ -878,6 +902,8 @@ static const char *const config_template[LANG_N] = {
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 	"; NULD - configuração, lida ao iniciar\n"
 	"\n[ui]\n; idioma da interface e destes comentários: es = espanhol (español), en = inglês (english), pt = português\nidioma = pt\n"
+	"; tema: torres (prismas de luz numa noite azul), nuld (preto e verde ácido, o da v1.2), cristal, aurora, liquid,\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START);\n; ou o nome de uma pasta de nuld/themes (um tema feito por alguém: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; onde procurar jogos de PS2 (pastas DVD e CD), separados por vírgulas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, ou APA com partições do HD Loader. udpbd usa o IP fixo de [red];\n"
 	"; udpfs, o servidor abaixo. mx4sio e mmce não funcionam juntos. Configuração, capas, Neutrino, POPS\n"
@@ -940,6 +966,13 @@ static void load_config(void) // loader thread, before the splash sound
 		ini_parse(&cfg, config_template[0]);
 	}
 	lang = lang_of(ini_get(&cfg, "ui", "idioma", "es")); // phase 18: first, the rest may show text
+	char tdir[40];
+	snprintf(tdir, sizeof(tdir), "%s/%s/themes", homedev, home_dir);
+	themes_load(tdir); // the community's (docs/themes.md)
+	theme_id = theme_of(ini_get(&cfg, "ui", "tema", "torres"));
+#ifdef THEME_FORCE
+	theme_id = THEME_FORCE;
+#endif
 	// phase 18: the comments follow idioma. A file NULD (or ORBIT, until v1.1) wrote (its first line names the
 	// language) in the other language is written again from that language's template with every value kept
 	// (ini_render); a file the user wrote from scratch is left alone
@@ -1065,8 +1098,8 @@ static void opt_value(int i, int row, char *out, int n)
 
 // ---- sound: tools/sfx.py WAVs -> SPU2 ADPCM (adpenc, Makefile), played on free SPU2 voices by audsrv ----
 #define SND(n) extern unsigned char sfx_##n[]; extern unsigned int size_sfx_##n
-SND(splash); SND(move); SND(edge); SND(confirm); SND(panel);
-enum { S_SPLASH, S_MOVE, S_EDGE, S_CONFIRM, S_PANEL, S_N };
+SND(splash); SND(move); SND(edge); SND(confirm); SND(panel); SND(torres);
+enum { S_SPLASH, S_MOVE, S_EDGE, S_CONFIRM, S_PANEL, S_TORRES, S_N }; // S_TORRES: the Torres theme's splash
 static audsrv_adpcm_t snd[S_N];
 static volatile int sound; // loader: 0 not ready yet, 1 ready, -1 unavailable
 
@@ -1076,7 +1109,7 @@ static int sound_init(void) // loader thread, right after the modules: the splas
 	audsrv_adpcm_init();
 	audsrv_set_volume(MAX_VOLUME);
 	struct { unsigned char *d; unsigned *n; } src[S_N] = {{sfx_splash, &size_sfx_splash}, {sfx_move, &size_sfx_move},
-		{sfx_edge, &size_sfx_edge}, {sfx_confirm, &size_sfx_confirm}, {sfx_panel, &size_sfx_panel}};
+		{sfx_edge, &size_sfx_edge}, {sfx_confirm, &size_sfx_confirm}, {sfx_panel, &size_sfx_panel}, {sfx_torres, &size_sfx_torres}};
 	for (int i = 0; i < S_N; i++) { // the IOP DMAs the sample out of EE RAM: aligned, written-back copy
 		void *b = memalign(64, *src[i].n);
 		if (!b) return -1;
@@ -1529,12 +1562,20 @@ static void splash(int t, float fade)
 	if (stage == 0) snprintf(st, sizeof(st), L("Iniciando USB", "Starting USB"));
 	else if (stage == 1) snprintf(st, sizeof(st), L("Leyendo memory cards", "Reading memory cards"));
 	else snprintf(st, sizeof(st), L("Cargando juegos  %02d / %02d", "Loading games  %02d / %02d"), done_n, total_n);
-	splash_msg(st);
 	gfx_begin();
-	splash_draw(t / 60.f);
-	gfx_alpha(0x80);
-	gfx_rect(490, 524, 300, 2, EDGE);
-	gfx_rect(490, 524, (int)(300 * shown), 2, ACID);
+	if (T->splash) { // the theme's own splash; the status and the progress come in when it says
+		gfx_alpha((int)(0x80 * T->splash(t / 60.f)));
+		gfx_tracking(3), text_c(&gfx_font_mono, T->status_y, st, LABEL), gfx_tracking(0);
+		gfx_rect(490, T->status_y + 38, 300, 2, EDGE);
+		gfx_rect(490, T->status_y + 38, (int)(300 * shown), 2, ACID);
+		gfx_alpha(0x80);
+	} else {
+		splash_msg(st);
+		splash_draw(t / 60.f);
+		gfx_alpha(0x80);
+		gfx_rect(490, 524, 300, 2, EDGE);
+		gfx_rect(490, 524, (int)(300 * shown), 2, ACID);
+	}
 	if (fade > 0) { gfx_alpha((int)(0x80 * fade)); gfx_rect(0, 0, GFX_W, GFX_H, 0); }
 	gfx_end();
 	gfx_flip();
@@ -1571,7 +1612,7 @@ static int hint(int x, int key_icon, const char *key_text, const char *label) //
 static void generic_cover(int i, int x, int y, int w, int h, int a) // no cover file: a hatched panel with the title
 {
 	gfx_alpha(a);
-	gfx_rect(x, y, w, h, 0x11141A);
+	gfx_rect(x, y, w, h, theme_id == TH_NULD ? 0x11141A : PANEL);
 	gfx_scissor(x, y, x + w - 1, y + h - 1);
 	for (int d = -h; d < w; d += 12) gfx_line(x + d, y + h, x + d + h, y, TEXT, a / 8, a / 8);
 	gfx_scissor(0, 0, GFX_W - 1, GFX_H - 1);
@@ -1599,21 +1640,22 @@ static void generic_cover(int i, int x, int y, int w, int h, int a) // no cover 
 static int tag(int x, const char *t, int icon, unsigned edge, unsigned ink, int filled) // returns the next x
 {
 	int pad = icon != -1 ? 8 + 18 + 6 : 12, w = pad + gfx_text_width(&gfx_font_mono, t) + 12;
-	if (filled) gfx_rect(x, 86, w, 26, edge), ink = BG;
+	if (filled) gfx_rect(x, 86, w, 26, edge), ink = INV;
 	else frame1(x, 86, w, 26, edge);
 	if (icon >= 0) gfx_icon(icon, x + 8, 90, ink);
 	gfx_text(&gfx_font_mono, x + pad, 91, t, ink);
 	return x + w + 10;
 }
 
+static int panel_dim = 0x60; // how much a panel dims the home behind it (less while a theme is being chosen)
 static void panel(int x, int y, int w, int h, int icon, const char *title) // △ / START / ○: over the dimmed home
 {
-	gfx_alpha(0x60);
+	gfx_alpha(panel_dim);
 	gfx_rect(0, 0, GFX_W, GFX_H, BG);
 	gfx_alpha(0x80);
 	gfx_rect(x, y, w, h, PANEL);
 	frame1(x, y, w, h, EDGE);
-	splash_hud(x - 6, y - 6, w + 12, h + 12, 22);
+	if (theme_id == TH_NULD) splash_hud(x - 6, y - 6, w + 12, h + 12, 22, ACID);
 	gfx_icon(icon, x + 24, y + 24, ACID);
 	gfx_text(&gfx_font_ui, x + 52, y + 21, title, TEXT);
 	gfx_rect(x + 24, y + 58, w - 48, 1, EDGE);
@@ -1625,8 +1667,8 @@ static void value_tag(int xr, int ry, const char *a, int sel, int on, int arrows
 {
 	int pw = gfx_text_width(&gfx_font_ui, a) + 64, px = xr - pw;
 	if (sel && on) gfx_rect(px, ry + 5, pw, 30, ACID);
-	else gfx_rect(px, ry + 5, pw, 30, on ? NULD_STEEL : PANEL), frame1(px, ry + 5, pw, 30, on ? EDGE : ROW);
-	unsigned ink = sel && on ? BG : on ? TEXT : LABEL;
+	else gfx_rect(px, ry + 5, pw, 30, on ? STEEL : PANEL), frame1(px, ry + 5, pw, 30, on ? EDGE : ROW);
+	unsigned ink = sel && on ? INV : on ? TEXT : LABEL;
 	if (arrows) {
 		gfx_text(&gfx_font_ui, px + 12, ry + 8, "<", ink);
 		gfx_text(&gfx_font_ui, px + pw - 12 - gfx_text_width(&gfx_font_ui, ">"), ry + 8, ">", ink);
@@ -1727,11 +1769,7 @@ static void draw_cover(int i)
 	const box *b = &shown_box[i];
 	int x = (int)lroundf(b->x), y = (int)lroundf(b->y), w = (int)lroundf(b->w), h = (int)lroundf(b->h);
 	if (b->a < 0.01f || w < 8 || x + w + 60 < 0 || x - 60 > GFX_W || y > GFX_H || y + h < 0) return;
-	if (b->f > 0.01f) { // acid HUD corners, faded with the focus; their margin scales with the cover
-		int g = 12 * w / LW;
-		gfx_alpha((int)(0x80 * b->f * b->a));
-		splash_hud(x - g, y - g, w + 2 * g, h + 2 * g, 30 * w / LW);
-	}
+	if (b->f > 0.01f) T->sel(x, y, w, h, b->f * b->a, 0); // what the theme puts behind the cover in focus
 	gfx_alpha((int)(0x80 * b->a));
 	cover_seen[i] = frame_n;
 	void *im[3] = {cv[i].half, cv[i].small, cv[i].big};
@@ -1743,14 +1781,29 @@ static void draw_cover(int i)
 		cover_req[i] |= 1 << k, SignalSema(cover_sema); // coalesced: max_count 1
 	for (int j = 2; !im[k] && j >= 0; j--) k = j; // not read (yet): the biggest one there is
 	if (!im[k]) generic_cover(i, x, y, w, h, (int)(0x80 * b->a));
-	else gfx_image(im[k], iw[k], ih[k], x, y, w, h);
-	frame1(x, y, w, h, b->f > 0.5f ? 0x3A4150 : 0x232833);
+	else {
+		if (b->f > 0.9f) themes_cover(im[k], iw[k], ih[k]); // the cover in focus, for the themes that take from it
+		if (T->flags & TF_MONO) { // out of focus in the theme's colour: its pixels times that colour
+			unsigned c = ACID;
+			float f = b->f;
+			gfx_tint((unsigned)((c >> 16 & 255) + (255 - (c >> 16 & 255)) * f) << 16 | (unsigned)((c >> 8 & 255) + (255 - (c >> 8 & 255)) * f) << 8 |
+			         (unsigned)((c & 255) + (255 - (c & 255)) * f));
+		}
+		gfx_image(im[k], iw[k], ih[k], x, y, w, h);
+		gfx_tint(0xFFFFFF);
+	}
+	frame1(x, y, w, h, theme_id != TH_NULD ? EDGE : b->f > 0.5f ? 0x3A4150 : 0x232833);
+	if (b->f > 0.01f) T->sel(x, y, w, h, b->f * b->a, 1), gfx_alpha(0x80); // and in front of it
 }
 
 static void list_rows(int sel, float lscroll, float pill_y, float pres) // the list's text side; pres: 0..1 presence
 {
 	char t[96];
 	if (pres < 0.01f) return;
+	if (T->pane) { // a pane behind the rows, where the background would cross the text
+		gfx_alpha((int)(T->pane * ease(pres))), gfx_rect(LX - 18, LY0 - 16, LWID + 36, LVIS * LROW + 26, PANEL);
+		gfx_alpha((int)(0x80 * ease(pres))), frame1(LX - 18, LY0 - 16, LWID + 36, LVIS * LROW + 26, EDGE);
+	}
 	float pa = pres * edge_fade(pill_y, LROW - 6, LY0 - 4, LY0 + LVIS * LROW + 4, 26);
 	gfx_alpha((int)(0x80 * pa)); // the cursor's row, gliding to the selection
 	sel_row(LX, (int)pill_y, LWID, LROW - 6);
@@ -1803,9 +1856,9 @@ static void options_panel(int i, int row) // △ menu: the game's Neutrino optio
 }
 
 // ---- setup wizard (#15): the config.ini basics, the boot stub on a chosen memory card and how FreeMcBoot 1.966
-// starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts NULD so
-// every setting takes effect. ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
-enum { W_UPD, W_LANG, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
+// starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts NULD only
+// when the sources or the network changed (read at boot). ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
+enum { W_UPD, W_LANG, W_THEME, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
 static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS}; // checkboxes
 #define W_NCHIP (int)sizeof(w_chip)
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
@@ -1822,6 +1875,7 @@ static char *fmcb_txt[2];           // each card's FREEMCB.CNF with FMCB_ROOM by
 static int fmcb_len[2];
 static char w_ip[24], w_sum[UPD_MAXF + 2][100]; // the fixed IP config.ini has ("" none); what saving / updating did
 static int w_nsum;
+static int w_restart, w_quiet; // the save changed what is only read at boot (sources, network); nothing to report: just close
 
 static int w_fmcb_card(void) // the FREEMCB.CNF to edit: the chosen card's, else the other's; -1 none
 {
@@ -1834,7 +1888,7 @@ static void wiz_open(void)
 {
 	const char *o = ini_get(&cfg, "juegos", "origen", "usb"), *ip = ini_get(&cfg, "red", "ip", "dhcp");
 	memset(w_val, 0, sizeof(w_val));
-	w_val[W_LANG] = lang, w_val[W_SRC] = src_mask(o), w_val[W_VIDEO] = 1, w_val[W_CARD] = mcn[0] >= 0 ? 0 : mcn[1] >= 0 ? 1 : -1;
+	w_val[W_LANG] = lang, w_val[W_THEME] = theme_id, w_val[W_SRC] = src_mask(o), w_val[W_VIDEO] = 1, w_val[W_CARD] = mcn[0] >= 0 ? 0 : mcn[1] >= 0 ? 1 : -1;
 	if (!w_val[W_SRC]) w_val[W_SRC] = 1u << SRC_USB;
 	w_cur = 0;
 	for (int k = 0; k < 3; k++) {
@@ -1851,9 +1905,11 @@ static void wiz_save(void) // icon thread
 {
 	static char out[16384];
 	ini_set(&cfg, "ui", "idioma", lang_key[w_val[W_LANG]]);
+	ini_set(&cfg, "ui", "tema", themes[w_val[W_THEME]].key);
 	char list[64] = ""; // hdd also covers HD Loader disks (src_mask)
 	for (int k = 0; k < W_NCHIP; k++)
 		if (w_val[W_SRC] & 1u << w_chip[k]) snprintf(list + strlen(list), sizeof(list) - strlen(list), "%s%s", *list ? ", " : "", src_key[(int)w_chip[k]]);
+	w_restart = src_mask(list) != src_want || strcasecmp(w_val[W_NET] ? w_ip : "dhcp", ini_get(&cfg, "red", "ip", "dhcp"));
 	ini_set(&cfg, "juegos", "origen", list);
 	ini_set(&cfg, "memorycard", "modo", w_mcm[w_val[W_MC]]);
 	ini_set(&cfg, "video", "modo", w_vid[w_val[W_VIDEO]]);
@@ -1864,8 +1920,9 @@ static void wiz_save(void) // icon thread
 	if (f) ok &= fclose(f) == 0;
 	snprintf(w_sum[0], 100, "%s: %s", CONFIG, ok ? L("guardado", "saved") : L("ERROR al guardar", "ERROR saving"));
 	w_nsum = 1;
+	w_quiet = ok && !w_restart && !w_val[W_FMCB];
 	int c = w_val[W_CARD], stub = c >= 0 && stub_write(c), v = w_val[W_FMCB], fp = w_fmcb_card();
-	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/NULD.ELF: %s", c, stub ? "ok" : "ERROR");
+	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/NULD.ELF: %s", c, stub ? "ok" : "ERROR"), w_quiet &= stub;
 	if (v > 0 && fp >= 0 && stub) {
 		char *t = fmcb_txt[fp], key[24];
 		int bn, max = fmcb_len[fp] + FMCB_ROOM;
@@ -1939,7 +1996,7 @@ static void wiz_job(void) // icon thread, woken by wiz_open and by Save
 			free(b);
 		}
 	else if (job == 2) wiz_save();
-	else if (job == 3) update_install(), job = 2; // its summary, like a save
+	else if (job == 3) update_install(), w_restart = 1, w_quiet = 0, job = 2; // its summary, like a save
 	if (job) w_job = 0, w_done = job;
 }
 
@@ -1949,6 +2006,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 	char cur[64] = "";
 	switch (r) {
 	case W_LANG: snprintf(a, n, "%s", v == LANG_EN ? "English" : v == LANG_PT ? "Português" : "Español"); break;
+	case W_THEME: snprintf(a, n, "%s", themes[v].name); break;
 	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Virtual por juego", "Per-game virtual") : v == 1 ? L("Virtual compartida", "Shared virtual") : L("Física", "Physical")); break;
 	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Nativo", "Native") : w_vid[v]); break;
 	case W_NET: snprintf(a, n, "%s", v ? w_ip : "DHCP"); break;
@@ -1962,7 +2020,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 		else snprintf(a, n, L("Entrada en el menú de FMCB", "Item in FMCB's menu"));
 		break;
 	case W_UPD: snprintf(a, n, L("Actualizar NULD a %s", "Update NULD to %s"), upd.version); break;
-	default: snprintf(a, n, "%s", L("Guardar y reiniciar", "Save and restart"));
+	default: snprintf(a, n, "%s", L("Guardar", "Save"));
 	}
 }
 
@@ -1970,6 +2028,7 @@ static void wiz_change(int d) // left / right on the selected row
 {
 	int r = wiz, *v = &w_val[r];
 	if (r == W_LANG) *v = (*v + d + LANG_N) % LANG_N, lang = *v; // the panel itself switches language at once
+	else if (r == W_THEME) *v = (*v + d + themes_n) % themes_n, theme_set(*v); // shown at once behind the panel, as the language
 	else if (r == W_SRC) w_cur = w_cur + d < 0 ? 0 : w_cur + d >= W_NCHIP ? W_NCHIP - 1 : w_cur + d; // the cursor
 	else if (r == W_MC || r == W_VIDEO) *v = (*v + d + 3) % 3;
 	else if (r == W_NET) *v = *w_ip ? !*v : 0;
@@ -1996,9 +2055,9 @@ static void wiz_chips(int x, int ry, int sel) // the sources row's checkboxes, r
 	for (int k = 0; k < W_NCHIP; k++) {
 		const char *t = src_label[(int)w_chip[k]];
 		int on = w_val[W_SRC] & 1u << w_chip[k], cw = gfx_text_width(&gfx_font_mono, t) + 24, cur = sel && k == w_cur;
-		if (on) gfx_rect(x - w, ry + 5, cw, 30, cur ? ACID : NULD_STEEL); // checked: solid; unchecked: a frame, dim text
+		if (on) gfx_rect(x - w, ry + 5, cw, 30, cur ? ACID : STEEL); // checked: solid; unchecked: a frame, dim text
 		else frame1(x - w, ry + 5, cw, 30, cur ? ACID : ROW);
-		gfx_text(&gfx_font_mono, x - w + 12, ry + 11, t, on ? (cur ? BG : TEXT) : cur ? TEXT2 : DIM);
+		gfx_text(&gfx_font_mono, x - w + 12, ry + 11, t, on ? (cur ? INV : TEXT) : cur ? TEXT2 : DIM);
 		w -= cw + 6;
 	}
 }
@@ -2007,16 +2066,18 @@ static void wiz_panel(void) // design: the △ options panel
 {
 	char a[128];
 	int r0 = upd_avail ? W_UPD : W_LANG, x = 270, y = upd_avail ? 74 : 96, w = 740, h = 70 + (W_ROWS - r0) * 46 + 40;
+	panel_dim = wiz == W_THEME ? 0x20 : 0x60; // on the theme's row the home stays in sight: it is the preview
 	panel(x, y, w, h, UI_GEAR_18, L("Configuración de NULD", "NULD setup"));
+	panel_dim = 0x60;
 	int ry = y + 70;
 	if (w_done == 2 || w_job == 3) { // the summary (an update fills it as it goes)
 		for (int k = 0; k < w_nsum; k++, ry += 40) gfx_text(&gfx_font_mono, x + 28, ry + 10, w_sum[k], TEXT);
-		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, L("X: reiniciar NULD", "X: restart NULD"), ACID);
+		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, w_restart ? L("X: reiniciar NULD", "X: restart NULD") : L("X: cerrar", "X: close"), ACID);
 		else if (upd_phase && upd_k >= 0) { // the current file: its download, then its write to the USB
 			int size = upd.f[upd_k].size, got = upd_phase == 1 ? net_got : upd_done, pct = size > 0 ? (int)(100LL * got / size) : 0;
 			pct = pct > 100 ? 100 : pct;
 			int bx = x + 28, by = y + h - 70, bw = w - 56 - 70;
-			gfx_rect(bx, by + 4, bw, 6, NULD_STEEL);
+			gfx_rect(bx, by + 4, bw, 6, STEEL);
 			gfx_rect(bx, by + 4, bw * pct / 100, 6, upd_phase == 1 ? ACID : TEXT);
 			snprintf(a, sizeof(a), "%d%%", pct);
 			gfx_text(&gfx_font_mono, x + w - 28 - gfx_text_width(&gfx_font_mono, a), by - 3, a, TEXT);
@@ -2024,9 +2085,9 @@ static void wiz_panel(void) // design: the △ options panel
 		return;
 	}
 	static const char *const lab[LANG_N][W_ROWS] = {
-		{"", "Idioma", "Juegos desde", "Memory card", "Vídeo", "Red", "Arrancador en", "FreeMcBoot", ""},
-		{"", "Language", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""},
-		{"", "Idioma", "Jogos de", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""}};
+		{"", "Idioma", "Tema", "Juegos desde", "Memory card", "Vídeo", "Red", "Arrancador en", "FreeMcBoot", ""},
+		{"", "Language", "Theme", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""},
+		{"", "Idioma", "Tema", "Jogos de", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""}};
 	for (int r = r0; r < W_ROWS; r++, ry += 46) {
 		if (r == wiz) sel_row(x + 12, ry, w - 24, 40);
 		if (r == W_SRC) { gfx_text(&gfx_font_ui, x + 28, ry + 8, lab[lang][r], r == wiz ? TEXT : TEXT2), wiz_chips(x + w - 24, ry, r == wiz); continue; }
@@ -2098,10 +2159,10 @@ static const char *toast_msg;
 static void home(int sel, float s, float k, int toast, int opt, const char *overlay, float fade) // opt: panel row, -1 closed
 {
 	char a[96], b[96];
-	static int amb; // frames on the home screen: the floor flows towards the viewer
-	(void)s;
 	gfx_begin();
-	splash_floor(amb++ / 120.f, TEXT, 0x12);
+	if (T->flags & TF_ACCENT) thm.accent = themes_accent(); // the cover's colour, eased
+	T->bg(s);
+	gfx_alpha(0x80);
 
 	list_rows(sel, lscroll, pill_y, lpres);
 	for (int i = 0; i < ncv; i++)
@@ -2110,7 +2171,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 
 	// header: the mark, the title, its tags; the saves card on the right — always the selected game, fading in
 	gfx_alpha(0x80);
-	splash_mark(92, 73, 24);
+	splash_mark(92, 73, 24, TEXT, ACID);
 	if (ncv && k > 0) {
 		int cx = GFX_W - 64;
 		if (is_ps2(sel) && *cv[sel].serial) { // saves card: PS2 games only (PS1 saves live in POPS VMCs, apps have none)
@@ -2121,8 +2182,9 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		                         gfx_text_width(&gfx_font_ui, a) : gfx_text_width(&gfx_font_mono, b)) + 18;
 		cx = GFX_W - 64 - cw;
 		int sx = cx + 18, sy = 48; // card: padding 12 / 18, 64x64 icon slot (design)
-		gfx_alpha((int)(0x80 * k));
+		gfx_alpha((int)(T->card * k));
 		gfx_rect(cx, 36, cw, 88, PANEL);
+		gfx_alpha((int)(0x80 * k));
 		frame1(cx, 36, cw, 88, EDGE);
 		if (icon_sema >= 0 && ((vm && !vmc_state[sel]) || (sc && !gicon_state[sel]))) // coalesced: max_count 1
 			icon_want = sel, SignalSema(icon_sema);
@@ -2141,7 +2203,9 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 
 		fit(&gfx_font_title, cv[sel].title, cx - 40 - 140, a, sizeof(a));
 		gfx_alpha(0x80);
-		gfx_text(&gfx_font_title, 140, 34, a, TEXT);
+		if (T->flags & TF_GHOST) gfx_text(&gfx_font_title, 143, 35, a, 0xFF3CD2);
+		if (T->flags & TF_CHROME) gfx_text_chrome(&gfx_font_title, 140, 34, a);
+		else gfx_text(&gfx_font_title, 140, 34, a, TEXT);
 		gfx_alpha((int)(0x80 * k));
 		int x = 140;
 		if (*cv[sel].serial) x = tag(x, cv[sel].serial, -1, EDGE, TEXT2, 0);
@@ -2194,7 +2258,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 			}
 			int pw = gfx_text_width(&gfx_font_mono, filter_name[fl]) + 18, on = fl == filter;
 			if (on) gfx_rect(tx, 655, pw, 22, ACID);
-			gfx_text(&gfx_font_mono, tx + 9, 658, filter_name[fl], on ? BG : TEXT2);
+			gfx_text(&gfx_font_mono, tx + 9, 658, filter_name[fl], on ? INV : TEXT2);
 			tx += pw + 6;
 		}
 	}
@@ -2245,13 +2309,16 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		}
 		gfx_alpha(dl_state == 3 && dl_fade < 30 ? dl_fade * 0x80 / 30 : 0x80);
 		gfx_tracking(2);
+		if (T->flags & TF_FLAT) gfx_rect(52, 608, gfx_text_width(&gfx_font_mono, st) + 24, 26, PANEL);
 		gfx_text(&gfx_font_mono, 64, 614, st, dl_state < 0 ? 0xFF9FB0 : LABEL);
 		gfx_tracking(0);
 	}
 	if (toast > 0 && toast_msg) {
 		const char *m = toast_msg;
+		int tw = gfx_text_width(&gfx_font_ui, m);
 		gfx_alpha(toast > 30 ? 0x80 : toast * 0x80 / 30);
-		gfx_text(&gfx_font_ui, GFX_W - 64 - gfx_text_width(&gfx_font_ui, m), 612, m, ACID);
+		if (T->flags & TF_FLAT) gfx_rect(GFX_W - 64 - tw - 12, 606, tw + 24, 30, PANEL); // a bright ground: its own pane
+		gfx_text(&gfx_font_ui, GFX_W - 64 - tw, 612, m, ACID);
 	}
 	if (overlay) {
 		int lines = 1;
@@ -2261,7 +2328,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		gfx_alpha(0x80);
 		gfx_text(&gfx_font_mono, 64, 162, overlay, TEXT);
 	}
-	splash_scan();
+	if (T->over) T->over();
 	if (fade > 0) { gfx_alpha((int)(0x80 * fade)); gfx_rect(0, 0, GFX_W, GFX_H, 0); }
 	gfx_end();
 }
@@ -2321,8 +2388,9 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 	vmc_file(i, path, sizeof(path));
 	if (exists(path)) return 1;
 	gfx_begin();
-	splash_floor(0, TEXT, 0x12);
-	splash_mark(640, 278, 28);
+	T->bg(0);
+	gfx_alpha(0x80);
+	splash_mark(640, 278, 28, TEXT, ACID);
 	text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 	gfx_tracking(3);
 	text_c(&gfx_font_mono, 400, L("CREANDO MEMORY CARD VIRTUAL (8 MB)", "CREATING VIRTUAL MEMORY CARD (8 MB)"), LABEL);
@@ -2378,11 +2446,11 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	launch_err = NULL;
 	const char *how[4] = {L("INICIANDO CON NEUTRINO", "STARTING WITH NEUTRINO"), L("INICIANDO CON POPSTARTER", "STARTING WITH POPSTARTER"), L("INICIANDO APLICACIÓN", "STARTING APPLICATION"),
 	                             L("INICIANDO DISCO", "STARTING DISC")};
-	for (int t = 0; t < 40; t++) { // let the confirm sound play while the screen fades to the entry's name
+	for (int t = 0; t < (theme_id == TH_NULD ? 40 : 64); t++) { // let the confirm sound play while the screen fades to the entry's name
 		gfx_begin();
-		splash_floor(t / 60.f, TEXT, 0x12);
+		T->launch(t / 60.f); // the theme's own way out
 		gfx_alpha((int)(0x80 * span(t, 0, 20)));
-		splash_mark(640, 278, 28);
+		if (T->flags & TF_MARK) splash_mark(640, 278, 28, TEXT, ACID); // the others put a light of their own there
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
 		text_c(&gfx_font_mono, 400, how[(int)cv[i].kind], LABEL);
@@ -2516,6 +2584,7 @@ int main(int argc, char *argv[])
 	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/launcher.elf");
 	if (!gfx_init()) printf("gfx_init: VRAM pool too small\n");
 	splash_ver = NULD_VERSION + 1; // "1.2"
+	thm = themes[TH_TORRES].pal;
 	ChangeThreadPriority(GetThreadId(), 0x20); // render thread above the loader
 	ee_thread_t th = { .func = loader, .stack = loader_stack, .stack_size = sizeof(loader_stack), .gp_reg = &_gp,
 	                   .initial_priority = 0x40 };
@@ -2531,11 +2600,12 @@ int main(int argc, char *argv[])
 	for (;; t++) {
 		if (start < 0 && t >= HOLD && (stage >= 1 || t >= HOLD + 360)) { // audio + config ready (or 6 s more): go together
 			start = t;
-			gfx_crt(crt); // config.ini is read by now (or never will be: 720p)
-			play(S_SPLASH, 100);
+			theme_set(theme_id); // config.ini is read by now (or never will be: Torres, 720p); up to a second, still black
+			gfx_crt(crt);
+			play(T->flags & TF_PIANO ? S_TORRES : S_SPLASH, 100);
 		}
 		int tt = start < 0 ? -1 : t - start;
-		if (end < 0 && stage == 3 && tt >= 240 && shown > 0.98f) end = tt;
+		if (end < 0 && stage == 3 && tt >= T->splash_frames && shown > 0.98f) end = tt; // Torres: its camera lands at 5 s
 		if (end >= 0 && tt - end > 20) break;
 		u32 f0 = cycles();
 		if (tt >= 0) splash(tt, end < 0 ? 0 : span(tt, end, end + 20));
@@ -2592,7 +2662,10 @@ int main(int argc, char *argv[])
 		if (ra_down && !ra_told) ra_told = 1, toast = 240, toast_msg = ra_down == 1 ? L("Logros: sin red", "Achievements: no network") : L("Logros: sin servidor", "Achievements: no server");
 		if (w_first && usb && booted) w_first = 0, wiz_open(), play(S_PANEL, 70); // first boot (#15)
 		if (wiz >= 0) { // setup wizard owns the pad until ○ / Save (#15)
-			if (w_done == 2) { if (pressed & PAD_CROSS) restart_self(); }
+			if (w_done == 2) { // saved: NULD starts again only if the sources or the network changed
+				if (w_quiet) wiz = -1, toast = 180, toast_msg = L("Configuración guardada", "Setup saved");
+				else if (pressed & PAD_CROSS) { if (w_restart) restart_self(); else wiz = -1, play(S_PANEL, 70); }
+			}
 			else if (w_job != 2) {
 				if (pressed & PAD_DOWN) { if (wiz < W_ROWS - 1) wiz++, play(S_MOVE, 70); else play(S_EDGE, 80); }
 				if (pressed & PAD_UP) { if (wiz > (upd_avail ? W_UPD : W_LANG)) wiz--, play(S_MOVE, 70); else play(S_EDGE, 80); }
@@ -2603,6 +2676,7 @@ int main(int argc, char *argv[])
 				if (pressed & PAD_CROSS && wiz == W_SAVE && w_job == 0) w_job = 2, SignalSema(icon_sema), play(S_CONFIRM, 80);
 				if (pressed & (PAD_CIRCLE | PAD_START)) // closed unsaved: the language as config.ini has it
 					wiz = -1, lang = lang_of(ini_get(&cfg, "ui", "idioma", "es")), play(S_PANEL, 70);
+				if (wiz < 0 && theme_id != theme_of(ini_get(&cfg, "ui", "tema", "torres"))) theme_set(theme_of(ini_get(&cfg, "ui", "tema", "torres"))); // and the theme
 			}
 		} else if (opt >= 0) { // options panel owns the pad until △/○
 			if (pressed & PAD_DOWN) { if (opt < OPT_ROWS - 1) opt++, play(S_MOVE, 70); else play(S_EDGE, 80); }
@@ -2730,6 +2804,12 @@ int main(int argc, char *argv[])
 			med = build[WINDOW / 2], max = build[WINDOW - 1];
 			windows++;
 			printf("window %u: median %u us max %u us missed %u\n", windows, med, max, missed);
+#ifdef TORRES_BENCH // one part left out per window: what each costs on the console
+			static const char var[6] = {0, 1, 2, 4, 8, 16};
+			FILE *bf = usb && windows <= 12 ? fopen(LOG_TXT, "a") : NULL;
+			if (bf) fprintf(bf, "torres bench %d: median %u us  max %u us  missed %u\n", torres_bench, med, max, missed), fclose(bf);
+			torres_bench = var[windows % 6];
+#endif
 			FILE *fp = usb && windows <= 3 ? fopen(LOG_TXT, "a") : NULL;
 			if (fp) {
 				fprintf(fp, "nuld window %u (%d frames, %d covers, overlay %d): median %u us  max %u us  missed vsync %u  "

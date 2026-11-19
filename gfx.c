@@ -354,7 +354,7 @@ static void xyz16(int x16, int y16) // coordinates in 1/16 pixel
 	y16 = y16 * out_h / GFX_H; // CRT: 720 -> 448 / 512 lines
 	PACK_GIFTAG(q, GIF_SET_XYZ(x16 + (2048 << 4), y16 + (2048 << 4), 0), GIF_REG_XYZ2); q++;
 }
-static void uv16(int u16, int v16) { PACK_GIFTAG(q, GIF_SET_UV(u16, v16), GIF_REG_UV); q++; }
+static void uv16(int u16, int v16) { PACK_GIFTAG(q, GIF_SET_UV(u16 < 0 ? 0 : u16, v16), GIF_REG_UV); q++; } // UV has no sign
 static unsigned lerp(unsigned a, unsigned b, int t, int n) // colour a -> b at t / n
 {
 	if (n <= 0) return a;
@@ -456,6 +456,40 @@ void gfx_vmesh(const short *v, int nv, const unsigned short *tri, int ntri, cons
 		}
 	}
 }
+
+void gfx_add(int on) // ALPHA: (Cs - 0) * As + Cd for lights, (Cs - Cd) * As + Cd otherwise (draw_setup_environment's)
+{
+	if (!room(1)) return;
+	PACK_GIFTAG(q, GS_SET_ALPHA(0, on ? 2 : 1, 0, 1, 0x80), GS_REG_ALPHA); q++;
+}
+
+void gfx_quad(const float *xy, const unsigned *rgb)
+{
+	static const char o[4] = {0, 1, 3, 2}; // round the quad -> strip order
+	if (!room(9)) return;
+	prim(GS_PRIM_TRIANGLE_STRIP, 1, 0, 1, 0);
+	for (int k = 0; k < 4; k++) rgba(rgb[(int)o[k]]), xyz16((int)(xy[2 * o[k]] * 16), (int)(xy[2 * o[k] + 1] * 16));
+}
+
+void gfx_strip(const float *xy, const unsigned *rgb, int n)
+{
+	if (n < 3 || !room(1 + 2 * n)) return;
+	prim(GS_PRIM_TRIANGLE_STRIP, 1, 0, 1, 0);
+	for (int k = 0; k < n; k++) rgba(rgb[k]), xyz16((int)(xy[2 * k] * 16), (int)(xy[2 * k + 1] * 16));
+}
+
+void gfx_fade(int x, int y, int w, int h, unsigned rgb, int a0, int a1)
+{
+	if (!room(9)) return;
+	prim(GS_PRIM_TRIANGLE_STRIP, 1, 0, 1, 0);
+	rgba_a(rgb, a0); xyz16(x << 4, y << 4);
+	rgba_a(rgb, a1); xyz16(x << 4, (y + h) << 4);
+	rgba_a(rgb, a0); xyz16((x + w) << 4, y << 4);
+	rgba_a(rgb, a1); xyz16((x + w) << 4, (y + h) << 4);
+}
+
+static unsigned tint = 0xFFFFFF;
+void gfx_tint(unsigned rgb) { tint = rgb; }
 
 void gfx_scissor(int x0, int y0, int x1, int y1)
 {
@@ -574,7 +608,7 @@ void gfx_image(const void *pix, int w, int h, int x, int y, int dw, int dh)
 		dma_channel_send_chain(DMA_CHANNEL_GIF, pk->data, e - pk->data, 0, 0);
 		dma_wait_fast();
 		tquad16(tex0, x << 4, (y << 4) + r0 * dh * 16 / h, (x + dw) << 4, (y << 4) + (r0 + bh) * dh * 16 / h, 0, 0,
-		        w << 4, bh << 4, 0xFFFFFF, 0xFFFFFF, scaled);
+		        w << 4, bh << 4, tint, tint, scaled);
 	}
 }
 
@@ -624,6 +658,26 @@ static void band(const void *pix, int w, int h) // upload one image band (w <= 2
 	e = draw_texture_flush(e);
 	dma_channel_send_chain(DMA_CHANNEL_GIF, pk->data, e - pk->data, 0, 0);
 	dma_wait_fast();
+}
+
+// the left half (w wide) of a picture that is the same mirrored: each tile is sent once and drawn twice, at 1:1.
+// Mirrored, pixel i of a tile reads texel tw - 1 - i: U runs from tw - 1/4 down to 0 (after tquad16's + 8), which
+// keeps every pixel in the upper half of its texel, right for PCSX2 (floor) and for the console (half a texel less);
+// a miss would only repeat the column next to it, never read past the tile
+void gfx_image_mirrored(const unsigned short *tiles, int w, int h)
+{
+	if (slot < 0) return;
+	unsigned long long tex0 = GS_SET_TEX0(slot >> 6, SLOT_W / 64, GS_PSM_16, log2up(SLOT_W), log2up(SLOT_H), 0, 0, 0,
+	                                      0, 0, 0, 0);
+	for (int ty = 0; ty < h; ty += SLOT_H)
+		for (int tx = 0; tx < w; tx += SLOT_W) {
+			int tw = w - tx < SLOT_W ? w - tx : SLOT_W, th = h - ty < SLOT_H ? h - ty : SLOT_H;
+			band(tiles, tw, th);
+			tquad16(tex0, tx << 4, ty << 4, (tx + tw) << 4, (ty + th) << 4, 0, 0, tw << 4, th << 4, 0xFFFFFF, 0xFFFFFF, 0);
+			tquad16(tex0, (2 * w - tx - tw) << 4, ty << 4, (2 * w - tx) << 4, (ty + th) << 4, (tw << 4) - 12, 0, -8,
+			        th << 4, 0xFFFFFF, 0xFFFFFF, 0);
+			tiles += tw * th;
+		}
 }
 
 void gfx_image_tiled(const unsigned short *tiles, int w, int h, int x, int y) // gfx_tiles_from layout, 1:1

@@ -145,6 +145,69 @@ def splash():
     return buf
 
 
+def lpf(x, fc, order=4):  # zero-phase low-pass in the frequency domain
+    X = np.fft.rfft(x)
+    return np.fft.irfft(X / np.sqrt(1 + (np.fft.rfftfreq(len(x), 1 / SR) / fc) ** order), len(x))
+
+
+def hall(x, rt=3.2, mix=0.5):  # a big dark room: convolution with decaying noise, darker as it decays
+    t = t_(rt * 1.3)
+    ir = lpf(noise(len(t)), 1400) * np.exp(-6.9 * t / rt) + 0.5 * lpf(noise(len(t)), 6000) * np.exp(-6.9 * t / (rt * 0.35))
+    ir[:int(0.012 * SR)] = 0  # pre-delay
+    ir /= np.sqrt((ir ** 2).sum())
+    n = len(x) + len(ir)
+    wet = np.fft.irfft(np.fft.rfft(x, n) * np.fft.rfft(ir, n), n)[:len(x)]
+    return (1 - mix) * x + mix * wet
+
+
+def piano(m, sec, vel=1.0):  # struck string: stretched partials, the high ones die first, two strings beating
+    f0, t = NOTE(m), t_(sec)
+    out = np.zeros(len(t))
+    for k in range(1, 40):
+        f = f0 * k * np.sqrt(1 + 0.0004 * k * k)
+        if f > 7000:
+            break
+        a = vel ** (1 + k / 12) / k * np.exp(-k * 0.06)
+        for det in (-0.0007, 0.0007):
+            out += a * np.sin(2 * np.pi * f * (1 + det) * t + rng.uniform(0, 6.28)) * np.exp(-t * (0.35 + 0.16 * k))
+    thump = lpf(noise(int(0.03 * SR)), 900) * env(int(0.03 * SR), 0.001, 0.029)  # the hammer
+    out[:len(thump)] += 3 * vel * thump
+    return out * np.minimum(1, t / 0.004)
+
+
+def bell(m, sec):  # small glass chime: inharmonic partials
+    t = t_(sec)
+    return sum(a * np.sin(2 * np.pi * NOTE(m) * r * t) * np.exp(-t * d)
+               for r, a, d in ((1, 1, 5), (2.76, 0.5, 8), (5.4, 0.25, 13), (8.93, 0.12, 20)))
+
+
+def torres():  # the Torres theme's splash (original, no samples): a console waking up in a big dark room
+    HIT = 2.6  # the low piano strike: the towers' camera lands here
+    buf = np.zeros(int(9.0 * SR))
+    # 0-2.6 s: air rising towards the strike, then let go
+    n = int((HIT + 0.5) * SR)
+    swell = np.concatenate([np.linspace(0, 1, int(HIT * SR)) ** 2.2, np.linspace(1, 0, n - int(HIT * SR)) ** 2])
+    place(buf, 1.3 * svf(noise(n), np.geomspace(180, 1500, n), 2.5) * swell, 0)
+    # a low drone under everything: D with its fifth, slowly beating
+    n = int(7.0 * SR)
+    drone = sum(a * np.sin(2 * np.pi * NOTE(m) * d * t_(7.0)) for m, d, a in
+                ((26, 1, 0.6), (38, 1, 1), (38, 1.004, 0.8), (45, 0.998, 0.35)))
+    place(buf, 0.45 * drone * env(n, HIT, 0.4, 0.6, 2.0, 2.0), 0)
+    # chimes scattered over the rise, more of them and louder near the strike, a few falling after it
+    for k in range(16):
+        at = HIT * (k / 16) ** 0.7 + rng.uniform(0, 0.12)
+        place(buf, 0.20 * (0.3 + k / 16) * bell(rng.choice((86, 89, 93, 96, 100, 105)), 0.9), 0.3 + at * 0.85)
+    for k, m in enumerate((100, 96, 93, 89)):
+        place(buf, 0.12 * bell(m, 1.2), HIT + 0.5 + k * 0.42)
+    # the strike: low piano strings, a dark D minor cluster, with a sub under it
+    for m, v in ((26, 1.0), (38, 1.0), (45, 0.8), (50, 0.7), (53, 0.55), (64, 0.3)):
+        place(buf, 0.5 * piano(m, 4.8, v), HIT + rng.uniform(0, 0.012))
+    place(buf, 0.5 * sub_drop(1.2, 80, 37), HIT)
+    out = hall(buf, 3.4, 0.55)
+    out[-2 * SR:] *= np.linspace(1, 0, 2 * SR) ** 2  # the room fades out with the splash
+    return out
+
+
 def move():  # carousel step: crisp digital click + short crushed swish (the transition)
     n = int(0.16 * SR)
     click = fm(2600, 0.16, 1.5, 3.0, 40) * env(n, 0.0005, 0.03)
@@ -175,7 +238,7 @@ def panel():  # SELECT: data chirp, resonant square sweep, glitch-stuttered
     return stutter(svf(sq, np.geomspace(1500, 6000, n), 5) * env(n, 0.002, 0.085), 0.015, 2)
 
 
-SOUNDS = {"splash": splash, "move": move, "edge": edge, "confirm": confirm, "panel": panel}
+SOUNDS = {"splash": splash, "torres": torres, "move": move, "edge": edge, "confirm": confirm, "panel": panel}
 
 
 def write_wav(path, x):

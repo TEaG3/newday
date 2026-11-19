@@ -27,6 +27,13 @@ void gfx_rrect(int x, int y, int w, int h, int r, unsigned top, unsigned bottom)
 void gfx_line(float x0, float y0, float x1, float y1, unsigned rgb, int a0, int a1); // anti-aliased, alpha a0 -> a1
 void gfx_ribbon(const float *px, const float *py, int n, float width, unsigned rgb, int a); // soft thick polyline
 void gfx_stroke(const float *px, const float *py, int n, float width, unsigned rgb); // solid thick polyline, soft edge
+void gfx_add(int on);        // 1: what follows adds its light to the picture (Cs * As + Cd); 0: normal blending
+// gouraud quad for lights: 4 corners (x y pairs) in order round it, a colour per corner, at the current alpha
+void gfx_quad(const float *xy, const unsigned *rgb);
+// gouraud triangle strip, n corners (x y pairs) with a colour each, at the current alpha (curtains, ribbons of light)
+void gfx_strip(const float *xy, const unsigned *rgb, int n);
+void gfx_fade(int x, int y, int w, int h, unsigned rgb, int a0, int a1); // a rect whose alpha goes a0 -> a1 downwards
+void gfx_tint(unsigned rgb);  // gfx_image multiplies its pixels by this colour until the next call (white: as they are)
 void gfx_scissor(int x0, int y0, int x1, int y1); // draw only inside this rectangle (inclusive) until the next call
 // vector glyph (logo_data.c): triangles + contours (AA edges), font units y up, at (ox + x * s, oy - y * s)
 void gfx_vmesh(const short *v, int nv, const unsigned short *tri, int ntri, const unsigned short *ctr, int nctr,
@@ -50,6 +57,7 @@ void gfx_tiles_from(unsigned short *tiles, const unsigned short *lin, int w, int
 // bilinear when scaled. Streamed in 256x64 CT32 bands straight from pix by DMA; pix 16-byte aligned, not in the D-cache.
 void gfx_mb32(const void *pix, int w, int h, int x, int y, int dw, int dh);
 void gfx_image_tiled(const unsigned short *tiles, int w, int h, int x, int y);     // any size, 1:1, pixel-exact
+void gfx_image_mirrored(const unsigned short *tiles, int w, int h); // a left half (tiles, w wide) and its mirror, at (0, 0)
 void gfx_hstrip(const unsigned short *pix, int w, int h, int y); // w-px strip (power of 2) tiled across the width
 // 3D mesh (save icons): triangle list in a 64x64 box, x/y in box pixels, z 0..1 (1 = nearest), u/v texels of a
 // 128x128 CT16 texture (NULL: untextured), r/g/b GS colour (0x80 = x1). Drawn with a Z buffer into an own 64x64

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NULD changelog</title>
+<meta name="description" content="What changed in each version of NULD, the PlayStation 2 game launcher.">
+<meta name="theme-color" content="#E6E8EC">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css">
+</head>
+<body class="paper log">
+<div class="wrap">
+  <nav class="runhead" aria-label="Changelog">
+    <a href="./">NULD changelog</a>
+    <a href="manual.html">Manual</a>
+    <a href="themes.html">Theme maker</a>
+    <a href="https://github.com/danielnuld/nuld/releases">All downloads</a>
+  </nav>
+
+  <header class="cover">
+    <div>
+      <h1>What changed, <span class="mark">version by version</span>.</h1>
+    </div>
+    <p>Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.</p>
+  </header>
+
+  <section class="chapter" id="v1.3">
+    <header><b>1.3</b><h2 class="mono">2026-11-19 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.3">download</a></h2></header>
+    <div>
+      <p>Themes: twelve looks for the launcher, a selector in the setup panel, and themes anybody can make.</p>
+      <h3>New</h3>
+      <ul><li><b>Twelve themes.</b> Torres (the new default: prisms of light in a blue night), NULD (v1.2's look), Cristal, Aurora, Liquid, Onda, Orbit, Techstep, Wireframe, Neuro, Fósforo and Papel. Each has its own colours, animated background, loading screen, launch screen and way of marking the selected game. The layout is the same in all of them.</li><li><b>Theme selector.</b> START, then <b>Theme</b>: each theme is shown at once behind the panel. Saved as <code>[ui] tema</code> in <code>config.ini</code>. To keep v1.2's look, pick NULD.</li><li><b>Themes from folders.</b> A folder in <code>nuld/themes/</code> with a <code>theme.ini</code> (a name, a built-in theme as its base and eleven colours) and, optionally, a 1280 x 720 <code>fondo.jpg</code> is a theme of its own. The guide is in the <a href="https://danielnuld.github.io/nuld/manual.html#themes">manual</a> and in <code>docs/themes.md</code>.</li><li><b>Theme maker.</b> A <a href="https://danielnuld.github.io/nuld/themes.html">page</a> that builds that folder in the browser, with a live preview of the home screen, and downloads it as a zip.</li><li><b>Saving the setup no longer restarts NULD.</b> Language, theme, memory card and video apply at once; it only starts again when the game sources or the network changed.</li><li><b>A loading sound for the new themes</b>: air rising and a low piano strike in a hall. NULD keeps its own.</li></ul>
+      <h3>Fixed</h3>
+      <ul><li>After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.</li></ul>
+      <h3>Known issues</h3>
+      <ul><li>Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.14">
+    <header><b>1.2.14</b><h2 class="mono">2026-11-17 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.14">download</a></h2></header>
+    <div>
+      <p>Covers from your home server, the interface in Portuguese, and the PlayStation 2 logo before the games.</p>
+      <h3>New</h3>
+      <ul><li><b>Covers from the home server (#19).</b> The catalog serves the server's <code>ART/</code> folder, with OPL's names (<code>ART/SLUS_209.46_COV.png</code> or <code>.jpg</code> for games, <code>ART/&lt;ELF file&gt;_COV.png</code> for apps). The launcher asks the server for the cover of each of its games and apps before downloading one from the internet. Needs the server's <code>nuld_catalog.py</code> from this zip's <code>server/</code>; restart it with <code>systemctl --user restart nuld-catalog</code>.</li><li><b>Portuguese interface.</b> In <code>config.ini</code> set <code>[ui] idioma = pt</code>; the setup wizard of a new drive offers it too. The in-game menu and the achievement notices are in Portuguese as well.</li><li><b>PlayStation 2 logo before the games.</b> In <code>config.ini</code> set <code>[juegos] logo = si</code> and each game starts with the PlayStation 2 logo, as from a disc. Off by default. A game from another region than the console (PAL on an NTSC console or the reverse) may not start this way: leave it off for those. Not tested on a console yet.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.13">
+    <header><b>1.2.13</b><h2 class="mono">2026-11-15 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.13">download</a></h2></header>
+    <div>
+      <p>Apps from your home server, OPL's ART folder, and square covers for PS1 games and apps.</p>
+      <h3>New</h3>
+      <ul><li><b>Apps from the home server.</b> The catalog now also lists the server's <code>APPS/</code> folder, in OPL's layout (a loose <code>.elf</code>, or a folder with <code>title.cfg</code> holding <code>title=</code> and <code>boot=</code>). Pressing X downloads the ELF to <code>nuld/red.elf</code> on the USB and runs it. Only the ELF is downloaded: an app that reads other files from its own folder still has to be on the USB. Needs the server's <code>nuld_catalog.py</code> from this zip's <code>server/</code>; restart it with <code>systemctl --user restart nuld-catalog</code>.</li><li><b>OPL's ART folder (#16).</b> Covers are read straight from <code>ART/</code>, with OPL's names: <code>ART/SLUS_209.46_COV.jpg</code> or <code>.png</code> for games, <code>ART/&lt;ELF file&gt;_COV.png</code> for apps (for example <code>ART/OPNPS2LD.ELF_COV.png</code>). The launcher looks in the <code>ART/</code> folder of its own drive and of the game's drive. It converts each image once into <code>covers/</code>, and does not download a cover for that game from the internet. Transparent PNGs are drawn over NULD's background.</li><li><b>Square covers for PS1 games and apps (#27).</b> PS1 covers are no longer squashed into the DVD case shape: they are drawn square, like a CD case, and so are app covers. PS1 covers downloaded by earlier versions are downloaded again in the new shape. <code>tools/covers.py --square</code> makes square covers by hand; app covers made earlier with <code>covers.py</code> have to be made again with <code>--square</code>.</li><li><b>Games on a udpfs server reconnect after a lost link.</b> Before, once udpfs gave up on the server, every later read failed and the game crashed at its next load. Now it finds the server again (for up to about a minute) and retries the read. Not tested on a console yet.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.12">
+    <header><b>1.2.12</b><h2 class="mono">2026-11-08 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.12">download</a></h2></header>
+    <div>
+      <p>The splash counts the games on your home server.</p>
+      <h3>Fixed</h3>
+      <ul><li><b>The splash stopped at "00 / 01"</b> with games on a home server: its total counted only what is on the USB, and the server's games were never added. They are now counted as the catalog arrives (and HD Loader games too). The line now reads "Cargando juegos" / "Loading games": it is the game list, covers load later as they show.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.11">
+    <header><b>1.2.11</b><h2 class="mono">2026-11-08 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.11">download</a></h2></header>
+    <div>
+      <p>Fixes a black screen after the splash.</p>
+      <h3>Fixed</h3>
+      <ul><li><b>Black screen after the splash, at every boot.</b> The update check waits for GitHub over HTTPS; when a server went quiet the launcher waited forever (the network library here ignores the 15-second limit the code asked for), and the screen stayed black. HTTPS reads now give up after 8 seconds of silence, and <code>launcher.txt</code> says where the check stopped. If you are stuck on v1.2.8: on the USB, in <code>nuld/config.ini</code>, set <code>[actualizaciones] buscar = no</code> to boot, update by hand, then set it back.</li></ul>
+      <h3>New since v1.2.5</h3>
+      <ul><li><b>Save icons for the games on your home server</b> (needs the server's <code>nuld_catalog.py</code> and <code>nuld_hash</code> from this zip's <code>server/</code>; restart it with <code>systemctl --user restart nuld-catalog</code>).</li><li><b>Covers for apps</b>: <code>covers/&lt;title&gt;.c16</code> and <code>_s.c16</code>, named after the title the launcher shows.</li><li><b>Faster covers and achievements</b>: covers read in one request per file; the first achievements query no longer waits for the update check; the client's "still loading" answer is asked again 5 times a second.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.8">
+    <header><b>1.2.8</b><h2 class="mono">2026-11-08 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.8">download</a></h2></header>
+    <div>
+      <p>Faster covers and achievements in the launcher, covers for apps.</p>
+      <h3>Faster</h3>
+      <ul><li><b>Covers</b> are read from the USB in one request per file instead of 1 KB at a time.</li><li><b>Achievements</b>: the first game's query no longer waits for the update check (seconds of HTTPS at every boot), and the client's "still loading" answer is asked again 5 times a second instead of once.</li></ul>
+      <h3>New</h3>
+      <ul><li><b>Covers for apps.</b> An app (APPS/) has no serial: its covers are <code>covers/&lt;title&gt;.c16</code> and <code>_s.c16</code>, named after the title the launcher shows (tools/covers.py makes them from a PNG or JPG with that name).</li></ul>
+      <h3>Changed</h3>
+      <ul><li><code>launcher.txt</code> logs each request for a home-server game's memory card ("nuld vmc remote"), to find why its save icon does not show yet.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.7">
+    <header><b>1.2.7</b><h2 class="mono">not released yet</h2></header>
+    <div>
+      <p>Covers for apps, and a log line for the save icons of server games.</p>
+      <h3>New</h3>
+      <ul><li><b>Covers for apps.</b> An app (APPS/) has no serial: its covers are now <code>covers/&lt;title&gt;.c16</code> and <code>_s.c16</code>, named after the title the launcher shows (tools/covers.py makes them from a PNG or JPG with that name).</li></ul>
+      <h3>Changed</h3>
+      <ul><li><code>launcher.txt</code> logs each request for a home-server game's memory card ("nuld vmc remote"), to find why its save icon does not show yet.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.6">
+    <header><b>1.2.6</b><h2 class="mono">2026-11-08 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.6">download</a></h2></header>
+    <div>
+      <p>Save icons for the games on your home server.</p>
+      <h3>New</h3>
+      <ul><li><b>The save icon of a game from the home server.</b> Its virtual memory card lives on the server, which the launcher never read: the catalog service now lists the card and hands over the newest save's icon.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.5">
+    <header><b>1.2.5</b><h2 class="mono">2026-11-07 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.5">download</a></h2></header>
+    <div>
+      <p>Achievement unlocks show up in the game.</p>
+      <h3>New</h3>
+      <ul><li><b>Unlock notice in the game.</b> When the achievements client announces an unlock, the game pauses for about 2.5 seconds under a box with "LOGRO DESBLOQUEADO  5 PTS" (or "ACHIEVEMENT UNLOCKED") and the achievement's title. The titles come from the client's list at launch (the ones still to earn, up to 128 per game).</li></ul>
+      <h3>Fixed</h3>
+      <ul><li><b>The in-game menu did not show during gameplay</b> (Tekken 5 in a fight: the game froze for 10 s, no box). The menu, and now the notice, wait for a moment when the game is not sending anything to the GS (up to 2 s).</li><li><b>The achievements list (○) of games with subsets stayed empty</b> ("could not read the list"): Tekken 5's answer names the subset's achievement count first.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.4">
+    <header><b>1.2.4</b><h2 class="mono">2026-11-07 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.4">download</a></h2></header>
+    <div>
+      <p>The in-game menu can no longer leave a game frozen.</p>
+      <h3>Fixed</h3>
+      <ul><li><b>The in-game menu froze the game when the pad was not read</b> (an 8BitDo adapter, #11). With no new press for 10 seconds the menu now closes by itself and the game goes on. The 8BitDo still cannot pick an option in the menu.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.3">
+    <header><b>1.2.3</b><h2 class="mono">2026-11-07 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.3">download</a></h2></header>
+    <div>
+      <p>Achievements inside games, for real this time, and a lighter agent.</p>
+      <h3>Fixed</h3>
+      <ul><li><b>In-game achievements never unlocked since v1.1.</b> The launcher handed Neutrino the agent's config file instead of the game's watch list, so the console never sent the game's memory to the achievements client. The list of achievements on ○ was not affected.</li><li><b>Games froze at scene loads with achievements on</b> (Tekken 5 from the home server). The agent kept about 25 KB of the IOP's 2 MB for snapshots it never sends; it now keeps 4 KB, one packet's worth.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.2">
+    <header><b>1.2.2</b><h2 class="mono">2026-11-07 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.2">download</a></h2></header>
+    <div>
+      <p>Achievements work again.</p>
+      <h3>Fixed</h3>
+      <ul><li><b>No achievements unlocked in v1.2.1.</b> v1.2.1's freeze fix checked the wrong DMA channel (SIF0, which is always running), so the console never sent the game's memory to the achievements client. It now checks SIF1, the channel it shares with the game.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2.1">
+    <header><b>1.2.1</b><h2 class="mono">2026-11-07 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2.1">download</a></h2></header>
+    <div>
+      <p>Fix for a freeze with achievements on.</p>
+      <h3>Fixed</h3>
+      <ul><li><b>Games froze at scene loads with achievements on</b> (seen in Tekken 5 from the home server: black or frozen picture after a fight or a Story mode replay). The achievements telemetry sent its snapshot to the IOP in the middle of the game's own transfers; it now waits for a free frame. It also stops when the game reboots the IOP, until the agent says where its new buffer is.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.2">
+    <header><b>1.2</b><h2 class="mono">2026-11-05 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2">download</a></h2></header>
+    <div>
+      <p>ORBIT is now <b>NULD</b>: a new name, a new look, and nothing to redo on your USB drive.</p>
+      <p><b>Website, screenshots, manual:</b> <a href="https://danielnuld.github.io/nuld/">https://danielnuld.github.io/nuld/</a></p>
+      <h3>New</h3>
+      <ul><li><b>A new name.</b> ORBIT clashed with other PS2 projects; the launcher, its repository and its site are now NULD.</li><li><b>A new look.</b> Black, steel and one acid accent: a loading screen with the four NULD logos taking turns over a wire sphere, 1 px frames and HUD corners on the selection, and the Archivo, IBM Plex Mono and Michroma typefaces. The in-game menu follows the same palette.</li><li><b>A new website</b> with the loading screen running in the browser, every screenshot in a full-size viewer, and the setup guide as a manual of its own.</li></ul>
+      <h3>Known issues</h3>
+      <ul><li>"Native" video mode can give a black screen on some HDTV setups: there, keep the default 480p.</li><li>Loading over udpfs needs a wired network on both ends.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.1">
+    <header><b>1.1</b><h2 class="mono">2026-10-12 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.1">download</a></h2></header>
+    <div>
+      <p>Setup without a PC, updates without a PC, and CRT TVs.</p>
+      <p><b>Website, screenshots, setup guide:</b> <a href="https://danielnuld.github.io/ps2-launcher/">https://danielnuld.github.io/ps2-launcher/</a></p>
+      <h3>New</h3>
+      <ul><li><b>Setup wizard</b> (#15). It opens by itself on the first boot, and with START any time after. In one screen: language, game sources (checkboxes), memory card mode, video, network, and installing ORBIT on a memory card with FreeMcBoot 1.966 set to start it (autoboot, a button, or an item in FMCB's menu). FMCB's other settings stay as they were, and its original config is kept as <code>FREEMCB.CNF.bak</code>.</li><li><b>ORBIT updates itself</b> (#15). With the network cable in, ORBIT checks for a newer release at boot; START opens the update. Every file is checked against a manifest signed with the release key before anything is replaced, and the old files are kept as <code>.old</code>. Turn it off with <code>[actualizaciones] buscar = no</code>.</li><li><b>CRT TVs</b>: the menu was 720p only, which a CRT shows as a black screen. Press <b>L2+R2</b> together (it works blind) to switch the menu to 480i (576i on PAL consoles) and back; it is saved as <code>[video] pantalla</code> in <code>config.ini</code>. In 480i the games default to their native video mode too.</li><li><b>Run ORBIT from an MMCE SD card, no USB drive needed</b> (#8). Settings, covers, apps and Neutrino live on the SD card; a USB drive becomes an optional extra game source.</li><li><b>udpfs without ORBIT's catalog</b> (#10): with <code>[juegos] servidor</code> empty, any udpfs server (Server2PS2...) works, and its DVD/CD folders are listed like any other source.</li><li><b>SELECT shows every game source's status</b> (#4): how many games each one found, or why it failed.</li></ul>
+      <h3>Fixed</h3>
+      <ul><li><b>The in-game menu ignored the controller on an 8BitDo adapter</b> (#11): it read only one of the two copies of the pad data that the driver writes in turn.</li></ul>
+      <h3>Known issues</h3>
+      <ul><li>"Native" video mode can give a black screen on some HDTV setups: there, keep the default 480p.</li><li>Loading over udpfs needs a wired network on both ends; Neutrino's UDP transport does not recover from WiFi packet loss.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.0.2">
+    <header><b>1.0.2</b><h2 class="mono">2026-10-05 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.0.2">download</a></h2></header>
+    <div>
+      <p>A small one: covers show up right away again.</p>
+      <p><b>Website, screenshots, setup guide:</b> <a href="https://danielnuld.github.io/ps2-launcher/">https://danielnuld.github.io/ps2-launcher/</a></p>
+      <h3>Fixed</h3>
+      <ul><li><b>Covers took a long time to appear</b> with the network cable in. In v1.0.1 the covers on screen waited for the launcher's network work at boot (downloading missing covers, asking about achievements), so they could show up only when the achievements chip did. The thread that loads them now goes first.</li></ul>
+      <p>Everything from <a href="https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.1">v1.0.1</a> is in here too: USB games booting on a real PS2, up to 1024 games, DNS with DHCP, MemCard PRO 2 game IDs.</p>
+      <h3>Known issues</h3>
+      <ul><li>The in-game menu doesn't react to a DualSense on an 8BitDo adapter; a wired controller works (#11).</li><li>"Native" video mode can give a black screen on some setups: keep the default 480p.</li><li>Loading over udpfs needs a wired network on both ends; Neutrino's UDP transport does not recover from WiFi packet loss.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.0.1">
+    <header><b>1.0.1</b><h2 class="mono">2026-10-05 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.0.1">download</a></h2></header>
+    <div>
+      <p>Fixes for what people found in v1.0. Thanks to everyone who opened an issue!</p>
+      <p><b>Website, screenshots, setup guide:</b> <a href="https://danielnuld.github.io/ps2-launcher/">https://danielnuld.github.io/ps2-launcher/</a></p>
+      <h3>Fixed</h3>
+      <ul><li><b>USB games didn't boot on a real PS2</b> (#12). The in-game menu now draws over the game without saving what's under it (the game's next frame redraws it), which frees the memory that broke the boot. The menu still works on every source, in Spanish or English.</li><li><b>128 game limit</b> (#3). Now 1024. Covers are loaded only while they're on screen, and each view reads just the size it draws; the grid keeps a small thumbnail per game on the USB (<code>covers/&lt;serial&gt;_h.c16</code>, made the first time).</li><li><b>Covers: "No DNS"</b> (#7). <code>[red] dns</code> now works with DHCP too, and if the router gives no DNS server ORBIT uses 1.1.1.1. The first download retries once if the connection fails right after the network comes up.</li><li><b>MemCard PRO 2 / SD2PSX didn't switch cards</b> (#2). ORBIT now sends the game ID on every launch, whatever the game's source, as NHDDL does. To save on the card instead of the USB's virtual one, set the game's memory card to <code>fisica</code> (△, or <code>[memorycard] modo = fisica</code> for every game).</li><li><b>xeRAbora version</b> (#5). The docs point to the client release ORBIT is tested with: <a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9">v0.1.0-alpha.9</a>.</li></ul>
+      <h3>Also</h3>
+      <ul><li><code>tools/covers.py</code> is in the zip: it turns PNG/JPG files named by serial (<code>SLUS-21376.png</code>) into covers for <code>mass0:/covers/</code> (<code>python3 covers.py IN_DIR OUT_DIR</code>, needs numpy and Pillow).</li><li><code>mass0:/launcher.txt</code> now says why a game source or the network did not come up, and why a cover download failed.</li></ul>
+      <h3>Known issues</h3>
+      <ul><li>The in-game menu doesn't react to a DualSense on an 8BitDo adapter; a wired controller works (#11).</li><li>"Native" video mode can give a black screen on some setups: keep the default 480p.</li><li>Loading over udpfs needs a wired network on both ends; Neutrino's UDP transport does not recover from WiFi packet loss.</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="v1.0">
+    <header><b>1.0</b><h2 class="mono">2026-10-04 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.0">download</a></h2></header>
+    <div>
+      <p>ORBIT's first public release: a game launcher for a real PlayStation 2.</p>
+      <p><b>Website, screenshots, setup guide:</b> <a href="https://danielnuld.github.io/ps2-launcher/">https://danielnuld.github.io/ps2-launcher/</a></p>
+      <h3>What's in it</h3>
+      <ul><li><b>Three views</b> (carousel, grid, list) at 60 fps, filters All / PS2 / PS1 / Apps, animated splash.</li><li><b>Covers downloaded by the PS2</b> over HTTPS (xlenore/ps2-covers), decoded and saved on the console.</li><li><b>3D save icons</b> of each game's newest save, read from the memory card.</li><li><b>Virtual memory cards</b> per game or shared, created on first play; or the physical card, per game.</li><li><b>Per-game options</b> (△): 480p / 1080i, compatibility modes, memory card.</li><li><b>In-game menu</b> (L1+L2+R1+R2+START+SELECT): restart into ORBIT or power off; direct combos too.</li><li><b>RetroAchievements on real hardware</b>: rcheevos-compatible game hash, ○ lists the achievements with your progress, and an agent inside the game feeds the <a href="https://github.com/hacan359/xerabora">xeRAbora</a> client.</li><li><b>Home game server</b>: udpfs + ORBIT's catalog service; server games keep covers, achievements and save icons.</li><li><b>Sources</b>: USB, internal HDD (exFAT, HD Loader), MX4SIO, iLink, MMCE, UDPBD, udpfs; discs, PS1 (POPStarter), homebrew from <code>APPS/</code>.</li><li><b>Spanish or English</b> (<code>[ui] idioma</code>), including the in-game menu and config.ini's comments.</li></ul>
+      <h3>Known issues</h3>
+      <ul><li>"Native" video mode can give a black screen on some setups: keep the default 480p.</li><li>Loading over udpfs needs a wired network on both ends; Neutrino's UDP transport does not recover from WiFi packet loss.</li><li>Achievement unlocks depend on the xeRAbora client being reachable on the same network.</li></ul>
+    </div>
+  </section>
+  <footer class="site">
+    <span>NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).</span>
+    <span>PlayStation is a trademark of Sony Interactive Entertainment. NULD is not affiliated with Sony.</span>
+  </footer>
+</div>
+</body>
+</html>

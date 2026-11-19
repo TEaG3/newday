@@ -110,27 +110,27 @@ static int from_rgb(unsigned char *rgb, int w, int h, unsigned short *big, unsig
 	return ok;
 }
 
-static int from_png(const unsigned char *data, int n, unsigned short *big, unsigned short *small, int sq)
+static unsigned char *png_rgb(const unsigned char *data, int n, int *pw, int *ph)
 {
 	png_image img;
 	memset(&img, 0, sizeof(img));
 	img.version = PNG_IMAGE_VERSION;
-	if (!png_image_begin_read_from_memory(&img, data, n)) return 0;
+	if (!png_image_begin_read_from_memory(&img, data, n)) return NULL;
 	img.format = PNG_FORMAT_RGB;
-	int w = img.width, h = img.height;
+	int w = *pw = img.width, h = *ph = img.height;
 	png_color bg = {0x06, 0x07, 0x0A}; // transparent parts (OPL app art) over NULD_BG
 	unsigned char *rgb = w < 64 || h < 64 || w > 2048 || h > 2048 ? NULL : malloc(PNG_IMAGE_SIZE(img));
-	if (!rgb || !png_image_finish_read(&img, &bg, rgb, 0, NULL)) { png_image_free(&img); free(rgb); return 0; }
-	return from_rgb(rgb, w, h, big, small, sq);
+	if (!rgb || !png_image_finish_read(&img, &bg, rgb, 0, NULL)) { png_image_free(&img); free(rgb); return NULL; }
+	return rgb;
 }
 
-int cover_from_image(const unsigned char *jpg, int n, unsigned short *big, unsigned short *small, int sq)
+unsigned char *cover_rgb(const unsigned char *jpg, int n, int *pw, int *ph)
 {
-	if (n > 8 && !png_sig_cmp(jpg, 0, 8)) return from_png(jpg, n, big, small, sq);
+	if (n > 8 && !png_sig_cmp(jpg, 0, 8)) return png_rgb(jpg, n, pw, ph);
 	struct jpeg_decompress_struct d;
 	struct jerr err;
 	unsigned char *volatile rgb = NULL; // volatile: read after the longjmp
-	int ok = 0;
+	volatile int ok = 0;
 	d.err = jpeg_std_error(&err.mgr);
 	err.mgr.error_exit = jpeg_fail;
 	jpeg_create_decompress(&d);
@@ -139,7 +139,7 @@ int cover_from_image(const unsigned char *jpg, int n, unsigned short *big, unsig
 	jpeg_read_header(&d, TRUE);
 	d.out_color_space = JCS_RGB;
 	jpeg_start_decompress(&d);
-	int w = d.output_width, h = d.output_height;
+	int w = *pw = d.output_width, h = *ph = d.output_height;
 	if (w < 64 || h < 64 || w > 2048 || h > 2048) goto done; // ponytail: sanity bounds, xlenore covers are 512x736
 	rgb = malloc(w * h * 3);
 	if (!rgb) goto done;
@@ -148,11 +148,18 @@ int cover_from_image(const unsigned char *jpg, int n, unsigned short *big, unsig
 		jpeg_read_scanlines(&d, &row, 1);
 	}
 	jpeg_finish_decompress(&d);
-	ok = from_rgb(rgb, w, h, big, small, sq), rgb = NULL;
+	ok = 1;
 done:
 	jpeg_destroy_decompress(&d);
-	free(rgb);
-	return ok;
+	if (!ok) free(rgb), rgb = NULL;
+	return rgb;
+}
+
+int cover_from_image(const unsigned char *jpg, int n, unsigned short *big, unsigned short *small, int sq)
+{
+	int w, h;
+	unsigned char *rgb = cover_rgb(jpg, n, &w, &h);
+	return rgb ? from_rgb(rgb, w, h, big, small, sq) : 0;
 }
 
 #ifdef SELFTEST // host check: `make test`; with args, compare a real JPG against tools/covers.py output
