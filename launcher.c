@@ -792,11 +792,12 @@ static int disc_cnf(char *cnf, int max) // cdrom0:\SYSTEM.CNF;1 through libcdvd 
 static void disc_thread(void *arg)
 {
 	(void)arg;
-	int last = -1;
+	int last = -1, said = -1; // said: the language the title was written in (the setup panel changes it)
 	sceCdInit(SCECdINoD);
 	for (;; sleep(1)) {
 		int st = disc_state(sceCdGetDiskType());
-		if (st == last || disc_new) continue;
+		if ((st == last && lang == said) || disc_new) continue;
+		said = lang;
 		entry *d = &disc_stage;
 		memset(d, 0, sizeof(*d));
 		d->kind = K_DISC, d->disc = st;
