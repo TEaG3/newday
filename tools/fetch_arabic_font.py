@@ -38,7 +38,7 @@ def download(name: str, url: str, expected_git_sha: str | None, min_bytes: int) 
         temp.write_bytes(data)
         temp.replace(path)
     if expected_git_sha:
-        header = f"blob {len(data)}\\0".encode("ascii")
+        header = f"blob {len(data)}\0".encode("ascii")
         actual = sha1(header + data).hexdigest()
         if actual != expected_git_sha:
             path.unlink(missing_ok=True)
