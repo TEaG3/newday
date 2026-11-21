@@ -268,7 +268,10 @@ body.nuld-rtl {
 }
 
 /* Arabic text in controls and tables must use an Arabic-capable UI face, not the code font. */
-.nuld-rtl :is(.tabs button, .btn.small, .paper .runhead, .paper figcaption, .paper footer.site) {
+.nuld-rtl :is(.tabs button, .btn.small) {
+  font-family: "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+}
+.paper.nuld-rtl :is(.runhead, figcaption, footer.site) {
   font-family: "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
 }
 .nuld-rtl .files td:nth-child(2) { font-family: inherit; }
