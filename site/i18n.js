@@ -761,43 +761,63 @@
 
   const originalTitle = document.title;
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
+
+  function translateText(root, ar) {
+    const nodes = [];
+    if (root.nodeType === 3) nodes.push(root);
+    else if (root.querySelectorAll) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+    }
+    for (const node of nodes) {
+      const raw = node.nodeValue;
+      if (node.__nuldOriginal === undefined) node.__nuldOriginal = raw;
+      const original = node.__nuldOriginal, originalKey = key(original);
+      if (ar && dict[originalKey]) {
+        const leading = original.match(/^\\s*/)?.[0] || "", trailing = original.match(/\\s*$/)?.[0] || "";
+        node.nodeValue = leading + dict[originalKey] + trailing;
+      } else node.nodeValue = original;
+    }
+  }
+
+  function translateAttributes(root, ar) {
+    const selector = "[aria-label], [alt], [title], [placeholder]";
+    const elements = [];
+    if (root.nodeType === 1 && root.matches && root.matches(selector)) elements.push(root);
+    if (root.querySelectorAll) elements.push(...root.querySelectorAll(selector));
+    for (const el of elements) {
+      for (const attr of ["aria-label", "alt", "title", "placeholder"]) {
+        if (!el.hasAttribute(attr)) continue;
+        const store = "nuldOriginal" + attr.replace(/(^|-)([a-z])/g, (_, dash, ch) => ch.toUpperCase());
+        if (el.dataset[store] === undefined) el.dataset[store] = el.getAttribute(attr);
+        const original = el.dataset[store];
+        const translated = attributeDict[attr] && attributeDict[attr][key(original)];
+        el.setAttribute(attr, ar && translated ? translated : original);
+      }
+    }
+  }
+
+  function translateMeta(ar) {
+    document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(el => {
+      if (el.dataset.nuldOriginalContent === undefined) el.dataset.nuldOriginalContent = el.getAttribute("content") || "";
+      const original = el.dataset.nuldOriginalContent;
+      el.setAttribute("content", ar && metaDict[original] ? metaDict[original] : original);
+    });
+  }
+
   function apply() {
     const ar = lang === "ar";
     document.documentElement.lang = ar ? "ar" : "en";
     document.documentElement.dir = ar ? "rtl" : "ltr";
     document.body.classList.toggle("nuld-rtl", ar);
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-    for (const node of nodes) {
-      const raw = node.nodeValue, k = key(raw);
-      if (!node.__nuldOriginal) node.__nuldOriginal = raw;
-      const original = node.__nuldOriginal, originalKey = key(original);
-      if (ar && dict[originalKey]) {
-        const leading = original.match(/^\s*/)?.[0] || "", trailing = original.match(/\s*$/)?.[0] || "";
-        node.nodeValue = leading + dict[originalKey] + trailing;
-      } else node.nodeValue = original;
-    }
+    translateText(document.body, ar);
     document.querySelectorAll("[data-nuld-lang]").forEach(b => {
       const label = ar ? "English" : "العربية";
       if (b.textContent !== label) b.textContent = label;
     });
     document.title = ar ? (pageTitles[originalTitle] || originalTitle) : originalTitle;
-
-    for (const attr of ["aria-label", "alt", "title", "placeholder"]) {
-      document.querySelectorAll("[" + attr + "]").forEach(el => {
-        const store = "nuldOriginal" + attr.replace(/(^|-)([a-z])/g, (_, dash, ch) => ch.toUpperCase());
-        if (!el.dataset[store]) el.dataset[store] = el.getAttribute(attr);
-        const original = el.dataset[store];
-        const translated = attributeDict[attr] && attributeDict[attr][key(original)];
-        el.setAttribute(attr, ar && translated ? translated : original);
-      });
-    }
-    document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(el => {
-      if (!el.dataset.nuldOriginalContent) el.dataset.nuldOriginalContent = el.getAttribute("content") || "";
-      const original = el.dataset.nuldOriginalContent;
-      el.setAttribute("content", ar && metaDict[original] ? metaDict[original] : original);
-    });
+    translateAttributes(document.body, ar);
+    translateMeta(ar);
   }
   document.addEventListener("DOMContentLoaded", () => {
     const nav = document.querySelector(".nav .wrap, .runhead");
@@ -811,7 +831,11 @@
     apply();
     if (typeof MutationObserver !== "undefined") {
       const dynamicTextObserver = new MutationObserver(records => {
-        if (records.some(record => record.addedNodes && record.addedNodes.length)) apply();
+        const ar = lang === "ar";
+        records.forEach(record => record.addedNodes.forEach(node => {
+          translateText(node, ar);
+          translateAttributes(node, ar);
+        }));
       });
       dynamicTextObserver.observe(document.body, { childList: true, subtree: true });
     }
