@@ -199,9 +199,17 @@ static int notice_colour(u32 x, u32 y)
 {
     if (x == 0 || y == 0 || x == box_w - 1 || y == box_h - 1)
         return C_BORDER;
-    for (int i = 0; i < 2; i++)
-        if (x >= 10 && ascii_pixel(note_text[i], x - 10, y - ROW_Y(i)))
+    for (int i = 0; i < 2; i++) {
+        u32 ty = y - ROW_Y(i);
+        if (x >= 10 && ascii_pixel(note_text[i], x - 10, ty))
             return i ? C_SEL : C_BORDER;
+        if (eec.IgrLang == 3 && i == 0 && ty < IGR_AR_HEIGHT) {
+            u32 left = box_w - 10 - IGR_AR_NOTICE_WIDTH;
+            if (x >= left && x - left < IGR_AR_NOTICE_WIDTH &&
+                (igr_ar_notice_pixels[ty][(x - left) >> 3] & (0x80 >> ((x - left) & 7))))
+                return C_BORDER;
+        }
+    }
     return C_PANEL;
 }
 
@@ -365,14 +373,18 @@ void Notice_Run(u32 id, u32 points)
     do
         *--q = '0' + points % 10;
     while ((points /= 10) && q > num);
-    u32 n = put(note_text[0], 0, eec.IgrLang == 1 || eec.IgrLang == 3 ? "ACHIEVEMENT UNLOCKED  " : eec.IgrLang == 2 ? "CONQUISTA DESBLOQUEADA  " : "LOGRO DESBLOQUEADO  ");
-    n = put(note_text[0], put(note_text[0], n, q), " PTS");
+    u32 n = eec.IgrLang == 3 ? put(note_text[0], 0, q) :
+            put(note_text[0], 0, eec.IgrLang == 1 ? "ACHIEVEMENT UNLOCKED  " :
+                eec.IgrLang == 2 ? "CONQUISTA DESBLOQUEADA  " : "LOGRO DESBLOQUEADO  ");
+    n = put(note_text[0], n, " PTS");
     u32 m = 0;
     note_text[1][0] = 0;
     for (u32 i = 0; i < eec.RaTitleCount; i++)
         if (*(u32 *)(eec.RaTitles + i * EEC_RA_TITLE) == id)
             m = put(note_text[1], 0, (const char *)eec.RaTitles + i * EEC_RA_TITLE + 4);
     box_w = (20 + 12 * (n > m ? n : m) + 7) & ~7; // whole qwords per two lines at 2, 3 and 4 bytes a pixel
+    if (eec.IgrLang == 3 && box_w < IGR_AR_NOTICE_WIDTH + 24)
+        box_w = (IGR_AR_NOTICE_WIDTH + 31) & ~7;
     box_h = m ? 40 : 22;                         // two rows, or the first only
     notice = 1;
     if (box_open(1)) {
