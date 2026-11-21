@@ -30,13 +30,13 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
   switch it to 480i (576i on PAL consoles) and back; it is saved as `[video] pantalla` in `config.ini`. In 480i the
   games default to their native mode too.
 - **In-game menu**: hold L1+L2+R1+R2+START+SELECT in any game to pause it and restart or power off; plus direct
-  restart and power-off combos (In Game Reset).
+  restart and power-off combos (In Game Reset). The rebuilt Neutrino fork uses Arabic right-to-left labels when the launcher language is Arabic.
 - **RetroAchievements on the console**: the launcher identifies each game (rcheevos-compatible hash), shows how many
   achievements it has (○ opens the full list with your progress), and while you play an agent inside the game streams
   its memory to the [xeRAbora](https://github.com/hacan359/xerabora) client on your home network, which unlocks the
   achievements on your profile.
 - **Discs, PS1 and apps**: boots the disc in the drive, PS1 games through POPStarter, and homebrew from `APPS/`.
-- **Arabic by default**, with Spanish, English and Portuguese (`config.ini [ui] idioma`); the launcher shapes Arabic letters, joins contextual forms, lays out right-to-left text, and keeps Latin runs and numbers readable.
+- **Arabic by default**, with Spanish, English and Portuguese (`config.ini [ui] idioma`); the launcher shapes Arabic letters, joins contextual forms, lays out right-to-left text, and keeps Latin runs and numbers readable. The in-game pause menu and achievement-unlocked heading also have Arabic labels.
 - Companion app: [ORBIT Jellyfin](https://github.com/danielnuld/orbit-jellyfin), your Jellyfin library on the PS2.
 
 ## Quick start
@@ -84,7 +84,7 @@ Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and
 ```
 ./build.sh APP=launcher          # launcher.elf
 ./build.sh test                  # host selftests
-tools/build_neutrino.sh          # the Neutrino fork: neutrino.elf, ee_core.elf, raagent.irx (dist/neutrino)
+bash tools/build_neutrino.sh    # Arabic-capable Neutrino fork: dist/neutrino/; copy it over mass0:/neutrino/
 ./build.sh nuld_hash            # the game server's helper (static)
 ```
 
@@ -93,12 +93,14 @@ the console).
 
 ## Credits
 
+The launcher's footer includes the small attribution “تعديل المطور العراقي TEa.G3”.
+
 - [Neutrino](https://github.com/rickgaiser/neutrino) by Maximus32 (AFL-3.0), which loads the games; NULD ships a
   fork with the in-game menu and the achievements agent (`third_party/neutrino-igr`, AFL-3.0).
 - [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) (AFL-3.0): the In Game Reset technique.
 - [xeRAbora](https://github.com/hacan359/xerabora) (MIT client): the RetroAchievements protocol and PC client;
   [rcheevos](https://github.com/RetroAchievements/rcheevos) (MIT): the hash algorithm.
-- [ps2sdk](https://github.com/ps2dev/ps2sdk), wolfSSL, libjpeg; covers from
+- [ps2sdk](https://github.com/ps2dev/ps2sdk), wolfSSL, libjpeg; Noto Sans Arabic UI (Google Fonts, SIL OFL); covers from
   [xlenore/ps2-covers](https://github.com/xlenore/ps2-covers); fonts Unbounded, Sora, Space Mono (SIL OFL).
 - Developed with [Claude Code](https://claude.com/claude-code) (Anthropic) as the coding assistant, with the
   OpenSpec, Ponytail and CodeGraph plugins.
