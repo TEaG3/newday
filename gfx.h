@@ -3,7 +3,7 @@
 // (textured draws modulate a white texel by that colour). Alpha: 0..0x80, set by gfx_alpha (0x80 = opaque).
 #define GFX_W 1280
 #define GFX_H 720
-#define GFX_EXTRAS 158 // Latin UI accents + Arabic presentation forms + Arabic punctuation
+#define GFX_EXTRAS 161 // Latin accents + 125 Arabic presentation forms + 3 Arabic punctuation marks + œ/è
 #define GFX_GLYPHS (95 + GFX_EXTRAS) // ASCII 32-126, then font_extras (font_data.c)
 
 typedef struct { unsigned long long tex0; } gfx_tex;
