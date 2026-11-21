@@ -1,7 +1,7 @@
 (() => {
   const dict = {
     "Features":"المزايا","Screens":"لقطات الشاشة","Manual":"الدليل","Theme maker":"مصمم السمات","Changelog":"سجل التغييرات","Source":"المصدر","Download":"تنزيل",
-    "A console menu for the PlayStation&nbsp;2, running on the PlayStation&nbsp;2.":"واجهة تشغيل ألعاب تعمل على جهاز PlayStation 2 نفسه.",
+    "A console menu for the PlayStation 2, running on the PlayStation 2.":"واجهة تشغيل ألعاب تعمل على جهاز PlayStation 2 نفسه.",
     "Covers, 3D save icons, achievements, an in-game menu and games from a server at home. The console fetches and builds all of it; there is nothing to prepare on a PC.":"أغلفة الألعاب وأيقونات الحفظ ثلاثية الأبعاد والإنجازات وقائمة داخل اللعبة وتشغيل الألعاب من خادم منزلي. ينفّذ الجهاز هذه الوظائف مباشرة دون الحاجة إلى تجهيزها على الحاسوب.",
     "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.":"واجهة المشغّل بسماتها الاثنتي عشرة، معروضة داخل المتصفح. اضغط جانبي الغلاف لتغيير اللعبة.",
     "Make your own theme":"أنشئ سمة خاصة بك","What runs on the console":"ما الذي يعمل على الجهاز","Every row happens on the PS2 itself. The numbers were measured on a slim PS2 (SCPH-75001).":"تُنفّذ جميع الوظائف التالية على جهاز PS2 نفسه. القياسات أُخذت على جهاز PS2 Slim طراز SCPH-75001.",
@@ -29,7 +29,7 @@
     "The newest save of each game is read from its memory card, and the game's own 3D icon turns beside the title.":"تُقرأ أحدث عملية حفظ لكل لعبة من بطاقة الذاكرة، وتدور أيقونتها ثلاثية الأبعاد بجانب العنوان.",
     "One card per game or one shared, created on first play on the game's own device. Or the physical card, chosen per game.":"بطاقة افتراضية لكل لعبة أو بطاقة مشتركة، تُنشأ عند التشغيل الأول على جهاز اللعبة نفسه، أو اختيار البطاقة الفعلية لكل لعبة.",
     "L1+L2+R1+R2+START+SELECT pauses any game and offers restart or power off. Restart lands back in NULD.":"الضغط على L1+L2+R1+R2+START+SELECT يوقف اللعبة مؤقتاً ويعرض إعادة التشغيل أو إيقاف الجهاز. تعود إعادة التشغيل إلى NULD.",
-    "Each game is identified with the rcheevos hash. While you play, an agent inside the game sends its memory to the xeRAbora client, which unlocks them on your profile.":"يُعرّف كل משחק باستخدام بصمة rcheevos. أثناء اللعب يرسل وكيل داخل اللعبة بيانات الذاكرة إلى عميل xeRAbora لفتح الإنجازات في حسابك.",
+    "Each game is identified with the rcheevos hash. While you play, an agent inside the game sends its memory to the xeRAbora client, which unlocks them on your profile.":"يُعرّف كل لعبة باستخدام بصمة rcheevos. أثناء اللعب يرسل وكيل داخل اللعبة بيانات الذاكرة إلى عميل xeRAbora لفتح الإنجازات في حسابك.",
     "ISOs on a Linux box list instantly and load over the cable, with the same covers, cards and achievements as the USB.":"تظهر ملفات ISO الموجودة على خادم Linux فوراً، وتُحمّل عبر الشبكة مع دعم الأغلفة وبطاقات الذاكرة والإنجازات كما في USB.",
     "USB, internal HDD (exFAT or HD Loader), MX4SIO, i.Link, MMCE, UDPBD and udpfs, mixed in one list. Discs, PS1 games through POPStarter, and homebrew from APPS/ too.":"USB والقرص الداخلي (exFAT أو HD Loader) وMX4SIO وi.Link وMMCE وUDPBD وudpfs في قائمة واحدة. كما يدعم الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من APPS/.",
     "Force 480p or 1080i, Neutrino's compatibility modes, which memory card. Remembered per game.":"فرض دقة 480p أو 1080i، وأنماط التوافق في Neutrino، واختيار بطاقة الذاكرة. تُحفظ الإعدادات لكل لعبة.",
