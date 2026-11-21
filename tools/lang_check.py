@@ -118,6 +118,18 @@ def main():
         print(("ok: " if passed else "FAIL: ") + f"{symbol}: {rows}/4 language rows, Arabic row present={passed}")
         failed |= not passed
 
+    gfx_source = (ROOT / "gfx.c").read_text(encoding="utf-8")
+    arabic_forms = {int(value, 16) for value in re.findall(r'AR\\(0x([0-9A-Fa-f]{4}),', gfx_source)}
+    arabic_supported = arabic_forms | {0x060C, 0x061B, 0x061F}
+    arabic_used = {ord(ch) for source in (launcher, (ROOT / "lang_ar.c").read_text(encoding="utf-8"))
+                   for ch in source if 0x0600 <= ord(ch) <= 0x06FF}
+    unsupported = sorted(arabic_used - arabic_supported)
+    for cp in unsupported:
+        print(f"FAIL: Arabic codepoint U+{cp:04X} is used but has no shaping/font mapping")
+    print(("ok: " if not unsupported else "FAIL: ") +
+          f"all Arabic UI codepoints are covered ({len(arabic_used)} distinct codepoints)")
+    failed |= bool(unsupported)
+
     font_tool = (ROOT / "tools" / "font.py").read_text(encoding="utf-8")
     font_header = (ROOT / "gfx.h").read_text(encoding="utf-8")
     passed = ("ARABIC_FORMS" in font_tool and "NotoSansArabicUI.ttf" in font_tool and
