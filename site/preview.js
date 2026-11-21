@@ -1019,6 +1019,9 @@ function frame(ms) {
   tint = tint.map((v, i) => v + (o.acc[i] - v) * Math.min(1, dt * 2.5));
 
   g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.shadowBlur = 0; g.shadowOffsetY = 0; g.textBaseline = 'alphabetic';
+  // Keep the PS2 mock-up's fixed 1280x720 coordinate system LTR even when the website is Arabic.
+  // Arabic glyph shaping remains native; only the canvas anchoring direction is kept stable.
+  g.direction = 'ltr'; g.textAlign = 'left';
   if (mode !== 'home') { // a splash or a loading screen is playing
     const u = t - tMode, spl = mode === 'splash', end = spl ? SPL : LCH, out = (u - end + .45) / .45;
     if (u < end) (spl ? T.splash || genSplash : T.launch || genLaunch).call(T, u, t, o);
@@ -1029,6 +1032,18 @@ function frame(ms) {
     requestAnimationFrame(frame); return;
   }
   T.bg(t);
+  // Developer signature on the website's theme backgrounds only; never alters downloaded PS2 assets.
+  g.save();
+  g.direction = 'ltr'; g.textAlign = 'center'; g.globalAlpha = .72;
+  font('500 12px Archivo, "Geeza Pro", "Noto Sans Arabic", Tahoma, sans-serif');
+  const watermark = '( تعديل - وتعريب - TEa.G3 )';
+  const watermarkWidth = Math.ceil(g.measureText(watermark).width) + 22;
+  g.fillStyle = 'rgba(0,0,0,.38)';
+  g.fillRect((W - watermarkWidth) / 2, 690, watermarkWidth, 22);
+  g.strokeStyle = 'rgba(210,225,255,.34)'; g.lineWidth = 1;
+  g.strokeRect((W - watermarkWidth) / 2 + .5, 690.5, watermarkWidth - 1, 21);
+  g.fillStyle = '#F1F4FF'; g.fillText(watermark, W / 2, 705);
+  g.restore();
   if (T.glass) snap();
   listRows(t);
   covers(t);
