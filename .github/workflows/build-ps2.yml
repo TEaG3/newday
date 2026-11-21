@@ -31,10 +31,14 @@ jobs:
               export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
               export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"
               export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
-              apk add --no-cache python3 make
+              apk add --no-cache python3 make py3-pillow build-base
               command -v mips64r5900el-ps2-elf-gcc
               test -x "$PS2DEV/ee/bin/mips64r5900el-ps2-elf-gcc"
+              python3 tools/font.py --selftest
+              python3 tools/font.py
               python3 tools/lang_check.py
+              cc -std=gnu99 -Wall -DSELFTEST gfx.c font_data.c -o /tmp/gfx_selftest
+              /tmp/gfx_selftest
               { make clean; make APP=launcher; } 2>&1 | tee build.log
               test -s launcher.elf
               ls -lh launcher.elf
