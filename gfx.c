@@ -19,35 +19,228 @@ static int vram_alloc(int words, int clut)
 	return a;
 }
 
-// ---- text: UTF-8 -> glyph index (ASCII 32-126 = 0..94, font_extras = 95..), -1 = not in the fonts. A font that
-// did not bake an extra letter (only ui has them all, tools/font.py) gets its ASCII base instead: è -> e, œ -> o ----
+// ---- Unicode text: UTF-8 decoding, Arabic contextual forms, and a compact RTL/LTR visual-order pass ----
 extern const unsigned short font_extras[GFX_EXTRAS];
 extern const unsigned char font_fallback[GFX_EXTRAS];
 static int tracking;
 
-static int next_glyph(const gfx_font *f, const char **ps)
+typedef struct {
+	unsigned short cp, iso, fin, ini, med;
+} arabic_letter;
+
+#define AR(cp, iso, fin, ini, med) {cp, iso, fin, ini, med}
+static const arabic_letter ar_letters[] = {
+	AR(0x0621, 0xFE80, 0, 0, 0),              // hamza
+	AR(0x0622, 0xFE81, 0xFE82, 0, 0),        // alef madda
+	AR(0x0623, 0xFE83, 0xFE84, 0, 0),        // alef hamza above
+	AR(0x0624, 0xFE85, 0xFE86, 0, 0),        // waw hamza
+	AR(0x0625, 0xFE87, 0xFE88, 0, 0),        // alef hamza below
+	AR(0x0626, 0xFE89, 0xFE8A, 0xFE8B, 0xFE8C),
+	AR(0x0627, 0xFE8D, 0xFE8E, 0, 0),        // alef
+	AR(0x0628, 0xFE8F, 0xFE90, 0xFE91, 0xFE92),
+	AR(0x0629, 0xFE93, 0xFE94, 0, 0),        // teh marbuta
+	AR(0x062A, 0xFE95, 0xFE96, 0xFE97, 0xFE98),
+	AR(0x062B, 0xFE99, 0xFE9A, 0xFE9B, 0xFE9C),
+	AR(0x062C, 0xFE9D, 0xFE9E, 0xFE9F, 0xFEA0),
+	AR(0x062D, 0xFEA1, 0xFEA2, 0xFEA3, 0xFEA4),
+	AR(0x062E, 0xFEA5, 0xFEA6, 0xFEA7, 0xFEA8),
+	AR(0x062F, 0xFEA9, 0xFEAA, 0, 0),        // dal
+	AR(0x0630, 0xFEAB, 0xFEAC, 0, 0),        // thal
+	AR(0x0631, 0xFEAD, 0xFEAE, 0, 0),        // reh
+	AR(0x0632, 0xFEAF, 0xFEB0, 0, 0),        // zain
+	AR(0x0633, 0xFEB1, 0xFEB2, 0xFEB3, 0xFEB4),
+	AR(0x0634, 0xFEB5, 0xFEB6, 0xFEB7, 0xFEB8),
+	AR(0x0635, 0xFEB9, 0xFEBA, 0xFEBB, 0xFEBC),
+	AR(0x0636, 0xFEBD, 0xFEBE, 0xFEBF, 0xFEC0),
+	AR(0x0637, 0xFEC1, 0xFEC2, 0xFEC3, 0xFEC4),
+	AR(0x0638, 0xFEC5, 0xFEC6, 0xFEC7, 0xFEC8),
+	AR(0x0639, 0xFEC9, 0xFECA, 0xFECB, 0xFECC),
+	AR(0x063A, 0xFECD, 0xFECE, 0xFECF, 0xFED0),
+	AR(0x0641, 0xFED1, 0xFED2, 0xFED3, 0xFED4),
+	AR(0x0642, 0xFED5, 0xFED6, 0xFED7, 0xFED8),
+	AR(0x0643, 0xFED9, 0xFEDA, 0xFEDB, 0xFEDC),
+	AR(0x0644, 0xFEDD, 0xFEDE, 0xFEDF, 0xFEE0), // lam
+	AR(0x0645, 0xFEE1, 0xFEE2, 0xFEE3, 0xFEE4),
+	AR(0x0646, 0xFEE5, 0xFEE6, 0xFEE7, 0xFEE8),
+	AR(0x0647, 0xFEE9, 0xFEEA, 0xFEEB, 0xFEEC),
+	AR(0x0648, 0xFEED, 0xFEEE, 0, 0),        // waw
+	AR(0x0649, 0xFEEF, 0xFEF0, 0, 0),        // alef maksura
+	AR(0x064A, 0xFEF1, 0xFEF2, 0xFEF3, 0xFEF4)
+};
+#undef AR
+
+static unsigned utf8_next(const char **ps)
 {
 	const unsigned char *s = (const unsigned char *)*ps;
-	if (*s < 0x80) { *ps += 1; return *s >= 32 && *s < 127 ? *s - 32 : -1; }
+	unsigned cp;
+	if (*s < 0x80) { *ps += 1; return *s; }
 	if ((*s & 0xE0) == 0xC0 && (s[1] & 0xC0) == 0x80) {
-		unsigned cp = (s[0] & 0x1F) << 6 | (s[1] & 0x3F);
+		cp = (s[0] & 0x1F) << 6 | (s[1] & 0x3F);
 		*ps += 2;
-		for (int i = 0; i < GFX_EXTRAS; i++)
-			if (font_extras[i] == cp) return f->g[95 + i].adv ? 95 + i : font_fallback[i] - 32;
-		return -1;
+		return cp;
 	}
-	for (*ps += 1; (**(const unsigned char **)ps & 0xC0) == 0x80; *ps += 1) {} // skip other sequences
+	if ((*s & 0xF0) == 0xE0 && (s[1] & 0xC0) == 0x80 && (s[2] & 0xC0) == 0x80) {
+		cp = (s[0] & 0x0F) << 12 | (s[1] & 0x3F) << 6 | (s[2] & 0x3F);
+		*ps += 3;
+		return cp;
+	}
+	if ((*s & 0xF8) == 0xF0 && (s[1] & 0xC0) == 0x80 && (s[2] & 0xC0) == 0x80 &&
+	    (s[3] & 0xC0) == 0x80) {
+		cp = (s[0] & 7) << 18 | (s[1] & 0x3F) << 12 | (s[2] & 0x3F) << 6 | (s[3] & 0x3F);
+		*ps += 4;
+		return cp;
+	}
+	*ps += 1;
+	while ((**(const unsigned char **)ps & 0xC0) == 0x80) *ps += 1;
+	return 0xFFFFFFFFu;
+}
+
+static int glyph_index(const gfx_font *f, unsigned cp)
+{
+	if (cp < 0x80) return cp >= 32 && cp < 127 ? (int)cp - 32 : -1;
+	if (cp > 0xFFFF) return -1;
+	for (int i = 0; i < GFX_EXTRAS; i++)
+		if (font_extras[i] == cp)
+			return f->g[95 + i].adv ? 95 + i : (int)font_fallback[i] - 32;
 	return -1;
+}
+
+static int next_glyph(const gfx_font *f, const char **ps)
+{
+	return glyph_index(f, utf8_next(ps));
+}
+
+static const arabic_letter *arabic_find(unsigned cp)
+{
+	for (unsigned i = 0; i < sizeof(ar_letters) / sizeof(ar_letters[0]); i++)
+		if (ar_letters[i].cp == cp) return &ar_letters[i];
+	return NULL;
+}
+
+static int arabic_cp(unsigned cp)
+{
+	return (cp >= 0x0600 && cp <= 0x06FF) || (cp >= 0xFE70 && cp <= 0xFEFC);
+}
+
+static int contains_arabic(const char *s)
+{
+	while (*s) if (arabic_cp(utf8_next(&s))) return 1;
+	return 0;
+}
+
+static int can_join_prev(unsigned cp)
+{
+	const arabic_letter *a = arabic_find(cp);
+	return a && a->fin;
+}
+
+static int can_join_next(unsigned cp)
+{
+	const arabic_letter *a = arabic_find(cp);
+	return a && a->ini;
+}
+
+static unsigned lam_alef(unsigned alef, int linked)
+{
+	switch (alef) {
+	case 0x0622: return linked ? 0xFEF6 : 0xFEF5;
+	case 0x0623: return linked ? 0xFEF8 : 0xFEF7;
+	case 0x0625: return linked ? 0xFEFA : 0xFEF9;
+	default:     return linked ? 0xFEFC : 0xFEFB;
+	}
+}
+
+#define TEXT_LIMIT 512
+typedef struct { int gi; unsigned cp; unsigned char dir; } text_glyph;
+
+static int ltr_cp(unsigned cp)
+{
+	return (cp >= '0' && cp <= '9') || (cp >= 'A' && cp <= 'Z') || (cp >= 'a' && cp <= 'z') ||
+	       (cp >= 0x00C0 && cp <= 0x02AF) || (cp >= 0x0660 && cp <= 0x0669);
+}
+
+static int layout_line(const gfx_font *requested, const char **ps, text_glyph *out, int *width,
+                       const gfx_font **used_font)
+{
+	unsigned cp[TEXT_LIMIT], shaped[TEXT_LIMIT];
+	int n = 0, m = 0, rtl = 0, w = 0;
+	const char *p = *ps;
+	while (*p && *p != '\n' && n < TEXT_LIMIT) {
+		cp[n] = utf8_next(&p);
+		if (arabic_cp(cp[n])) rtl = 1;
+		n++;
+	}
+	*ps = p;
+	const gfx_font *f = rtl ? &gfx_font_ui : requested;
+	*used_font = f;
+
+	for (int i = 0; i < n; i++) {
+		if (cp[i] == 0x0644 && i + 1 < n &&
+		    (cp[i + 1] == 0x0622 || cp[i + 1] == 0x0623 || cp[i + 1] == 0x0625 || cp[i + 1] == 0x0627)) {
+			int linked = i > 0 && can_join_next(cp[i - 1]) && can_join_prev(cp[i]);
+			shaped[m++] = lam_alef(cp[i + 1], linked);
+			i++;
+			continue;
+		}
+		const arabic_letter *a = arabic_find(cp[i]);
+		if (a) {
+			int prev = i > 0 && can_join_next(cp[i - 1]) && a->fin;
+			int next = i + 1 < n && a->ini && can_join_prev(cp[i + 1]);
+			shaped[m++] = prev && next ? a->med : prev ? a->fin : next ? a->ini : a->iso;
+		} else shaped[m++] = cp[i];
+	}
+
+	if (!rtl) {
+		for (int i = 0; i < m; i++) {
+			int gi = glyph_index(f, shaped[i]);
+			out[i] = (text_glyph){gi, shaped[i], 2};
+			if (gi >= 0) w += f->g[gi].adv + tracking;
+		}
+		*width = w > 0 ? w - tracking : 0;
+		return m;
+	}
+
+	unsigned char dir[TEXT_LIMIT];
+	int order[TEXT_LIMIT];
+	for (int i = 0; i < m; i++) {
+		dir[i] = arabic_cp(shaped[i]) ? 1 : ltr_cp(shaped[i]) ? 2 : 0;
+		order[i] = m - i - 1;
+	}
+	// Resolve punctuation and spaces to the nearest strong direction; a disagreement defaults to RTL.
+	for (int i = 0; i < m; i++) {
+		if (dir[i]) continue;
+		int left = 1, right = 1;
+		for (int j = i - 1; j >= 0; j--) if (dir[j]) { left = dir[j]; break; }
+		for (int j = i + 1; j < m; j++) if (dir[j]) { right = dir[j]; break; }
+		dir[i] = left == right ? left : 1;
+	}
+	// Base direction is RTL: reverse the line, then restore each LTR run (codes, serials and numbers).
+	for (int i = 0; i < m;) {
+		if (dir[order[i]] != 2) { i++; continue; }
+		int j = i + 1;
+		while (j < m && dir[order[j]] == 2) j++;
+		for (int lo = i, hi = j - 1; lo < hi; lo++, hi--) {
+			int tmp = order[lo]; order[lo] = order[hi]; order[hi] = tmp;
+		}
+		i = j;
+	}
+	for (int i = 0; i < m; i++) {
+		unsigned ch = shaped[order[i]];
+		int gi = glyph_index(f, ch);
+		out[i] = (text_glyph){gi, ch, dir[order[i]]};
+		if (gi >= 0) w += f->g[gi].adv + tracking;
+	}
+	*width = w > 0 ? w - tracking : 0;
+	return m;
 }
 
 int gfx_text_width(const gfx_font *f, const char *s)
 {
-	int w = 0;
-	while (*s && *s != '\n') {
-		int g = next_glyph(f, &s);
-		if (g >= 0) w += f->g[g].adv + tracking;
-	}
-	return w > 0 ? w - tracking : 0;
+	text_glyph items[TEXT_LIMIT];
+	const gfx_font *used;
+	int width = 0;
+	layout_line(f, &s, items, &width, &used);
+	return width;
 }
 
 // ---- Floyd-Steinberg straight to the CT16 levels k*8 (the GS truncates 8 -> 5 bits), as tools/covers.py does
