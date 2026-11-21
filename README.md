@@ -3,7 +3,7 @@
 NULD is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
 [Neutrino](https://github.com/rickgaiser/neutrino), and adds what a modern console menu has: covers downloaded by the
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
-RetroAchievements on real hardware. Spanish and English.
+RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
 
 **Website, screenshots and videos:** https://danielnuld.github.io/nuld/
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
@@ -36,7 +36,7 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
   its memory to the [xeRAbora](https://github.com/hacan359/xerabora) client on your home network, which unlocks the
   achievements on your profile.
 - **Discs, PS1 and apps**: boots the disc in the drive, PS1 games through POPStarter, and homebrew from `APPS/`.
-- **Spanish or English** (`config.ini [ui] idioma`), including the in-game menu and the config file's comments.
+- **Arabic by default**, with Spanish, English and Portuguese (`config.ini [ui] idioma`); the launcher shapes Arabic letters, joins contextual forms, lays out right-to-left text, and keeps Latin runs and numbers readable.
 - Companion app: [ORBIT Jellyfin](https://github.com/danielnuld/orbit-jellyfin), your Jellyfin library on the PS2.
 
 ## Quick start
@@ -44,7 +44,7 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
 1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `launcher.elf` and `neutrino/`.
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
 2. **Start** `mass0:/launcher.elf` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
-3. **Set up**: the first boot opens the setup wizard (START reopens it): language, game sources, memory card,
+3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card,
    video, network, the memory card for `BOOT/NULD.ELF` and how FreeMcBoot 1.966 starts it (autoboot, a button or
    its menu; the original `FREEMCB.CNF` is kept as `.bak`). Every setting is also in `nuld/config.ini`, commented.
 4. **Play**: pick a game, press ✕.
@@ -79,7 +79,7 @@ The full guide is on the [website](https://danielnuld.github.io/nuld/#guide) and
 
 ## Building
 
-Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL.
+Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3 and Pillow are also required to generate the Arabic-aware font atlas.
 
 ```
 ./build.sh APP=launcher          # launcher.elf
