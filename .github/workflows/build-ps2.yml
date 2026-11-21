@@ -1,0 +1,53 @@
+name: PS2 launcher build
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  launcher:
+    name: Validate translations and build launcher.elf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Validate languages and compile with PS2SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/src" \
+            -w /src \
+            ps2dev/ps2dev:latest \
+            sh -lc '
+              set -eu
+              set -o pipefail
+              apk add --no-cache python3
+              python3 tools/lang_check.py
+              make clean
+              make APP=launcher 2>&1 | tee build.log
+              test -s launcher.elf
+              ls -lh launcher.elf
+            '
+
+      - name: Upload launcher ELF
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuld-launcher-${{ github.sha }}
+          path: launcher.elf
+          if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuld-build-log-${{ github.sha }}
+          path: build.log
+          if-no-files-found: warn
