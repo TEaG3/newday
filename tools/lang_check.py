@@ -130,6 +130,30 @@ def main():
           f"all Arabic UI codepoints are covered ({len(arabic_used)} distinct codepoints)")
     failed |= bool(unsupported)
 
+    neutrino_menu = (ROOT / "third_party" / "neutrino-igr" / "menu.c").read_text(encoding="utf-8")
+    neutrino_patch = (ROOT / "third_party" / "neutrino-igr" / "patch_neutrino.py").read_text(encoding="utf-8")
+    neutrino_build = (ROOT / "tools" / "build_neutrino.sh").read_text(encoding="utf-8")
+    igr_generator = (ROOT / "tools" / "generate_igr_arabic.py").read_text(encoding="utf-8")
+    igr_checks = {
+        "launcher passes Arabic to the in-game menu": '"-igrlang=ar"' in launcher,
+        "Neutrino patch parses Arabic as language 3": 'igr_lang = !strcmp(&argv[i][9], "en") ? 1 : !strcmp(&argv[i][9], "pt") ? 2 : !strcmp(&argv[i][9], "ar") ? 3 : 0;' in neutrino_patch,
+        "Neutrino in-game menu renders Arabic labels": 'eec.IgrLang == 3' in neutrino_menu and "igr_ar_label_pixels" in neutrino_menu,
+        "Neutrino achievement notice has Arabic text": "igr_ar_notice_pixels" in neutrino_menu and "IGR_AR_NOTICE_WIDTH" in neutrino_menu,
+        "Arabic IGR bitmap is generated from pinned font": 'NOTICE = "تم فتح الإنجاز"' in igr_generator and 'LABELS = ("إعادة تشغيل", "إيقاف التشغيل", "إلغاء")' in igr_generator,
+        "Neutrino builder copies the generated Arabic menu header": '"$FORK/menu_arabic.h"' in neutrino_build and "tools/generate_igr_arabic.py" in neutrino_build,
+    }
+    for description, passed in igr_checks.items():
+        print(("ok: " if passed else "FAIL: ") + description)
+        failed |= not passed
+
+    igr_codepoints = {ord(ch) for ch in igr_generator if 0x0600 <= ord(ch) <= 0x06FF}
+    igr_unsupported = sorted(igr_codepoints - arabic_supported)
+    for cp in igr_unsupported:
+        print(f"FAIL: IGR Arabic label U+{cp:04X} has no shaping/font mapping")
+    print(("ok: " if not igr_unsupported else "FAIL: ") +
+          f"all Arabic IGR label codepoints are covered ({len(igr_codepoints)} distinct codepoints)")
+    failed |= bool(igr_unsupported)
+
     font_tool = (ROOT / "tools" / "font.py").read_text(encoding="utf-8")
     font_header = (ROOT / "gfx.h").read_text(encoding="utf-8")
     passed = ("ARABIC_FORMS" in font_tool and "NotoSansArabicUI.ttf" in font_tool and
