@@ -64,6 +64,8 @@ function mono(o, k) { // a green-phosphor copy of a cover
 
 // ---- state: one box per cover that eases to its place in the current view, as in the launcher ----
 const VNAME = ['CAROUSEL', 'GRID', 'LIST'];
+const isArabic = () => document.documentElement.lang === 'ar';
+const viewName = i => isArabic() ? ['دائري', 'شبكة', 'قائمة'][i] : VNAME[i];
 let now = 0, sel = 2, prev = 2, dir = 1, pos = 2, view = 0, gtop = 0, ltop = 0, lscroll = 0, pillY = 166 + 2 * 52, lpres = 0;
 let tMove = 0, tTheme = 0, tView = -9, tAnim = 0, lastInput = -9, autoDir = 1, autoN = 0, T = null, A = [200, 255, 46], Afrom = A, sunX = 640, tint = [30, 90, 200];
 const B = G.map(() => ({ x: 640, y: 376, w: 0, h: 0, a: 0, f: 0 })), F = G.map(() => ({}));
@@ -233,12 +235,12 @@ function header(t) {
   if (T.cardFill) { g.fillStyle = T.cardFill(); g.fillRect(932, 36, 284, 88); } else panel(932, 36, 284, 88, T.R);
   g.strokeStyle = T.cardTx || acc; g.lineWidth = 2; g.beginPath(); // the saves card
   g.rect(968, 62, 28, 36); g.moveTo(974, 62); g.lineTo(974, 72); g.lineTo(990, 72); g.lineTo(990, 62); g.moveTo(974, 88); g.lineTo(990, 88); g.stroke();
-  font(FU); g.fillStyle = T.cardTx || T.tx; g.fillText('Virtual memory card', 1028, 74);
-  font(FM); g.fillStyle = T.cardTx || T.t2; g.fillText(o.n + (o.n === 1 ? ' SAVE · ' : ' SAVES · ') + (o.n * 98 + 14) + ' KB', 1028, 98);
+  font(FU); g.fillStyle = T.cardTx || T.tx; g.fillText(isArabic() ? 'بطاقة ذاكرة افتراضية' : 'Virtual memory card', 1028, 74);
+  font(FM); g.fillStyle = T.cardTx || T.t2; g.fillText(o.n + (isArabic() ? (o.n === 1 ? ' عملية حفظ · ' : ' عمليات حفظ · ') : (o.n === 1 ? ' SAVE · ' : ' SAVES · ')) + (o.n * 98 + 14) + ' KB', 1028, 98);
 
   title(o, t);
   const tags = [[o.s, 0], ['PS2', 1], ['USB', 2], ['480P', 0]];
-  if (o.ach) tags.push(['ACHIEVEMENTS ' + o.ach, 2]);
+  if (o.ach) tags.push([(isArabic() ? 'الإنجازات ' : 'ACHIEVEMENTS ') + o.ach, 2]);
   let x = 140;
   font(FM);
   tags.forEach(([s, kind], i) => {
@@ -269,7 +271,7 @@ function footer(t) {
     x += w + 6;
   });
   x = W - 64;
-  const hints = [['s', 'View'], ['t', 'Options']]; if (o.ach) hints.push(['o', 'Achievements']); hints.push(['x', 'Play']);
+  const hints = [['s', isArabic() ? 'العرض' : 'View'], ['t', isArabic() ? 'الخيارات' : 'Options']]; if (o.ach) hints.push(['o', isArabic() ? 'الإنجازات' : 'Achievements']); hints.push(['x', isArabic() ? 'تشغيل' : 'Play']);
   font(FU);
   for (const [kd, s] of hints) {
     x -= Math.round(g.measureText(s).width); g.fillStyle = T.tx; g.fillText(s, x, y + 17);
@@ -277,7 +279,7 @@ function footer(t) {
   }
   const vl = t - tView; // the view's name, framed in the accent, about a second after a change
   if (vl < 1.15) {
-    const va = vl < .3 ? ease(vl / .3) : ease((1.15 - vl) / .8), s = 'VIEW  ' + VNAME[view];
+    const va = vl < .3 ? ease(vl / .3) : ease((1.15 - vl) / .8), s = (isArabic() ? 'العرض  ' : 'VIEW  ') + viewName(view);
     font(FM); if ('letterSpacing' in g) g.letterSpacing = '3px';
     const w = Math.round(g.measureText(s).width) + 56, vx = Math.round((W - w) / 2), vy = 590 + Math.round(8 * (1 - va));
     g.globalAlpha = va; g.fillStyle = T.vp || T.pn; g.fillRect(vx, vy, w, 36); g.strokeStyle = acc; g.lineWidth = 1; g.strokeRect(vx + .5, vy + .5, w - 1, 35);
@@ -316,7 +318,8 @@ function ring(s, c, lw, pad, r) { g.globalAlpha = s.f; rr(s.x - pad, s.y - pad, 
 
 // ---- splash and loading screens: a theme may bring its own; the rest get a plain one made from their tokens ----
 let mode = 'home', tMode = 0, tFade = 0, CAM = null;
-const SPL = 6.4, LCH = 4.4, HOW = 'STARTING WITH NEUTRINO';
+const SPL = 6.4, LCH = 4.4, HOW_EN = 'STARTING WITH NEUTRINO';
+const how = () => isArabic() ? 'جارٍ تشغيل NEUTRINO' : HOW_EN;
 const STEPS = [[0, 'STARTING'], [1.1, 'USB MODULES'], [2.2, 'READING GAMES  7 / 16'], [3.3, 'READING GAMES  16 / 16'], [4.4, '16 GAMES · READY']];
 const status = u => { let s = STEPS[0][1]; for (const [a, m] of STEPS) if (u >= a) s = m; return s; };
 const ink = () => T.btx || T.tx;
@@ -487,7 +490,7 @@ const THEMES = {
         g.fillText(num(sel), 44, 636 + (1 - st) * 300);
         g.restore();
         g.fillRect(540, 604, 676, 2); for (let x = 540; x <= 1216; x += 52) g.fillRect(x, 596, 2, 8); // a ruler and its small print
-        font(FM); g.fillText('LIBRARY / ' + N + ' TITLES', 540, 626);
+        font(FM); g.fillText(isArabic() ? 'المكتبة / ' + N + ' لعبة' : 'LIBRARY / ' + N + ' TITLES', 540, 626);
         const tx = 'NTSC-U · 480P · NULD 1.3'; g.fillText(tx, 1216 - g.measureText(tx).width, 626);
         if ((t * 174 / 60) % 1 < .5) g.fillRect(1216 - g.measureText(tx).width - 20, 615, 10, 10); // blinks on the beat
       }
