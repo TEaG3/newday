@@ -818,6 +818,7 @@
     document.title = ar ? (pageTitles[originalTitle] || originalTitle) : originalTitle;
     translateAttributes(document.body, ar);
     translateMeta(ar);
+    document.dispatchEvent(new Event("nuld:languagechange"));
   }
   document.addEventListener("DOMContentLoaded", () => {
     const nav = document.querySelector(".nav .wrap, .runhead");
