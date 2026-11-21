@@ -12,6 +12,7 @@
 #include "eecore_config.h"
 #include "ee_asm.h"
 #include "igr.h"
+#include "menu_arabic.h"
 
 // 1 = when no DISPFB was captured, draw into Black's frame (FBP 0, 640 wide, CT16S). Only for PCSX2, which has no
 // data breakpoints: tools/build_neutrino.sh sets it with MENU_TEST=1. In a real game a guess could hit its textures
@@ -48,6 +49,7 @@ void GSM_GetDisplay(u64 out[6]); // gsm_api.c (patch_neutrino.py step 5)
 
 // 144 x 54: three items in a 6x8 font at 2x (12x16 cells), 17 px apart
 #define BOX_W  144
+#define BOX_H_AR IGR_AR_BOX_WIDTH
 #define BOX_H  54 // even: STRIP lines per upload
 #define STRIP  2 // lines per upload
 #define TEXT_X 28
@@ -207,7 +209,7 @@ static int menu_colour(u32 x, u32 y)
 {
     if (notice)
         return notice_colour(x, y);
-    if (x == 0 || y == 0 || x == BOX_W - 1 || y == BOX_H - 1)
+    if (x == 0 || y == 0 || x == box_w - 1 || y == box_h - 1)
         return C_BORDER;
     for (int i = 0; i < M_ITEMS; i++) {
         u32 ty = y - ROW_Y(i);
@@ -216,7 +218,13 @@ static int menu_colour(u32 x, u32 y)
         static const u8 mark[2] = {G_MARK, G_END};
         if (i == sel && x >= MARK_X && text_pixel(mark, x - MARK_X, ty))
             return C_SEL;
-        if (x >= TEXT_X && text_pixel(label[i], x - TEXT_X, ty))
+        if (eec.IgrLang == 3) {
+            u32 width = igr_ar_label_width[i];
+            u32 left = box_w - 12 - width; // Arabic labels are pre-shaped and stored in visual LTR pixel order
+            if (x >= left && x - left < width &&
+                (igr_ar_label_pixels[i][ty][(x - left) >> 3] & (0x80 >> ((x - left) & 7))))
+                return i == sel ? C_SEL : C_ITEM;
+        } else if (x >= TEXT_X && text_pixel(label[i], x - TEXT_X, ty))
             return i == sel ? C_SEL : C_ITEM;
     }
     return C_PANEL;
@@ -308,7 +316,7 @@ static void box_close(void)
 // The game is paused by the caller. Returns MENU_CANCEL, MENU_REBOOT or MENU_OFF
 int Menu_Run(void)
 {
-    box_w = BOX_W, box_h = BOX_H;
+    box_w = eec.IgrLang == 3 ? BOX_H_AR : BOX_W, box_h = BOX_H;
     if (!box_open(0))
         return MENU_CANCEL;
 
@@ -357,7 +365,7 @@ void Notice_Run(u32 id, u32 points)
     do
         *--q = '0' + points % 10;
     while ((points /= 10) && q > num);
-    u32 n = put(note_text[0], 0, eec.IgrLang == 1 ? "ACHIEVEMENT UNLOCKED  " : eec.IgrLang == 2 ? "CONQUISTA DESBLOQUEADA  " : "LOGRO DESBLOQUEADO  ");
+    u32 n = put(note_text[0], 0, eec.IgrLang == 1 || eec.IgrLang == 3 ? "ACHIEVEMENT UNLOCKED  " : eec.IgrLang == 2 ? "CONQUISTA DESBLOQUEADA  " : "LOGRO DESBLOQUEADO  ");
     n = put(note_text[0], put(note_text[0], n, q), " PTS");
     u32 m = 0;
     note_text[1][0] = 0;
