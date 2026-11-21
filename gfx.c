@@ -124,12 +124,6 @@ static int arabic_cp(unsigned cp)
 	return (cp >= 0x0600 && cp <= 0x06FF) || (cp >= 0xFE70 && cp <= 0xFEFC);
 }
 
-static int contains_arabic(const char *s)
-{
-	while (*s) if (arabic_cp(utf8_next(&s))) return 1;
-	return 0;
-}
-
 static int can_join_prev(unsigned cp)
 {
 	const arabic_letter *a = arabic_find(cp);
