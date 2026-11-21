@@ -67,7 +67,7 @@
       const k = Math.max(1280 / bmp.width, 720 / bmp.height), w = bmp.width * k, h = bmp.height * k; // cover the screen, centred
       c.getContext('2d').drawImage(bmp, (1280 - w) / 2, (720 - h) / 2, w, h);
       state.picture = c;
-    } catch { alert('That file could not be read as a picture.'); }
+    } catch { alert(document.documentElement.lang === 'ar' ? 'تعذرت قراءة الملف على أنه صورة.' : 'That file could not be read as a picture.'); }
     e.target.value = '';
     sync();
   };
@@ -145,17 +145,22 @@
     .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0);
   const contrast = (a, b) => { const x = lum(a) + 0.05, y = lum(b) + 0.05; return x > y ? x / y : y / x; };
   function warnings() {
-    const p = state.pal, w = [], check = (a, b, min, what) => {
+    const p = state.pal, w = [], ar = document.documentElement.lang === 'ar';
+    const check = (a, b, min, en, arabic) => {
       const c = contrast(p[a], p[b]);
-      if (c < min) w.push(`<b>${a}</b> on <b>${b}</b> is hard to read (contrast ${c.toFixed(1)}, aim for ${min} or more): ${what}.`);
+      if (c < min) w.push(ar
+        ? `<b>${a}</b> مع <b>${b}</b>: التباين ${c.toFixed(1)}، والمستوى المقترح ${min} أو أعلى. ${arabic}.`
+        : `<b>${a}</b> on <b>${b}</b> is hard to read (contrast ${c.toFixed(1)}, aim for ${min} or more): ${en}.`);
     };
-    check('texto', 'panel', 4.5, 'the text of every panel');
-    check('texto2', 'panel', 3, 'the list rows not selected');
-    check('texto', 'fila', 4.5, 'the selected row');
-    check('etiqueta', 'fondo', 3, 'serials and the status line');
-    if (!state.coverAccent) check('inverso', 'acento', 4.5, 'the lit filter and options');
-    check('inverso', 'texto', 4.5, 'the filled tag next to the serial');
-    if (state.picture) w.push('With a picture, check the title and the legend against it in the preview: only the list gets a pane behind it.');
+    check('texto', 'panel', 4.5, 'the text of every panel', 'قد يصعب قراءة نصوص اللوحات');
+    check('texto2', 'panel', 3, 'the list rows not selected', 'قد يصعب قراءة نصوص الصفوف غير المحددة');
+    check('texto', 'fila', 4.5, 'the selected row', 'قد يصعب قراءة نص الصف المحدد');
+    check('etiqueta', 'fondo', 3, 'serials and the status line', 'قد يصعب قراءة الأرقام التسلسلية وسطر الحالة');
+    if (!state.coverAccent) check('inverso', 'acento', 4.5, 'the lit filter and options', 'قد يصعب قراءة النص داخل المرشحات والخيارات المميزة');
+    check('inverso', 'texto', 4.5, 'the filled tag next to the serial', 'قد يصعب قراءة النص داخل الوسم المعبأ بجانب الرقم التسلسلي');
+    if (state.picture) w.push(ar
+      ? 'عند إضافة صورة خلفية، راجع وضوح العنوان والتوضيح في المعاينة؛ فاللوحة تظهر خلف القائمة فقط.'
+      : 'With a picture, check the title and the legend against it in the preview: only the list gets a pane behind it.');
     $('warnings').innerHTML = w.map(t => `<li>${t}</li>`).join('');
   }
 
