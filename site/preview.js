@@ -10,7 +10,9 @@ const ease = k => { k = clamp(k); return k * k * (3 - 2 * k); };
 const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
 const hash = (i, j) => { const n = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return n - Math.floor(n); };
 const saw = x => 2 * (x - Math.floor(x + .5));
-const FT = '700 38px Archivo, sans-serif', FU = '500 17px Archivo, sans-serif', FM = '400 14px "IBM Plex Mono", monospace';
+const FT = '700 38px Archivo, sans-serif',
+  FU = '500 17px "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Archivo, sans-serif',
+  FM = '400 14px "IBM Plex Mono", monospace';
 const font = (f, wide) => { g.font = f; if ('fontStretch' in g) g.fontStretch = wide ? 'expanded' : 'normal'; };
 const Q = new URLSearchParams(location.search), T0 = +(Q.get('t') || 0); // local testing: start the clock later, in a given view
 
@@ -236,13 +238,13 @@ function header(t) {
   g.strokeStyle = T.cardTx || acc; g.lineWidth = 2; g.beginPath(); // the saves card
   g.rect(968, 62, 28, 36); g.moveTo(974, 62); g.lineTo(974, 72); g.lineTo(990, 72); g.lineTo(990, 62); g.moveTo(974, 88); g.lineTo(990, 88); g.stroke();
   font(FU); g.fillStyle = T.cardTx || T.tx; g.fillText(isArabic() ? 'بطاقة ذاكرة افتراضية' : 'Virtual memory card', 1028, 74);
-  font(FM); g.fillStyle = T.cardTx || T.t2; g.fillText(o.n + (isArabic() ? (o.n === 1 ? ' عملية حفظ · ' : ' عمليات حفظ · ') : (o.n === 1 ? ' SAVE · ' : ' SAVES · ')) + (o.n * 98 + 14) + ' KB', 1028, 98);
+  font(isArabic() ? FU : FM); g.fillStyle = T.cardTx || T.t2; g.fillText(o.n + (isArabic() ? (o.n === 1 ? ' عملية حفظ · ' : ' عمليات حفظ · ') : (o.n === 1 ? ' SAVE · ' : ' SAVES · ')) + (o.n * 98 + 14) + ' KB', 1028, 98);
 
   title(o, t);
   const tags = [[o.s, 0], ['PS2', 1], ['USB', 2], ['480P', 0]];
   if (o.ach) tags.push([(isArabic() ? 'الإنجازات ' : 'ACHIEVEMENTS ') + o.ach, 2]);
   let x = 140;
-  font(FM);
+  font(isArabic() && o.ach ? FU : FM);
   tags.forEach(([s, kind], i) => {
     const w = Math.round(g.measureText(s).width) + 24, ac = T.aTag || acc;
     g.globalAlpha = T.wipe || T.type ? (t - tMove > .06 * i ? 1 : 0) : ease((t - tMove - .04 * i) / .22);
