@@ -13,11 +13,15 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent.parent
 FONTS = ROOT / "tools" / "fonts"
 ASCII = "".join(chr(c) for c in range(32, 127))
-BASE = "áéíóúñÁÉÍÓÚÑü¿¡·ãõçâêôàÃÕÇÂÊÔÀ"          # Spanish and Portuguese UI text, in every font
-# the other Latin-1 letters and French oe / quotes, for subtitles: only the ui font bakes them (the atlas has no room
-# for three sizes: 12 pages and ~6 KB of VRAM left), the others draw FALLBACK (the ASCII base) instead
-MORE = "".join(chr(c) for c in range(0xC0, 0x100) if c not in (0xD7, 0xF7) and chr(c) not in BASE) + "\u0153\u0152\u00ab\u00bb\u00b0\u00ba\u00aa"
-EXTRAS = BASE + MORE                              # gfx.c decodes 2-byte UTF-8 to these (GFX_EXTRAS)
+BASE = "áéíóúñÁÉÍÓÚÑü¿¡·ãõçâêôàÃÕÇÂÊÔÀ"  # Spanish and Portuguese UI accents
+# Unicode Arabic Presentation Forms-B (U+FE80..U+FEFC) are baked as separate contextual glyphs.
+# gfx.c shapes Arabic letters into these code points before drawing. Arabic punctuation is also included.
+ARABIC_FORMS = "".join(chr(cp) for cp in range(0xFE80, 0xFEFD))
+ARABIC_PUNCT = "\u060c\u061b\u061f"  # Arabic comma, semicolon and question mark
+ARABIC_CHARS = ARABIC_FORMS + ARABIC_PUNCT
+EXTRAS = BASE + ARABIC_CHARS
+ARABIC_SET = set(ARABIC_CHARS)
+ARABIC_FONT = FONTS / "NotoSansArabicUI.ttf"
 SPECIAL = {"\u00df": "s", "\u00e6": "a", "\u00c6": "A", "\u0153": "o", "\u0152": "O", "\u00f8": "o", "\u00d8": "O", "\u00f0": "d", "\u00d0": "D",
            "\u00fe": "p", "\u00de": "P", "\u00ab": '"', "\u00bb": '"', "\u00b0": "o", "\u00ba": "o", "\u00aa": "a", "\u00bf": "?", "\u00a1": "!", "\u00b7": "."}
 # name, file, px, variation axes in the font's order (None = static font), characters to bake (None = all).
@@ -38,21 +42,37 @@ def fallback(ch):  # the ASCII letter a font without ch draws instead
     return SPECIAL.get(ch, base if ord(base) < 127 else "?")
 
 
-def render(file, px, weight, only):
+def render(file, px, weight, only, ui=False):
     f = ImageFont.truetype(str(FONTS / file), px)
     if weight:
         f.set_variation_by_axes(list(weight))      # Archivo: wght, wdth
+    ar = None
+    if ui:
+        if not ARABIC_FONT.is_file():
+            raise FileNotFoundError(f"{ARABIC_FONT} is missing; run tools/fetch_arabic_font.py first")
+        ar = ImageFont.truetype(str(ARABIC_FONT), px)
+        # Noto Sans Arabic UI variable-font axes are wdth, wght.
+        try:
+            axes = ar.get_variation_axes()
+            if len(axes) == 2:
+                ar.set_variation_by_axes([100, 500])
+        except AttributeError:
+            pass
     asc, desc = f.getmetrics()
+    if ar:
+        ar_asc, ar_desc = ar.getmetrics()
+        asc, desc = max(asc, ar_asc), max(desc, ar_desc)
     glyphs = []
     for ch in ASCII + EXTRAS:
         if only is not None and ch not in only and ch != " ":
             glyphs.append(dict(img=None, xo=0, yo=0, adv=0))
             continue
-        x0, y0, x1, y1 = f.getbbox(ch)
+        face = ar if ar is not None and ch in ARABIC_SET else f
+        x0, y0, x1, y1 = face.getbbox(ch)
         im = Image.new("L", (max(1, x1 - x0), max(1, y1 - y0)))
-        ImageDraw.Draw(im).text((-x0, -y0), ch, font=f, fill=255)
+        ImageDraw.Draw(im).text((-x0, -y0), ch, font=face, fill=255)
         glyphs.append(dict(img=im if x1 > x0 and im.getbbox() else None,  # blank (space): advance only
-                           xo=x0, yo=y0, adv=round(f.getlength(ch))))
+                           xo=x0, yo=y0, adv=round(face.getlength(ch))))
     return glyphs, asc + desc, asc
 
 
@@ -69,7 +89,7 @@ def pack(rects):  # rects: list of (w, h); returns [(x, y)] shelf-packed, PAD px
 
 
 def build():
-    fonts = [(name, *render(file, px, w, only)) for name, file, px, w, only in SPECS]
+    fonts = [(name, *render(file, px, w, only, name == "ui")) for name, file, px, w, only in SPECS]
     items = [g for _, gl, _, _ in fonts for g in gl if g["img"]]
     pos, used = pack([g["img"].size for g in items])
     h = (used + PAGE_H - 1) // PAGE_H * PAGE_H
@@ -103,8 +123,10 @@ def c_source(fonts, atlas):
 
 
 def selftest():
-    assert len(EXTRAS) == 72 == len(set(EXTRAS)) and all(0x80 <= ord(c) < 0x800 for c in EXTRAS)  # 2-byte UTF-8, GFX_EXTRAS
+    assert len(BASE) == 30 and len(ARABIC_FORMS) == 125 and len(ARABIC_PUNCT) == 3
+    assert len(EXTRAS) == 158 == len(set(EXTRAS)) and all(0x80 <= ord(c) < 0x10000 for c in EXTRAS)
     assert all(32 <= ord(fallback(c)) < 127 for c in EXTRAS) and fallback("\u00e8") == "e" and fallback("\u0153") == "o"
+    assert ARABIC_FONT.is_file(), "Noto Sans Arabic UI font is required (tools/fetch_arabic_font.py)"
     fonts, atlas, items, pos = build()
     r = [(x, y, *g["img"].size) for g, (x, y) in zip(items, pos)]
     for i, (x, y, w, h) in enumerate(r):
