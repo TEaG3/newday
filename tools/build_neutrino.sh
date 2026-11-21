@@ -11,6 +11,8 @@ export PS2DEV=/usr/local/ps2dev PS2SDK=/usr/local/ps2dev/ps2sdk GSKIT=/usr/local
 export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2SDK/bin
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 FORK="$REPO/third_party/neutrino-igr"
+python3 "$REPO/tools/fetch_arabic_font.py"
+python3 "$REPO/tools/generate_igr_arabic.py"
 WORK="${WORK:-$HOME/orbit-build}"
 BASE=7be8de2
 mkdir -p "$WORK"
@@ -21,7 +23,7 @@ git checkout -q -- . && git checkout -q "$BASE" && git clean -qfd ee/ee_core ee/
 rm -rf "$WORK/resetspu" && cp -r "$FORK/resetspu" "$WORK/resetspu" # the IGR's SPU2 reset, embedded in ee_core
 make -C "$WORK/resetspu" > "$WORK/resetspu.log" 2>&1 || { tail -20 "$WORK/resetspu.log"; exit 1; }
 bin2c "$WORK/resetspu/resetspu.irx" ee/ee_core/src/resetspu_irx.c resetspu_irx
-cp "$FORK/igr.c" "$FORK/menu.c" "$FORK/ra.c" ee/ee_core/src/
+cp "$FORK/igr.c" "$FORK/menu.c" "$FORK/menu_arabic.h" "$FORK/ra.c" ee/ee_core/src/
 if [ "${MENU_TEST:-0}" = 1 ]; then # PCSX2 only: the menu guesses Black's frame (no data breakpoints there)
     sed -i 's/^#define MENU_TEST 0$/#define MENU_TEST 1/' ee/ee_core/src/menu.c
 fi
