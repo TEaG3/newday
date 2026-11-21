@@ -16,6 +16,18 @@ EE_CFLAGS += -MMD -MP $(if $(BENCH),-DTORRES_BENCH) $(if $(THEME),-DTHEME_FORCE=
 all: $(EE_BIN)
 	$(EE_STRIP) --strip-all $(EE_BIN)
 
+# Arabic UI glyphs are generated from the pinned Noto Sans Arabic UI font.
+.PHONY: font
+font:
+	python3 tools/fetch_arabic_font.py
+	python3 tools/font.py
+
+tools/fonts/NotoSansArabicUI.ttf:
+	python3 tools/fetch_arabic_font.py
+
+font_data.c: tools/font.py tools/fonts/NotoSansArabicUI.ttf
+	python3 tools/font.py
+
 sfx_%.c: sfx/%.wav
 	$(PS2SDK)/bin/adpenc $< sfx_$*.adp && $(PS2SDK)/bin/bin2c sfx_$*.adp $@ sfx_$*
 
