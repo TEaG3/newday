@@ -220,10 +220,13 @@ body.paper { background: var(--fg); color: var(--bg); }
 /* Arabic typography: use native Arabic fonts instead of the Latin-only Archivo face. */
 body.nuld-rtl {
   font-family: "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+  font-stretch: normal;
   letter-spacing: normal;
   word-spacing: normal;
   line-height: 1.9;
 }
+.nuld-rtl :is(h1, h2, h3) { font-stretch: normal; line-height: 1.35; }
+.nuld-rtl p, .nuld-rtl li { text-wrap: pretty; }
 .nuld-rtl :is(p, li, td, th, button, a, label, h1, h2, h3, figcaption, span) {
   letter-spacing: normal;
   word-spacing: normal;
@@ -240,29 +243,26 @@ body.nuld-rtl {
   gap: 10px;
   padding-block: 28px 40px;
   text-align: right;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--edge);
   color: var(--text2);
   font-size: 14px;
 }
 .nuld-rtl .site a {
-  color: var(--accent);
+  color: var(--acid);
   font-weight: 700;
 }
 
-/* Theme-aware Arabic text contrast: the halo follows the active page palette. */
+/* Theme-aware Arabic contrast. The halo uses the active theme's own background colours. */
 .nuld-rtl :is(h1, h2, h3, p, li, figcaption, .lead, .caption, .site span) {
-  text-shadow:
-    0 1px 0 color-mix(in srgb, var(--bg) 82%, transparent),
-    0 0 .42em color-mix(in srgb, var(--bg) 58%, transparent);
+  text-shadow: 0 1px 1px var(--bg), 0 0 5px var(--bg);
 }
-.nuld-rtl :is(a, button, .lang-switch) {
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--bg) 72%, transparent);
+.nuld-rtl :is(a:not(.btn), .lang-switch) {
+  text-shadow: 0 1px 2px var(--bg);
 }
+.nuld-rtl :is(.btn, button.btn, code, pre, .mono) { text-shadow: none; }
 .paper.nuld-rtl :is(h1, h2, h3, p, li, figcaption, .lead, .caption, .site span) {
-  text-shadow:
-    0 1px 0 color-mix(in srgb, var(--fg) 82%, transparent),
-    0 0 .42em color-mix(in srgb, var(--fg) 58%, transparent);
+  text-shadow: 0 1px 1px var(--fg), 0 0 5px var(--fg);
 }
-.paper.nuld-rtl :is(a, button, .lang-switch) {
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--fg) 72%, transparent);
+.paper.nuld-rtl :is(a:not(.btn), .lang-switch) {
+  text-shadow: 0 1px 2px var(--fg);
 }
