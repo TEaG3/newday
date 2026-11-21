@@ -3,8 +3,8 @@
 // (textured draws modulate a white texel by that colour). Alpha: 0..0x80, set by gfx_alpha (0x80 = opaque).
 #define GFX_W 1280
 #define GFX_H 720
-#define GFX_GLYPHS 167 // ASCII 32-126, then GFX_EXTRAS Latin-1 letters (font_extras, tools/font.py)
-#define GFX_EXTRAS 72
+#define GFX_EXTRAS 158 // Latin UI accents + Arabic presentation forms + Arabic punctuation
+#define GFX_GLYPHS (95 + GFX_EXTRAS) // ASCII 32-126, then font_extras (font_data.c)
 
 typedef struct { unsigned long long tex0; } gfx_tex;
 typedef struct { unsigned short u, v; unsigned char w, h; signed char xo, yo; unsigned char adv; } gfx_glyph;
