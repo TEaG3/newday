@@ -88,6 +88,13 @@
     "The splash counts the games on your home server.":"شاشة البداية تحصي الألعاب الموجودة على الخادم المنزلي.","Fixes a black screen after the splash.":"إصلاح مشكلة الشاشة السوداء بعد شاشة البداية.","New since v1.2.5":"الجديد منذ v1.2.5","Faster covers and achievements":"تسريع تحميل الأغلفة والإنجازات","Covers for apps.":"أغلفة التطبيقات.","Save icons for the games on your home server":"أيقونات الحفظ لألعاب الخادم المنزلي","Achievement unlocks show up in the game.":"ظهور إشعارات فتح الإنجازات داخل اللعبة.","The in-game menu can no longer leave a game frozen.":"قائمة اللعبة لم تعد تترك اللعبة متوقفة.","Achievements work again.":"عادت الإنجازات للعمل.","Fix for a freeze with achievements on.":"إصلاح التجمّد عند تفعيل الإنجازات."
   });
 
+  Object.assign(dict, {
+    "A console menu for the PlayStation&nbsp;2, running on the PlayStation 2.":"مشغّل ألعاب وواجهة إدارة تعمل مباشرة على جهاز PlayStation 2.",
+    "Covers, 3D save icons, achievements, an in-game menu and games from a server at home. The console fetches and builds all of it; there is nothing to prepare on a PC.":"يوفّر المشغّل أغلفة الألعاب، وأيقونات حفظ ثلاثية الأبعاد، والإنجازات، وقائمة داخل الألعاب، وإمكانية تشغيل الألعاب من خادم منزلي. ينفّذ جهاز PS2 هذه المهام بنفسه، من دون الحاجة إلى إعدادها مسبقاً على الكمبيوتر.",
+    "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.":"هذه معاينة للشاشة الرئيسية للمشغّل بسماته الاثنتي عشرة داخل المتصفح. اضغط على جانبي الغلاف للتنقل بين الألعاب.",
+    "Every row happens on the PS2 itself. The numbers were measured on a slim PS2 (SCPH-75001).":"تُنفّذ جميع الوظائف المذكورة على جهاز PS2 نفسه. أُخذت القياسات على جهاز PS2 Slim، الطراز SCPH-75001."
+  });
+
   const key = s => s.replace(/\s+/g, " ").trim();
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
   function apply() {
