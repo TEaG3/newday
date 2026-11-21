@@ -30,6 +30,22 @@
 #include "igr.h"
 #include "padpatterns.h"
 
+// The PS2SDK 2.0 libkernel archive calls BSD strlcpy, but does not export it.
+// This local implementation keeps Neutrino's in-game reset ELF linkable on current PS2SDK.
+size_t strlcpy(char *dst, const char *src, size_t size)
+{
+    size_t length = 0;
+    while (src[length])
+        length++;
+    if (size) {
+        size_t copy = length < size - 1 ? length : size - 1;
+        for (size_t i = 0; i < copy; i++)
+            dst[i] = src[i];
+        dst[copy] = '\0';
+    }
+    return length;
+}
+
 void DisableGSM(void); // gsm_api.c
 void Remove_Kernel_Hooks(void); // iopmgr.c
 extern unsigned char resetspu_irx[]; // resetspu/, built by tools/build_neutrino.sh
