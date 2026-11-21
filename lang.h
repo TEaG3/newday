@@ -5,4 +5,5 @@
 enum { LANG_ES, LANG_EN, LANG_PT, LANG_AR, LANG_N };
 extern int lang;
 const char *lang_pt(const char *en);
-#define L(es, en) (lang == LANG_EN ? (en) : lang == LANG_PT ? lang_pt(en) : (es))
+const char *lang_ar(const char *en);
+#define L(es, en) (lang == LANG_EN ? (en) : lang == LANG_PT ? lang_pt(en) : lang == LANG_AR ? lang_ar(en) : (es))
