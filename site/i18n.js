@@ -671,6 +671,26 @@
   Object.assign(dict, {
     "USB root ├── launcher.elf ├── neutrino/ the loader, with NULD's in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by NULD: the covers it downloads └── nuld/ written by NULD: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة NULD داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه NULD لحفظ الأغلفة التي ينزّلها\n└── nuld/         ينشئه NULD لحفظ ملفات الإعداد والحالة"
   });
+
+  Object.assign(dict, {
+  "NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0). Called ORBIT until v1.1.": "NULD برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0. كان اسم المشروع ORBIT حتى الإصدار v1.1.",
+  "mass0:/nuld/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)": "mass0:/nuld/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
+  "nombre = Ocaso ; the name in the setup panel base = nuld ; the built-in theme it starts from [colores] ; RRGGBB; what you leave out keeps the base's fondo = 0E0714 panel = 1A0F22 fila = 3A2140 borde = 6A4A66 tenue = 5A4458 texto = FFF4E8 texto2 = E8D2C4 etiqueta = C9A9A0 acento = FF8A3C acero = 2A1830 inverso = 0E0714": "nombre = Ocaso       ; اسم السمة في لوحة الإعداد\\nbase = nuld          ; السمة المدمجة التي تنطلق منها\\n\\n[colores]            ; قيم الألوان بصيغة RRGGBB\\n                     ; أي لون لا تحدده يحتفظ بلون السمة الأساسية\\nfondo = 0E0714\\npanel = 1A0F22\\nfila = 3A2140\\nborde = 6A4A66\\ntenue = 5A4458\\ntexto = FFF4E8\\ntexto2 = E8D2C4\\netiqueta = C9A9A0\\nacento = FF8A3C\\nacero = 2A1830\\ninverso = 0E0714",
+  ", and keeps using": "، ويواصل استخدام",
+  "from this zip's": "الموجود في هذه الحزمة داخل",
+  ", or a folder with": "، أو مجلد يحتوي على",
+  ", named after the title the launcher shows (tools/covers.py makes them from a PNG or JPG with that name).": "، ويكون اسمها مطابقاً لعنوان التطبيق الذي يعرضه المشغّل. تنشئ الأداة tools/covers.py هذه الأغلفة من صورة PNG أو JPG تحمل الاسم نفسه.",
+  "Website, screenshots, manual:": "الموقع ولقطات الشاشة والدليل:",
+  "Website, screenshots, setup guide:": "الموقع ولقطات الشاشة ودليل الإعداد:",
+  ". Turn it off with": ". يمكنك تعطيل التحديث التلقائي عبر",
+  "\"Native\" video mode can give a black screen on some setups: keep the default 480p.": "قد يؤدي نمط الفيديو \"Native\" إلى ظهور شاشة سوداء على بعض الأجهزة؛ لذلك استخدم الدقة الافتراضية 480p.",
+  ", made the first time).": "، ويُنشأ هذا الملف عند الحاجة لأول مرة).",
+  ", needs numpy and Pillow).": "، ويتطلب مكتبتي numpy وPillow).",
+  "RetroAchievements on real hardware": "خدمة RetroAchievements على جهاز حقيقي",
+  "manual": "الدليل",
+  "NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "NULD برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0."
+});
+
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
