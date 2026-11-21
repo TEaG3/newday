@@ -25,10 +25,15 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/src" \
             -w /src \
             ps2dev/ps2dev:latest \
-            sh -lc '
+            sh -c '
               set -eu
               set -o pipefail
+              export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
+              export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"
+              export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
               apk add --no-cache python3 make
+              command -v mips64r5900el-ps2-elf-gcc
+              test -x "$PS2DEV/ee/bin/mips64r5900el-ps2-elf-gcc"
               python3 tools/lang_check.py
               { make clean; make APP=launcher; } 2>&1 | tee build.log
               test -s launcher.elf
