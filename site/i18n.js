@@ -57,6 +57,37 @@
     "Every setting is also in ":"توجد جميع الإعدادات أيضاً في "
   });
 
+
+  Object.assign(dict, {
+    "Fig. 1, the loading screen at every boot, while the console starts the USB, reads the memory cards and loads the covers.":"الشكل 1: شاشة التحميل عند كل بدء تشغيل، أثناء تهيئة USB وقراءة بطاقات الذاكرة وتحميل الأغلفة.",
+    "Fig. 2, the home screen. The hints at the bottom right change with what the selected game allows.":"الشكل 2: الشاشة الرئيسية. تتغير تلميحات الأزرار أسفل اليمين بحسب الخيارات المتاحة للعبة المحددة.",
+    "Fig. 3, △ on a PS2 game.":"الشكل 3: الضغط على △ عند تحديد لعبة PS2.",
+    "Fig. 4, ○ on Black: 56 achievements, with points and progress.":"الشكل 4: الضغط على ○ في لعبة Black؛ تظهر 56 إنجازاً مع النقاط والتقدم.",
+    "Fig. 5, Ocaso, the example theme: eleven colours and one picture.":"الشكل 5: سمة Ocaso كمثال، وتتكون من أحد عشر لوناً وصورة واحدة.",
+    "Move through the library":"التنقل داخل مكتبة الألعاب","Filter: all, PS2, PS1, apps":"تصفية: الكل، PS2، PS1، التطبيقات","Change view: carousel, grid, list":"تغيير نمط العرض: دائري، شبكة، قائمة","Per-game options: video mode, compatibility, memory card":"إعدادات اللعبة: نمط الفيديو والتوافق وبطاقة الذاكرة","The game's achievements, when it has a set":"إنجازات اللعبة إذا كانت مدعومة","Status: each game source (games found, or why it failed), the network, frame times":"الحالة: مصادر الألعاب وعدد المكتشف منها أو سبب الفشل، والشبكة، وأزمنة الإطارات","Switch the menu between 720p and 480i for a CRT TV. It works blind, and is remembered":"التبديل بين 720p و480i لتناسب شاشة CRT. يعمل حتى دون رؤية الشاشة ويُحفظ الاختيار.",
+    "Section and key":"القسم والمفتاح","Values":"القيم","What it does":"الوظيفة","es, en":"es, en, ar","torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of nuld/themes":"أسماء السمات المدمجة أو مجلد سمة داخل nuld/themes","usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs":"مصادر التخزين المدعومة","juego, compartida, fisica":"خاصة باللعبة، مشتركة، فعلية","nativo, 480p, 1080i":"أصلي، 480p، 1080i","720p, 480i":"720p، 480i","dhcp or an IP":"DHCP أو عنوان IP","si, no":"نعم، لا","a button combo":"مجموعة أزرار",
+    "Plug in the network cable (built in on slim PS2s, the network adapter on fat ones). At boot NULD downloads the covers it is missing from xlenore/ps2-covers and keeps them on the USB, so later boots work offline.":"صل كابل الشبكة (مدمج في أجهزة PS2 Slim، أو عبر محول الشبكة في الأجهزة السميكة). عند بدء التشغيل ينزّل NULD الأغلفة الناقصة من xlenore/ps2-covers ويحفظها على USB لتعمل لاحقاً دون اتصال.",
+    "in the zip turns PNG or JPG files named by serial (":"داخل ملف ZIP يحوّل صور PNG أو JPG المسماة بالرقم التسلسلي (",
+    ") into the pair of files for":") إلى ملفي الغلاف المطلوبين للمسار",
+    "on its first boot, and the setup wizard (START) edits the main keys for you. Each key is explained in the file. The main ones:":"عند أول تشغيل، ويتيح معالج الإعداد (START) تعديل المفاتيح الأساسية. يشرح الملف وظيفة كل مفتاح، وأهمها:",
+    "Language of the menus and of the file's comments":"لغة القوائم والتعليقات داخل الملف","Where to look for games, comma-separated":"مصادر البحث عن الألعاب، مفصولة بفواصل","A virtual card per game, one shared, or the physical one":"بطاقة افتراضية لكل لعبة، أو بطاقة مشتركة، أو البطاقة الفعلية","DHCP, or a fixed IP with mascara, puerta and dns":"DHCP أو عنوان IP ثابت مع قناع الشبكة والبوابة وDNS","RetroAchievements through the xeRAbora client":"إنجازات RetroAchievements عبر عميل xeRAbora","The in-game menu's combo; also reiniciar and apagar":"اختصار فتح قائمة اللعبة، إضافة إلى إعادة التشغيل وإيقاف الجهاز",
+    "on your memory card, and the setup wizard can set FreeMcBoot to start it (autoboot, a button, or an item in FMCB's menu). Then":"على بطاقة الذاكرة، ويمكن لمعالج الإعداد ضبط FreeMcBoot لتشغيله تلقائياً أو بزر أو من قائمة FMCB. بعد ذلك فإن خيار",
+    "in the in-game menu (L1+L2+R1+R2+START+SELECT) reboots the console straight into NULD. L1+L2+R1+R2+L3+R3 powers it off.":"في قائمة اللعبة (L1+L2+R1+R2+START+SELECT) يعيد تشغيل الجهاز مباشرة إلى NULD. أما L1+L2+R1+R2+L3+R3 فيوقف تشغيله.",
+    "The card at the top right shows the game's newest save and its 3D icon: from the virtual card, or from the physical one in slot 1 when you choose it here.":"تعرض البطاقة أعلى اليمين أحدث عملية حفظ للعبة وأيقونتها ثلاثية الأبعاد؛ من البطاقة الافتراضية أو من البطاقة الفعلية في المنفذ 1 عند اختيارها.",
+    "client and sign in to your RetroAchievements account.":"ثم سجّل الدخول إلى حسابك في RetroAchievements.",
+    "empty to find the client on the network, or set its IP.":"فارغاً ليبحث عن العميل في الشبكة، أو أدخل عنوان IP الخاص به.",
+    "folder has everything:":"يحتوي على جميع الملفات اللازمة:",
+    "Allow UDP 62966 and TCP 18290 in the firewall. On the PS2:":"اسمح بالمنفذين UDP 62966 وTCP 18290 في جدار الحماية. على جهاز PS2:",
+    "Other sources":"مصادر أخرى","Add them to":"أضفها إلى","Updates":"التحديثات","Coming from ORBIT (v1.1 or older): the first boot moves":"إذا كنت قادماً من ORBIT (الإصدار v1.1 أو أقدم)، فسينقل التشغيل الأول المجلد",
+    "Themes":"السمات","Since v1.3 NULD has twelve themes: START, then":"منذ الإصدار v1.3، يتضمن NULD اثنتي عشرة سمة: اضغط START ثم",
+    "keeps it. A theme has its own colours, background, loading screen and way of marking the selected game; the layout is the same in all of them.":"لحفظها. لكل سمة ألوانها وخلفيتها وشاشة التحميل وطريقة تمييز اللعبة المحددة، مع بقاء تخطيط الواجهة موحداً.",
+    "Make your own":"أنشئ سمتك الخاصة","A theme is a folder with a text file and, if you want, a picture. The":"السمة عبارة عن مجلد يحتوي على ملف نصي وصورة اختيارية. يقوم",
+    "Themes: twelve looks for the launcher, a selector in the setup panel, and themes anybody can make.":"اثنتا عشرة هيئة للمشغّل، ومحدد للسمات في لوحة الإعداد، وإمكانية إنشاء سمات مخصصة.",
+    "Twelve themes.":"اثنتا عشرة سمة.","Theme selector.":"محدد السمات.","Themes from folders.":"السمات من المجلدات.","Theme maker.":"مصمم السمات.","Saving the setup no longer restarts NULD.":"حفظ الإعدادات لم يعد يعيد تشغيل NULD.","A loading sound for the new themes":"صوت تحميل للسمات الجديدة",
+    "Portuguese interface.":"واجهة باللغة البرتغالية.","PlayStation 2 logo before the games.":"إظهار شعار PlayStation 2 قبل الألعاب.","Apps from your home server.":"تشغيل التطبيقات من الخادم المنزلي.","OPL's ART folder (#16).":"مجلد ART الخاص بـ OPL (#16).","Square covers for PS1 games and apps (#27).":"أغلفة مربعة لألعاب PS1 والتطبيقات (#27).","Games on a udpfs server reconnect after a lost link.":"تُعيد الألعاب الموجودة على خادم udpfs الاتصال بعد انقطاع الرابط.",
+    "The splash counts the games on your home server.":"شاشة البداية تحصي الألعاب الموجودة على الخادم المنزلي.","Fixes a black screen after the splash.":"إصلاح مشكلة الشاشة السوداء بعد شاشة البداية.","New since v1.2.5":"الجديد منذ v1.2.5","Faster covers and achievements":"تسريع تحميل الأغلفة والإنجازات","Covers for apps.":"أغلفة التطبيقات.","Save icons for the games on your home server":"أيقونات الحفظ لألعاب الخادم المنزلي","Achievement unlocks show up in the game.":"ظهور إشعارات فتح الإنجازات داخل اللعبة.","The in-game menu can no longer leave a game frozen.":"قائمة اللعبة لم تعد تترك اللعبة متوقفة.","Achievements work again.":"عادت الإنجازات للعمل.","Fix for a freeze with achievements on.":"إصلاح التجمّد عند تفعيل الإنجازات."
+  });
+
   const key = s => s.replace(/\s+/g, " ").trim();
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
   function apply() {
