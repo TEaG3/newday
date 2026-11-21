@@ -1,7 +1,7 @@
 // Fills the downloads from the latest GitHub release: the version, the zip's name and size, and the links straight
 // to the file. Without JavaScript, or if GitHub does not answer, they keep pointing at the releases page.
 (function () {
-  fetch("https://api.github.com/repos/danielnuld/nuld/releases/latest")
+  fetch("https://api.github.com/repos/TEaG3/newday/releases/latest")
     .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function (rel) {
       var v = String(rel.tag_name || "").replace(/^v/, ""), assets = rel.assets || [], zip = null;
