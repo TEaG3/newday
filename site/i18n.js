@@ -586,6 +586,45 @@
 });
 
   const key = s => s.replace(/\s+/g, " ").trim();
+  const attributeDict = {
+    "aria-label": {
+      "Main":"القائمة الرئيسية",
+      "Theme":"السمة",
+      "View":"طريقة العرض",
+      "Previous screens":"اللقطات السابقة",
+      "Next screens":"اللقطات التالية",
+      "Screenshots, scrolls sideways":"لقطات الشاشة؛ مرّر جانبياً لاستعراضها",
+      "NULD's home screen, animated: covers in a carousel, a grid or a list, in the theme picked below":"الشاشة الرئيسية لمشغّل NULD، مع معاينة متحركة للأغلفة في العرض الدائري أو الشبكة أو القائمة، وفق السمة المحددة أدناه.",
+      "NULD's loading screen, animated: a wire sphere over a perspective floor and the four logo variants taking turns":"شاشة تحميل NULD المتحركة: كرة شبكية فوق أرضية بمنظور ثلاثي الأبعاد، مع ظهور شعارات NULD الأربعة بالتناوب.",
+      "Screenshot viewer":"عارض لقطات الشاشة",
+      "Preview of NULD's home screen with your theme, animated":"معاينة متحركة للشاشة الرئيسية لمشغّل NULD باستخدام سمتك.",
+      "Screen":"الشاشة"
+    },
+    "alt": {
+      "God of War selected: the saves card shows 1 save on memory card 1 with its 3D icon":"لعبة God of War محددة؛ تعرض بطاقة الحفظ عملية حفظ واحدة على بطاقة الذاكرة 1 مع أيقونتها ثلاثية الأبعاد.",
+      "Black selected, with an Achievements 56 tag next to its serial, media, source and video tags":"لعبة Black محددة، وتظهر بجانب رقمها التسلسلي ووسوم الوسيط والمصدر والفيديو علامة الإنجازات 56.",
+      "Achievements panel for Black: 0 of 56, 0 of 600 points, each achievement with its points":"لوحة إنجازات لعبة Black: تم فتح 0 من أصل 56 إنجازاً، و0 من أصل 600 نقطة، مع عرض نقاط كل إنجاز.",
+      "Per-game options panel: video mode, video compatibility, memory card and Neutrino's compatibility modes":"لوحة إعدادات اللعبة: نمط الفيديو وتوافقه وبطاقة الذاكرة وأنماط التوافق في Neutrino.",
+      "Setup wizard in Spanish: language, game sources, memory card, video, network, boot stub and FreeMcBoot":"معالج الإعداد باللغة الإسبانية: اللغة ومصادر الألعاب وبطاقة الذاكرة والفيديو والشبكة وإعدادات الإقلاع وFreeMcBoot.",
+      "Carousel view: Beyond Good and Evil selected, its tags at the top and the button hints at the bottom":"العرض الدائري مع تحديد لعبة Beyond Good and Evil؛ تظهر وسومها في الأعلى وتلميحات الأزرار في الأسفل."
+    },
+    "title": {
+      "Screenshot viewer":"عارض لقطات الشاشة"
+    }
+  };
+  const pageTitles = {
+    "NULD, a game launcher for the PlayStation 2":"NULD — مشغّل ألعاب لجهاز PlayStation 2",
+    "NULD manual":"دليل NULD",
+    "NULD theme maker":"مصمم سمات NULD",
+    "NULD changelog":"سجل تغييرات NULD"
+  };
+  const metaDict = {
+    "NULD is a game launcher that runs on a real PlayStation 2: covers downloaded by the console, 3D save icons, virtual memory cards, an in-game menu, games from a home server and RetroAchievements on hardware.":"NULD مشغّل ألعاب يعمل مباشرة على جهاز PlayStation 2، ويوفّر تنزيل الأغلفة وأيقونات الحفظ ثلاثية الأبعاد وبطاقات الذاكرة الافتراضية وقائمة داخل اللعبة وتشغيل الألعاب من خادم منزلي ودعم RetroAchievements على الجهاز.",
+    "Covers, 3D save icons, an in-game menu, a home game server and RetroAchievements, all running on the PS2.":"أغلفة الألعاب وأيقونات الحفظ ثلاثية الأبعاد وقائمة داخل اللعبة وخادم ألعاب منزلي ودعم RetroAchievements؛ جميعها تعمل على جهاز PS2.",
+    "How to install and set up NULD, the PlayStation 2 game launcher: the USB drive, the buttons, config.ini, covers, achievements, the home game server and every game source.":"طريقة تثبيت NULD وإعداده على جهاز PlayStation 2: وحدة USB وأزرار التحكم وملف config.ini وأغلفة الألعاب والإنجازات والخادم المنزلي وجميع مصادر الألعاب.",
+    "Make a theme for NULD, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.":"أنشئ سمة لمشغّل NULD في المتصفح: اختر الألوان وأضف صورة خلفية، ثم عاينها على الشاشة الرئيسية ونزّل مجلدها إلى وحدة USB."
+  };
+  const originalTitle = document.title;
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
   function apply() {
     const ar = lang === "ar";
@@ -604,7 +643,26 @@
         node.nodeValue = leading + dict[originalKey] + trailing;
       } else node.nodeValue = original;
     }
-    document.querySelectorAll("[data-nuld-lang]").forEach(b => b.textContent = ar ? "English" : "العربية");
+    document.querySelectorAll("[data-nuld-lang]").forEach(b => {
+      const label = ar ? "English" : "العربية";
+      if (b.textContent !== label) b.textContent = label;
+    });
+    document.title = ar ? (pageTitles[originalTitle] || originalTitle) : originalTitle;
+
+    for (const attr of ["aria-label", "alt", "title", "placeholder"]) {
+      document.querySelectorAll("[" + attr + "]").forEach(el => {
+        const store = "nuldOriginal" + attr.replace(/(^|-)([a-z])/g, (_, dash, ch) => ch.toUpperCase());
+        if (!el.dataset[store]) el.dataset[store] = el.getAttribute(attr);
+        const original = el.dataset[store];
+        const translated = attributeDict[attr] && attributeDict[attr][key(original)];
+        el.setAttribute(attr, ar && translated ? translated : original);
+      });
+    }
+    document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(el => {
+      if (!el.dataset.nuldOriginalContent) el.dataset.nuldOriginalContent = el.getAttribute("content") || "";
+      const original = el.dataset.nuldOriginalContent;
+      el.setAttribute("content", ar && metaDict[original] ? metaDict[original] : original);
+    });
   }
   document.addEventListener("DOMContentLoaded", () => {
     const nav = document.querySelector(".nav .wrap, .runhead");
@@ -615,5 +673,11 @@
       nav.append(b);
     }
     apply();
+    if (typeof MutationObserver !== "undefined") {
+      const dynamicTextObserver = new MutationObserver(records => {
+        if (records.some(record => record.addedNodes && record.addedNodes.length)) apply();
+      });
+      dynamicTextObserver.observe(document.body, { childList: true, subtree: true });
+    }
   });
 })();
