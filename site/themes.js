@@ -163,6 +163,7 @@
       : 'With a picture, check the title and the legend against it in the preview: only the list gets a pane behind it.');
     $('warnings').innerHTML = w.map(t => `<li>${t}</li>`).join('');
   }
+  document.addEventListener('nuld:languagechange', warnings);
 
   // ---- the preview: preview.js draws the home; the setup panel over it is drawn here, with the palette as it is ----
   const UI = '500 17px "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif', MONO = '500 14px "IBM Plex Mono", monospace';
