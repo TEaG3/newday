@@ -248,3 +248,21 @@ body.nuld-rtl {
   color: var(--accent);
   font-weight: 700;
 }
+
+/* Theme-aware Arabic text contrast: the halo follows the active page palette. */
+.nuld-rtl :is(h1, h2, h3, p, li, figcaption, .lead, .caption, .site span) {
+  text-shadow:
+    0 1px 0 color-mix(in srgb, var(--bg) 82%, transparent),
+    0 0 .42em color-mix(in srgb, var(--bg) 58%, transparent);
+}
+.nuld-rtl :is(a, button, .lang-switch) {
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--bg) 72%, transparent);
+}
+.paper.nuld-rtl :is(h1, h2, h3, p, li, figcaption, .lead, .caption, .site span) {
+  text-shadow:
+    0 1px 0 color-mix(in srgb, var(--fg) 82%, transparent),
+    0 0 .42em color-mix(in srgb, var(--fg) 58%, transparent);
+}
+.paper.nuld-rtl :is(a, button, .lang-switch) {
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--fg) 72%, transparent);
+}
