@@ -667,6 +667,10 @@
   "Games from": "مصادر الألعاب"
 });
 
+  delete dict.to;
+  Object.assign(dict, {
+    "USB root ├── launcher.elf ├── neutrino/ the loader, with NULD's in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by NULD: the covers it downloads └── nuld/ written by NULD: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة NULD داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه NULD لحفظ الأغلفة التي ينزّلها\n└── nuld/         ينشئه NULD لحفظ ملفات الإعداد والحالة"
+  });
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
