@@ -624,6 +624,33 @@
     "How to install and set up NULD, the PlayStation 2 game launcher: the USB drive, the buttons, config.ini, covers, achievements, the home game server and every game source.":"طريقة تثبيت NULD وإعداده على جهاز PlayStation 2: وحدة USB وأزرار التحكم وملف config.ini وأغلفة الألعاب والإنجازات والخادم المنزلي وجميع مصادر الألعاب.",
     "Make a theme for NULD, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.":"أنشئ سمة لمشغّل NULD في المتصفح: اختر الألوان وأضف صورة خلفية، ثم عاينها على الشاشة الرئيسية ونزّل مجلدها إلى وحدة USB."
   };
+  Object.assign(attributeDict["aria-label"], {
+    "Language":"اللغة",
+    "Theme":"السمة",
+    "Colour picker":"أداة اختيار اللون",
+    "Screen":"الشاشة"
+  });
+  Object.assign(attributeDict.alt, {
+    "Logo":"الشعار",
+    "NULD logo":"شعار NULD"
+  });
+  Object.assign(attributeDict.title, {
+    "Switch language":"تغيير اللغة"
+  });
+  Object.assign(dict, {
+    "Ground, hex":"الخلفية، رمز اللون",
+    "Panel, hex":"اللوحة، رمز اللون",
+    "Row, hex":"الصف، رمز اللون",
+    "Edge, hex":"الحافة، رمز اللون",
+    "Dim, hex":"باهت، رمز اللون",
+    "Text, hex":"النص، رمز اللون",
+    "Text 2, hex":"النص الثانوي، رمز اللون",
+    "Label, hex":"التسمية، رمز اللون",
+    "Accent, hex":"لون التمييز، رمز اللون",
+    "Steel, hex":"اللون المعدني، رمز اللون",
+    "Inverse, hex":"اللون المعاكس، رمز اللون"
+  });
+
   const originalTitle = document.title;
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
   function apply() {
