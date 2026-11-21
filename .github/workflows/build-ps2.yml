@@ -28,10 +28,9 @@ jobs:
             sh -lc '
               set -eu
               set -o pipefail
-              apk add --no-cache python3
+              apk add --no-cache python3 make
               python3 tools/lang_check.py
-              make clean
-              make APP=launcher 2>&1 | tee build.log
+              { make clean; make APP=launcher; } 2>&1 | tee build.log
               test -s launcher.elf
               ls -lh launcher.elf
             '
