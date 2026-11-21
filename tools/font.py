@@ -18,8 +18,9 @@ BASE = "áéíóúñÁÉÍÓÚÑü¿¡·ãõçâêôàÃÕÇÂÊÔÀ"  # Spanish
 # gfx.c shapes Arabic letters into these code points before drawing. Arabic punctuation is also included.
 ARABIC_FORMS = "".join(chr(cp) for cp in range(0xFE80, 0xFEFD))
 ARABIC_PUNCT = "\u060c\u061b\u061f"  # Arabic comma, semicolon and question mark
+LATIN_MORE = "èœŒ"  # retained for European game titles; non-UI fonts fall back to ASCII
 ARABIC_CHARS = ARABIC_FORMS + ARABIC_PUNCT
-EXTRAS = BASE + ARABIC_CHARS
+EXTRAS = BASE + LATIN_MORE + ARABIC_CHARS
 ARABIC_SET = set(ARABIC_CHARS)
 ARABIC_FONT = FONTS / "NotoSansArabicUI.ttf"
 SPECIAL = {"\u00df": "s", "\u00e6": "a", "\u00c6": "A", "\u0153": "o", "\u0152": "O", "\u00f8": "o", "\u00d8": "O", "\u00f0": "d", "\u00d0": "D",
@@ -124,7 +125,7 @@ def c_source(fonts, atlas):
 
 def selftest():
     assert len(BASE) == 30 and len(ARABIC_FORMS) == 125 and len(ARABIC_PUNCT) == 3
-    assert len(EXTRAS) == 158 == len(set(EXTRAS)) and all(0x80 <= ord(c) < 0x10000 for c in EXTRAS)
+    assert len(EXTRAS) == 161 == len(set(EXTRAS)) and all(0x80 <= ord(c) < 0x10000 for c in EXTRAS)
     assert all(32 <= ord(fallback(c)) < 127 for c in EXTRAS) and fallback("\u00e8") == "e" and fallback("\u0153") == "o"
     assert ARABIC_FONT.is_file(), "Noto Sans Arabic UI font is required (tools/fetch_arabic_font.py)"
     fonts, atlas, items, pos = build()
