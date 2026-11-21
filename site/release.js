@@ -1,11 +1,11 @@
 // Fills the downloads from the latest GitHub release: the version, the zip's name and size, and the links straight
-// to the file. Without JavaScript, or if GitHub does not answer, they keep pointing at the releases page.
+// to the Arabic file. If GitHub does not answer, the direct release links in the HTML remain available.
 (function () {
   fetch("https://api.github.com/repos/TEaG3/newday/releases?per_page=10")
     .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function (releases) {
       var rel = (releases || []).find(function (item) {
-        return /^arabic-/i.test(item.tag_name || "") && (item.assets || []).some(function (asset) { return /NULD-Arabic-Edition\\.zip$/i.test(asset.name); });
+        return /^arabic-/i.test(item.tag_name || "") && (item.assets || []).some(function (asset) { return asset.name === "NULD-Arabic-Edition.zip"; });
       });
       if (!rel) return Promise.reject("No Arabic NULD release found");
       var v = String(rel.tag_name || "").replace(/^arabic-/i, "").replace(/^v/i, ""), assets = rel.assets || [], zip = null;
