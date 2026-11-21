@@ -122,7 +122,8 @@ static const char *kind_label(int i)
 // views (phase 10): the one shown, restored from estado.ini, which the icon thread rewrites when state_dirty is set
 enum { V_CAROUSEL, V_GRID, V_LIST, V_N };
 static const char *const view_names[LANG_N][V_N] = {{"CARRUSEL", "CUADRÍCULA", "LISTA"}, {"CAROUSEL", "GRID", "LIST"},
-                                                    {"CARROSSEL", "GRADE", "LISTA"}};
+                                                    {"CARROSSEL", "GRADE", "LISTA"},
+                                                    {"كاروسيل", "شبكة", "قائمة"}};
 #define view_name view_names[lang] // phase 18
 static const char *view_key[V_N] = {"carrusel", "cuadricula", "lista"};
 static const int view_icon[V_N] = {UI_CAROUSEL_18, UI_GRID_18, UI_LIST_18};
@@ -938,14 +939,54 @@ static const char *const config_template[LANG_N] = {
 	"; inicialização automática aponta para mc?:/BOOT/NULD.ELF (o launcher a instala).\n"
 	"; botões: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (cima baixo esquerda direita triângulo círculo x quadrado), unidos com +; vazio = desativado\n"
-	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n"};
+	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
+	"; NULD - configuration, read at boot\n"
+	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = ar\n"
+	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
+	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in nuld/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
+	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
+	"; udpbd, udpfs. hdd = internal exFAT disk, or APA with HD Loader partitions. udpbd uses the fixed IP of [red];\n"
+	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
+	"; and APPS stay on the USB.\norigen = usb\n"
+	"; udpfs: IP of the game server running nuld_catalog (lists the games; covers and achievements keep working).\n"
+	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
+	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
+	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
+	"\n[memorycard]\n; memory card for PS2 games: juego = a virtual card per game (VMC/<serial>.bin on the same\n"
+	"; device, created on first play), compartida = one virtual card for all (VMC/NULD.bin), fisica = the one in slot 1.\n"
+	"; Each game can change it with triangle. HD Loader only allows the physical one; an MMCE switches to the game's.\n"
+	"modo = juego\n"
+	"\n[video]\n; video mode of the games: nativo, 480p or 1080i (each game can change it with triangle)\nmodo = 480p\n"
+	"; menu screen: 720p, or 480i for a CRT TV (with 480i the games run native, except the ones you change\n"
+	"; with triangle). L2+R2 together switches it and saves it here, in case nothing shows\npantalla = 720p\n"
+	"\n[sonido]\n; volume of the menu sounds, 0-100\nvolumen = 100\n"
+	"\n[red]\n; ip = dhcp, or a fixed IP with its mascara (netmask), puerta (gateway) and dns; dns also works with dhcp (e.g. 1.1.1.1)\nip = dhcp\nmascara = 255.255.255.0\n"
+	"puerta =\ndns =\n"
+	"\n[portadas]\n; si = download the missing covers from the internet (github xlenore/ps2-covers), with the cable in\n"
+	"descargar = si\n"
+	"\n[actualizaciones]\n; si = at boot, with the network cable in, check for a new NULD version (installed with START)\n"
+	"buscar = si\n"
+	"\n[logros]\n; RetroAchievements: si = ask the home xeRAbora client whether the game has achievements (with the\n"
+	"; network cable in), no = no achievements at all\nactivos = si\n"
+	"; IP of the client; empty = look for it on the network\nservidor =\n"
+	"\n[jellyfin]\n; home Jellyfin server for watching movies (http://IP:8096), with its usuario (user) and clave (password);\n"
+	"; empty = no Jellyfin\nservidor =\nusuario =\nclave =\n"
+	"; subtitles (text, not burned in): languages in order of preference (spa, eng, por...), no = no subtitles;\n"
+	"; during the video, square changes the track\nsubtitulos = spa\n"
+	"\n[igr]\n; from a game (NULD's Neutrino): menu opens the menu over the paused game; reiniciar (restart) and\n"
+	"; apagar (power off) act at once. Restart boots the console as when powered on: FMCB starts NULD again if\n"
+	"; its autoboot points to mc?:/BOOT/NULD.ELF (the launcher installs it).\n"
+	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
+	"; (up down left right triangle circle x square), joined with +; empty = off\n"
+	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
+};
 static ini cfg, games;
 static volatile int cfg_volume = 100;
 static const char *src_why; // the first source that did not come up (toast after the splash)
 static int ra_on;           // [logros] activos (phase 16)
 int lang;                   // [ui] idioma: LANG_ES / EN / PT (phase 18, lang.h)
-static const char *const lang_key[LANG_N] = {"es", "en", "pt"};
-static int lang_of(const char *s) { return !strcasecmp(s, "en") ? LANG_EN : !strcasecmp(s, "pt") ? LANG_PT : LANG_ES; }
+static const char *const lang_key[LANG_N] = {"es", "en", "pt", "ar"};
+static int lang_of(const char *s) { return !strcasecmp(s, "en") ? LANG_EN : !strcasecmp(s, "pt") ? LANG_PT : !strcasecmp(s, "ar") ? LANG_AR : LANG_ES; }
 static int w_first;         // no config.ini at boot: the setup wizard opens by itself (#15)
 static int crt;             // [video] pantalla = 480i: menu in 480i / 576i, games native by default
 
@@ -1011,7 +1052,8 @@ static void load_config(void) // loader thread, before the splash sound
 // video: 0 = default (config), 1 nativo, 2 480p (-gsm=fp2), 3 1080i (-gsm=1080ix2); Neutrino README for -gsm / -gc
 static const char *vid_key[4] = {NULL, "nativo", "480p", "1080i"};
 static const char *const vid_labels[LANG_N][4] = {{"Predeterminado", "Nativo", "480p", "1080i"}, {"Default", "Native", "480p", "1080i"},
-                                                 {"Padrão", "Nativo", "480p", "1080i"}};
+                                                 {"Padrão", "Nativo", "480p", "1080i"},
+                                                 {"افتراضي", "أصلي", "480p", "1080i"}};
 #define vid_label vid_labels[lang]
 static const char gc_modes[] = "02357";
 static const char *const gc_name_l[LANG_N][5] = {{"Lectura rápida (0)", "Lectura síncrona (2)", "Sin hooks de syscalls (3)",
@@ -1019,13 +1061,15 @@ static const char *const gc_name_l[LANG_N][5] = {{"Lectura rápida (0)", "Lectur
                                                  {"Fast reads (0)", "Synchronous reads (2)", "No syscall hooks (3)",
                                                   "Emulate DVD-DL (5)", "Fix buffer overrun (7)"},
                                                  {"Leitura rápida (0)", "Leitura síncrona (2)", "Sem hooks de syscalls (3)",
-                                                  "Emular DVD-DL (5)", "Corrigir buffer overrun (7)"}};
+                                                  "Emular DVD-DL (5)", "Corrigir buffer overrun (7)"},
+                                                  {"قراءة سريعة (0)", "قراءة متزامنة (2)", "بدون خطافات syscalls (3)", "محاكاة DVD-DL (5)", "إصلاح تجاوز المخزن (7)"}};
 #define gc_names gc_name_l[lang]
 enum { OPT_VIDEO, OPT_COMPAT, OPT_MC, OPT_GC, OPT_ROWS = OPT_GC + 5 };
 static const char *mc_key[MC_N] = {NULL, "juego", "compartida", "fisica"};
 static const char *const mc_labels[LANG_N][MC_N] = {{"Predeterminada", "Virtual del juego", "Virtual compartida", "Física (ranura 1)"},
                                                    {"Default", "Per-game virtual", "Shared virtual", "Physical (slot 1)"},
-                                                   {"Padrão", "Virtual do jogo", "Virtual compartilhado", "Físico (slot 1)"}};
+                                                   {"Padrão", "Virtual do jogo", "Virtual compartilhado", "Físico (slot 1)"},
+                                                    {"افتراضي", "افتراضي لكل لعبة", "افتراضي مشترك", "مادي (فتحة 1)"}};
 #define mc_label mc_labels[lang]
 
 static int vid_index(const char *s)
@@ -1686,7 +1730,8 @@ static int gtop, ltop;           // first grid row / first list row on screen (t
 // filters (phase 11, L1/R1): views lay out positions, not indices; pos[i] < 0 = hidden (fades where it is)
 enum { F_ALL, F_PS2, F_PS1, F_APP, F_N };
 static const char *const filter_names[LANG_N][F_N] = {{"TODO", "PS2", "PS1", "APPS"}, {"ALL", "PS2", "PS1", "APPS"},
-                                                     {"TUDO", "PS2", "PS1", "APPS"}};
+                                                     {"TUDO", "PS2", "PS1", "APPS"},
+                                                     {"الكل", "PS2", "PS1", "تطبيقات"}};
 #define filter_name filter_names[lang]
 static int filter, pos[MAXC], order[MAXC], nord;
 
@@ -1864,6 +1909,7 @@ static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE,
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
 static const char *const w_mcm[3] = {"juego", "compartida", "fisica"}, *const w_vid[3] = {"nativo", "480p", "1080i"};
 static const char *const w_lk[] = {"Auto", "R1", "L1", "R2", "L2", "Triangle", "Circle", "Square", "Cross", "Start", "Select"};
+static const char *const w_lk_ar[] = {"تلقائي", "R1", "L1", "R2", "L2", "مثلث", "دائرة", "مربع", "إكس", "Start", "Select"};
 static const char *const w_lk_es[] = {"Auto", "R1", "L1", "R2", "L2", "Triángulo", "Círculo", "Cuadrado", "X", "Start", "Select"};
 static const char *const w_lk_pt[] = {"Auto", "R1", "L1", "R2", "L2", "Triângulo", "Círculo", "Quadrado", "X", "Start", "Select"};
 #define W_NLK 11 // w_val[W_FMCB]: 0 no change, 1 autoboot, 2..W_NLK a button, W_NLK + 1 an item in FMCB's menu
@@ -2005,7 +2051,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 	int v = w_val[r], fp = w_fmcb_card();
 	char cur[64] = "";
 	switch (r) {
-	case W_LANG: snprintf(a, n, "%s", v == LANG_EN ? "English" : v == LANG_PT ? "Português" : "Español"); break;
+	case W_LANG: snprintf(a, n, "%s", v == LANG_EN ? "English" : v == LANG_PT ? "Português" : v == LANG_AR ? "العربية" : "Español"); break;
 	case W_THEME: snprintf(a, n, "%s", themes[v].name); break;
 	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Virtual por juego", "Per-game virtual") : v == 1 ? L("Virtual compartida", "Shared virtual") : L("Física", "Physical")); break;
 	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Nativo", "Native") : w_vid[v]); break;
@@ -2016,7 +2062,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 		else if (fp < 0 || w_val[W_CARD] < 0) snprintf(a, n, L("FreeMcBoot no encontrado", "FreeMcBoot not found"));
 		else if (!v) snprintf(a, n, L("Sin cambios (auto: %s)", "No change (auto: %s)"), cnf_get(fmcb_txt[fp], "LK_Auto_E1", cur, sizeof(cur)) ? cur : "-");
 		else if (v == 1) snprintf(a, n, L("Autoarranque", "Autoboot"));
-		else if (v <= W_NLK) snprintf(a, n, L("Botón %s", "Button %s"), (lang == LANG_EN ? w_lk : lang == LANG_PT ? w_lk_pt : w_lk_es)[v - 1]);
+		else if (v <= W_NLK) snprintf(a, n, L("Botón %s", "Button %s"), (lang == LANG_EN ? w_lk : lang == LANG_PT ? w_lk_pt : lang == LANG_AR ? w_lk_ar : w_lk_es)[v - 1]);
 		else snprintf(a, n, L("Entrada en el menú de FMCB", "Item in FMCB's menu"));
 		break;
 	case W_UPD: snprintf(a, n, L("Actualizar NULD a %s", "Update NULD to %s"), upd.version); break;
@@ -2087,7 +2133,8 @@ static void wiz_panel(void) // design: the △ options panel
 	static const char *const lab[LANG_N][W_ROWS] = {
 		{"", "Idioma", "Tema", "Juegos desde", "Memory card", "Vídeo", "Red", "Arrancador en", "FreeMcBoot", ""},
 		{"", "Language", "Theme", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""},
-		{"", "Idioma", "Tema", "Jogos de", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""}};
+		{"", "Idioma", "Tema", "Jogos de", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""},
+		{"", "اللغة", "الثيم", "مصدر الألعاب", "بطاقة الذاكرة", "الفيديو", "الشبكة", "Boot stub", "FreeMcBoot", ""}};
 	for (int r = r0; r < W_ROWS; r++, ry += 46) {
 		if (r == wiz) sel_row(x + 12, ry, w - 24, 40);
 		if (r == W_SRC) { gfx_text(&gfx_font_ui, x + 28, ry + 8, lab[lang][r], r == wiz ? TEXT : TEXT2), wiz_chips(x + w - 24, ry, r == wiz); continue; }
@@ -2541,7 +2588,12 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	if (neutrino_igr && (igr_exit || (neutrino_menu && igr_menu)))
 		argv[argc++] = "-igrexit=rom0:OSDSYS"; // the reboot: FMCB comes up from the card and autoboots NULD
 	if (neutrino_igr && igr_off) snprintf(igr[1], sizeof(igr[1]), "-igroff=0x%04x", igr_off), argv[argc++] = igr[1];
-	if (neutrino_lang && neutrino_menu && igr_menu && lang) argv[argc++] = lang == LANG_EN ? "-igrlang=en" : "-igrlang=pt"; // phase 18
+	if (neutrino_lang && neutrino_menu && igr_menu) {
+		if (lang == LANG_EN) argv[argc++] = "-igrlang=en";
+		else if (lang == LANG_PT) argv[argc++] = "-igrlang=pt";
+		else if (lang == LANG_ES) argv[argc++] = "-igrlang=es";
+		// LANG_AR: leave Neutrino at its default language.
+	}
 	if (ra) argv[argc++] = "-cfg=ra", argv[argc++] = ra_arg; // phase 16b: the achievements agent and its watch list
 	if (!strcasecmp(ini_get(&cfg, "juegos", "logo", "no"), "si")) argv[argc++] = "-logo"; // Neutrino runs the game through rom0:PS2LOGO
 	// HD Loader needs Neutrino's own load stage (hdlfs; nhddl neutrino.c); so do nuld games, whose network stack is
