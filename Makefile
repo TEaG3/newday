@@ -46,8 +46,9 @@ ps2hdd_bdm_irx.c: # the file name has a dash, the C symbol cannot
 %_irx.c:
 	$(PS2SDK)/bin/bin2c $(PS2SDK)/iop/irx/$*.irx $@ $*_irx
 
-test:
-	python3 tools/lang_check.py # every English text has its Portuguese one (lang_pt.c)
+test: font
+	python3 tools/font.py --selftest
+	python3 tools/lang_check.py # checks Portuguese, Arabic, defaults, language tables and the font pipeline
 	cc -std=c99 -Wall -DSELFTEST bench.c -o /tmp/bench_selftest && /tmp/bench_selftest
 	cc -std=c99 -Wall -DSELFTEST gfx.c font_data.c -o /tmp/gfx_selftest && /tmp/gfx_selftest
 	cc -std=gnu99 -Wall -DSELFTEST iso.c -o /tmp/iso_selftest && /tmp/iso_selftest
