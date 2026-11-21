@@ -215,3 +215,36 @@ body.paper { background: var(--fg); color: var(--bg); }
 .nuld-rtl pre,.nuld-rtl code,.nuld-rtl .mono{direction:ltr;unicode-bidi:plaintext;text-align:left}
 .nuld-rtl .btns,.nuld-rtl .tabs{direction:rtl}
 @media(max-width:760px){.lang-switch{margin-inline-start:0}}
+
+
+/* Arabic typography: use native Arabic fonts instead of the Latin-only Archivo face. */
+body.nuld-rtl {
+  font-family: "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+  letter-spacing: normal;
+  word-spacing: normal;
+  line-height: 1.9;
+}
+.nuld-rtl :is(p, li, td, th, button, a, label, h1, h2, h3, figcaption, span) {
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+.nuld-rtl .hero-top p,
+.nuld-rtl .chapter p,
+.nuld-rtl .chapter li,
+.nuld-rtl .site span {
+  line-height: 1.95;
+}
+.nuld-rtl .site {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-block: 28px 40px;
+  text-align: right;
+  border-top: 1px solid var(--line);
+  color: var(--text2);
+  font-size: 14px;
+}
+.nuld-rtl .site a {
+  color: var(--accent);
+  font-weight: 700;
+}
