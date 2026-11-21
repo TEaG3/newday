@@ -119,7 +119,7 @@ def main():
         failed |= not passed
 
     gfx_source = (ROOT / "gfx.c").read_text(encoding="utf-8")
-    arabic_forms = {int(value, 16) for value in re.findall(r'AR\\(0x([0-9A-Fa-f]{4}),', gfx_source)}
+    arabic_forms = {int(value, 16) for value in re.findall(r'AR\(0x([0-9A-Fa-f]{4}),', gfx_source)}
     arabic_supported = arabic_forms | {0x060C, 0x061B, 0x061F}
     arabic_used = {ord(ch) for source in (launcher, (ROOT / "lang_ar.c").read_text(encoding="utf-8"))
                    for ch in source if 0x0600 <= ord(ch) <= 0x06FF}
