@@ -313,13 +313,13 @@ int main(void)
 	text_glyph laid[TEXT_LIMIT];
 	const gfx_font *used = NULL;
 	int shaped_width = 0;
-	s = "\\xD8\\xA8\\xD8\\xA8"; // beh + beh: final form left, initial form right
+	s = "\xD8\xA8\xD8\xA8"; // beh + beh: final form left, initial form right
 	int shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
 	assert(shaped_n == 2 && used == &gfx_font_ui && laid[0].cp == 0xFE90 && laid[1].cp == 0xFE91 && shaped_width > 0);
-	s = "\\xD9\\x84\\xD8\\xA7"; // lam + alef -> isolated lam-alef ligature
+	s = "\xD9\x84\xD8\xA7"; // lam + alef -> isolated lam-alef ligature
 	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
 	assert(shaped_n == 1 && laid[0].cp == 0xFEFB);
-	s = "\\xD9\\x85 USB"; // Latin run must retain left-to-right order
+	s = "\xD9\x85 USB"; // Latin run must retain left-to-right order
 	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
 	assert(shaped_n == 5 && laid[0].cp == 'U' && laid[1].cp == 'S' && laid[2].cp == 'B' && shaped_width > 0);
 	assert(gfx_font_logo.g['N' - 32].w > 0 && gfx_font_logo.g['A' - 32].w == 0); // logo: "NULD" only
@@ -993,7 +993,7 @@ static void text(const gfx_font *requested, int x, int y, const char *s, unsigne
 			}
 			x += g->adv + tracking;
 		}
-		if (*p == '\\n') { p++; x = left; y += f->line_h; }
+		if (*p == '\n') { p++; x = left; y += f->line_h; }
 		else if (*p) continue; // a long line is processed in bounded chunks
 	}
 }
