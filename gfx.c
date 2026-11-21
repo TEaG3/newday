@@ -105,10 +105,12 @@ static int glyph_index(const gfx_font *f, unsigned cp)
 	return -1;
 }
 
+#ifdef SELFTEST
 static int next_glyph(const gfx_font *f, const char **ps)
 {
 	return glyph_index(f, utf8_next(ps));
 }
+#endif
 
 static const arabic_letter *arabic_find(unsigned cp)
 {
@@ -314,6 +316,18 @@ int main(void)
 	s = "\xC3\xA8\xC5\x93";                              // the title font did not: its ASCII base
 	assert(next_glyph(&gfx_font_title, &s) == 'e' - 32 && next_glyph(&gfx_font_title, &s) == 'o' - 32);
 	assert(gfx_text_width(f, "t\xC3\xA9") == f->g['t' - 32].adv + f->g[96].adv && f->g[96].w > 0); // é baked
+	text_glyph laid[TEXT_LIMIT];
+	const gfx_font *used = NULL;
+	int shaped_width = 0;
+	s = "\\xD8\\xA8\\xD8\\xA8"; // beh + beh: final form left, initial form right
+	int shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
+	assert(shaped_n == 2 && used == &gfx_font_ui && laid[0].cp == 0xFE90 && laid[1].cp == 0xFE91 && shaped_width > 0);
+	s = "\\xD9\\x84\\xD8\\xA7"; // lam + alef -> isolated lam-alef ligature
+	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
+	assert(shaped_n == 1 && laid[0].cp == 0xFEFB);
+	s = "\\xD9\\x85 USB"; // Latin run must retain left-to-right order
+	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
+	assert(shaped_n == 5 && laid[0].cp == 'U' && laid[1].cp == 'S' && laid[2].cp == 'B' && shaped_width > 0);
 	assert(gfx_font_logo.g['N' - 32].w > 0 && gfx_font_logo.g['A' - 32].w == 0); // logo: "NULD" only
 	for (int c = 33; c < 127; c++) assert(gfx_font_title.g[c - 32].w > 0 && gfx_font_mono.g[c - 32].w > 0);
 	static unsigned short img[64 * 64], lin[300 * 140], tl[300 * 140];
@@ -951,33 +965,42 @@ void gfx_hstrip(const unsigned short *pix, int w, int h, int y) // w-wide strip 
 	}
 }
 
-static void text(const gfx_font *f, int x, int y, const char *s, unsigned rgb, int chrome)
+static void text(const gfx_font *requested, int x, int y, const char *s, unsigned rgb, int chrome)
 {
-	// chrome: canvas .chrome-text stops; white -> #E3EAF8 above the split, #9FADCB -> #F2F6FF below it
-	int split = y + f->asc * 55 / 100, bot = y + f->line_h;
-	for (int x0 = x; *s;) {
-		if (*s == '\n') { x = x0; y += f->line_h; split += f->line_h; bot += f->line_h; s++; continue; }
-		int gi = next_glyph(f, &s);
-		if (gi < 0) continue;
-		const gfx_glyph *g = &f->g[gi];
-		int gy0 = y + g->yo, gy1 = gy0 + g->h, gx0 = x + g->xo, gx1 = gx0 + g->w;
-		if (!g->w) { x += g->adv + tracking; continue; }
-		if (!chrome)
-			tquad16(font_tex0, gx0 << 4, gy0 << 4, gx1 << 4, gy1 << 4, g->u << 4, g->v << 4, (g->u + g->w) << 4,
-			        (g->v + g->h) << 4, rgb, rgb, 0);
-		else {
-			int top = split - y, all = bot - y;
-			unsigned ca = 0xFFFFFF, cb = 0xE3EAF8, cc = 0x9FADCB, cd = 0xF2F6FF;
-			#define AT(yy) ((yy) < split ? lerp(ca, cb, (yy) - y, top) : lerp(cc, cd, (yy) - split, all - top))
-			int ys = gy0 < split && gy1 > split ? split : gy1; // first part ends at the split when the glyph spans it
-			tquad16(font_tex0, gx0 << 4, gy0 << 4, gx1 << 4, ys << 4, g->u << 4, g->v << 4, (g->u + g->w) << 4,
-			        (g->v + ys - gy0) << 4, AT(gy0), ys == split ? cb : AT(gy1), 0);
-			if (ys < gy1)
-				tquad16(font_tex0, gx0 << 4, ys << 4, gx1 << 4, gy1 << 4, g->u << 4, (g->v + ys - gy0) << 4,
-				        (g->u + g->w) << 4, (g->v + g->h) << 4, cc, AT(gy1), 0);
-			#undef AT
+	const char *p = s;
+	const int left = x;
+	while (*p) {
+		text_glyph items[TEXT_LIMIT];
+		const gfx_font *f = requested;
+		int width = 0;
+		int count = layout_line(requested, &p, items, &width, &f);
+		(void)width;
+		int split = y + f->asc * 55 / 100, bot = y + f->line_h;
+		for (int i = 0; i < count; i++) {
+			int gi = items[i].gi;
+			if (gi < 0) continue;
+			const gfx_glyph *g = &f->g[gi];
+			int gy0 = y + g->yo, gy1 = gy0 + g->h, gx0 = x + g->xo, gx1 = gx0 + g->w;
+			if (!g->w) { x += g->adv + tracking; continue; }
+			if (!chrome)
+				tquad16(font_tex0, gx0 << 4, gy0 << 4, gx1 << 4, gy1 << 4, g->u << 4, g->v << 4, (g->u + g->w) << 4,
+				        (g->v + g->h) << 4, rgb, rgb, 0);
+			else {
+				int top = split - y, all = bot - y;
+				unsigned ca = 0xFFFFFF, cb = 0xE3EAF8, cc = 0x9FADCB, cd = 0xF2F6FF;
+				#define AT(yy) ((yy) < split ? lerp(ca, cb, (yy) - y, top) : lerp(cc, cd, (yy) - split, all - top))
+				int ys = gy0 < split && gy1 > split ? split : gy1;
+				tquad16(font_tex0, gx0 << 4, gy0 << 4, gx1 << 4, ys << 4, g->u << 4, g->v << 4, (g->u + g->w) << 4,
+				        (g->v + ys - gy0) << 4, AT(gy0), ys == split ? cb : AT(gy1), 0);
+				if (ys < gy1)
+					tquad16(font_tex0, gx0 << 4, ys << 4, gx1 << 4, gy1 << 4, g->u << 4, (g->v + ys - gy0) << 4,
+					        (g->u + g->w) << 4, (g->v + g->h) << 4, cc, AT(gy1), 0);
+				#undef AT
+			}
+			x += g->adv + tracking;
 		}
-		x += g->adv + tracking;
+		if (*p == '\\n') { p++; x = left; y += f->line_h; }
+		else if (*p) continue; // a long line is processed in bounded chunks
 	}
 }
 void gfx_text(const gfx_font *f, int x, int y, const char *s, unsigned rgb) { text(f, x, y, s, rgb, 0); }
