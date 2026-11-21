@@ -2590,7 +2590,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		if (lang == LANG_EN) argv[argc++] = "-igrlang=en";
 		else if (lang == LANG_PT) argv[argc++] = "-igrlang=pt";
 		else if (lang == LANG_ES) argv[argc++] = "-igrlang=es";
-		// LANG_AR: leave Neutrino at its default language.
+		else if (lang == LANG_AR) argv[argc++] = "-igrlang=ar"; // Arabic IGR menu uses its generated RTL labels.
 	}
 	if (ra) argv[argc++] = "-cfg=ra", argv[argc++] = ra_arg; // phase 16b: the achievements agent and its watch list
 	if (!strcasecmp(ini_get(&cfg, "juegos", "logo", "no"), "si")) argv[argc++] = "-logo"; // Neutrino runs the game through rom0:PS2LOGO
