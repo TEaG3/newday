@@ -310,6 +310,17 @@ int main(void)
 	s = "\xC3\xA8\xC5\x93";                              // the title font did not: its ASCII base
 	assert(next_glyph(&gfx_font_title, &s) == 'e' - 32 && next_glyph(&gfx_font_title, &s) == 'o' - 32);
 	assert(gfx_text_width(f, "t\xC3\xA9") == f->g['t' - 32].adv + f->g[96].adv && f->g[96].w > 0); // é baked
+	// Every contextual glyph used by the Arabic shaper must exist in the generated UI font.
+	for (unsigned i = 0; i < sizeof(ar_letters) / sizeof(ar_letters[0]); i++) {
+		const arabic_letter *a = &ar_letters[i];
+		assert(glyph_index(&gfx_font_ui, a->iso) >= 95);
+		if (a->fin) assert(glyph_index(&gfx_font_ui, a->fin) >= 95);
+		if (a->ini) assert(glyph_index(&gfx_font_ui, a->ini) >= 95);
+		if (a->med) assert(glyph_index(&gfx_font_ui, a->med) >= 95);
+	}
+	for (unsigned cp = 0xFEFB; cp <= 0xFEFC; cp++) assert(glyph_index(&gfx_font_ui, cp) >= 95);
+	for (unsigned cp = 0x060C; cp <= 0x061F; cp++)
+		if (cp == 0x060C || cp == 0x061B || cp == 0x061F) assert(glyph_index(&gfx_font_ui, cp) >= 95);
 	text_glyph laid[TEXT_LIMIT];
 	const gfx_font *used = NULL;
 	int shaped_width = 0;
