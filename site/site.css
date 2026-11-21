@@ -201,3 +201,17 @@ body.paper { background: var(--fg); color: var(--bg); }
 .log .chapter h3 { margin-top: 22px; }
 .log .chapter h3:first-child { margin-top: 0; }
 .log .chapter ul, .log .chapter ol { padding-left: 20px; margin: 0 0 18px; }
+
+
+/* Arabic localization */
+.lang-switch{margin-inline-start:auto;border:1px solid var(--edge,#59606b);background:transparent;color:var(--fg,#fff);padding:8px 13px;border-radius:999px;font:inherit;cursor:pointer;white-space:nowrap}
+.nuld-rtl{direction:rtl;text-align:right}
+.nuld-rtl .nav .wrap,.nuld-rtl .runhead{direction:rtl}
+.nuld-rtl .nav .wrap{flex-wrap:wrap}
+.nuld-rtl .hero-top,.nuld-rtl .maker-grid{direction:rtl}
+.nuld-rtl .rules td,.nuld-rtl .files td,.nuld-rtl table td,.nuld-rtl table th{text-align:right}
+.nuld-rtl .steps,.nuld-rtl .howto{padding-inline-start:1.5rem;padding-inline-end:0}
+.nuld-rtl .chapter>header{direction:rtl}
+.nuld-rtl pre,.nuld-rtl code,.nuld-rtl .mono{direction:ltr;unicode-bidi:plaintext;text-align:left}
+.nuld-rtl .btns,.nuld-rtl .tabs{direction:rtl}
+@media(max-width:760px){.lang-switch{margin-inline-start:0}}
