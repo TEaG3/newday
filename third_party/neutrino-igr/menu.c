@@ -49,7 +49,7 @@ void GSM_GetDisplay(u64 out[6]); // gsm_api.c (patch_neutrino.py step 5)
 
 // 144 x 54: three items in a 6x8 font at 2x (12x16 cells), 17 px apart
 #define BOX_W  144
-#define BOX_H_AR IGR_AR_BOX_WIDTH
+#define BOX_W_AR IGR_AR_BOX_WIDTH
 #define BOX_H  54 // even: STRIP lines per upload
 #define STRIP  2 // lines per upload
 #define TEXT_X 28
