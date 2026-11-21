@@ -213,7 +213,10 @@ body.paper { background: var(--fg); color: var(--bg); }
 .nuld-rtl .steps,.nuld-rtl .howto{padding-inline-start:1.5rem;padding-inline-end:0}
 .nuld-rtl .chapter>header{direction:rtl}
 .nuld-rtl pre,.nuld-rtl code,.nuld-rtl .mono{direction:ltr;unicode-bidi:plaintext;text-align:left}
-.nuld-rtl .btns,.nuld-rtl .tabs{direction:rtl}
+/* Keep the launcher's control order and preview layout identical to the original English site. */
+.nuld-rtl .btns,.nuld-rtl .tabs{direction:ltr}
+.nuld-rtl .tabs button,.nuld-rtl .btns>.btn{unicode-bidi:plaintext;text-align:center}
+.nuld-rtl #live .screen,.nuld-rtl #live canvas{direction:ltr}
 @media(max-width:760px){.lang-switch{margin-inline-start:0}}
 
 
