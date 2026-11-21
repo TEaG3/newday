@@ -940,53 +940,39 @@ static const char *const config_template[LANG_N] = {
 	"; botões: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (cima baixo esquerda direita triângulo círculo x quadrado), unidos com +; vazio = desativado\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
-	"; NULD - configuration, read at boot\n"
-	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = ar\n"
-	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
-	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in nuld/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
-	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
-	"; udpbd, udpfs. hdd = internal exFAT disk, or APA with HD Loader partitions. udpbd uses the fixed IP of [red];\n"
-	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
-	"; and APPS stay on the USB.\norigen = usb\n"
-	"; udpfs: IP of the game server running nuld_catalog (lists the games; covers and achievements keep working).\n"
-	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
-	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
-	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
-	"\n[memorycard]\n; memory card for PS2 games: juego = a virtual card per game (VMC/<serial>.bin on the same\n"
-	"; device, created on first play), compartida = one virtual card for all (VMC/NULD.bin), fisica = the one in slot 1.\n"
-	"; Each game can change it with triangle. HD Loader only allows the physical one; an MMCE switches to the game's.\n"
-	"modo = juego\n"
-	"\n[video]\n; video mode of the games: nativo, 480p or 1080i (each game can change it with triangle)\nmodo = 480p\n"
-	"; menu screen: 720p, or 480i for a CRT TV (with 480i the games run native, except the ones you change\n"
-	"; with triangle). L2+R2 together switches it and saves it here, in case nothing shows\npantalla = 720p\n"
-	"\n[sonido]\n; volume of the menu sounds, 0-100\nvolumen = 100\n"
-	"\n[red]\n; ip = dhcp, or a fixed IP with its mascara (netmask), puerta (gateway) and dns; dns also works with dhcp (e.g. 1.1.1.1)\nip = dhcp\nmascara = 255.255.255.0\n"
+	"; NULD - إعدادات عربية\n"
+	"\n[ui]\n; لغة واجهة المشغّل والتعليقات: ar = العربية، es = الإسبانية، en = الإنجليزية، pt = البرتغالية\nidioma = ar\n"
+	"; المظهر: torres أو nuld أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
+	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من nuld/themes\ntema = torres\n"
+	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
+	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n"
+	"; عنوان خادم الألعاب الذي يشغّل nuld_catalog. اتركه فارغاً لاكتشاف خادم udpfs تلقائياً\nservidor =\n"
+	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
+	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
+	"; تُنشأ البطاقة الافتراضية عند أول تشغيل. يمكن تغييرها من خيارات اللعبة بزر المثلث\nmodo = juego\n"
+	"\n[video]\n; وضع عرض الألعاب: nativo أو 480p أو 1080i\nmodo = 480p\n"
+	"; دقة قائمة المشغّل: 720p، أو 480i لأجهزة CRT. اضغط L2+R2 معاً للتبديل عند تعذر ظهور الصورة\npantalla = 720p\n"
+	"\n[sonido]\n; مستوى أصوات القائمة من 0 إلى 100\nvolumen = 100\n"
+	"\n[red]\n; ip = dhcp أو عنوان ثابت. يمكن ضبط mascara وpuerta وdns، ويعمل dns أيضاً مع DHCP\nip = dhcp\nmascara = 255.255.255.0\n"
 	"puerta =\ndns =\n"
-	"\n[portadas]\n; si = download the missing covers from the internet (github xlenore/ps2-covers), with the cable in\n"
-	"descargar = si\n"
-	"\n[actualizaciones]\n; si = at boot, with the network cable in, check for a new NULD version (installed with START)\n"
-	"buscar = si\n"
-	"\n[logros]\n; RetroAchievements: si = ask the home xeRAbora client whether the game has achievements (with the\n"
-	"; network cable in), no = no achievements at all\nactivos = si\n"
-	"; IP of the client; empty = look for it on the network\nservidor =\n"
-	"\n[jellyfin]\n; home Jellyfin server for watching movies (http://IP:8096), with its usuario (user) and clave (password);\n"
-	"; empty = no Jellyfin\nservidor =\nusuario =\nclave =\n"
-	"; subtitles (text, not burned in): languages in order of preference (spa, eng, por...), no = no subtitles;\n"
-	"; during the video, square changes the track\nsubtitulos = spa\n"
-	"\n[igr]\n; from a game (NULD's Neutrino): menu opens the menu over the paused game; reiniciar (restart) and\n"
-	"; apagar (power off) act at once. Restart boots the console as when powered on: FMCB starts NULD again if\n"
-	"; its autoboot points to mc?:/BOOT/NULD.ELF (the launcher installs it).\n"
-	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
-	"; (up down left right triangle circle x square), joined with +; empty = off\n"
+	"\n[portadas]\n; تنزيل أغلفة الألعاب الناقصة من الإنترنت عند توفر اتصال الشبكة\ndescargar = si\n"
+	"\n[actualizaciones]\n; البحث عن إصدار جديد من NULD عند بدء التشغيل، ويُثبّت من قائمة START\nbuscar = si\n"
+	"\n[logros]\n; دعم إنجازات RetroAchievements: si للتفعيل وno للإيقاف\nactivos = si\n"
+	"; عنوان جهاز xeRAbora على الشبكة. اتركه فارغاً للبحث عنه تلقائياً\nservidor =\n"
+	"\n[jellyfin]\n; خادم Jellyfin لمشاهدة مكتبتك. اترك العنوان فارغاً لتعطيل Jellyfin\nservidor =\nusuario =\nclave =\n"
+	"; اللغات المفضلة للترجمة النصية حسب رموز ISO مثل ara وeng وspa. استخدم no لإيقاف الترجمة\nsubtitulos = spa\n"
+	"\n[igr]\n; اختصارات القائمة داخل اللعبة: menu لفتح القائمة، reiniciar لإعادة التشغيل، apagar لإيقاف الجهاز\n"
+	"; استخدم أزرار L1 وL2 وR1 وR2 وL3 وR3 وSTART وSELECT والاتجاهات وأزرار المثلث والدائرة والإكس والمربع\n"
+	"; اربط أكثر من زر بعلامة +، واترك القيمة فارغة لتعطيل الاختصار\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 };
 static ini cfg, games;
 static volatile int cfg_volume = 100;
 static const char *src_why; // the first source that did not come up (toast after the splash)
 static int ra_on;           // [logros] activos (phase 16)
-int lang;                   // [ui] idioma: LANG_ES / EN / PT (phase 18, lang.h)
+int lang = LANG_AR;          // Arabic is the launcher's primary interface language
 static const char *const lang_key[LANG_N] = {"es", "en", "pt", "ar"};
-static int lang_of(const char *s) { return !strcasecmp(s, "en") ? LANG_EN : !strcasecmp(s, "pt") ? LANG_PT : !strcasecmp(s, "ar") ? LANG_AR : LANG_ES; }
+static int lang_of(const char *s) { return !strcasecmp(s, "en") ? LANG_EN : !strcasecmp(s, "pt") ? LANG_PT : !strcasecmp(s, "es") ? LANG_ES : LANG_AR; }
 static int w_first;         // no config.ini at boot: the setup wizard opens by itself (#15)
 static int crt;             // [video] pantalla = 480i: menu in 480i / 576i, games native by default
 
@@ -1000,13 +986,13 @@ static void load_config(void) // loader thread, before the splash sound
 		closedir(o);
 		if (rename(old, dir)) home_dir = "orbit", home_paths();
 	} else if (!d) mkdir(dir, 0777);
-	if (!ini_load(&cfg, CONFIG)) { // Spanish, the default, until the user picks another idioma
+	if (!ini_load(&cfg, CONFIG)) { // Arabic is the default for a fresh configuration
 		w_first = 1;               // the setup wizard opens on the home screen (#15)
 		FILE *f = fopen(CONFIG, "wb");
-		if (f) fputs(config_template[0], f), fclose(f);
-		ini_parse(&cfg, config_template[0]);
+		if (f) fputs(config_template[LANG_AR], f), fclose(f);
+		ini_parse(&cfg, config_template[LANG_AR]);
 	}
-	lang = lang_of(ini_get(&cfg, "ui", "idioma", "es")); // phase 18: first, the rest may show text
+	lang = lang_of(ini_get(&cfg, "ui", "idioma", "ar")); // resolve language before drawing the rest of the UI
 	char tdir[40];
 	snprintf(tdir, sizeof(tdir), "%s/%s/themes", homedev, home_dir);
 	themes_load(tdir); // the community's (docs/themes.md)
@@ -1021,7 +1007,8 @@ static void load_config(void) // loader thread, before the splash sound
 	FILE *cf = fopen(CONFIG, "rb");
 	if (cf) fgets(first, sizeof(first), cf), fclose(cf);
 	const char *body = first + (!strncmp(first, "; NULD - ", 9) ? 9 : !strncmp(first, "; ORBIT - ", 10) ? 10 : 0);
-	int file = body == first ? -1 : !strncmp(body, "configuration", 13) ? LANG_EN : !strncmp(body, "configuraci", 11) ? LANG_ES :
+	int file = body == first ? -1 : !strncmp(body, "إعدادات عربية", strlen("إعدادات عربية")) ? LANG_AR :
+	           !strncmp(body, "configuration", 13) ? LANG_EN : !strncmp(body, "configuraci", 11) ? LANG_ES :
 	           !strncmp(body, "configuração", 13) ? LANG_PT : -1;
 	if (file >= 0 && file != lang) {
 		static char out[16384];
@@ -2374,6 +2361,17 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		gfx_rect(48, 150, 1184, lines * gfx_font_mono.line_h + 26, BG);
 		gfx_alpha(0x80);
 		gfx_text(&gfx_font_mono, 64, 162, overlay, TEXT);
+	}
+	// Small developer credit in the safe footer margin; no panel or background is painted behind it.
+	{
+		const char *credit = "تعديل المطور العراقي";
+		const char *brand = "TEa.G3";
+		int bw = gfx_text_width(&gfx_font_mono, brand), cw = gfx_text_width(&gfx_font_ui, credit);
+		int cx = GFX_W - 64 - bw - 10 - cw;
+		gfx_alpha(0x50);
+		gfx_text(&gfx_font_mono, cx, 690, brand, 0x91A0B2);
+		gfx_text(&gfx_font_ui, cx + bw + 10, 690, credit, 0x91A0B2);
+		gfx_alpha(0x80);
 	}
 	if (T->over) T->over();
 	if (fade > 0) { gfx_alpha((int)(0x80 * fade)); gfx_rect(0, 0, GFX_W, GFX_H, 0); }
