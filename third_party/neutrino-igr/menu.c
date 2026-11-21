@@ -316,7 +316,7 @@ static void box_close(void)
 // The game is paused by the caller. Returns MENU_CANCEL, MENU_REBOOT or MENU_OFF
 int Menu_Run(void)
 {
-    box_w = eec.IgrLang == 3 ? BOX_H_AR : BOX_W, box_h = BOX_H;
+    box_w = eec.IgrLang == 3 ? BOX_W_AR : BOX_W, box_h = BOX_H;
     if (!box_open(0))
         return MENU_CANCEL;
 
