@@ -774,7 +774,7 @@
       if (node.__nuldOriginal === undefined) node.__nuldOriginal = raw;
       const original = node.__nuldOriginal, originalKey = key(original);
       if (ar && dict[originalKey]) {
-        const leading = original.match(/^\\s*/)?.[0] || "", trailing = original.match(/\\s*$/)?.[0] || "";
+        const leading = original.match(/^\s*/)?.[0] || "", trailing = original.match(/\s*$/)?.[0] || "";
         node.nodeValue = leading + dict[originalKey] + trailing;
       } else node.nodeValue = original;
     }
