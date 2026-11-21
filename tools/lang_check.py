@@ -130,6 +130,7 @@ def main():
           f"all Arabic UI codepoints are covered ({len(arabic_used)} distinct codepoints)")
     failed |= bool(unsupported)
 
+    neutrino_igr = (ROOT / "third_party" / "neutrino-igr" / "igr.c").read_text(encoding="utf-8")
     neutrino_menu = (ROOT / "third_party" / "neutrino-igr" / "menu.c").read_text(encoding="utf-8")
     neutrino_patch = (ROOT / "third_party" / "neutrino-igr" / "patch_neutrino.py").read_text(encoding="utf-8")
     neutrino_build = (ROOT / "tools" / "build_neutrino.sh").read_text(encoding="utf-8")
@@ -141,6 +142,7 @@ def main():
         "Neutrino achievement notice has Arabic text": "igr_ar_notice_pixels" in neutrino_menu and "IGR_AR_NOTICE_WIDTH" in neutrino_menu,
         "Arabic IGR bitmap is generated from pinned font": 'NOTICE = "تم فتح الإنجاز"' in igr_generator and 'LABELS = ("إعادة تشغيل", "إيقاف التشغيل", "إلغاء")' in igr_generator,
         "Neutrino builder copies the generated Arabic menu header": '"$FORK/menu_arabic.h"' in neutrino_build and "tools/generate_igr_arabic.py" in neutrino_build,
+        "PS2SDK strlcpy compatibility is linked into Neutrino": "size_t strlcpy(char *dst, const char *src, size_t size)" in neutrino_igr,
     }
     for description, passed in igr_checks.items():
         print(("ok: " if passed else "FAIL: ") + description)
