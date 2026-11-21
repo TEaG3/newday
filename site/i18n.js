@@ -589,6 +589,8 @@
   const attributeDict = {
     "aria-label": {
       "Main":"القائمة الرئيسية",
+      "Manual":"الدليل",
+      "Changelog":"سجل التغييرات",
       "Theme":"السمة",
       "View":"طريقة العرض",
       "Previous screens":"اللقطات السابقة",
@@ -696,6 +698,7 @@
     if (nav && !document.querySelector("[data-nuld-lang]")) {
       const b = document.createElement("button");
       b.type = "button"; b.className = "lang-switch"; b.dataset.nuldLang = "1";
+      b.setAttribute("aria-label", "Switch language");
       b.addEventListener("click", () => { lang = lang === "ar" ? "en" : "ar"; localStorage.setItem("nuld-site-lang", lang); apply(); });
       nav.append(b);
     }
