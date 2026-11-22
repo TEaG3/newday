@@ -713,6 +713,25 @@
     "Save keeps it.":"اضغط حفظ للاحتفاظ بها."
   });
 
+  Object.assign(dict, {
+    "All downloads":"كل التنزيلات",
+    "download":"تنزيل",
+    "not released yet":"لم يصدر بعد",
+    "A folder in":"مجلد داخل",
+    "and in":"والمثال موجود في",
+    ", keeps":"، ويحتفظ أيضاً",
+    ". The line after the loading screen says which step failed; for \"no DNS\", set":". يوضح السطر الذي يظهر بعد شاشة التحميل المرحلة التي تعذّر إكمالها؛ عند ظهور رسالة \"no DNS\"، اضبط",
+    "with games on a home server: its total counted only what is on the USB, and the server's games were never added. They are now counted as the catalog arrives (and HD Loader games too). The line now reads \"Cargando juegos\" / \"Loading games\": it is the game list, covers load later as they show.":"عند وجود ألعاب على خادم منزلي، كان العداد يحصي الألعاب الموجودة على USB فقط ولا يضيف ألعاب الخادم. أصبح يحصيها الآن عند وصول فهرس الخادم، وكذلك ألعاب HD Loader. ويعرض السطر الآن حالة تحميل قائمة الألعاب؛ أما الأغلفة فتُحمّل لاحقاً عند ظهور الألعاب في الواجهة.",
+    ": covers read in one request per file; the first achievements query no longer waits for the update check; the client's \"still loading\" answer is asked again 5 times a second.":": تُقرأ الأغلفة بطلب واحد لكل ملف؛ ولم يعد أول استعلام عن الإنجازات ينتظر فحص التحديثات، كما يعاد الاستعلام عن رد العميل \"ما زال جارياً التحميل\" خمس مرات في الثانية.",
+    ": the first game's query no longer waits for the update check (seconds of HTTPS at every boot), and the client's \"still loading\" answer is asked again 5 times a second instead of once.":": لم يعد استعلام اللعبة الأولى ينتظر فحص التحديثات الذي كان يستغرق عدة ثوانٍ عبر HTTPS عند كل تشغيل، كما يعاد الاستعلام عن رد العميل \"ما زال جارياً التحميل\" خمس مرات في الثانية بدلاً من مرة واحدة.",
+    "logs each request for a home-server game's memory card (\"nuld vmc remote\"), to find why its save icon does not show yet.":"يسجل كل طلب لبطاقة ذاكرة لعبة موجودة على الخادم المنزلي (\"nuld vmc remote\") للمساعدة في معرفة سبب عدم ظهور أيقونة الحفظ.",
+    "When the achievements client announces an unlock, the game pauses for about 2.5 seconds under a box with \"LOGRO DESBLOQUEADO 5 PTS\" (or \"ACHIEVEMENT UNLOCKED\") and the achievement's title. The titles come from the client's list at launch (the ones still to earn, up to 128 per game).":"عندما يعلن عميل الإنجازات عن فتح إنجاز، تتوقف اللعبة مؤقتاً لنحو 2.5 ثانية وتظهر نافذة تحمل إشعار فتح الإنجاز وعدد نقاطه وعنوانه. تُجلب العناوين من قائمة العميل عند بدء التشغيل، وتشمل الإنجازات التي لم تُفتح بعد، بحد أقصى 128 إنجازاً لكل لعبة.",
+    "(\"could not read the list\"): Tekken 5's answer names the subset's achievement count first.":"(تعذرت قراءة القائمة): كان رد لعبة Tekken 5 يعرض عدد إنجازات المجموعة الفرعية أولاً.",
+    "\"Native\" video mode can give a black screen on some HDTV setups: there, keep the default 480p.":"قد يؤدي وضع الفيديو \"Native\" إلى شاشة سوداء في بعض أجهزة HDTV؛ في هذه الحالة استخدم الدقة الافتراضية 480p.",
+    "\"Native\" video mode can give a black screen on some setups: keep the default 480p.":"قد يؤدي وضع الفيديو \"Native\" إلى شاشة سوداء في بعض الإعدادات؛ لذلك استخدم الدقة الافتراضية 480p.",
+    "python3 covers.py IN_DIR OUT_DIR":"أمر python3 covers.py IN_DIR OUT_DIR",
+    "Per-game options panel over the dimmed home screen":"لوحة إعدادات اللعبة فوق الشاشة الرئيسية المعتمة."
+  });
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
