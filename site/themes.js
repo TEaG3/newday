@@ -87,7 +87,7 @@
   }
   function ini() {
     const name = $('name').value.replace(/[;#\[\]=\r\n]/g, '').trim() || folder(); // ; and # would start a comment
-    const note = document.documentElement.lang === 'ar' ? `; ${name}: سمة لمشغّل NULD (الإصدار 1.3 أو أحدث). انسخ هذا المجلد إلى nuld/themes/ في وحدة USB.\\n` : `; ${name}: a theme for NULD (v1.3 or newer). Copy this folder to nuld/themes/ on the USB drive.\\n`;
+    const note = document.documentElement.lang === 'ar' ? `; ${name}: سمة لمشغّل NULD (الإصدار 1.3 أو أحدث). انسخ هذا المجلد إلى nuld/themes/ في وحدة USB.\n` : `; ${name}: a theme for NULD (v1.3 or newer). Copy this folder to nuld/themes/ on the USB drive.\\n`;
     let t = note +
       `nombre = ${name}\nbase = ${state.base}\n\n[colores]\n`;
     for (const [key] of KEYS) t += `${key} = ${key === 'acento' && state.coverAccent ? 'portada' : state.pal[key]}\n`;
