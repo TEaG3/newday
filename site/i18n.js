@@ -761,6 +761,19 @@
     "All releases":"جميع الإصدارات",
     "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.":"واجهة المشغّل بسماتها الاثنتي عشرة، معروضة داخل المتصفح. اضغط على جانبيها لتغيير اللعبة."
   });
+  Object.assign(dict, {
+    "Ships a fork of":"يتضمن نسخة متفرعة من",
+    "All releases":"جميع الإصدارات",
+    "all releases":"جميع الإصدارات",
+    "NULD, a game launcher for the PlayStation 2":"NULD، مشغّل ألعاب لجهاز PlayStation 2",
+    "NULD instruction manual, ":"دليل استخدام NULD، ",
+    "NULD changelog":"سجل تغييرات NULD",
+    "NULD theme maker":"مصمم سمات NULD",
+    "The home screen with your theme. Click its sides to change game.":"الشاشة الرئيسية باستخدام سمتك. اضغط على جانبيها لتغيير اللعبة.",
+    "The loading and launch screens are the base's.":"شاشتا التحميل والتشغيل مأخوذتان من السمة الأساسية.",
+    "Back to the base's colours":"استعادة ألوان السمة الأساسية",
+    "The accent follows the selected cover's colour":"يتغير لون التمييز وفق لون غلاف اللعبة المحددة"
+  });
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
