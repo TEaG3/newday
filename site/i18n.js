@@ -774,6 +774,33 @@
     "Back to the base's colours":"استعادة ألوان السمة الأساسية",
     "The accent follows the selected cover's colour":"يتغير لون التمييز وفق لون غلاف اللعبة المحددة"
   });
+  Object.assign(dict, {
+    ": check the cable and": ": افحص كابل الشبكة وتأكد من تفعيل الخيار",
+    ": SELECT lists every source and why it failed.": ": يعرض زر SELECT جميع مصادر الألعاب وسبب تعذّر عمل أي مصدر.",
+    ": the xeRAbora client did not answer; set its IP in": ": لم يستجب عميل xeRAbora؛ أدخل عنوان IP الخاص به في",
+    ": try 480p instead of nativo with △, or a compatibility mode.": ": جرّب دقة 480p بدلاً من Native باستخدام △، أو جرّب أحد أوضاع التوافق.",
+    ": press L2+R2 together for 480i.": ": اضغط L2+R2 معاً للتبديل إلى 480i.",
+    ": each theme is shown at once behind the panel. Saved as": ": تُعرض كل سمة مباشرة خلف لوحة الإعداد، ويُحفظ الاختيار في",
+    ": air rising and a low piano strike in a hall. NULD keeps its own.": ": صوت تصاعد هوائي يتبعه صوت بيانو منخفض في قاعة واسعة. ويحتفظ NULD بصوته الخاص.",
+    "The splash stopped at \"00 / 01\"": "توقفت شاشة البدء عند الحالة \"00 / 01\".",
+    ": a new name, a new look, and nothing to redo on your USB drive.": ": اسم جديد ومظهر جديد، دون الحاجة إلى إعادة إعداد وحدة USB.",
+    ": the menu was 720p only, which a CRT shows as a black screen. Press": ": كانت القائمة تعمل بدقة 720p فقط، ولذلك تظهر شاشة سوداء على تلفاز CRT. اضغط",
+    ": rcheevos-compatible game hash, ○ lists the achievements with your progress, and an agent inside the game feeds the": ": يتعرّف على اللعبة باستخدام بصمة rcheevos المتوافقة؛ ويعرض الزر ○ الإنجازات وتقدمك فيها، بينما يرسل مكوّن داخل اللعبة بياناتها إلى عميل",
+    ": udpfs + ORBIT's catalog service; server games keep covers, achievements and save icons.": ": يستخدم udpfs مع خدمة فهرسة ORBIT؛ وتحتفظ ألعاب الخادم بأغلفتها وإنجازاتها وأيقونات الحفظ.",
+    ": USB, internal HDD (exFAT, HD Loader), MX4SIO, iLink, MMCE, UDPBD, udpfs; discs, PS1 (POPStarter), homebrew from": ": يدعم USB والقرص الداخلي HDD (بنظام exFAT أو HD Loader) وMX4SIO وiLink وMMCE وUDPBD وudpfs، إضافة إلى الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من",
+    "ORBIT is now": "أصبح ORBIT الآن",
+    "No covers": "لا تظهر أغلفة الألعاب",
+    "A source shows no games": "أحد مصادر الألعاب لا يعرض أي لعبة",
+    "Black screen with a game": "شاشة سوداء عند تشغيل لعبة",
+    "Black screen on a CRT": "شاشة سوداء على تلفاز CRT",
+    "Logs": "السجلات",
+    "Theme selector.": "محدد السمات.",
+    "Themes from folders.": "السمات من المجلدات.",
+    "Saving the setup no longer restarts NULD.": "لم يعد حفظ الإعدادات يؤدي إلى إعادة تشغيل NULD.",
+    "A loading sound for the new themes": "صوت تحميل للسمات الجديدة",
+    "After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.":"بعد تغيير اللغة من لوحة الإعداد، كان عنوان القرص في الشاشة الرئيسية يبقى باللغة السابقة.",
+    "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.":"تم قياس أداء سمتي Torres وNULD فقط على جهاز حقيقي بمعدل 60 إطاراً في الثانية على SCPH-75001. أما السمات العشر الأخرى فقد عملت على الجهاز نفسه دون تقطع ملحوظ، لكن لم يُقَس معدل إطاراتها."
+  });
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
