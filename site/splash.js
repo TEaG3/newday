@@ -3,7 +3,8 @@
 // HUD corners and scanlines. Reduced motion: one still frame of variant A.
 (function () {
   var BG = '#06070A', FG = '#E6E8EC', MUTED = '#8A919C', ACID = '#C8FF2E', PI = Math.PI;
-  var MSGS = ['Starting USB', 'Reading memory cards', 'Loading covers'];
+  var MSGS_EN = ['Starting USB', 'Reading memory cards', 'Loading covers'];
+  var MSGS_AR = ['جارٍ تشغيل وحدة USB', 'جارٍ قراءة بطاقات الذاكرة', 'جارٍ تحميل الأغلفة'];
   var BARS = [3, 1, 2, 1, 4, 1, 1, 3, 2, 1, 1, 2, 4, 1, 3, 1, 2, 2, 1, 4, 1, 1, 3, 1, 2, 1, 4, 2, 1, 3];
   var TOP = [230, 232, 252, 190], BOT = [370, 372, 348, 420];
 
@@ -124,12 +125,22 @@
       if (inn < 0.05) { g.fillStyle = rgba(FG, 0.09); g.fillRect(0, 0, 1280, 720); }
     }
     // status line: the boot as the console shows it, then again
-    var t = s % 12, st = t < 1.5 ? MSGS[0] : t < 3 ? MSGS[1] : MSGS[2], prog = Math.min(1, t / 10);
-    if (t >= 3) { var c = Math.min(20, Math.floor((t - 3) / 7 * 20)); st += '  ' + (c < 10 ? '0' : '') + c + ' / 20'; }
-    font(g, '15px "IBM Plex Mono"');
-    var tw = g.measureText(st).width, tx = 640 - tw / 2;
-    g.fillStyle = BG; g.fillRect(tx - 12, 482, tw + 38, 26);
-    g.fillStyle = FG; g.fillText(st, tx, 500);
+    var t = s % 12, ar = document.documentElement.lang === 'ar';
+    var messages = ar ? MSGS_AR : MSGS_EN;
+    var st = t < 1.5 ? messages[0] : t < 3 ? messages[1] : messages[2], prog = Math.min(1, t / 10);
+    if (t >= 3) {
+      var c = Math.min(20, Math.floor((t - 3) / 7 * 20));
+      var count = (c < 10 ? '0' : '') + c + ' / 20';
+      if (ar) count = count.replace(/[0-9]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; });
+      st += '  ' + count;
+    }
+    var oldDirection = g.direction, oldAlign = g.textAlign;
+    g.font = ar ? '500 18px "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif' : '15px "IBM Plex Mono"';
+    g.direction = ar ? 'rtl' : 'ltr'; g.textAlign = 'center';
+    var tw = g.measureText(st).width;
+    g.fillStyle = BG; g.fillRect(640 - tw / 2 - 12, 482, tw + 24, 26);
+    g.fillStyle = FG; g.fillText(st, 640, 500);
+    g.direction = oldDirection; g.textAlign = oldAlign;
     if (!blink(s)) { g.fillStyle = accent; g.fillRect(tx + tw + 4, 486, 8, 16); }
     g.fillStyle = '#2A303A'; g.fillRect(490, 524, 300, 2);
     g.fillStyle = accent; g.fillRect(490, 524, 300 * prog, 2);
