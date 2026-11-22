@@ -87,7 +87,8 @@
   }
   function ini() {
     const name = $('name').value.replace(/[;#\[\]=\r\n]/g, '').trim() || folder(); // ; and # would start a comment
-    let t = `; ${name}: a theme for NULD (v1.3 or newer). Copy this folder to nuld/themes/ on the USB drive.\n` +
+    const note = document.documentElement.lang === 'ar' ? `; ${name}: سمة لمشغّل NULD (الإصدار 1.3 أو أحدث). انسخ هذا المجلد إلى nuld/themes/ في وحدة USB.\\n` : `; ${name}: a theme for NULD (v1.3 or newer). Copy this folder to nuld/themes/ on the USB drive.\\n`;
+    let t = note +
       `nombre = ${name}\nbase = ${state.base}\n\n[colores]\n`;
     for (const [key] of KEYS) t += `${key} = ${key === 'acento' && state.coverAccent ? 'portada' : state.pal[key]}\n`;
     return t;
@@ -227,7 +228,7 @@
   }
   setPal(OCASO);
   const from = new URLSearchParams(location.search).get('base'); // themes.html?base=torres starts from that theme
-  if (BASES[from]) state.base = baseSel.value = from, $('name').value = 'My ' + BASES[from][0], setPal(BASES[from][1]);
+  if (BASES[from]) state.base = baseSel.value = from, $('name').value = document.documentElement.lang === 'ar' ? 'سمتي ' + ({torres:'الأبراج',nuld:'NULD',cristal:'كريستال',aurora:'الشفق القطبي',liquid:'السائل',onda:'الموجة',orbit:'المدار',techstep:'تيك ستيب',wireframe:'الإطار السلكي',neuro:'نيورو',fosforo:'الفوسفور',papel:'الورق'}[from] || BASES[from][0]) : 'My ' + BASES[from][0], setPal(BASES[from][1]);
   const first = document.querySelector(`.tabs [data-view="${location.hash.slice(1)}"]`); // themes.html#list opens on that screen
   if (first) first.click();
   sync();
