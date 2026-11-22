@@ -742,6 +742,25 @@
     "Previous":"السابق",
     "Next":"التالي"
   });
+  Object.assign(dict, {
+    "changelog":"سجل التغييرات",
+    "Per-game options panel: video mode, video compatibility, memory card and Neutrino":"لوحة إعدادات اللعبة: نمط الفيديو وتوافق الفيديو وبطاقة الذاكرة وخيارات التوافق في Neutrino.",
+    "Preview of NULD":"معاينة NULD",
+    "Achievements panel for Black: 0 of 56, 0 of 600 points":"لوحة إنجازات لعبة Black: ٠ من ٥٦ إنجازاً و٠ من ٦٠٠ نقطة.",
+    "Carousel with the example theme Ocaso: a dusk sky behind the covers, orange accent":"العرض الدائري باستخدام السمة التجريبية Ocaso: سماء الغسق خلف الأغلفة مع لون تمييز برتقالي.",
+    "The splash stopped at \"00 / 01\"":"توقفت شاشة البدء عند الحالة \"00 / 01\".",
+    "\"Achievements: no server\"":"\"الإنجازات: لا يوجد خادم\"",
+    "Covers: \"No DNS\"":"الأغلفة: \"لا يوجد DNS\"",
+    "ORBIT is now":"أصبح ORBIT الآن",
+    "Achievements":"الإنجازات",
+    "holding":"مع الاستمرار بالضغط على",
+    "for games,":"للألعاب،",
+    "or":"أو",
+    "client.":"العميل.",
+    "Covers:":"الأغلفة:",
+    "All releases":"جميع الإصدارات",
+    "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.":"واجهة المشغّل بسماتها الاثنتي عشرة، معروضة داخل المتصفح. اضغط على جانبيها لتغيير اللعبة."
+  });
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
