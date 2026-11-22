@@ -286,7 +286,7 @@ function footer(t) {
     font(isArabic() ? FU : FM); if ('letterSpacing' in g) g.letterSpacing = '3px';
     const w = Math.round(g.measureText(s).width) + 56, vx = Math.round((W - w) / 2), vy = 590 + Math.round(8 * (1 - va));
     g.globalAlpha = va; g.fillStyle = T.vp || T.pn; g.fillRect(vx, vy, w, 36); g.strokeStyle = acc; g.lineWidth = 1; g.strokeRect(vx + .5, vy + .5, w - 1, 35);
-    g.fillStyle = T.vtx || T.tx; g.fillText(s, vx + 28, vy + 23);
+    g.fillStyle = T.vtx || T.tx; putText(s, vx + 28, vy + 23);
     if ('letterSpacing' in g) g.letterSpacing = '0px';
     g.globalAlpha = 1;
   }
