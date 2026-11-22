@@ -214,7 +214,6 @@ body.paper { background: var(--fg); color: var(--bg); }
 .nuld-rtl .nav .wrap,.nuld-rtl .runhead,.nuld-rtl .hero-top,.nuld-rtl .maker-grid,
 .nuld-rtl .chapter>header,.nuld-rtl .btns,.nuld-rtl .tabs { direction:ltr; }
 .nuld-rtl .nav .wrap { flex-wrap:wrap; }
-.nuld-rtl .steps,.nuld-rtl .howto { padding-inline-start:1.5rem; padding-inline-end:0; }
 .nuld-rtl .tabs button,.nuld-rtl .btns>.btn { unicode-bidi:plaintext; text-align:center; }
 .nuld-rtl #live .screen,.nuld-rtl #live canvas { direction:ltr; }
 .nuld-rtl .nav a:not(.brand),.nuld-rtl .runhead a { direction:rtl; unicode-bidi:plaintext; }
