@@ -237,8 +237,8 @@ function header(t) {
   if (T.cardFill) { g.fillStyle = T.cardFill(); g.fillRect(932, 36, 284, 88); } else panel(932, 36, 284, 88, T.R);
   g.strokeStyle = T.cardTx || acc; g.lineWidth = 2; g.beginPath(); // the saves card
   g.rect(968, 62, 28, 36); g.moveTo(974, 62); g.lineTo(974, 72); g.lineTo(990, 72); g.lineTo(990, 62); g.moveTo(974, 88); g.lineTo(990, 88); g.stroke();
-  font(FU); g.fillStyle = T.cardTx || T.tx; g.fillText(isArabic() ? 'بطاقة ذاكرة افتراضية' : 'Virtual memory card', 1028, 74);
-  font(isArabic() ? FU : FM); g.fillStyle = T.cardTx || T.t2; g.fillText(o.n + (isArabic() ? (o.n === 1 ? ' عملية حفظ · ' : ' عمليات حفظ · ') : (o.n === 1 ? ' SAVE · ' : ' SAVES · ')) + (o.n * 98 + 14) + ' KB', 1028, 98);
+  font(FU); g.fillStyle = T.cardTx || T.tx; putText(uiText('Virtual memory card', 'بطاقة ذاكرة افتراضية'), 1028, 74);
+  font(isArabic() ? FU : FM); g.fillStyle = T.cardTx || T.t2; putText(o.n + (isArabic() ? (o.n === 1 ? ' عملية حفظ · ' : ' عمليات حفظ · ') : (o.n === 1 ? ' SAVE · ' : ' SAVES · ')) + (o.n * 98 + 14) + ' KB', 1028, 98);
 
   title(o, t);
   const tags = [[o.s, 0], ['PS2', 1], ['USB', 2], ['480P', 0]];
@@ -322,10 +322,16 @@ function ring(s, c, lw, pad, r) { g.globalAlpha = s.f; rr(s.x - pad, s.y - pad, 
 let mode = 'home', tMode = 0, tFade = 0, CAM = null;
 const SPL = 6.4, LCH = 4.4, HOW_EN = 'STARTING WITH NEUTRINO';
 const how = () => isArabic() ? 'جارٍ تشغيل NEUTRINO' : HOW_EN;
-const STEPS = isArabic()
-  ? [[0, 'جارٍ البدء'], [1.1, 'وحدات USB'], [2.2, 'جارٍ فحص الألعاب  ٧ / ١٦'], [3.3, 'جارٍ فحص الألعاب  ١٦ / ١٦'], [4.4, '١٦ لعبة · جاهز']]
-  : [[0, 'STARTING'], [1.1, 'USB MODULES'], [2.2, 'READING GAMES  7 / 16'], [3.3, 'READING GAMES  16 / 16'], [4.4, '16 GAMES · READY']];
-const status = u => { let s = STEPS[0][1]; for (const [a, m] of STEPS) if (u >= a) s = m; return s; };
+const STEPS_EN = [[0, 'STARTING'], [1.1, 'USB MODULES'], [2.2, 'READING GAMES  7 / 16'], [3.3, 'READING GAMES  16 / 16'], [4.4, '16 GAMES · READY']];
+const STEPS_AR = [[0, 'جارٍ البدء'], [1.1, 'وحدات USB'], [2.2, 'جارٍ فحص الألعاب  ٧ / ١٦'], [3.3, 'جارٍ فحص الألعاب  ١٦ / ١٦'], [4.4, '١٦ لعبة · جاهز']];
+const status = u => { const steps = isArabic() ? STEPS_AR : STEPS_EN; let s = steps[0][1]; for (const [a, m] of steps) if (u >= a) s = m; return s; };
+const uiText = (en, ar) => isArabic() ? ar : en;
+const putText = (s, x, y, align = 'left') => {
+  const oldDirection = g.direction, oldAlign = g.textAlign;
+  g.direction = isArabic() && /[\u0600-\u06FF]/.test(s) ? 'rtl' : 'ltr';
+  g.textAlign = align; g.fillText(s, x, y);
+  g.textAlign = oldAlign; g.direction = oldDirection;
+};
 const ink = () => T.btx || T.tx;
 function mark(cx, cy, r, ringc, slash) { // NULD's mark: a ring and a slash
   const th = r * .18, d = r * .985; g.lineCap = 'butt';
@@ -341,7 +347,9 @@ function wordmark(cx, cy, cap, inkc, slash, dx = 0) { // the mark and NULD in Mi
 }
 function centred(s, y, f, c, track) {
   font(f, f === FT); if (track && 'letterSpacing' in g) g.letterSpacing = track + 'px';
+  const oldDirection = g.direction; g.direction = isArabic() && /[\u0600-\u06FF]/.test(s) ? 'rtl' : 'ltr';
   g.fillStyle = c; const w = g.measureText(s).width; g.fillText(s, Math.round(640 - w / 2), y);
+  g.direction = oldDirection;
   if ('letterSpacing' in g) g.letterSpacing = '0px'; return w;
 }
 function corners(x, y, w, h, len, c) {
@@ -494,7 +502,7 @@ const THEMES = {
         g.fillText(num(sel), 44, 636 + (1 - st) * 300);
         g.restore();
         g.fillRect(540, 604, 676, 2); for (let x = 540; x <= 1216; x += 52) g.fillRect(x, 596, 2, 8); // a ruler and its small print
-        font(FM); g.fillText(isArabic() ? 'المكتبة / ' + N + ' لعبة' : 'LIBRARY / ' + N + ' TITLES', 540, 626);
+        font(FM); putText(isArabic() ? 'المكتبة / ' + String(N).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) + ' لعبة' : 'LIBRARY / ' + N + ' TITLES', 540, 626);
         const tx = 'NTSC-U · 480P · NULD 1.3'; g.fillText(tx, 1216 - g.measureText(tx).width, 626);
         if ((t * 174 / 60) % 1 < .5) g.fillRect(1216 - g.measureText(tx).width - 20, 615, 10, 10); // blinks on the beat
       }
@@ -712,7 +720,7 @@ Object.assign(THEMES.nuld, {
     g.fillStyle = '#06070A'; g.fillRect(0, 0, W, H); floor(t, [230, 232, 236], .14);
     g.globalAlpha = k; mark(640, 278, 28, '#E6E8EC', acid);
     font(FT, true); centred(fit(o.t, 1000), 372, FT, '#E6E8EC'); centred(HOW, 414, FM, '#8A919C', 3);
-    if (o.ach) centred('ACHIEVEMENTS', 444, FM, acid, 3);
+    if (o.ach) centred(uiText('ACHIEVEMENTS', 'الإنجازات'), 444, isArabic() ? FU : FM, acid, 3);
     corners(340 - m, 214 - m, 600 + 2 * m, 276 + 2 * m, 28, acid);
     g.fillStyle = '#2A303A'; g.fillRect(520, 466, 240, 2); g.fillStyle = acid; g.fillRect(520 + (t * 170) % 200, 466, 40, 2);
     g.globalAlpha = 1; this.fx();
@@ -743,8 +751,8 @@ Object.assign(THEMES.cristal, {
     g.globalAlpha = k; panel(px, 176, 470, 316, 22);
     font(FT, true); g.fillStyle = '#FFFFFF'; g.fillText(fit(o.t, 410), px + 30, 246);
     font(FM); g.fillStyle = T.t2; g.fillText(o.s + '  ·  PS2  ·  USB  ·  480P', px + 30, 282);
-    font(FU); g.fillStyle = T.tx; g.fillText('Virtual memory card', px + 30, 334);
-    if (o.ach) { g.fillStyle = acc; g.fillText('Achievements · ' + o.ach, px + 30, 362); }
+    font(FU); g.fillStyle = T.tx; putText(uiText('Virtual memory card', 'بطاقة ذاكرة افتراضية'), px + 30, 334);
+    if (o.ach) { g.fillStyle = acc; putText(uiText('Achievements · ' + o.ach, 'الإنجازات · ' + o.ach), px + 30, 362); }
     font(FM); if ('letterSpacing' in g) g.letterSpacing = '3px'; g.fillStyle = T.lb; g.fillText(HOW, px + 30, 430); if ('letterSpacing' in g) g.letterSpacing = '0px';
     g.fillStyle = 'rgba(255,255,255,.22)'; rr(px + 30, 446, 410, 4, 2); g.fill(); g.fillStyle = acc; rr(px + 30, 446, Math.max(4, 410 * ease(u / 3.8)), 4, 2); g.fill();
     g.globalAlpha = 1;
@@ -827,7 +835,7 @@ Object.assign(THEMES.techstep, {
     if (u > .7) {
       const m = status(u), b = '174 BPM', bw = g.measureText(b).width;
       g.fillStyle = K; g.fillRect(64, 548, Math.round(g.measureText(m).width) + 24, 26); g.fillText(b, 1216 - bw, 566); if ((t * 174 / 60) % 1 < .5) g.fillRect(1216 - bw - 20, 555, 10, 10);
-      g.fillStyle = Y; g.fillText(m, 76, 566);
+      g.fillStyle = Y; putText(m, 76, 566);
     }
     g.fillStyle = Y; const tk = 'NULD SYS 1.3  ///  EE R5900  ///  294.912 MHZ  ///  174 BPM  ///  ', tw = g.measureText(tk).width;
     for (let x = -((t * 60) % tw); x < W; x += tw) { g.fillText(tk, x, 62); g.fillText(tk, x - tw / 2, 672); }
@@ -907,7 +915,7 @@ Object.assign(THEMES.wireframe, {
   splash(u, t) { // a wire cube turns over the terrain; the name with its magenta ghost
     const k = ease((u - .5) / .8), j = kick(t) * 4;
     this.bg(t); g.globalCompositeOperation = 'lighter'; cube(640, 300, 170 * ease(u / 1.2), t * .6, 'rgba(57,230,255,.5)'); g.globalCompositeOperation = 'source-over';
-    g.globalAlpha = k; wordmark(644 + j, 300, 74, 'rgba(255,60,210,.9)', 'rgba(255,60,210,.9)'); wordmark(640, 300, 74, '#E8FBFF', '#39E6FF'); centred('> ' + status(u), 440, FM, T.t2, 3); g.globalAlpha = 1;
+    g.globalAlpha = k; wordmark(644 + j, 300, 74, 'rgba(255,60,210,.9)', 'rgba(255,60,210,.9)'); wordmark(640, 300, 74, '#E8FBFF', '#39E6FF'); centred('> ' + status(u), 440, isArabic() ? FU : FM, T.t2, 3); g.globalAlpha = 1;
   },
   launch(u, t, o) { // the cube closes round the cover; the load is a row of segments from cyan to magenta
     const k = ease(u / .45), s = { x: 512, y: 96, w: 256, h: 368, a: k, f: k, sc: 1 }, n = Math.floor(clamp(u / 3.9) * 24), j = kick(t) * 4;
@@ -938,19 +946,23 @@ Object.assign(THEMES.neuro, {
 Object.assign(THEMES.fosforo, {
   ground() { g.fillStyle = '#010703'; g.fillRect(0, 0, W, H); const r = g.createRadialGradient(640, 360, 0, 640, 360, 760); r.addColorStop(0, 'rgba(20,90,40,.42)'); r.addColorStop(1, 'rgba(1,7,3,0)'); g.fillStyle = r; g.fillRect(0, 0, W, H); },
   splash(u, t) { // a boot log types itself out, then the name
-    const gr = '#6BFF96', L = ['NULD BIOS 1.3', 'EE R5900  294.912 MHz ............ OK', 'RAM  32 MB ....................... OK', 'USB MASS ......................... OK', 'NET  100 MBIT .................... OK', 'LIBRARY  16 GAMES ............. OK'];
+    const gr = '#6BFF96', L = isArabic()
+      ? ['NULD BIOS 1.3', 'معالج EE R5900  294.912 MHz ............ OK', 'ذاكرة RAM  32 MB ....................... OK', 'وحدة USB MASS ......................... OK', 'شبكة NET  100 MBIT .................... OK', 'المكتبة  ١٦ لعبة ............. OK']
+      : ['NULD BIOS 1.3', 'EE R5900  294.912 MHz ............ OK', 'RAM  32 MB ....................... OK', 'USB MASS ......................... OK', 'NET  100 MBIT .................... OK', 'LIBRARY  16 GAMES ............. OK'];
     const n = clamp(Math.floor((u - .3) / .5) + 1, 0, L.length), w = ease((u - 3.4) / .6);
     this.ground(); font(FM); g.shadowColor = 'rgba(80,255,130,.8)'; g.shadowBlur = 8; g.fillStyle = gr;
-    L.forEach((m, i) => { const a = (u - .3 - i * .5) / .35; if (a > 0) g.fillText(m.slice(0, Math.ceil(clamp(a) * m.length)), 96, 96 + i * 22); });
+    L.forEach((m, i) => { const a = (u - .3 - i * .5) / .35; if (a > 0) putText(m.slice(0, Math.ceil(clamp(a) * m.length)), 96, 96 + i * 22); });
     if (Math.floor(t * 2.5) % 2 === 0) g.fillRect(96, 96 + n * 22 - 14, 10, 16);
     if (w > 0) { g.globalAlpha = w; g.shadowBlur = 22; wordmark(640, 420, 84, gr, gr); g.globalAlpha = 1; }
     g.shadowBlur = 0; this.fx(t);
   },
   launch(u, t, o) { // a terminal runs the game; its cover develops from green to full colour
     const gr = '#6BFF96', n = Math.floor(clamp(u / 3.9) * 28), im = o.im[2], ok = im.complete && im.naturalWidth;
-    const L = ['> RUN ' + o.s.replace('-', '_'), '', 'TITLE     ' + o.t.toUpperCase(), 'SOURCE    USB', 'VIDEO     480P', 'TROPHIES  ' + (o.ach || 'NO'), '', HOW, '[' + '#'.repeat(n) + '.'.repeat(28 - n) + ']  ' + String(Math.round(n / 28 * 100)).padStart(3, ' ') + ' %'];
+    const L = isArabic()
+      ? ['> تشغيل ' + o.s.replace('-', '_'), '', 'العنوان  ' + o.t, 'المصدر    USB', 'الفيديو    480P', 'الإنجازات  ' + (o.ach || 'لا يوجد'), '', HOW, '[' + '#'.repeat(n) + '.'.repeat(28 - n) + ']  ' + String(Math.round(n / 28 * 100)).padStart(3, ' ') + ' %']
+      : ['> RUN ' + o.s.replace('-', '_'), '', 'TITLE     ' + o.t.toUpperCase(), 'SOURCE    USB', 'VIDEO     480P', 'TROPHIES  ' + (o.ach || 'NO'), '', HOW, '[' + '#'.repeat(n) + '.'.repeat(28 - n) + ']  ' + String(Math.round(n / 28 * 100)).padStart(3, ' ') + ' %'];
     this.ground(); font(FM); g.shadowColor = 'rgba(80,255,130,.8)'; g.shadowBlur = 8; g.fillStyle = gr;
-    L.forEach((m, i) => { if (u > .14 * i) g.fillText(i ? fit(m, 640) : m.slice(0, Math.ceil(clamp(u / .5) * m.length)), 96, 210 + i * 26); });
+    L.forEach((m, i) => { if (u > .14 * i) putText(i ? fit(m, 640) : m.slice(0, Math.ceil(clamp(u / .5) * m.length)), 96, 210 + i * 26); });
     if (Math.floor(t * 2.5) % 2 === 0) g.fillRect(96, 210 + L.length * 26 - 14, 10, 16);
     g.shadowBlur = 0; g.imageSmoothingEnabled = false;
     if (ok) { g.drawImage(mono(o, 2), 840, 150); g.globalAlpha = ease((u - .8) / 2.4); g.drawImage(im, 840, 150); g.globalAlpha = 1; }
