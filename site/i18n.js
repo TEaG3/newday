@@ -732,6 +732,16 @@
     "python3 covers.py IN_DIR OUT_DIR":"أمر python3 covers.py IN_DIR OUT_DIR",
     "Per-game options panel over the dimmed home screen":"لوحة إعدادات اللعبة فوق الشاشة الرئيسية المعتمة."
   });
+  Object.assign(dict, {
+    "mc1":"بطاقة الذاكرة ١",
+    "ra":"الإنجازات",
+    "NULD zip":"حزمة NULD",
+    "PlayStation is a trademark of Sony Interactive Entertainment. NULD is not affiliated with Sony.":"PlayStation علامة تجارية لشركة Sony Interactive Entertainment، ولا يرتبط مشروع NULD بشركة Sony.",
+    "Ships a fork of":"يتضمن نسخة متفرعة من",
+    "Close":"إغلاق",
+    "Previous":"السابق",
+    "Next":"التالي"
+  });
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
