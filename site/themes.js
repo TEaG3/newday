@@ -169,21 +169,22 @@
   const UI = '500 17px "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif', MONO = '500 14px "IBM Plex Mono", monospace';
   function setup(g) {
     const P = state.pal, ACC = state.coverAccent ? 'FFB454' : P.acento;
-    const rtl = document.documentElement.lang === 'ar';
+    const ar = document.documentElement.lang === 'ar';
     const rect = (x, y, w, h, c, a = 1) => { g.globalAlpha = a, g.fillStyle = '#' + c, g.fillRect(x, y, w, h), g.globalAlpha = 1; };
     const frame = (x, y, w, h, c) => { g.fillStyle = '#' + c; g.fillRect(x, y, w, 1), g.fillRect(x, y + h - 1, w, 1), g.fillRect(x, y, 1, h), g.fillRect(x + w - 1, y, 1, h); };
     const text = (font, x, y, s, c, align = 'left') => {
-      const drawX = rtl ? 1280 - x : x;
-      const drawAlign = rtl ? (align === 'left' ? 'right' : align === 'right' ? 'left' : align) : align;
-      g.font = font, g.fillStyle = '#' + c, g.textAlign = drawAlign, g.textBaseline = 'top', g.fillText(s, drawX, y);
+      const previousDirection = g.direction;
+      g.direction = ar && /[\\u0600-\\u06FF]/.test(s) ? 'rtl' : 'ltr';
+      g.font = font, g.fillStyle = '#' + c, g.textAlign = align, g.textBaseline = 'top', g.fillText(s, x, y);
+      g.direction = previousDirection;
     };
-    const width = s => { g.font = MONO; return Math.round(g.measureText(s).width); };
+    const width = s => { g.font = ar && /[\\u0600-\\u06FF]/.test(s) ? UI : MONO; g.direction = ar ? 'rtl' : 'ltr'; return Math.round(g.measureText(s).width); };
     g.setTransform(1, 0, 0, 1, 0, 0);
     rect(0, 0, 1280, 720, '000000', 0.25); // on the theme's row the home stays in sight
     rect(270, 98, 740, 524, P.panel), frame(270, 98, 740, 524, P.borde);
     text(UI, 320, 118, rtl ? 'إعدادات NULD' : 'NULD setup', P.texto), rect(294, 156, 692, 1, P.borde);
     const value = (y, s, cur) => {
-      const w = width(s) + 56, x = rtl ? 294 : 986 - w;
+      const w = width(s) + 56, x = 986 - w;
       if (cur) rect(x, y + 5, w, 30, ACC); else rect(x, y + 5, w, 30, P.panel), frame(x, y + 5, w, 30, P.borde);
       text(MONO, x + w / 2, y + 12, `<  ${s}  >`, cur ? P.inverso : P.texto, 'center');
     };
@@ -200,10 +201,10 @@
       if (on) rect(x, 263, w, 30, P.acero); else frame(x, 263, w, 30, P.fila);
       text(MONO, x + 12, 270, s, on ? P.texto : P.tenue), x -= 6;
     }
-    value(304, 'Per-game virtual', 0), value(350, '480p', 0), value(396, 'DHCP', 0);
+    value(304, ar ? 'افتراضية لكل لعبة' : 'Per-game virtual', 0), value(350, '480p', 0), value(396, 'DHCP', 0);
     text(UI, 640, 470, rtl ? 'حفظ' : 'Save', ACC, 'center');
     rect(294, 520, 692, 6, P.acero), rect(294, 520, 240, 6, ACC); // a bar and its track
-    text(MONO, 294, 540, 'COVERS 7 / 16', P.etiqueta);
+    text(MONO, 294, 540, ar ? 'الأغلفة ٧ / ١٦' : 'COVERS 7 / 16', P.etiqueta);
     g.textAlign = 'left', g.textBaseline = 'alphabetic';
   }
   const VIEWS = { carousel: 0, grid: 1, list: 2, setup: 1 };
