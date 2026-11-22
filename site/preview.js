@@ -261,15 +261,16 @@ function footer(t) {
   const o = G[sel], acc = rgb(A), y = T.fy || 655;
   if (T.dock) panel(44, 639, 1192, 54, 27);
   if (T.bar) panel(-1, 626, W + 2, 96, 0);
-  font(FM);
+  font(isArabic() ? FU : FM);
   let x = 64;
   const count = String(sel + 1).padStart(2, '0') + ' / ' + N;
   g.fillStyle = T.lb; g.fillText(count, x, y + 16); x += Math.round(g.measureText(count).width) + 16;
-  ['L1', 'ALL', 'PS2', 'PS1', 'APPS', 'R1'].forEach((s, i) => {
+  const filters = isArabic() ? ['L1', 'الكل', 'PS2', 'PS1', 'التطبيقات', 'R1'] : ['L1', 'ALL', 'PS2', 'PS1', 'APPS', 'R1'];
+  filters.forEach((s, i) => {
     const key = i === 0 || i === 5, w = Math.round(g.measureText(s).width) + (key ? 12 : 18);
     if (key) { rr(x + .5, y + .5, w - 1, 21, T.kr || 0); g.strokeStyle = T.lb; g.lineWidth = 1; g.stroke(); }
     if (i === 1) { rr(x, y, w, 22, T.fr || 0); g.fillStyle = acc; g.fill(); }
-    g.fillStyle = i === 1 ? T.oa : T.t2; g.fillText(s, x + (key ? 6 : 9), y + 16);
+    g.fillStyle = i === 1 ? T.oa : T.t2; putText(s, x + (key ? 6 : 9), y + 16);
     x += w + 6;
   });
   x = W - 64;
@@ -282,7 +283,7 @@ function footer(t) {
   const vl = t - tView; // the view's name, framed in the accent, about a second after a change
   if (vl < 1.15) {
     const va = vl < .3 ? ease(vl / .3) : ease((1.15 - vl) / .8), s = (isArabic() ? 'العرض  ' : 'VIEW  ') + viewName(view);
-    font(FM); if ('letterSpacing' in g) g.letterSpacing = '3px';
+    font(isArabic() ? FU : FM); if ('letterSpacing' in g) g.letterSpacing = '3px';
     const w = Math.round(g.measureText(s).width) + 56, vx = Math.round((W - w) / 2), vy = 590 + Math.round(8 * (1 - va));
     g.globalAlpha = va; g.fillStyle = T.vp || T.pn; g.fillRect(vx, vy, w, 36); g.strokeStyle = acc; g.lineWidth = 1; g.strokeRect(vx + .5, vy + .5, w - 1, 35);
     g.fillStyle = T.vtx || T.tx; g.fillText(s, vx + 28, vy + 23);
@@ -953,7 +954,7 @@ Object.assign(THEMES.fosforo, {
       ? ['NULD BIOS 1.3', 'معالج EE R5900  294.912 MHz ............ OK', 'ذاكرة RAM  32 MB ....................... OK', 'وحدة USB MASS ......................... OK', 'شبكة NET  100 MBIT .................... OK', 'المكتبة  ١٦ لعبة ............. OK']
       : ['NULD BIOS 1.3', 'EE R5900  294.912 MHz ............ OK', 'RAM  32 MB ....................... OK', 'USB MASS ......................... OK', 'NET  100 MBIT .................... OK', 'LIBRARY  16 GAMES ............. OK'];
     const n = clamp(Math.floor((u - .3) / .5) + 1, 0, L.length), w = ease((u - 3.4) / .6);
-    this.ground(); font(FM); g.shadowColor = 'rgba(80,255,130,.8)'; g.shadowBlur = 8; g.fillStyle = gr;
+    this.ground(); font(isArabic() ? FU : FM); g.shadowColor = 'rgba(80,255,130,.8)'; g.shadowBlur = 8; g.fillStyle = gr;
     L.forEach((m, i) => { const a = (u - .3 - i * .5) / .35; if (a > 0) putText(m.slice(0, Math.ceil(clamp(a) * m.length)), 96, 96 + i * 22); });
     if (Math.floor(t * 2.5) % 2 === 0) g.fillRect(96, 96 + n * 22 - 14, 10, 16);
     if (w > 0) { g.globalAlpha = w; g.shadowBlur = 22; wordmark(640, 420, 84, gr, gr); g.globalAlpha = 1; }
