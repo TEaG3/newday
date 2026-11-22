@@ -186,7 +186,7 @@
     const value = (y, s, cur) => {
       const w = width(s) + 56, x = 986 - w;
       if (cur) rect(x, y + 5, w, 30, ACC); else rect(x, y + 5, w, 30, P.panel), frame(x, y + 5, w, 30, P.borde);
-      text(MONO, x + w / 2, y + 12, `<  ${s}  >`, cur ? P.inverso : P.texto, 'center');
+      text(ar && /[\u0600-\u06FF]/.test(s) ? UI : MONO, x + w / 2, y + 12, `<  ${s}  >`, cur ? P.inverso : P.texto, 'center');
     };
     (ar ? ['اللغة', 'السمة', 'مصادر الألعاب', 'بطاقة الذاكرة', 'الفيديو', 'الشبكة'] : ['Language', 'Theme', 'Games from', 'Memory card', 'Video', 'Network']).forEach((l, r) => {
       const y = 166 + 46 * r;
@@ -204,7 +204,7 @@
     value(304, ar ? 'افتراضية لكل لعبة' : 'Per-game virtual', 0), value(350, '480p', 0), value(396, 'DHCP', 0);
     text(UI, 640, 470, ar ? 'حفظ' : 'Save', ACC, 'center');
     rect(294, 520, 692, 6, P.acero), rect(294, 520, 240, 6, ACC); // a bar and its track
-    text(MONO, 294, 540, ar ? 'الأغلفة ٧ / ١٦' : 'COVERS 7 / 16', P.etiqueta);
+    text(ar ? UI : MONO, 294, 540, ar ? 'الأغلفة ٧ / ١٦' : 'COVERS 7 / 16', P.etiqueta);
     g.textAlign = 'left', g.textBaseline = 'alphabetic';
   }
   const VIEWS = { carousel: 0, grid: 1, list: 2, setup: 1 };
