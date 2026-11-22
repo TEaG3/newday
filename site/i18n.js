@@ -691,6 +691,28 @@
   "NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "NULD برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0."
 });
 
+  Object.assign(dict, {
+    "Torres":"الأبراج","Cristal":"كريستال","Aurora":"الشفق القطبي","Liquid":"السائل","Onda":"الموجة","Orbit":"المدار",
+    "Techstep":"تيك ستيب","Wireframe":"الإطار السلكي","Neuro":"نيورو","Fósforo":"الفوسفور","Papel":"الورق",
+    "Setup panel":"لوحة الإعداد","Loading screen":"شاشة التحميل","Launch a game":"تشغيل لعبة",
+    "Download the theme":"تنزيل السمة","Copy theme.ini":"نسخ ملف theme.ini","Copied":"تم النسخ",
+    "Back to the base's colours":"استعادة ألوان السمة الأساسية",
+    "The accent follows the selected cover's colour":"يتغير لون التمييز وفق لون غلاف اللعبة المحددة",
+    "Choose a picture":"اختيار صورة","Remove it":"إزالة الصورة","Name":"الاسم","Base":"السمة الأساسية",
+    "Colours":"الألوان","Background picture":"صورة الخلفية","optional":"اختياري",
+    "under the picture and where nothing is drawn; the base’s own background keeps its colours":"الخلفية التي تظهر أسفل الصورة وفي المساحات الفارغة؛ تحتفظ خلفية السمة الأساسية بألوانها",
+    "panels, the detail card, the pane behind the list":"اللوحات وبطاقة التفاصيل والخلفية خلف قائمة الألعاب",
+    "the selected row; the frame of options that are off":"الصف المحدد وإطار الخيارات غير المفعّلة",
+    "1-px edges and rules":"الحواف والفواصل بسماكة بكسل واحد","what is off: unchecked options":"العناصر غير المفعّلة والخيارات غير المحددة",
+    "titles and main text":"العناوين والنصوص الرئيسية","secondary text":"النصوص الثانوية",
+    "serials, counters, the status line":"الأرقام التسلسلية والعدادات وسطر الحالة",
+    "the selection":"العنصر المحدد","quiet fills: options that are on, bar tracks":"التعبئات الهادئة والخيارات المفعّلة ومسارات الأشرطة",
+    "text on an accent or text fill":"النص الظاهر فوق لون التمييز أو التعبئة",
+    "Unzip the download into":"فك ضغط الملف الذي نزّلته داخل",
+    "On the PS2: START, then Theme, and move right until yours shows up.":"على جهاز PS2: اضغط START ثم اختر السمة، وانتقل يميناً حتى تظهر سمتك.",
+    "Save keeps it.":"اضغط حفظ للاحتفاظ بها."
+  });
+
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
@@ -831,7 +853,7 @@
   function apply() {
     const ar = lang === "ar";
     document.documentElement.lang = ar ? "ar" : "en";
-    document.documentElement.dir = ar ? "rtl" : "ltr";
+    document.documentElement.dir = "ltr";
     document.body.classList.toggle("nuld-rtl", ar);
     translateText(document.body, ar);
     document.querySelectorAll("[data-nuld-lang]").forEach(b => {
