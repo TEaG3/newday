@@ -996,11 +996,11 @@ window.NULDPreview = {
     if (coverAccent) N_.acc = 'cover';
     else if (ch('acento') || S.acc === 'cover' || S.acc === 'coverDark') { const n = parseInt(pal.acento, 16); N_.acc = [n >> 16, n >> 8 & 255, n & 255]; if (ch('acento')) N_.aTag = null, N_.fBg = null; }
     if (picture) N_.bg = () => { g.imageSmoothingEnabled = true; g.drawImage(picture, 0, 0, W, H); }, N_.lp = 1, N_.mid = null, N_.back = false;
-    T = N_; Afrom = A;
+    previewFault = false; T = N_; Afrom = A;
     if (!same) tTheme = tFade = now, settle();
   },
-  view(v) { if (mode !== 'home') mode = 'home', tFade = now; if (v !== view) setView(v); lastInput = now; },
-  show(m) { mode = m; tMode = now; lastInput = now; },
+  view(v) { previewFault = false; if (mode !== 'home') mode = 'home', tFade = now; if (v !== view) setView(v); lastInput = now; },
+  show(m) { previewFault = false; mode = m; tMode = now; lastInput = now; },
   overlay(fn) { overlay = fn; },
   tour(fn) { tour = fn; },
   get g() { return g; },
@@ -1008,8 +1008,20 @@ window.NULDPreview = {
 cv.addEventListener('click', e => { if (mode !== 'home') { mode = 'home'; tFade = now; lastInput = now; return; } const r = cv.getBoundingClientRect(); const d = (e.clientX - r.left) / r.width < .5 ? -1 : 1; move(view === 2 ? d : d); lastInput = now; });
 
 // ---- the frame ----
+let lastFrameMs = 0, previewFault = false;
+const frameInterval = matchMedia('(max-width: 760px), (pointer: coarse)').matches ? 1000 / 24 : 1000 / 30;
 function frame(ms) {
-  if (!seen) { requestAnimationFrame(frame); return; } // off screen: nothing to draw
+  if (!seen || document.hidden) { requestAnimationFrame(frame); return; }
+  if (ms - lastFrameMs < frameInterval) { requestAnimationFrame(frame); return; }
+  lastFrameMs = ms;
+  if (previewFault) {
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    g.fillStyle = '#06070A'; g.fillRect(0, 0, W, H);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; font(FU);
+    g.fillStyle = '#E6E8EC'; g.fillText(isArabic() ? 'تعذرت المعاينة. اضغط زر العرض لإعادة المحاولة.' : 'Preview paused. Choose a view to try again.', W / 2, H / 2);
+    requestAnimationFrame(frame); return;
+  }
+  try {
   const t = ms / 1000 + T0, dt = Math.min(.05, Math.max(0, t - now)); now = t;
   for (const o of G) if (!o.blur && o.im[2].complete && o.im[2].naturalWidth) derive(o);
   if (mode === 'home' && !overlay && auto.checked && t - lastInput > 5 && t - Math.max(tMove, tView) > 3.2) { // the demo: three games, then the next view
@@ -1030,8 +1042,8 @@ function frame(ms) {
     else { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); if (!spl) centred('THE GAME STARTS HERE', 366, FM, '#8A919C', 3); }
     const dark = Math.max(u < .45 ? 1 - ease(u / .45) : 0, out > 0 && u < end ? ease(out) : 0);
     if (dark > 0) { g.fillStyle = `rgba(0,0,0,${dark})`; g.fillRect(0, 0, W, H); }
-    if (u >= end + (spl ? 0 : 1.3)) { mode = 'home'; tFade = t; if (!spl) tTheme = t; lastInput = Math.max(lastInput, t - 3); }
-    requestAnimationFrame(frame); return;
+    if (u >= end + (spl ? 0 : .25)) { mode = 'home'; tFade = t; if (!spl) tTheme = t; lastInput = Math.max(lastInput, t - 3); }
+    return;
   }
   T.bg(t);
   // Developer signature on the website's theme backgrounds only; never alters downloaded PS2 assets.
@@ -1054,6 +1066,16 @@ function frame(ms) {
   if (T.fx) T.fx(t);
   if (overlay) { g.save(); overlay(g); g.restore(); }
   const fi = (t - tFade) / .35; if (fi < 1) { g.fillStyle = `rgba(0,0,0,${1 - ease(fi)})`; g.fillRect(0, 0, W, H); }
+
+  } catch (err) {
+    // A theme effect or a mobile canvas limitation must never stop the animation loop.
+    previewFault = true; mode = 'home'; overlay = null;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    g.shadowBlur = 0; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#06070A'; g.fillRect(0, 0, W, H);
+    font(FU); g.fillStyle = '#E6E8EC';
+    g.fillText(isArabic() ? 'تعذرت المعاينة. اضغط زر العرض لإعادة المحاولة.' : 'Preview paused. Choose a view to try again.', W / 2, H / 2);
+  }
   requestAnimationFrame(frame);
 }
 window.NULDPreview.set('nuld', {}, {}, null, false);
