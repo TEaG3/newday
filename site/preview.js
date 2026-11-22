@@ -322,7 +322,9 @@ function ring(s, c, lw, pad, r) { g.globalAlpha = s.f; rr(s.x - pad, s.y - pad, 
 let mode = 'home', tMode = 0, tFade = 0, CAM = null;
 const SPL = 6.4, LCH = 4.4, HOW_EN = 'STARTING WITH NEUTRINO';
 const how = () => isArabic() ? 'جارٍ تشغيل NEUTRINO' : HOW_EN;
-const STEPS = [[0, 'STARTING'], [1.1, 'USB MODULES'], [2.2, 'READING GAMES  7 / 16'], [3.3, 'READING GAMES  16 / 16'], [4.4, '16 GAMES · READY']];
+const STEPS = isArabic()
+  ? [[0, 'جارٍ البدء'], [1.1, 'وحدات USB'], [2.2, 'جارٍ فحص الألعاب  ٧ / ١٦'], [3.3, 'جارٍ فحص الألعاب  ١٦ / ١٦'], [4.4, '١٦ لعبة · جاهز']]
+  : [[0, 'STARTING'], [1.1, 'USB MODULES'], [2.2, 'READING GAMES  7 / 16'], [3.3, 'READING GAMES  16 / 16'], [4.4, '16 GAMES · READY']];
 const status = u => { let s = STEPS[0][1]; for (const [a, m] of STEPS) if (u >= a) s = m; return s; };
 const ink = () => T.btx || T.tx;
 function mark(cx, cy, r, ringc, slash) { // NULD's mark: a ring and a slash
@@ -1027,7 +1029,7 @@ function frame(ms) {
   if (mode !== 'home') { // splash or launch screen; keep the animation loop alive until it finishes
     const u = t - tMode, spl = mode === 'splash', end = spl ? SPL : LCH, out = (u - end + .45) / .45;
     if (u < end) (spl ? T.splash || genSplash : T.launch || genLaunch).call(T, u, t, o);
-    else { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); if (!spl) centred('THE GAME STARTS HERE', 366, FM, '#8A919C', 3); }
+    else { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); if (!spl) centred(isArabic() ? 'تم تشغيل اللعبة' : 'THE GAME STARTS HERE', 366, isArabic() ? FU : FM, '#8A919C', 3); }
     const dark = Math.max(u < .45 ? 1 - ease(u / .45) : 0, out > 0 && u < end ? ease(out) : 0);
     if (dark > 0) { g.fillStyle = `rgba(0,0,0,${dark})`; g.fillRect(0, 0, W, H); }
     if (u >= end + (spl ? 0 : 1.3)) { mode = 'home'; tFade = t; if (!spl) tTheme = t; lastInput = Math.max(lastInput, t - 3); }
