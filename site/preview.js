@@ -996,11 +996,11 @@ window.NULDPreview = {
     if (coverAccent) N_.acc = 'cover';
     else if (ch('acento') || S.acc === 'cover' || S.acc === 'coverDark') { const n = parseInt(pal.acento, 16); N_.acc = [n >> 16, n >> 8 & 255, n & 255]; if (ch('acento')) N_.aTag = null, N_.fBg = null; }
     if (picture) N_.bg = () => { g.imageSmoothingEnabled = true; g.drawImage(picture, 0, 0, W, H); }, N_.lp = 1, N_.mid = null, N_.back = false;
-    previewFault = false; T = N_; Afrom = A;
+    T = N_; Afrom = A;
     if (!same) tTheme = tFade = now, settle();
   },
-  view(v) { previewFault = false; if (mode !== 'home') mode = 'home', tFade = now; if (v !== view) setView(v); lastInput = now; },
-  show(m) { previewFault = false; mode = m; tMode = now; lastInput = now; },
+  view(v) { if (mode !== 'home') mode = 'home', tFade = now; if (v !== view) setView(v); lastInput = now; },
+  show(m) { mode = m; tMode = now; lastInput = now; },
   overlay(fn) { overlay = fn; },
   tour(fn) { tour = fn; },
   get g() { return g; },
@@ -1008,23 +1008,12 @@ window.NULDPreview = {
 cv.addEventListener('click', e => { if (mode !== 'home') { mode = 'home'; tFade = now; lastInput = now; return; } const r = cv.getBoundingClientRect(); const d = (e.clientX - r.left) / r.width < .5 ? -1 : 1; move(view === 2 ? d : d); lastInput = now; });
 
 // ---- the frame ----
-let lastFrameMs = 0, previewFault = false;
-const frameInterval = matchMedia('(max-width: 760px), (pointer: coarse)').matches ? 1000 / 24 : 1000 / 30;
+// Keep the original NULD animation scheduler: one requestAnimationFrame per frame.
 function frame(ms) {
-  if (!seen || document.hidden) { requestAnimationFrame(frame); return; }
-  if (ms - lastFrameMs < frameInterval) { requestAnimationFrame(frame); return; }
-  lastFrameMs = ms;
-  if (previewFault) {
-    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-    g.fillStyle = '#06070A'; g.fillRect(0, 0, W, H);
-    g.textAlign = 'center'; g.textBaseline = 'middle'; font(FU);
-    g.fillStyle = '#E6E8EC'; g.fillText(isArabic() ? 'تعذرت المعاينة. اضغط زر العرض لإعادة المحاولة.' : 'Preview paused. Choose a view to try again.', W / 2, H / 2);
-    requestAnimationFrame(frame); return;
-  }
-  try {
+  if (!seen) { requestAnimationFrame(frame); return; } // off screen: nothing to draw
   const t = ms / 1000 + T0, dt = Math.min(.05, Math.max(0, t - now)); now = t;
   for (const o of G) if (!o.blur && o.im[2].complete && o.im[2].naturalWidth) derive(o);
-  if (mode === 'home' && !overlay && auto.checked && t - lastInput > 5 && t - Math.max(tMove, tView) > 3.2) { // the demo: three games, then the next view
+  if (mode === 'home' && !overlay && auto.checked && t - lastInput > 5 && t - Math.max(tMove, tView) > 3.2) {
     if (tour && ++autoN % 4 === 0) setView(view + 1), tour(view); else if (!move(autoDir)) { autoDir = -autoDir; move(autoDir); }
   }
   animate(t, dt);
@@ -1033,16 +1022,16 @@ function frame(ms) {
   tint = tint.map((v, i) => v + (o.acc[i] - v) * Math.min(1, dt * 2.5));
 
   g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.shadowBlur = 0; g.shadowOffsetY = 0; g.textBaseline = 'alphabetic';
-  // Keep the PS2 mock-up's fixed 1280x720 coordinate system LTR even when the website is Arabic.
-  // Arabic glyph shaping remains native; only the canvas anchoring direction is kept stable.
+  // The canvas uses the original fixed LTR coordinate system; Arabic labels remain shaped by their text runs.
   g.direction = 'ltr'; g.textAlign = 'left';
-  if (mode !== 'home') { // a splash or a loading screen is playing
+  if (mode !== 'home') { // splash or launch screen; keep the animation loop alive until it finishes
     const u = t - tMode, spl = mode === 'splash', end = spl ? SPL : LCH, out = (u - end + .45) / .45;
     if (u < end) (spl ? T.splash || genSplash : T.launch || genLaunch).call(T, u, t, o);
     else { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); if (!spl) centred('THE GAME STARTS HERE', 366, FM, '#8A919C', 3); }
     const dark = Math.max(u < .45 ? 1 - ease(u / .45) : 0, out > 0 && u < end ? ease(out) : 0);
     if (dark > 0) { g.fillStyle = `rgba(0,0,0,${dark})`; g.fillRect(0, 0, W, H); }
-    if (u >= end + (spl ? 0 : .25)) { mode = 'home'; tFade = t; if (!spl) tTheme = t; lastInput = Math.max(lastInput, t - 3); }
+    if (u >= end + (spl ? 0 : 1.3)) { mode = 'home'; tFade = t; if (!spl) tTheme = t; lastInput = Math.max(lastInput, t - 3); }
+    requestAnimationFrame(frame);
     return;
   }
   T.bg(t);
@@ -1066,16 +1055,6 @@ function frame(ms) {
   if (T.fx) T.fx(t);
   if (overlay) { g.save(); overlay(g); g.restore(); }
   const fi = (t - tFade) / .35; if (fi < 1) { g.fillStyle = `rgba(0,0,0,${1 - ease(fi)})`; g.fillRect(0, 0, W, H); }
-
-  } catch (err) {
-    // A theme effect or a mobile canvas limitation must never stop the animation loop.
-    previewFault = true; mode = 'home'; overlay = null;
-    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-    g.shadowBlur = 0; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = '#06070A'; g.fillRect(0, 0, W, H);
-    font(FU); g.fillStyle = '#E6E8EC';
-    g.fillText(isArabic() ? 'تعذرت المعاينة. اضغط زر العرض لإعادة المحاولة.' : 'Preview paused. Choose a view to try again.', W / 2, H / 2);
-  }
   requestAnimationFrame(frame);
 }
 window.NULDPreview.set('nuld', {}, {}, null, false);
