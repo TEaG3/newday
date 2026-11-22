@@ -251,7 +251,7 @@ function header(t) {
     if (kind === 1) { rr(x, 86, w, 26, T.r); g.fillStyle = T.fBg ? T.fBg() : T.tx; g.fill(); g.fillStyle = T.fTx || T.inv; }
     else if (T.glass) { panel(x, 86, w, 26, T.r, T.tg, kind === 2 ? ac : 0); g.fillStyle = kind === 2 ? ac : T.t2; font(FM); }
     else { rr(x + .5, 86.5, w - 1, 25, T.r); if (T.tg) { g.fillStyle = T.tg; g.fill(); } g.strokeStyle = kind === 2 ? ac : (T.tagEd ? T.tagEd() : T.ed); g.lineWidth = 1; g.stroke(); g.fillStyle = kind === 2 ? ac : T.t2; }
-    g.fillText(s, x + 12, 104);
+    putText(s, x + 12, 104);
     x += w + 10;
   });
   g.globalAlpha = 1;
@@ -276,7 +276,7 @@ function footer(t) {
   const hints = [['s', isArabic() ? 'العرض' : 'View'], ['t', isArabic() ? 'الخيارات' : 'Options']]; if (o.ach) hints.push(['o', isArabic() ? 'الإنجازات' : 'Achievements']); hints.push(['x', isArabic() ? 'تشغيل' : 'Play']);
   font(FU);
   for (const [kd, s] of hints) {
-    x -= Math.round(g.measureText(s).width); g.fillStyle = T.tx; g.fillText(s, x, y + 17);
+    x -= Math.round(g.measureText(s).width); g.fillStyle = T.tx; putText(s, x, y + 17);
     x -= 22; glyph(kd, x, y + 4, acc); x -= 24;
   }
   const vl = t - tView; // the view's name, framed in the accent, about a second after a change
@@ -327,10 +327,12 @@ const STEPS_AR = [[0, 'جارٍ البدء'], [1.1, 'وحدات USB'], [2.2, 'ج
 const status = u => { const steps = isArabic() ? STEPS_AR : STEPS_EN; let s = steps[0][1]; for (const [a, m] of steps) if (u >= a) s = m; return s; };
 const uiText = (en, ar) => isArabic() ? ar : en;
 const putText = (s, x, y, align = 'left') => {
-  const oldDirection = g.direction, oldAlign = g.textAlign;
-  g.direction = isArabic() && /[\u0600-\u06FF]/.test(s) ? 'rtl' : 'ltr';
+  const oldDirection = g.direction, oldAlign = g.textAlign, oldFont = g.font;
+  const arabicRun = isArabic() && /[\u0600-\u06FF]/.test(s);
+  if (arabicRun) g.font = FU;
+  g.direction = arabicRun ? 'rtl' : 'ltr';
   g.textAlign = align; g.fillText(s, x, y);
-  g.textAlign = oldAlign; g.direction = oldDirection;
+  g.textAlign = oldAlign; g.direction = oldDirection; g.font = oldFont;
 };
 const ink = () => T.btx || T.tx;
 function mark(cx, cy, r, ringc, slash) { // NULD's mark: a ring and a slash
@@ -346,8 +348,9 @@ function wordmark(cx, cy, cap, inkc, slash, dx = 0) { // the mark and NULD in Mi
   mark(x + r, cy, r, inkc, slash);
 }
 function centred(s, y, f, c, track) {
-  font(f, f === FT); if (track && 'letterSpacing' in g) g.letterSpacing = track + 'px';
-  const oldDirection = g.direction; g.direction = isArabic() && /[\u0600-\u06FF]/.test(s) ? 'rtl' : 'ltr';
+  const arabicRun = isArabic() && /[\u0600-\u06FF]/.test(s);
+  font(arabicRun ? FU : f, !arabicRun && f === FT); if (track && 'letterSpacing' in g) g.letterSpacing = track + 'px';
+  const oldDirection = g.direction; g.direction = arabicRun ? 'rtl' : 'ltr';
   g.fillStyle = c; const w = g.measureText(s).width; g.fillText(s, Math.round(640 - w / 2), y);
   g.direction = oldDirection;
   if ('letterSpacing' in g) g.letterSpacing = '0px'; return w;
@@ -753,7 +756,7 @@ Object.assign(THEMES.cristal, {
     font(FM); g.fillStyle = T.t2; g.fillText(o.s + '  ·  PS2  ·  USB  ·  480P', px + 30, 282);
     font(FU); g.fillStyle = T.tx; putText(uiText('Virtual memory card', 'بطاقة ذاكرة افتراضية'), px + 30, 334);
     if (o.ach) { g.fillStyle = acc; putText(uiText('Achievements · ' + o.ach, 'الإنجازات · ' + o.ach), px + 30, 362); }
-    font(FM); if ('letterSpacing' in g) g.letterSpacing = '3px'; g.fillStyle = T.lb; g.fillText(HOW, px + 30, 430); if ('letterSpacing' in g) g.letterSpacing = '0px';
+    font(FM); if ('letterSpacing' in g) g.letterSpacing = '3px'; g.fillStyle = T.lb; putText(HOW, px + 30, 430); if ('letterSpacing' in g) g.letterSpacing = '0px';
     g.fillStyle = 'rgba(255,255,255,.22)'; rr(px + 30, 446, 410, 4, 2); g.fill(); g.fillStyle = acc; rr(px + 30, 446, Math.max(4, 410 * ease(u / 3.8)), 4, 2); g.fill();
     g.globalAlpha = 1;
   }
@@ -849,7 +852,7 @@ Object.assign(THEMES.techstep, {
     font(FM); g.fillStyle = Y; g.fillText(o.s + '  ///  PS2  ///  USB  ///  480P', 140, 104);
     if (u > .3) {
       font('800 230px Archivo, sans-serif', true); g.fillStyle = K; g.fillText(String(sel + 1).padStart(2, '0'), 590, 400);
-      font(FM); g.fillRect(596, 440, Math.round(g.measureText(HOW).width) + 24, 26); g.fillStyle = Y; g.fillText(HOW, 608, 458); g.fillStyle = K;
+      font(FM); g.fillRect(596, 440, Math.round(g.measureText(HOW).width) + 24, 26); g.fillStyle = Y; putText(HOW, 608, 458); g.fillStyle = K;
       for (let i = 0; i < 16; i++) { const x = 596 + i * 38; if (i < n) g.fillRect(x, 500, 30, 30); else { g.fillRect(x, 500, 30, 2); g.fillRect(x, 528, 30, 2); g.fillRect(x, 500, 2, 30); g.fillRect(x + 28, 500, 2, 30); } }
       g.fillText(String(Math.round(n / 16 * 100)).padStart(3, ' ') + ' %', 596, 562);
     }
