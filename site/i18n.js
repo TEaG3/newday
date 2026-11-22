@@ -801,6 +801,14 @@
     "After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.":"بعد تغيير اللغة من لوحة الإعداد، كان عنوان القرص في الشاشة الرئيسية يبقى باللغة السابقة.",
     "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.":"تم قياس أداء سمتي Torres وNULD فقط على جهاز حقيقي بمعدل 60 إطاراً في الثانية على SCPH-75001. أما السمات العشر الأخرى فقد عملت على الجهاز نفسه دون تقطع ملحوظ، لكن لم يُقَس معدل إطاراتها."
   });
+  Object.assign(dict, {
+    "under the picture and where nothing is drawn; the base’s own background keeps its colours":"الخلفية التي تظهر أسفل الصورة وفي المساحات الفارغة؛ تحتفظ خلفية السمة الأساسية بألوانها.",
+    "panels, the detail card, the pane behind the list":"اللوحات وبطاقة التفاصيل والمساحة خلف قائمة الألعاب.",
+    "the selected row; the frame of options that are off":"الصف المحدد وإطار الخيارات غير المفعّلة.",
+    "quiet fills: options that are on, bar tracks":"التعبئات الهادئة والخيارات المفعّلة ومسارات الأشرطة.",
+    "Theme selector.":"محدد السمات.",
+    "Switch language":"تغيير اللغة"
+  });
   const key = s => s.replace(/\s+/g, " ").trim();
   const attributeDict = {
     "aria-label": {
@@ -945,7 +953,7 @@
     document.body.classList.toggle("nuld-rtl", ar);
     translateText(document.body, ar);
     document.querySelectorAll("[data-nuld-lang]").forEach(b => {
-      const label = ar ? "English" : "العربية";
+      const label = ar ? "الإنجليزية" : "العربية";
       if (b.textContent !== label) b.textContent = label;
     });
     document.title = ar ? (pageTitles[originalTitle] || originalTitle) : originalTitle;
