@@ -9,7 +9,8 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 curl --fail --location --retry 3 "$URL" -o "$WORK/neutrino.7z"
 echo "$SHA256  $WORK/neutrino.7z" | sha256sum --check -
-7zz x -y "$WORK/neutrino.7z" "-o$WORK/unpacked" >/dev/null
+mkdir -p "$WORK/unpacked"
+bsdtar -xf "$WORK/neutrino.7z" -C "$WORK/unpacked"
 MODULE="$(find "$WORK/unpacked" -type f -name mmcefhi.irx -print -quit)"
 test -n "$MODULE" && test -s "$MODULE"
 mkdir -p "$ROOT/third_party/neutrino-igr/runtime"
