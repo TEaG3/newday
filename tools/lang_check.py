@@ -103,7 +103,7 @@ def main():
         "Arabic language key must be registered":
             'lang_key[LANG_N] = {"es", "en", "pt", "ar"}' in launcher,
         "fresh config must use Arabic": 'ini_parse(&cfg, config_template[LANG_AR]);' in launcher,
-        "Arabic config template marker must exist": '"; NULD - إعدادات عربية\\n"' in launcher,
+        "Arabic config template marker must exist": '"; TEa.G3 - إعدادات عربية\\n"' in launcher,
         "Arabic config template must set idioma=ar": "idioma = ar\\n" in launcher,
         "developer credit must be present": 'TEa.G3' in launcher and "تعديل المطور العراقي" in launcher,
     }
