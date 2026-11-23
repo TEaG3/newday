@@ -45,27 +45,27 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
 2. **Start** `mass0:/TEa.G3.ELF` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
 3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card,
-   video, network, the memory card for `BOOT/NULD.ELF` and how FreeMcBoot 1.966 starts it (autoboot, a button or
-   its menu; the original `FREEMCB.CNF` is kept as `.bak`). Every setting is also in `nuld/config.ini`, commented.
+   video, network, the memory card for `BOOT/TEa.G3.ELF` and how FreeMcBoot 1.966 starts it (autoboot, a button or
+   its menu; the original `FREEMCB.CNF` is kept as `.bak`). Every setting is also in `tea_g3/config.ini`, commented.
 4. **Play**: pick a game, press ✕.
 
 Optional:
 - **Covers**: plug in the network cable; missing covers download at boot. If you see "No DNS", set
   `[red] dns = 1.1.1.1` in config.ini. Your own covers: `python3 tools/covers.py IN_DIR OUT_DIR` (numpy, Pillow)
   turns PNG/JPG files named by serial (`SLUS-21376.png`) into the `.c16` pair that goes in `mass0:/covers/`.
-- **Back to NULD from a game**: with FMCB set to autoboot `BOOT/NULD.ELF` (the wizard does it), "Restart" in
+- **Back to TEa.G3 from a game**: with FMCB set to autoboot `BOOT/NULD.ELF` (the wizard does it), "Restart" in
   the in-game menu brings you back.
 - **MemCard PRO 2 / SD2PSX**: they switch to the game's own card when a game starts. To save there instead of the
   USB's virtual card, set the game's memory card to `fisica` (△, or `[memorycard] modo = fisica` for every game).
 - **Achievements**: run the xeRAbora client (signed in to your RetroAchievements account) on a PC or server on the
   same network. Use [v0.1.0-alpha.9](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9), the version
-  NULD is tested with: xeRAbora is in active development and newer releases may change the protocol.
-- **Home game server**: on a Linux box, run Neutrino's `udpfs_server.py` and NULD's `server/nuld_catalog.py`
+  TEa.G3 is tested with: xeRAbora is in active development and newer releases may change the protocol.
+- **Home game server**: on a Linux box, run Neutrino's `udpfs_server.py` and TEa.G3's `server/nuld_catalog.py`
   (zip, `server/`) over `<root>/DVD`; set `[juegos] origen = usb, udpfs` and `servidor = <server IP>`. Use a cable.
   Any other udpfs server (Server2PS2, ...): leave `servidor` empty and set a fixed `[red] ip`; no online covers or
   achievements then.
 - **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy the same files to the card's SD and start
-  `mmce0:/launcher.elf` (point FMCB's autoboot straight at it). Settings, covers and Neutrino live on the card; PS1
+  `mmce0:/TEa.G3.ELF` (point FMCB's autoboot straight at it). Settings, covers and Neutrino live on the card; PS1
   games need NULD on a USB; MX4SIO can't be used alongside.
 - **Status**: SELECT shows each game source (games found, or why it failed) and the network.
 
@@ -82,7 +82,7 @@ The full guide is on the [website](https://danielnuld.github.io/nuld/#guide) and
 Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3 and Pillow are also required to generate the Arabic-aware font atlas.
 
 ```
-./build.sh APP=launcher          # launcher.elf
+./build.sh APP=launcher          # TEa.G3.ELF
 ./build.sh test                  # host selftests
 bash tools/build_neutrino.sh    # Arabic-capable Neutrino fork: dist/neutrino/; copy it over mass0:/neutrino/
 ./build.sh nuld_hash            # the game server's helper (static)
