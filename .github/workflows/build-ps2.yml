@@ -36,8 +36,8 @@ jobs:
               test -x "$PS2DEV/ee/bin/mips64r5900el-ps2-elf-gcc"
               make test
               { make clean; make APP=launcher; } 2>&1 | tee build.log
-              test -s launcher.elf
-              ls -lh launcher.elf
+              test -s TEa.G3.ELF
+              ls -lh TEa.G3.ELF
               bash tools/build_neutrino.sh 2>&1 | tee -a build.log
               test -s dist/neutrino/neutrino.elf
               test -s dist/neutrino/modules/ee_core.elf
@@ -49,15 +49,15 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: nuld-launcher-${{ github.sha }}
-          path: launcher.elf
+          name: tea-g3-launcher-${{ github.sha }}
+          path: TEa.G3.ELF
           if-no-files-found: error
 
       - name: Upload Neutrino Arabic IGR build
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: nuld-neutrino-${{ github.sha }}
+          name: tea-g3-neutrino-${{ github.sha }}
           path: dist/neutrino/
           if-no-files-found: error
 
@@ -65,6 +65,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nuld-build-log-${{ github.sha }}
+          name: tea-g3-build-log-${{ github.sha }}
           path: build.log
           if-no-files-found: warn
