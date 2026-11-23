@@ -87,10 +87,10 @@ if source.count(old) != 1:
     raise SystemExit(f"expected one BDM device-selection block, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
-old = r'''        if (!strcmp(argv[4], "bdm") || !strcmp(argv[4], "usb"))
+old = r'''        if (!strcmp(argv[4], "bdm"))
             autoLaunchBDMGame(argv);
 '''
-new = r'''        if (!strcmp(argv[4], "bdm"))
+new = r'''        if (!strcmp(argv[4], "bdm") || !strcmp(argv[4], "usb"))
             autoLaunchBDMGame(argv);
         /* argv[0] boot path, argv[1] raw UL name, argv[2] startup ID,
            argv[3] "CD"/"DVD", argv[4] "ul", argv[5] split-part count. */
@@ -99,6 +99,12 @@ new = r'''        if (!strcmp(argv[4], "bdm"))
 '''
 if source.count(old) != 1:
     raise SystemExit(f"expected one BDM main dispatch, found {source.count(old)}")
+source = source.replace(old, new, 1)
+
+old = r'''    if (gBDMPrefix[0] != '\\0') {'''
+new = r'''    if (!isUL && gBDMPrefix[0] != '\\0') {'''
+if source.count(old) != 1:
+    raise SystemExit(f"expected one BDM prefix branch, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
 path.write_text(source, encoding="utf-8")
