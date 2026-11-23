@@ -79,10 +79,15 @@ make -f Makefile.embedded copy_extra >> "$WORK/neutrino_copy.log" 2>&1 || {
 mkdir -p "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
 cp -R ee/loader/modules/. "$REPO/dist/neutrino/modules/"
 cp -R ee/loader/config/. "$REPO/dist/neutrino/config/"
+# PS2SDK does not ship mmcefhi.irx; use the SHA-256-pinned official Neutrino release module.
+MMCE_FHI="$REPO/third_party/neutrino-igr/runtime/mmcefhi.irx"
+test -s "$MMCE_FHI"
+cp "$MMCE_FHI" "$REPO/dist/neutrino/modules/mmcefhi.irx"
 # Restore the TEa.G3-specific achievements agent after the upstream module copy.
 cp iop/raagent/irx/raagent.irx "$REPO/dist/neutrino/modules/raagent.irx"
 test -s "$REPO/dist/neutrino/modules/cdvdman_emu.irx"
 test -s "$REPO/dist/neutrino/modules/ee_core.elf"
 test -s "$REPO/dist/neutrino/modules/udnl.irx"
+test -s "$REPO/dist/neutrino/modules/mmcefhi.irx"
 ls -la "$REPO/dist/neutrino" "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
 echo "complete Neutrino runtime staged at dist/neutrino/ from $BASE"
