@@ -39,7 +39,7 @@ cp "$FORK/igr.h" "$FORK/padpatterns.h" ee/ee_core/include/
 cp "$FORK/raagent/ra_snap.h" "$FORK/raagent/ra_watch.h" common/include/ # xeRAbora's protocol: loader, ee_core, agent
 rm -rf iop/raagent && cp -r "$FORK/raagent" iop/raagent
 python3 "$FORK/patch_neutrino.py"
-make -C iop/cdvdman_emu > "$WORK/cdvdman_emu.log" 2>&1 || { tail -20 "$WORK/cdvdman_emu.log"; exit 1; }
+make -C iop/cdvdman_emu IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/cdvdman_emu.log" 2>&1 || { tail -20 "$WORK/cdvdman_emu.log"; exit 1; }
 make -C ee/ee_core clean all > "$WORK/ee_core.log" 2>&1 || { tail -20 "$WORK/ee_core.log"; exit 1; }
 grep -E ' _end$|_end = ' ee/ee_core/ee_core.map | head -2 # the 64 KB region ends at 0x94000
 # the packed neutrino.elf needs ps2-packer's stubs, which this toolchain cannot find; the unpacked ELF runs the same
