@@ -63,7 +63,7 @@ int runtime_install(const char *home)
         size_t n = fread(actual, 1, sizeof(actual) - 1, f);
         actual[n] = 0;
         fclose(f);
-        if (n && actual[n - 1] == '\\n') actual[n - 1] = 0;
+        if (n && actual[n - 1] == 10) actual[n - 1] = 0;
         if (!strcmp(actual, expected)) return 1;
     }
     for (unsigned int i = 0; i < tea_runtime_assets_count; i++) {
