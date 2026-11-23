@@ -3,7 +3,7 @@
 build.sh nuld_hash). Usage: python tools/make_release.py v1.0 <neutrino dev release dir> <udpfs_server.py>
 
 Layout, to be copied to the root of the USB drive (server/ goes to the game server instead):
-  TEa.G3.ELF  OPL.ELF  neutrino/ (official dev release + TEa.G3's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
+  TEa.G3.ELF  DVD/  CD/  (OPL and Neutrino are embedded in TEa.G3.ELF)
   server/ (nuld_catalog.py, nuld_hash, udpfs_server.py, systemd units)  tools/covers.py  QUICKSTART.txt  LICENSE
 """
 import hashlib, os, sys, zipfile
@@ -104,27 +104,17 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(info, s.replace("\n", "\r\n") if arc.endswith(".txt") else s, zipfile.ZIP_DEFLATED)
 
     add(os.path.join(ROOT, "TEa.G3.ELF"), "TEa.G3.ELF")
-    # OPL is a runtime selected by TEa.G3 for USBExtreme UL and optional USB ISO/ZSO.
-    # Fail the release build rather than silently publishing a package with a broken UL path.
-    opl = os.path.join(ROOT, "OPL.ELF")
-    if not os.path.isfile(opl) or os.path.getsize(opl) == 0:
-        raise SystemExit("OPL.ELF is required: build/download the pinned OPL runtime before packaging")
-    add(opl, "OPL.ELF")
-    # TEa.G3 runtime plus SMB modules/config built into dist/neutrino by build_neutrino.sh.
-    overlay = {
-        "neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx",
-        "modules/smap.irx", "modules/ministack.irx",
-        "modules/smb_ioman.irx", "modules/smb_fhi.irx",
-        "config/bsd-smb.toml",
-    }
-    for dirpath, _, files in os.walk(ndev):
-        for f in files:
-            rel = os.path.relpath(os.path.join(dirpath, f), ndev).replace("\\", "/")
-            if rel.startswith("udpfs_server"):
-                continue
-            add(os.path.join(ROOT, "dist", "neutrino", rel) if rel in overlay else os.path.join(dirpath, f), "neutrino/" + rel)
-    add(os.path.join(ROOT, "dist", "neutrino", "modules", "raagent.irx"), "neutrino/modules/raagent.irx")
-    add(os.path.join(ROOT, "third_party", "neutrino-igr", "LICENSE"), "neutrino/LICENSE")
+    # The runtime payload is linked into TEa.G3.ELF and extracted to tea_g3/runtime on first boot.
+    manifest = os.path.join(ROOT, "runtime-manifest.txt")
+    if not os.path.isfile(manifest) or os.path.getsize(manifest) == 0:
+        raise SystemExit("runtime-manifest.txt is missing: build the launcher with embedded OPL and Neutrino first")
+    with open(manifest, encoding="utf-8") as f:
+        embedded = f.read()
+    for required in ("OPL.ELF", "neutrino/neutrino.elf", "neutrino/modules/ee_core.elf",
+                     "neutrino/modules/raagent.irx", "neutrino/modules/smb_fhi.irx"):
+        if required not in embedded:
+            raise SystemExit("embedded runtime is incomplete: " + required)
+    add(manifest, "runtime-manifest.txt")
     text("DVD/put your PS2 DVD ISOs here.txt", "")
     text("CD/put your PS2 CD ISOs here.txt", "")
     add(os.path.join(ROOT, "tools", "covers.py"), "tools/covers.py", 0o755)
