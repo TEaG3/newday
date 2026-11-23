@@ -50,6 +50,18 @@ static int write_asset(const char *root, const tea_runtime_asset *asset)
     return 1;
 }
 
+static int asset_present(const char *root, const tea_runtime_asset *asset)
+{
+    char path[256];
+    if (snprintf(path, sizeof(path), "%s/%s", root, asset->path) >= (int)sizeof(path)) return 0;
+    FILE *f = fopen(path, "rb");
+    if (!f) return 0;
+    int ok = fseek(f, 0, SEEK_END) == 0;
+    long size = ok ? ftell(f) : -1;
+    fclose(f);
+    return size >= 0 && (unsigned long)size == (unsigned long)*asset->size;
+}
+
 int runtime_install(const char *home)
 {
     char root[128], marker[144], expected[32], actual[32];
@@ -64,7 +76,12 @@ int runtime_install(const char *home)
         actual[n] = 0;
         fclose(f);
         if (n && actual[n - 1] == 10) actual[n - 1] = 0;
-        if (!strcmp(actual, expected)) return 1;
+        if (!strcmp(actual, expected)) {
+            int complete = 1;
+            for (unsigned int i = 0; i < tea_runtime_assets_count; i++)
+                if (!asset_present(root, &tea_runtime_assets[i])) { complete = 0; break; }
+            if (complete) return 1;
+        }
     }
     for (unsigned int i = 0; i < tea_runtime_assets_count; i++) {
         if (!write_asset(root, &tea_runtime_assets[i])) {
