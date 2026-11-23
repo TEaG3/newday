@@ -153,6 +153,7 @@ static const char *const ar[][2] = {
         {"Physical (SMB: read-only)", "البطاقة الفعلية (SMB: قراءة فقط)"},
         {"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "مصادر SMB وUDPBD وUDPFS تتشارك محول الشبكة: الأولوية إلى SMB"},
         {"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "شبكة Neutrino (UDPBD / UDPFS / SMB)، IP %s\n"},
+        {"Modified and developed by Iraqi developer TEa.G3", "تعديل وتطوير المطور العراقي TEa.G3"},
 };
 
 const char *lang_ar(const char *en)
