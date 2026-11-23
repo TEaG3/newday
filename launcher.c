@@ -729,7 +729,7 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 static int smb_game_path(const char *path)
 {
 	if (strncmp(path, "DVD/", 4) && strncmp(path, "CD/", 3)) return 0;
-	if (!has_ext(path, ".iso") || strstr(path, "..")) return 0;
+	if ((!has_ext(path, ".iso") && !has_ext(path, ".zso")) || strstr(path, "..")) return 0;
 	for (const unsigned char *p = (const unsigned char *)path; *p; p++)
 		if (*p < 0x20 || *p > 0x7e || *p == '\\' || *p == ':') return 0;
 	return strlen(path) < sizeof(cv[0].path);
@@ -756,11 +756,29 @@ static int smb_catalog_load(int s, int n)
 		if (!t2) continue;
 		*t2++ = 0;
 		if (!smb_game_path(line) || !*t1 || strlen(t1) >= sizeof(cv[0].title)) continue;
+		char raw[16] = "";
+		int id_ok = 0;
+		if (strlen(t2) == 11) {
+			serial_dash(t2, raw);
+			id_ok = 1;
+		} else {
+			char image_path[220];
+			snprintf(image_path, sizeof(image_path), "smb:/%s", line);
+			int fd = fileXioOpen(image_path, FIO_O_RDONLY);
+			if (fd >= 0) {
+				if (has_ext(line, ".zso")) {
+					if (zso_ee_open(fd) == 1) id_ok = iso_serial(zso_fx_read, &fd, 0, raw);
+					zso_ee_close();
+				} else id_ok = iso_serial(fx_read, &fd, 0, raw);
+				fileXioClose(fd);
+			}
+		}
+		if (!id_ok || !*raw) continue;
 		entry *e = &cv[n++];
 		memset(e, 0, sizeof(*e));
 		snprintf(e->path, sizeof(e->path), "%s", line);
 		snprintf(e->title, sizeof(e->title), "%s", t1);
-		if (strlen(t2) == 11) serial_dash(t2, e->serial);
+		snprintf(e->serial, sizeof(e->serial), "%s", raw);
 		e->kind = K_PS2, e->cd = !strncmp(line, "CD/", 3), e->src = s;
 		done_n++, total_n++, got++;
 	}
