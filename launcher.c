@@ -132,7 +132,7 @@ static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
 static char STATE_INI[32], NEUTRINO[40], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[24], LOG_TXT[24];
-static const char *home_dir = "tea_g3"; // the settings folder; ORBIT's "orbit" when load_config could not move it
+static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
 	snprintf(STATE_INI, sizeof(STATE_INI), "%s/%s/estado.ini", homedev, home_dir);
@@ -851,7 +851,7 @@ static const char *const config_template[LANG_N] = {
 	"puerta =\ndns =\n"
 	"\n[portadas]\n; si = descargar de internet (github xlenore/ps2-covers) las que falten, con el cable de red conectado\n"
 	"descargar = si\n"
-	"\n[actualizaciones]\n; si = al arrancar, con el cable de red, mirar si hay una versión nueva de NULD (se instala con START)\n"
+	"\n[actualizaciones]\n; si = al arrancar, con el cable de red, mirar si hay una versión nueva de TEa.G3 (se instala con START)\n"
 	"buscar = si\n"
 	"\n[logros]\n; RetroAchievements: si = preguntar al cliente xeRAbora de la casa si el juego tiene logros (con el cable\n"
 	"; de red conectado), no = nada de logros\nactivos = si\n"
@@ -860,16 +860,16 @@ static const char *const config_template[LANG_N] = {
 	"; vacío = sin Jellyfin\nservidor =\nusuario =\nclave =\n"
 	"; subtítulos (texto, no quemados): idiomas en orden de preferencia (spa, eng, por...), no = sin subtítulos;\n"
 	"; durante el video, cuadrado cambia de pista\nsubtitulos = spa\n"
-	"\n[igr]\n; desde un juego (Neutrino de NULD): menu abre el menu sobre el juego en pausa; reiniciar y apagar\n"
+	"\n[igr]\n; desde un juego (Neutrino de TEa.G3): menu abre el menu sobre el juego en pausa; reiniciar y apagar\n"
 	"; actuan directo. Reiniciar arranca la consola como al encenderla: FMCB vuelve a lanzar NULD si su\n"
-	"; autoarranque apunta a mc?:/BOOT/NULD.ELF (lo instala el launcher).\n"
+	"; autoarranque apunta a mc?:/BOOT/TEa.G3.ELF (lo instala el launcher).\n"
 	"; botones: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO,\n"
 	"; unidos con +; vacio = desactivado\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 	"; TEa.G3 - configuration, read at boot\n"
 	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = en\n"
 	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
-	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in nuld/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
+	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in tea_g3/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = internal exFAT disk, or APA with HD Loader partitions. udpbd uses the fixed IP of [red];\n"
 	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
@@ -890,7 +890,7 @@ static const char *const config_template[LANG_N] = {
 	"puerta =\ndns =\n"
 	"\n[portadas]\n; si = download the missing covers from the internet (github xlenore/ps2-covers), with the cable in\n"
 	"descargar = si\n"
-	"\n[actualizaciones]\n; si = at boot, with the network cable in, check for a new NULD version (installed with START)\n"
+	"\n[actualizaciones]\n; si = at boot, with the network cable in, check for a new TEa.G3 version (installed with START)\n"
 	"buscar = si\n"
 	"\n[logros]\n; RetroAchievements: si = ask the home xeRAbora client whether the game has achievements (with the\n"
 	"; network cable in), no = no achievements at all\nactivos = si\n"
@@ -899,16 +899,16 @@ static const char *const config_template[LANG_N] = {
 	"; empty = no Jellyfin\nservidor =\nusuario =\nclave =\n"
 	"; subtitles (text, not burned in): languages in order of preference (spa, eng, por...), no = no subtitles;\n"
 	"; during the video, square changes the track\nsubtitulos = spa\n"
-	"\n[igr]\n; from a game (NULD's Neutrino): menu opens the menu over the paused game; reiniciar (restart) and\n"
+	"\n[igr]\n; from a game (TEa.G3's Neutrino): menu opens the menu over the paused game; reiniciar (restart) and\n"
 	"; apagar (power off) act at once. Restart boots the console as when powered on: FMCB starts NULD again if\n"
-	"; its autoboot points to mc?:/BOOT/NULD.ELF (the launcher installs it).\n"
+	"; its autoboot points to mc?:/BOOT/TEa.G3.ELF (the launcher installs it).\n"
 	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (up down left right triangle circle x square), joined with +; empty = off\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 	"; TEa.G3 - configuração, lida ao iniciar\n"
 	"\n[ui]\n; idioma da interface e destes comentários: es = espanhol (español), en = inglês (english), pt = português\nidioma = pt\n"
 	"; tema: torres (prismas de luz numa noite azul), nuld (preto e verde ácido, o da v1.2), cristal, aurora, liquid,\n"
-	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START);\n; ou o nome de uma pasta de nuld/themes (um tema feito por alguém: docs/themes.md)\ntema = torres\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START);\n; ou o nome de uma pasta de tea_g3/themes (um tema feito por alguém: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; onde procurar jogos de PS2 (pastas DVD e CD), separados por vírgulas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, ou APA com partições do HD Loader. udpbd usa o IP fixo de [red];\n"
 	"; udpfs, o servidor abaixo. mx4sio e mmce não funcionam juntos. Configuração, capas, Neutrino, POPS\n"
@@ -940,14 +940,14 @@ static const char *const config_template[LANG_N] = {
 	"; durante o vídeo, quadrado troca a faixa\nsubtitulos = por\n"
 	"\n[igr]\n; de dentro de um jogo (Neutrino do NULD): menu abre o menu sobre o jogo pausado; reiniciar e apagar\n"
 	"; (desligar) agem na hora. Reiniciar inicia o console como ao ligá-lo: o FMCB abre o NULD de novo se a sua\n"
-	"; inicialização automática aponta para mc?:/BOOT/NULD.ELF (o launcher a instala).\n"
+	"; inicialização automática aponta para mc?:/BOOT/TEa.G3.ELF (o launcher a instala).\n"
 	"; botões: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (cima baixo esquerda direita triângulo círculo x quadrado), unidos com +; vazio = desativado\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
 	"; TEa.G3 - إعدادات عربية\n"
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، es = الإسبانية، en = الإنجليزية، pt = البرتغالية\nidioma = ar\n"
 	"; المظهر: torres أو nuld أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
-	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من nuld/themes\ntema = torres\n"
+	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n"
 	"; عنوان خادم الألعاب الذي يشغل nuld_catalog. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
@@ -2752,10 +2752,10 @@ int main(int argc, char *argv[])
 					if (vmc_state[sel] == 2) free(vdir[sel]), vdir[sel] = NULL, vmc_state[sel] = 0; // 1: in flight, ponytail
 					if (gicon_state[sel] == 2) gicon_state[sel] = 0, gicon[sel] = NULL; // ponytail: the old icon leaks
 				}
-				if (usb && !ini_save(&games, GAMES_INI, L("; NULD - opciones por juego (menú de triángulo)\n"
+				if (usb && !ini_save(&games, GAMES_INI, L("; TEa.G3 - opciones por juego (menú de triángulo)\n"
 				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = modos de Neutrino (0 2 3 5 7),\n"
 				                     "; mc = juego | compartida | fisica\n",
-				                     "; NULD - per-game options (triangle menu)\n"
+				                     "; TEa.G3 - per-game options (triangle menu)\n"
 				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = Neutrino modes (0 2 3 5 7),\n"
 				                     "; mc = juego | compartida | fisica\n")))
 					toast = 180, toast_msg = L("No se pudieron guardar las opciones en el USB", "Could not save the options to the USB");
