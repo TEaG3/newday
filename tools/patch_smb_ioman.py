@@ -2,7 +2,11 @@
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-src = root / "iop" / "smb" / "src" / "smb_ioman.c"
+matches = list(root.rglob("smb_ioman.c"))
+if len(matches) != 1:
+    found = ", ".join(str(p.relative_to(root)) for p in matches) or "none"
+    raise SystemExit(f"expected one smb_ioman.c in Neutrino checkout; found: {found}")
+src = matches[0]
 text = src.read_text()
 
 if "smb_dev_dopen" not in text:
