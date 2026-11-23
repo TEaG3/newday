@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import sys
 
-root = Path(__file__).resolve().parents[1]
+if len(sys.argv) != 2:
+    raise SystemExit("usage: patch_smb_ioman.py NEUTRINO_CHECKOUT")
+root = Path(sys.argv[1]).resolve()
+if not (root / "iop" / "smb").is_dir():
+    raise SystemExit(f"not a Neutrino checkout: {root}")
 matches = list(root.rglob("smb_ioman.c"))
 if len(matches) != 1:
     found = ", ".join(str(p.relative_to(root)) for p in matches) or "none"
