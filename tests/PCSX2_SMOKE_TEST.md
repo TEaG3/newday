@@ -25,12 +25,17 @@ GitHub Actions run:
    title/serial and launch it from the same menu.
 6. Repeat the ZSO test after a cold emulator restart. Save the PCSX2 log and
    capture the last visible stage if the launch fails.
-7. Test each available FHI source separately only after it has been enabled and
-   configured. SMB is not yet selectable in the TEa.G3 source menu on this branch.
+7. For SMB, configure a fixed PS2 IPv4 address and the `[smb]` settings in
+   `tea_g3/config.ini`, export `DVD/` and/or `CD/`, generate `TEAG3.GAMES` with
+   `tools/smb_catalog.py`, then select SMB and test one plain ISO.
+8. Test the APA/HDLoader source on an emulated or real internal HDD separately.
+   Do not count USBExtreme/UL as supported until the OPL reader is integrated.
 
 ## Current scope
 
 CI tests the bounded decoder, the launcher's ZSO file adapter, the ordinary ISO
-fallback, and the PS2SDK build of the rebuilt `cdvdman_emu.irx`. The PCSX2 game
-launch checks above remain pending; no end-to-end boot result is claimed until
-they have been completed and recorded.
+fallback, the SMB catalog generator, and the PS2SDK build of the rebuilt
+`cdvdman_emu.irx` and SMB modules. PCSX2 game launches from ISO, ZSO, SMB and
+HDLoader remain manual checks. The screenshot currently supplied shows the
+launcher menu but reports `0 games loaded`, so it is not evidence of a game boot.
+No end-to-end game compatibility claim is made until these checks are recorded.
