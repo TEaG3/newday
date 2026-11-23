@@ -110,7 +110,7 @@ typedef struct {
 	unsigned size;
 	void *big, *small, *half;
 } entry;
-enum { ENGINE_NEUTRINO, ENGINE_OPL_UL };
+enum { ENGINE_NEUTRINO, ENGINE_OPL_UL, ENGINE_OPL_USB, ENGINE_UNSUPPORTED };
 static entry cv[MAXC];
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
@@ -705,6 +705,7 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (2 POPS
 		if (!ok && !ps1) { printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\n", path); continue; }
 		memset(cv[n].serial, 0, sizeof(cv[n].serial));
 		if (ok) serial_dash(raw, cv[n].serial); // a PS1 game without one is still listed, without covers
+		if (ok && !ps1) snprintf(cv[n].boot, sizeof(cv[n].boot), "%s", raw); // OPL direct-boot startup ID
 		iso_title(e->d_name, cv[n].title, sizeof(cv[n].title));
 		cv[n].kind = ps1 ? K_PS1 : K_PS2, cv[n].cd = k == 1, cv[n].src = s;
 		n++;
@@ -733,6 +734,17 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 }
 static ini cfg;               // tentative: defined with the config below
 static const char *src_why;
+
+static int engine_for(const entry *e) // automatic selection with a manual [juegos] motor override
+{
+	if (e->kind != K_PS2) return ENGINE_NEUTRINO;
+	if (e->engine == ENGINE_OPL_UL) return ENGINE_OPL_UL; // UL is OPL-only.
+	const char *preference = ini_get(&cfg, "juegos", "motor", "auto");
+	if (!strcasecmp(preference, "neutrino") || !strcasecmp(preference, "auto")) return ENGINE_NEUTRINO;
+	if (!strcasecmp(preference, "opl"))
+		return e->src >= 0 && e->src < nsrc && src[(int)e->src].type == SRC_USB ? ENGINE_OPL_USB : ENGINE_UNSUPPORTED;
+	return ENGINE_NEUTRINO;
+}
 static int catalog_load(int s, int n)
 {
 	const char *host = ini_get(&cfg, "juegos", "servidor", ""), *why = NULL;
@@ -2584,8 +2596,11 @@ static int status_text(char *b, int max)
 
 static const char *launch_problem(int i) // why X cannot start entry i, or NULL (shown as a toast)
 {
-	if (cv[i].kind == K_PS2 && cv[i].engine == ENGINE_NEUTRINO && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder");
-	if (cv[i].engine == ENGINE_OPL_UL && !exists("mass0:/OPL.ELF")) return L("Falta OPL.ELF en la raíz del USB", "OPL.ELF is missing from the USB root");
+	int engine = engine_for(&cv[i]);
+	if (engine == ENGINE_UNSUPPORTED) return L("OPL directo solo admite juegos USB en esta versión", "OPL direct boot currently supports USB games only");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder");
+	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_USB)
+		if (!exists("mass0:/OPL.ELF")) return L("Falta OPL.ELF en la raíz del USB", "OPL.ELF is missing from the USB root");
 	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB &&
 	    (!exists("mass0:/neutrino/modules/smb_fhi.irx") || !exists("mass0:/neutrino/config/bsd-smb.toml")))
 		return L("تثبيت Neutrino مع وحدات SMB مطلوب", "Install a Neutrino build with the SMB modules first");
@@ -2667,9 +2682,10 @@ static const char *app_fetch(int i, char *file, int n)
 	                st == 200 ? file : net_err(st)), why;
 }
 
-static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app ELF, or the BIOS for discs
+static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an app ELF, or the BIOS for discs
 {
 	launch_err = NULL;
+	int engine = engine_for(&cv[i]);
 	const char *how[4] = {L("INICIANDO CON NEUTRINO", "STARTING WITH NEUTRINO"), L("INICIANDO CON POPSTARTER", "STARTING WITH POPSTARTER"), L("INICIANDO APLICACIÓN", "STARTING APPLICATION"),
 	                             L("INICIANDO DISCO", "STARTING DISC")};
 	for (int t = 0; t < (theme_id == TH_NULD ? 40 : 64); t++) { // let the confirm sound play while the screen fades to the entry's name
@@ -2679,7 +2695,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		if (T->flags & TF_MARK) splash_mark(640, 278, 28, TEXT, ACID); // the others put a light of their own there
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
-		text_c(&gfx_font_mono, 400, cv[i].engine == ENGINE_OPL_UL ? L("INICIANDO CON OPL", "STARTING WITH OPL") : how[(int)cv[i].kind], LABEL);
+		text_c(&gfx_font_mono, 400, engine != ENGINE_NEUTRINO ? L("INICIANDO CON OPL", "STARTING WITH OPL") : how[(int)cv[i].kind], LABEL);
 		if (cv[i].engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
 			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("CON LOGROS", "WITH ACHIEVEMENTS") : L("SIN LOGROS: AÚN NO HABÍA RESPUESTA", "NO ACHIEVEMENTS: NO ANSWER YET"),
 			       ra_state[i] == RA_SET ? ACID : LABEL);
@@ -2687,7 +2703,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		gfx_end();
 		gfx_flip();
 	}
-	if (cv[i].kind == K_PS2 && cv[i].engine == ENGINE_NEUTRINO && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("No se pudo crear la memory card virtual", "Could not create the virtual memory card"); return; }
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("No se pudo crear la memory card virtual", "Could not create the virtual memory card"); return; }
 	// no ISO read nor socket call of the achievements worker left half-way under the IOP reset (phase 16: the game
 	// hung when launched while its hash was being computed); the render thread sleeps so the worker can stop
 	ra_launching = 1, ra_abort = 1;
@@ -2695,13 +2711,13 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	// phase 16b: the watch list and the agent's config, while the network is still up (the worker takes no new work)
 	static char ra_arg[72];
 	int ra = 0;
-	if (!ra_busy && cv[i].engine == ENGINE_NEUTRINO && neutrino_ra && ra_game_ok(i) && ra_state[i] == RA_SET && ra_on)
+	if (!ra_busy && engine == ENGINE_NEUTRINO && neutrino_ra && ra_game_ok(i) && ra_state[i] == RA_SET && ra_on)
 		ra_abort = 0, ra = ra_prepare(i, ra_arg, sizeof(ra_arg)), ra_abort = 1;
 	static char file[200], arg0[200];
 	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
 	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down(); // ponytail: a cover download in flight keeps it up
 	// no libcdvd call of the disc thread left half-way under the next program (Neutrino's branch: after its checks)
-	if ((cv[i].kind != K_PS2 || cv[i].engine == ENGINE_OPL_UL) && disc_tid >= 0) TerminateThread(disc_tid);
+	if ((cv[i].kind != K_PS2 || engine != ENGINE_NEUTRINO) && disc_tid >= 0) TerminateThread(disc_tid);
 	if (cv[i].kind == K_DISC) { // the BIOS: PS2LOGO checks and runs the BOOT2 path; PS1DRV takes file name + version
 		char *a[2] = {cv[i].boot, "???"}; // ponytail: version "???", as the OSD libraries fall back to
 		printf("launch: %s %s\n", cv[i].disc == D_PS2 ? "rom0:PS2LOGO" : "rom0:PS1DRV", cv[i].boot);
@@ -2710,14 +2726,29 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		LoadExecPS2(cv[i].disc == D_PS2 ? "rom0:PS2LOGO" : "rom0:PS1DRV", cv[i].disc == D_PS2 ? 1 : 2, a);
 		return;
 	}
-	if (cv[i].engine == ENGINE_OPL_UL) {
+	if (engine == ENGINE_OPL_UL) {
 		static char part_count[8];
 		snprintf(part_count, sizeof(part_count), "%u", (unsigned char)cv[i].parts);
 		char *opl_argv[6] = {"mass0:/OPL.ELF", cv[i].ul_name, cv[i].boot, cv[i].cd ? "CD" : "DVD", "ul", part_count};
 		printf("launch OPL UL: %s parts=%s\\n", cv[i].boot, part_count);
 		gfx_shutdown();
 		run_loader(6, opl_argv);
-		printf("OPL launch failed\\n");
+		printf("OPL UL launch failed\\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_USB) {
+		const char *filename = strrchr(cv[i].path, '/');
+		char *opl_argv[5];
+		filename = filename ? filename + 1 : cv[i].path;
+		opl_argv[0] = "mass0:/OPL.ELF";
+		opl_argv[1] = (char *)filename;
+		opl_argv[2] = cv[i].boot;
+		opl_argv[3] = cv[i].cd ? "CD" : "DVD";
+		opl_argv[4] = "usb";
+		printf("launch OPL USB: %s (%s)\\n", cv[i].boot, filename);
+		gfx_shutdown();
+		run_loader(5, opl_argv);
+		printf("OPL USB launch failed\\n");
 		return;
 	}
 	if (cv[i].kind != K_PS2) { // loader argv: the file, then the program's argv
