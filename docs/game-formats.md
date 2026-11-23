@@ -52,10 +52,12 @@ through the common FHI decoder, but still requires an end-to-end game launch tes
 - SMB and UDPBD/UDPFS are mutually exclusive in one TEa.G3 session because they
   share the PS2 network adapter.
 
-The current build contains one PS2 game engine: Neutrino. There is not yet a
-native OPL core behind TEa.G3, so there is no functional OPL engine selector.
-USBExtreme/UL support and choosing between multiple game engines remain
-unfinished requirements; do not represent them as available.
+The integration branch now contains two runtime paths: Neutrino remains the
+default for ISO/ZSO and the existing storage sources, while a separately built
+and patched OPL ELF handles USB ISO/ZSO when manually selected and USBExtreme
+UL automatically. The UL catalogue parser, split-part checks and engine
+selection matrix are implemented and host-tested. Actual game boot and
+in-game-read verification in PCSX2 and on real PS2 hardware are still pending.
 
 ## Themes are independent of image formats
 
@@ -79,15 +81,14 @@ depend on it. Therefore enabling `submodules: recursive` on checkout alone
 does not fetch this dependency; the workflow explicitly runs and verifies the
 upstream downloader before `make clean`.
 
-This CI artifact proves that the upstream OPL executable compiles. It does
-**not** yet mean TEa.G3 can select OPL, scan UL images, or launch a game through
-OPL. The current integration branch now adds a UL catalogue reader and a small upstream OPL patch for direct game boot. The launcher sends the exact fixed-width UL title, startup ID, media type and split count to OPL; OPL sets `GAME_FORMAT_USBLD` and selects the USB mass-storage driver for this path. The build/test job is still the gate for this code. The remaining work is:
-1. Add a TEa.G3 engine abstraction that keeps Neutrino as the default ISO/ZSO
-   runtime and adds OPL as a separate selectable engine.
-2. Finish CI validation of the UL parser and patched OPL direct-boot adapter.
-3. Verify the game-launch hand-off from TEa.G3 to OPL without replacing or deleting Neutrino.
-4. Test actual game boots
-   in PCSX2 with a configured mass-storage device and on real PS2 hardware.
+The successful CI run builds the pinned upstream OPL source with the TEa.G3
+direct-boot patch, compiles the launcher and Neutrino, and passes the UL parser,
+split-part and engine-selection host tests. The launcher passes the fixed-width
+UL name, startup ID, media type and split count to OPL; OPL selects the USB
+mass-storage driver and sets `GAME_FORMAT_USBLD` for UL. The remaining work is
+runtime verification: confirm the hand-off and actual game boot in PCSX2 with a
+configured mass-storage device, then verify in-game reads and stability on a
+real PS2. A green build is not a gameplay compatibility claim.
 
 Do not mark UL or OPL engine selection as supported until those steps and
 runtime tests pass.
