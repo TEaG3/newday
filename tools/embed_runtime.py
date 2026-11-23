@@ -32,7 +32,7 @@ def main() -> None:
         raise SystemExit("runtime bundle is incomplete: " + ", ".join(missing))
     assets = sorted(p for p in source.rglob("*") if p.is_file())
     # Include only runtime payloads, not build logs or temporary files.
-    assets = [p for p in assets if p.name not in {"build.log"} and not p.name.endswith(".tmp")]
+    assets = [p for p in assets if p.name not in {"build.log", "OPL-LICENSE.txt"} and not p.name.endswith(".tmp")]
     digest = hashlib.sha256()
     for path in assets:
         rel = path.relative_to(source).as_posix()
