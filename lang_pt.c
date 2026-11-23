@@ -23,6 +23,9 @@ static const char *const pt[][2] = {
 	{"connection failed", "falha na conexão"},
 	{"bad response", "resposta inválida"},
 	{"the adapter belongs to UDPBD", "o adaptador é do UDPBD"},
+	{"OPL.ELF is missing from the USB root", "OPL.ELF não está na raiz do USB"},
+	{"OPL direct boot currently supports USB games only", "O boot direto do OPL atualmente aceita apenas jogos USB"},
+	{"STARTING WITH OPL", "INICIANDO COM OPL"},
 	{"No network (%s): the server's game catalog was not read", "Sem rede (%s): o catálogo de jogos do servidor não foi lido"},
 	{"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
 	 "O catálogo em %s:18290 não respondeu (%s): o nuld_catalog.py está rodando? (sem ele: servidor vazio)"},
@@ -99,7 +102,6 @@ static const char *const pt[][2] = {
 	{"COVERS: NETWORK ERROR (%d)", "CAPAS: ERRO DE REDE (%d)"},
 	{"%-7s OK, %d games\n", "%-7s OK, %d jogos\n"},
 	{"%-7s not found\n", "%-7s não encontrado\n"},
-	{"NETWORK Neutrino's (UDPBD / UDPFS), IP %s\n", "REDE    do Neutrino (UDPBD / UDPFS), IP %s\n"},
 	{"NETWORK not used\n", "REDE    sem uso\n"},
 	{"NETWORK %s\n", "REDE    %s\n"},
 	{"NETWORK %s (%s)\n", "REDE    %s (%s)\n"},
@@ -146,6 +148,12 @@ static const char *const pt[][2] = {
 	{"The UDPBD server did not answer (the PS2 is %s, same network?)", "O servidor UDPBD não respondeu (o PS2 é %s, mesma rede?)"},
 	{"udpfs_ioman.irx from neutrino/modules did not load", "udpfs_ioman.irx de neutrino/modules não carregou"},
 	{"The UDPFS server did not answer (the PS2 is %s, same network?)", "O servidor UDPFS não respondeu (o PS2 é %s, mesma rede?)"},
+	{"Cannot read TEAG3.GAMES from the SMB share", "Não foi possível ler TEAG3.GAMES da pasta SMB"},
+	{"Error while reading the SMB catalog", "Erro ao ler o catálogo SMB"},
+	{"Install a Neutrino build with the SMB modules first", "Instale primeiro uma versão do Neutrino com os módulos SMB"},
+	{"Physical (SMB: read-only)", "Físico (SMB: somente leitura)"},
+	{"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "SMB e UDPBD/UDPFS compartilham o adaptador: prioridade para SMB"},
+	{"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "REDE Neutrino (UDPBD / UDPFS / SMB), IP %s\n"},
 };
 
 // ponytail: linear strcmp over ~140 rows per call (a few dozen calls a frame); index by pointer if it ever shows

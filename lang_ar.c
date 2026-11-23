@@ -22,6 +22,9 @@ static const char *const ar[][2] = {
         {"connection failed", "فشل الاتصال"},
         {"bad response", "استجابة غير صالحة"},
         {"the adapter belongs to UDPBD", "المحول مخصص ل UDPBD"},
+        {"OPL.ELF is missing from the USB root", "ملف OPL.ELF غير موجود في جذر USB"},
+        {"OPL direct boot currently supports USB games only", "الإقلاع المباشر عبر OPL يدعم ألعاب USB فقط"},
+        {"STARTING WITH OPL", "تشغيل OPL الآن"},
         {"No network (%s): the server's game catalog was not read", "لا توجد شبكة (%s): لم تتم قراءة كتالوج ألعاب الخادم"},
         {"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
          "الكتالوج على %s:18290 لم يستجب (%s): هل nuld_catalog.py يعمل؟ (بدونه: خادم فارغ)"},
@@ -98,7 +101,6 @@ static const char *const ar[][2] = {
         {"COVERS: NETWORK ERROR (%d)", "الأغلفة: خطأ شبكة (%d)"},
         {"%-7s OK, %d games\n", "%-7s OK، %d لعبة\n"},
         {"%-7s not found\n", "%-7s غير موجود\n"},
-        {"NETWORK Neutrino's (UDPBD / UDPFS), IP %s\n", "الشبكة  Neutrino (UDPBD / UDPFS)، IP %s\n"},
         {"NETWORK not used\n", "الشبكة  غير مستخدمة\n"},
         {"NETWORK %s\n", "الشبكة  %s\n"},
         {"NETWORK %s (%s)\n", "الشبكة  %s (%s)\n"},
@@ -145,6 +147,12 @@ static const char *const ar[][2] = {
         {"The UDPBD server did not answer (the PS2 is %s, same network?)", "خادم UDPBD لم يستجب (PS2 هو %s، نفس الشبكة؟)"},
         {"udpfs_ioman.irx from neutrino/modules did not load", "udpfs_ioman.irx من neutrino/modules لم يتم تحميله"},
         {"The UDPFS server did not answer (the PS2 is %s, same network?)", "خادم UDPFS لم يستجب (PS2 هو %s، نفس الشبكة؟)"},
+        {"Cannot read TEAG3.GAMES from the SMB share", "تعذرت قراءة TEAG3.GAMES من مشاركة SMB"},
+        {"Error while reading the SMB catalog", "حدث خطأ أثناء قراءة فهرس SMB"},
+        {"Install a Neutrino build with the SMB modules first", "ثبت إصدار Neutrino الذي يحتوي على وحدات SMB أولا"},
+        {"Physical (SMB: read-only)", "البطاقة الفعلية (SMB: قراءة فقط)"},
+        {"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "مصادر SMB وUDPBD وUDPFS تتشارك محول الشبكة: الأولوية إلى SMB"},
+        {"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "شبكة Neutrino (UDPBD / UDPFS / SMB)، IP %s\n"},
 };
 
 const char *lang_ar(const char *en)

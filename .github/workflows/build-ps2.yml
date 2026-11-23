@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compile and run ZSO raw-sector fixture
+      - name: Compile and run bounded ZSO decoder and scanner fixtures
         run: |
           set -euo pipefail
           cc -std=c99 -Wall -Wextra -Wno-unused-parameter -include string.h \
@@ -28,6 +28,12 @@ jobs:
             third_party/opl-zso/lz4.c \
             -o /tmp/zso_host_test
           /tmp/zso_host_test
+          cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter \
+            -Itests/zso_host/include -I. -Ithird_party/opl-zso \
+            tests/zso_host/test_zso_ee.c zso_ee.c \
+            -o /tmp/zso_ee_host_test
+          /tmp/zso_ee_host_test
+          python3 -m unittest tests/test_smb_catalog.py
 
   launcher:
     name: Validate Arabic localization and build launcher + Neutrino
@@ -62,6 +68,12 @@ jobs:
               test -s dist/neutrino/neutrino.elf
               test -s dist/neutrino/modules/ee_core.elf
               test -s dist/neutrino/modules/raagent.irx
+              test -s dist/neutrino/modules/cdvdman_emu.irx
+              test -s dist/neutrino/modules/smap.irx
+              test -s dist/neutrino/modules/ministack.irx
+              test -s dist/neutrino/modules/smb_ioman.irx
+              test -s dist/neutrino/modules/smb_fhi.irx
+              test -s dist/neutrino/config/bsd-smb.toml
               ls -lh dist/neutrino/neutrino.elf dist/neutrino/modules/*.elf dist/neutrino/modules/*.irx
             '
 
@@ -88,3 +100,126 @@ jobs:
           name: tea-g3-build-log-${{ github.sha }}
           path: build.log
           if-no-files-found: warn
+
+  opl-engine:
+    name: Build upstream OPL runtime (pinned source)
+    runs-on: ubuntu-latest
+    container: ghcr.io/ps2homebrew/ps2homebrew:main
+    steps:
+      - name: Check out TEa.G3 integration branch
+        uses: actions/checkout@v4
+        with:
+          path: tea-g3
+
+      - name: Check out Open PS2 Loader at pinned revision
+        uses: actions/checkout@v4
+        with:
+          repository: ps2homebrew/Open-PS2-Loader
+          ref: b3a2199795fe89ba7e2dd7b843354472dff2c3eb
+          path: Open-PS2-Loader
+
+      - name: Fetch lwNBD dependency before cleaning
+        working-directory: Open-PS2-Loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/Open-PS2-Loader"
+          git fetch --prune --unshallow
+          bash ./download_lwNBD.sh
+          test -f modules/network/lwNBD/Makefile
+          test "$(git -C modules/network/lwNBD rev-parse HEAD)" = "15f1c14536d662e2e00d38d0aa91ef24149e8b96"
+
+      - name: Apply TEa.G3 USBExtreme direct-boot patch
+        working-directory: Open-PS2-Loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
+          grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
+          grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path("src/opl.c").read_text(encoding="utf-8")
+          assert "if (!isUL && gBDMPrefix[0] != '\\0') {" in source
+          assert "if (!isUL && gBDMPrefix[0] != '\\\\0') {" not in source
+          assert 'snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), "%s", argv[2]);' in source
+          PY
+
+      - name: Clean and compile OPL ELF
+        working-directory: Open-PS2-Loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          make clean
+          make NOT_PACKED=1
+          test -s opl.elf
+          cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
+          file "$GITHUB_WORKSPACE/OPL.ELF" || true
+          sha256sum "$GITHUB_WORKSPACE/OPL.ELF"
+
+      - name: Upload standalone OPL runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-opl-${{ github.sha }}
+          path: OPL.ELF
+          if-no-files-found: error
+
+  test-bundle:
+    name: Assemble unified TEa.G3 runtime test bundle
+    runs-on: ubuntu-latest
+    needs: [host-zso-tests, launcher, opl-engine]
+    steps:
+      - name: Check out integration docs
+        uses: actions/checkout@v4
+
+      - name: Download launcher ELF
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-launcher-${{ github.sha }}
+          path: bundle
+
+      - name: Download Neutrino runtime and modules
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-neutrino-${{ github.sha }}
+          path: bundle/neutrino
+
+      - name: Download OPL runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-opl-${{ github.sha }}
+          path: bundle
+
+      - name: Verify and add integration test instructions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s bundle/TEa.G3.ELF
+          test -s bundle/OPL.ELF
+          test -s bundle/neutrino/neutrino.elf
+          test -s bundle/neutrino/modules/cdvdman_emu.irx
+          test -s bundle/neutrino/modules/smb_fhi.irx
+          mkdir -p bundle/docs
+          cp docs/game-formats.md docs/opl-engine-integration.md docs/smb.md bundle/docs/
+          cp tests/PCSX2_SMOKE_TEST.md bundle/PCSX2_SMOKE_TEST.md
+          cat > bundle/README-TEST-BUNDLE.txt <<'EOF'
+          TEa.G3 integrated runtime test bundle
+
+          Contents:
+          - TEa.G3.ELF: launcher/front end
+          - OPL.ELF: OPL runtime used for USBExtreme UL and optional USB ISO/ZSO
+          - neutrino/: default engine and its modules/configuration
+
+          Copy the three runtime components to the same USB device, keeping the
+          neutrino/ directory intact. For USBExtreme tests, keep ul.cfg and every
+          ul.* part in the USB root. Follow PCSX2_SMOKE_TEST.md before reporting
+          runtime compatibility. A successful CI build does not prove gameplay.
+          EOF
+
+      - name: Upload unified integration test bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-integration-test-bundle-${{ github.sha }}
+          path: bundle/
+          if-no-files-found: error
+          retention-days: 30

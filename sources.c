@@ -5,8 +5,8 @@
 // v1.8.0's config/bsd-*.toml and nhddl src/devices/init.c (reference only, docs/sources.md):
 //   hdd     ps2dev9 + ata_bd (exFAT/FAT disk), else ps2hdd-bdm (-o 4 -n 20) for an APA disk with HD Loader games
 //   mx4sio  mx4sio_bd_mini        ilink  iLinkman + IEEE1394_bd_mini        mmce  mmceman (mmce0: / mmce1:)
-//   udpbd   ps2dev9 + smap + ministack ip= + udpbd          udpfs  nothing: listed from the server's catalog (phase 17);
-//   udpfs without a catalog (#10): ps2dev9 + smap + ministack ip= + udpfs_ioman, mounted as "udpfs:" like nhddl
+//   udpbd   ps2dev9 + smap + ministack ip= + udpbd          udpfs  file-system catalog or udpfs_ioman (phase 17);
+//   smb     ps2dev9 + smap + ministack + smb_ioman; read-only SMB share with a TEAG3.GAMES index (Neutrino SMB FHI)
 // The ps2sdk ones are embedded (same build as our bdm); smap / ministack / udpbd / udpfs_ioman exist only in
 // Neutrino, so they are read from its modules/ folder. With -qb these stay loaded under Neutrino's load stage.
 #include <stdio.h>
@@ -29,9 +29,9 @@
 #define IRX(m) extern unsigned char m##_irx[]; extern unsigned int size_##m##_irx
 IRX(ata_bd); IRX(ps2hdd_bdm); IRX(mx4sio_bd_mini); IRX(iLinkman); IRX(IEEE1394_bd_mini); IRX(mmceman);
 
-const char *const src_key[SRC_N] = {"usb", "hdd", "hdl", "mx4sio", "ilink", "mmce", "udpbd", "udpfs"};
-const char *const src_bsd[SRC_N] = {"usb", "ata", "ata", "mx4sio", "ilink", "mmce", "udpbd", "udpfs"};
-const char *const src_label[SRC_N] = {"USB", "HDD", "HDD", "MX4SIO", "ILINK", "MMCE", "UDPBD", "UDPFS"};
+const char *const src_key[SRC_N] = {"usb", "hdd", "hdl", "mx4sio", "ilink", "mmce", "udpbd", "udpfs", "smb"};
+const char *const src_bsd[SRC_N] = {"usb", "ata", "ata", "mx4sio", "ilink", "mmce", "udpbd", "udpfs", "smb"};
+const char *const src_label[SRC_N] = {"USB", "HDD", "HDD", "MX4SIO", "ILINK", "MMCE", "UDPBD", "UDPFS", "SMB"};
 source src[SRC_MAX];
 int nsrc;
 const char *src_err[SRC_N];
@@ -196,6 +196,119 @@ const char *src_init(unsigned mask, const char *ip, const char *ndir, int udpfs_
 			snprintf(e[1], sizeof(e[1]), L("No respondió el servidor UDPFS (la PS2 es %s, misma red?)", "The UDPFS server did not answer (the PS2 is %s, same network?)"), ip), FAIL(SRC_UDPFS, e[1]);
 	}
 	return why;
+}
+
+// SMB (Neutrino's read-only FHI): the launcher can open files through smb_ioman, but that
+// module deliberately has no directory enumeration. TEa.G3 therefore reads a small TEAG3.GAMES
+// index from the share; Neutrino opens the listed ISO directly through smb_fhi at launch.
+static int smb_ipv4(const char *s)
+{
+	unsigned value = 0, digits = 0, octets = 0;
+	if (!s || !*s) return 0;
+	for (; *s; s++) {
+		if (*s >= '0' && *s <= '9') {
+			value = value * 10 + (unsigned)(*s - '0');
+			if (++digits > 3 || value > 255) return 0;
+		} else if (*s == '.' && digits && octets < 3) {
+			octets++, value = digits = 0;
+		} else return 0;
+	}
+	return octets == 3 && digits > 0;
+}
+
+static int smb_field(const char *s, int max, int empty_ok)
+{
+	int n = s ? strlen(s) : 0;
+	if ((!n && !empty_ok) || n > max) return 0;
+	for (int i = 0; i < n; i++) {
+		unsigned char ch = (unsigned char)s[i];
+		if (ch < 0x20 || ch > 0x7e || ch == '"' || ch == '\\') return 0;
+	}
+	return 1;
+}
+
+static int smb_arg_add(char *out, int cap, int *used, const char *key, const char *value)
+{
+	int n = snprintf(out + *used, cap - *used, "%s=%s", key, value);
+	if (n < 0 || n + 1 > cap - *used) return 0;
+	*used += n + 1; // SifExecModuleBuffer expects NUL-separated arguments
+	return 1;
+}
+
+static int smb_write_neutrino_config(const char *ndir, const char *ip, const char *mask, const char *gw,
+                                     const char *server, const char *user, const char *password, const char *share)
+{
+	char path[128], temp[136];
+	snprintf(path, sizeof(path), "%s/config/bsd-smb.toml", ndir);
+	snprintf(temp, sizeof(temp), "%s.new", path);
+	FILE *f = fopen(temp, "wb");
+	if (!f) return 0;
+	fprintf(f,
+	        "# TEa.G3: Neutrino SMB backend; generated from tea_g3/config.ini\n"
+	        "name = \"SMB driver\"\n"
+	        "depends = [\"i_dev9_hidden\"]\n"
+	        "[[module]]\nfile = \"iomanX.irx\"\nenv = [\"LE\"]\n"
+	        "[[module]]\nfile = \"fileXio.irx\"\nenv = [\"LE\"]\n"
+	        "[[module]]\nfile = \"smap.irx\"\nenv = [\"LE\", \"EE\"]\n"
+	        "[[module]]\nfile = \"ministack.irx\"\nargs = [\"ip=%s\"]\nenv = [\"LE\", \"EE\"]\n"
+	        "[[module]]\nfile = \"smb_ioman.irx\"\n"
+	        "args = [\"ip=%s\", \"mask=%s\", \"gw=%s\", \"srv=%s\", \"user=%s\", \"pass=%s\", \"share=%s\"]\n"
+	        "env = [\"LE\"]\n"
+	        "[[module]]\nfile = \"smb_fhi.irx\"\n"
+	        "args = [\"ip=%s\", \"mask=%s\", \"gw=%s\", \"srv=%s\", \"user=%s\", \"pass=%s\", \"share=%s\"]\n"
+	        "env = [\"EE\"]\n",
+	        ip, ip, mask, gw, server, user, password, share, ip, mask, gw, server, user, password, share);
+	int ok = !ferror(f);
+	if (fclose(f) != 0) ok = 0;
+	if (!ok) { remove(temp); return 0; }
+	if (rename(temp, path)) { remove(temp); return 0; }
+	return 1;
+}
+
+const char *src_smb_init(const char *ip, const char *mask, const char *gw, const char *server,
+                         const char *user, const char *password, const char *share, const char *ndir)
+{
+	static const char *bad_net = "SMB needs a fixed PS2 IPv4 address, mask and gateway in [red]";
+	static const char *bad_cfg = "SMB settings are invalid: check [smb] server/share/user/password (ASCII limits apply)";
+	static const char *missing = "SMB modules or Neutrino configuration are missing";
+	static const char *full = "Too many game sources are enabled";
+	static const char *bad_toml = "Could not write neutrino/config/bsd-smb.toml";
+	char min_args[64], smb_args[512];
+	int min_len = 0, smb_len = 0;
+
+	if (!ip || !strcasecmp(ip, "dhcp") || !smb_ipv4(ip) || !smb_ipv4(mask) ||
+	    (gw && *gw && !smb_ipv4(gw))) return src_err[SRC_SMB] = bad_net;
+	if (!server || !smb_ipv4(server) || !smb_field(user, 31, 1) ||
+	    !smb_field(password, 31, 1) || !smb_field(share, 63, 0))
+		return src_err[SRC_SMB] = bad_cfg;
+	if (nsrc >= SRC_MAX) return src_err[SRC_SMB] = full;
+	if (!smb_write_neutrino_config(ndir, ip, mask, gw && *gw ? gw : "0.0.0.0",
+	                               server, user && *user ? user : "guest", password ? password : "", share))
+		return src_err[SRC_SMB] = bad_toml;
+
+	if (!smb_arg_add(min_args, sizeof(min_args), &min_len, "ip", ip) ||
+	    !smb_arg_add(smb_args, sizeof(smb_args), &smb_len, "ip", ip) ||
+	    !smb_arg_add(smb_args, sizeof(smb_args), &smb_len, "mask", mask) ||
+	    !smb_arg_add(smb_args, sizeof(smb_args), &smb_len, "gw", gw && *gw ? gw : "0.0.0.0") ||
+	    !smb_arg_add(smb_args, sizeof(smb_args), &smb_len, "srv", server) ||
+	    !smb_arg_add(smb_args, sizeof(smb_args), &smb_len, "user", user && *user ? user : "guest") ||
+	    !smb_arg_add(smb_args, sizeof(smb_args), &smb_len, "pass", password ? password : "") ||
+	    !smb_arg_add(smb_args, sizeof(smb_args), &smb_len, "share", share))
+		return src_err[SRC_SMB] = bad_cfg;
+
+	if (!net_dev9() || !load_file(ndir, "smap.irx", NULL, 0) ||
+	    !load_file(ndir, "ministack.irx", min_args, min_len) ||
+	    !load_file(ndir, "smb_ioman.irx", smb_args, smb_len))
+		return src_err[SRC_SMB] = missing;
+
+	net_busy = 1; // SMB's tiny TCP/IP stack owns the adapter; do not start TEa.G3's lwIP stack as well.
+	src[nsrc].type = SRC_SMB;
+	src[nsrc].unit = 0;
+	strcpy(src[nsrc].root, "smb:");
+	printf("sources: smb share %s at %s (catalog TEAG3.GAMES)\n", share, server);
+	nsrc++;
+	src_err[SRC_SMB] = NULL;
+	return NULL;
 }
 
 // phase 17: the game stage's ministack (Neutrino boots it, no -qb) takes the address the launcher has, fixed or the

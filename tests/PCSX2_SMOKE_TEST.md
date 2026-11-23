@@ -1,32 +1,67 @@
-# PCSX2 runtime smoke test
+# PCSX2 and real-PS2 runtime smoke test
 
-This checklist is deliberately separate from the host-side ZSO fixture. A successful
-cross-compile or fixture run does not prove that the PS2 executable boots in PCSX2.
+This checklist is separate from host fixtures and cross-compilation. A green
+CI build does not prove that a game boots or that all split files are read.
 
 ## Automated artifact checks
 
-After downloading the launcher and Neutrino artifacts from the same successful
-GitHub Actions run:
+Download all artifacts from one successful GitHub Actions run; do not mix runs:
 
-1. Keep `TEa.G3.ELF` and the complete `neutrino/` directory together.
-2. Verify that `TEa.G3.ELF` and `neutrino/neutrino.elf` are non-empty ELF files.
-3. Verify that `neutrino/modules/` contains the modules shipped by that build.
-4. Do not mix artifacts from different workflow runs.
+1. Launcher artifact: `TEa.G3.ELF`.
+2. Neutrino artifact: the complete `neutrino/` directory.
+3. OPL artifact: `OPL.ELF`.
 
-## PCSX2 checks (manual, requires a legally obtained BIOS)
+Verify that each ELF is non-empty and that the Neutrino modules required by
+the selected source configuration are present.
 
-1. Configure PCSX2 for the matching PS2 region and a legally obtained BIOS.
-2. Boot `TEa.G3.ELF` from a virtual mass-storage device or a supported ELF launch method.
-3. Record whether the launcher reaches its first menu, whether Arabic text renders,
-   and whether controller navigation works.
-4. Launch a known-good homebrew ELF, then a legally owned test ISO from the supported
-   local source. Record the exact point of failure and attach the PCSX2 log.
-5. Repeat after a cold emulator restart.
+## PCSX2 checks
 
-## Current scope
+Use a legally obtained BIOS and a configured virtual USB mass-storage device.
+If the PCSX2 setup does not expose a PS2 mass-storage device to the ELF, the
+launcher can still display its UI, but the game scanner will have no USB library
+to enumerate; a `0 games loaded` message is not by itself evidence of a broken
+launcher UI.
 
-The vendored ZSO decoder is not connected to Neutrino's sector-read path. The CI
-fixture tests its existing raw-sector path only; it is not a compressed-ZSO,
-SMB, or end-to-end game-launch test. Compressed-block validation and real PCSX2
-boot results must remain pending until a bounded storage adapter is implemented
-and the emulator run is performed.
+1. Boot `TEa.G3.ELF`. Record whether the first menu appears, Arabic text
+   renders correctly, and controller navigation works.
+2. Place one known-good, legally owned ISO in `DVD/`; confirm it appears and
+   launch it with `motor = auto` (Neutrino).
+3. Place a matching ZSO in `DVD/`; confirm title/serial discovery and launch
+   with `motor = auto`. Repeat after a cold emulator restart.
+4. For SMB, configure fixed PS2 IPv4 and the `[smb]` settings in
+   `tea_g3/config.ini`, export `DVD/` and/or `CD/`, generate
+   `TEAG3.GAMES` with `tools/smb_catalog.py`, then select SMB and test one
+   plain ISO and one ZSO.
+5. Test APA/HDLoader on an emulated or real internal HDD separately.
+6. Copy the OPL artifact to the USB root as `mass0:/OPL.ELF`.
+7. Put a valid USBExtreme `ul.cfg` and all of its declared `ul.*` split parts
+   in the same USB root. Confirm TEa.G3 lists the game only when every part is
+   present, with the correct title and serial.
+8. Select the UL game with `motor = auto`. Verify that TEa.G3 invokes OPL
+   directly, that the selected game starts, and that reads continue across all
+   split parts.
+9. For an ordinary USB ISO/ZSO, set `[juegos] motor = opl` in
+   `tea_g3/config.ini`, restart TEa.G3, and verify the manual OPL direct-boot
+   route. Restore `motor = auto` or `motor = neutrino` afterwards.
+
+## Real PS2 checks
+
+Repeat USB ISO, USB ZSO, UL and manual OPL tests on real hardware. Record the
+console model, storage device, filesystem, game serial, engine selection and
+result. Verify in-game reads and stability, not just the first screen. Also
+verify that Neutrino ISO/ZSO, SMB, and APA/HDLoader paths remain intact.
+
+## Current automated coverage
+
+CI currently runs:
+- bounded ZSO decoder/scanner fixtures;
+- UL 64-byte record parsing, fixed-width name/CRC vectors and split-part checks;
+- engine-selection capability-matrix tests;
+- SMB catalog generator tests;
+- Arabic/Portuguese localization checks;
+- TEa.G3 launcher and Neutrino PS2SDK builds;
+- pinned upstream OPL checkout, pinned `lwNBD` retrieval, TEa.G3 OPL patch
+  application, OPL compilation and artifact upload.
+
+The runtime tests above are still manual. Do not mark game compatibility as
+verified until PCSX2 and real-PS2 results are recorded.

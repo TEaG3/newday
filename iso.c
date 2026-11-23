@@ -105,7 +105,7 @@ void iso_title(const char *file, char *out, int n) // "SLUS_209.46.God of War.is
 	if (name_serial(t, tmp)) t += 12; // OPL "SERIAL.Title.iso" naming
 	snprintf(out, n, "%s", t);
 	char *dot = strrchr(out, '.');
-	if (dot && (!strcasecmp(dot, ".iso") || !strcasecmp(dot, ".vcd") || !strcasecmp(dot, ".elf"))) *dot = 0;
+	if (dot && (!strcasecmp(dot, ".iso") || !strcasecmp(dot, ".vcd") || !strcasecmp(dot, ".elf") || !strcasecmp(dot, ".zso"))) *dot = 0;
 }
 
 int catalog_next(char **p, cat_ent *e)
@@ -178,6 +178,8 @@ int main(void)
 	assert(!strcmp(t, "Crash Bandicoot"));
 	iso_title("Okami (USA).ISO", t, sizeof(t));
 	assert(!strcmp(t, "Okami (USA)"));
+	iso_title("SLUS_209.46.God of War.zso", t, sizeof(t));
+	assert(!strcmp(t, "God of War"));
 	assert(name_serial("SLUS_209.46.God of War.iso", s) && !strcmp(s, "SLUS_209.46"));
 	assert(!name_serial("God of War.iso", s) && !name_serial("SLUS 209.46.X.iso", s));
 	char cat[] = "DVD/Black.iso\t3919609856\tSLUS_213.76\t8ee64a784fa9c9ac0a828be9a24f3679\tBlack\r\n"

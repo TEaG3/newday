@@ -25,7 +25,7 @@ git remote set-url origin https://github.com/ps2max32/neutrino.git
 git fetch -q origin "$BASE"
 git checkout -q -- .
 git checkout -q "$BASE"
-git clean -qfd ee/ee_core ee/loader common iop/raagent iop/udpfs
+git clean -qfd ee/ee_core ee/loader common iop/raagent iop/udpfs iop/cdvdman_emu
 git submodule update --init iop/smb/usmb2
 python3 "$REPO/tools/patch_smb_ioman.py" "$PWD"
 rm -rf "$WORK/resetspu" && cp -r "$FORK/resetspu" "$WORK/resetspu" # the IGR's SPU2 reset, embedded in ee_core
@@ -39,6 +39,7 @@ cp "$FORK/igr.h" "$FORK/padpatterns.h" ee/ee_core/include/
 cp "$FORK/raagent/ra_snap.h" "$FORK/raagent/ra_watch.h" common/include/ # xeRAbora's protocol: loader, ee_core, agent
 rm -rf iop/raagent && cp -r "$FORK/raagent" iop/raagent
 python3 "$FORK/patch_neutrino.py"
+make -C iop/cdvdman_emu IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/cdvdman_emu.log" 2>&1 || { tail -20 "$WORK/cdvdman_emu.log"; exit 1; }
 make -C ee/ee_core clean all > "$WORK/ee_core.log" 2>&1 || { tail -20 "$WORK/ee_core.log"; exit 1; }
 grep -E ' _end$|_end = ' ee/ee_core/ee_core.map | head -2 # the 64 KB region ends at 0x94000
 # the packed neutrino.elf needs ps2-packer's stubs, which this toolchain cannot find; the unpacked ELF runs the same
@@ -58,10 +59,12 @@ make -C iop/smb SMB_FHI=1 IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "
 
 mkdir -p "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
 cp ee/loader/neutrino_unpacked.elf "$REPO/dist/neutrino/neutrino.elf"
-cp ee/ee_core/ee_core.elf iop/raagent/irx/raagent.irx iop/udpfs/irx/udpfs_fhi.irx "$REPO/dist/neutrino/modules/"
+cp ee/ee_core/ee_core.elf iop/raagent/irx/raagent.irx iop/udpfs/irx/udpfs_fhi.irx \
+   iop/cdvdman_emu/irx/cdvdman_emu.irx "$REPO/dist/neutrino/modules/"
 cp iop/smap/irx/smap.irx iop/ministack/irx/ministack.irx \
    iop/smb/irx/smb_ioman.irx iop/smb/irx/smb_fhi.irx "$REPO/dist/neutrino/modules/"
 cp ee/loader/config/bsd-smb.toml "$REPO/dist/neutrino/config/"
+test -s "$REPO/dist/neutrino/modules/cdvdman_emu.irx"
 ls -la "$REPO/dist/neutrino" "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
-echo "copy dist/neutrino/ over mass0:/neutrino/ (SMB-capable Neutrino build from $BASE)"
+echo "copy dist/neutrino/ over mass0:/neutrino/ (ZSO FHI + SMB-capable Neutrino build from $BASE)"
 echo "NOTE: SMB is packaged but TEa.G3 source selection and credentials handoff are not enabled yet."
