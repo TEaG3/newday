@@ -1,53 +1,86 @@
-# OPL runtime integration plan
+# OPL runtime integration
 
-## What this branch adds
+## Architecture
 
-- A dedicated CI job builds the upstream Open PS2 Loader executable independently of the TEa.G3 launcher.
-- OPL source is pinned to `ps2homebrew/Open-PS2-Loader@b3a2199795fe89ba7e2dd7b843354472dff2c3eb`.
-- The upstream `download_lwNBD.sh` script fetches the exact `lwNBD` commit
-  `15f1c14536d662e2e00d38d0aa91ef24149e8b96`.
-- CI checks that dependency before running `make clean`, builds with
-  `NOT_PACKED=1`, and uploads `OPL.ELF`.
+TEa.G3 remains the front end. Neutrino remains the default engine for ordinary
+ISO/ZSO games and for the existing non-USB source routes. OPL is a separate
+runtime executable, selected only for formats/source combinations that have a
+direct-boot adapter in this branch.
 
-## Why the previous CI diagnosis needs precision
+The engine selector keeps the image format and storage source as separate
+inputs. Its current capability policy is:
 
-The upstream OPL repository does not declare `lwNBD` as a Git submodule.
-Its Makefile defines `download_lwNBD` and makes `clean` depend on that
-target. The correct fix is to run and verify the upstream downloader in the
-OPL working directory before the clean/build sequence. Recursive submodule
-checkout by itself is not sufficient.
+| Format | Source | Automatic engine | Manual OPL |
+|---|---|---|---|
+| ISO | USB | Neutrino | OPL |
+| ZSO | USB | Neutrino | OPL |
+| USBExtreme UL | USB | OPL | OPL-only |
+| ISO/ZSO | SMB, APA/HDL, MX4SIO, iLink, MMCE, UDPBD/UDPFS | Neutrino | Rejected until an OPL hand-off exists |
 
-## What is not integrated yet
+The config key is `[juegos] motor` in `nuld/config.ini` on the launcher's home
+device:
+- `auto`: Neutrino for ISO/ZSO; OPL for UL.
+- `neutrino`: keep ISO/ZSO on Neutrino; UL remains OPL-only.
+- `opl`: manually route USB ISO/ZSO to OPL. Unsupported source combinations
+  return an explicit message instead of silently using an incompatible path.
 
-The standalone OPL ELF is a build artifact, not yet a TEa.G3 runtime backend.
-The TEa.G3 menu does not yet route a selected game to OPL, and its library does
-not yet parse `ul.cfg` and the split `ul.*` parts. Neutrino remains intact and
-continues to serve its existing launch paths.
+## OPL build and dependency pinning
 
-## Required next implementation stages
+- Upstream source:
+  `ps2homebrew/Open-PS2-Loader@b3a2199795fe89ba7e2dd7b843354472dff2c3eb`
+- Upstream `lwNBD` dependency:
+  `15f1c14536d662e2e00d38d0aa91ef24149e8b96`
+- The OPL repository does not declare `lwNBD` as a Git submodule. Its Makefile
+  provides `download_lwNBD` and makes `clean` depend on that target.
+- CI explicitly runs and verifies `download_lwNBD.sh`, applies the TEa.G3
+  direct-boot patch, runs `make clean` and `make NOT_PACKED=1`, then uploads
+  the standalone `OPL.ELF` artifact.
 
-1. Define a common engine interface and explicit capability matrix. Keep the
-   source device and image format as separate dimensions.
-2. Implement OPL engine launch hand-off, including a deterministic way to
-   request a selected game from the TEa.G3 front-end.
-3. Implement UL parsing with strict bounds checks, part-order validation,
-   missing-part detection and title/serial extraction.
-4. Route UL games to OPL only; route formats unsupported by OPL to Neutrino
-   when that source/format combination is actually supported.
-5. Add CI fixtures for valid, malformed, truncated and missing-part UL sets.
-6. Verify game launch and in-game reads in PCSX2 using a mounted virtual USB
-   device, then repeat on a real PS2 before release claims.
+The direct-boot patch is maintained in `tools/patch_opl_ul.py` and is applied
+to the pinned upstream source during CI. It:
+- accepts a `usb` startup mode for USB ISO/ZSO;
+- accepts a `ul` startup mode plus split-part count for USBExtreme;
+- chooses the USB BDM driver for these modes;
+- sets `GAME_FORMAT_USBLD` and the UL part count for UL games;
+- uses a safe `"%s"` startup-ID format string.
 
-No OPL feature should be advertised as available merely because the upstream
-OPL executable compiled successfully.
+## USBExtreme catalogue reader
 
+`ul.c` parses the 64-byte upstream `USBExtreme_game_entry_t` layout:
+- 32-byte fixed-width game name;
+- `ul.` magic;
+- startup ID, part count and media;
+- the required `Byte08 = 0x08` marker.
 
-## Engine selection in TEa.G3
+It preserves the original fixed-width name for OPL's CRC calculation while
+trimming the display title. It computes the same CRC used by upstream OPL,
+constructs each expected `ul.%08X.<startup>.<part>` filename, and only exposes
+a game when every sequential split part exists and is non-empty. The host
+fixtures include known CRC vectors, padded names, invalid metadata and missing
+split-part cases.
 
-The launcher uses `[juegos] motor` in `mass0:/nuld/config.ini`:
+The launcher passes the raw fixed-width title, startup ID, CD/DVD media and
+part count to `mass0:/OPL.ELF`. The OPL executable must be copied to the root
+of the same USB device as `OPL.ELF`; `ul.cfg` and its `ul.*` parts stay in
+that device's root as well.
 
-- `motor = auto`: Neutrino for ordinary ISO/ZSO entries; OPL for USBExtreme UL entries.
-- `motor = neutrino`: keep ordinary PS2 images on Neutrino. UL still uses OPL because it is not a Neutrino format.
-- `motor = opl`: manually route USB ISO/ZSO entries to OPL's direct BDM USB launch path. Other storage-source combinations are rejected with a clear message rather than silently routed to an unsupported engine.
+## Validation status
 
-The OPL executable must be copied to `mass0:/OPL.ELF`. This is a configuration-level manual override; a dedicated graphical engine picker is still a possible UI enhancement.
+The successful CI run `45246675082` validated:
+- ZSO host decoder/scanner fixtures;
+- UL record and split-part fixtures;
+- engine-selection capability matrix;
+- Arabic and Portuguese localization;
+- TEa.G3 launcher and Neutrino PS2SDK builds;
+- pinned OPL dependency retrieval, patch application, compilation and artifact
+  upload.
+
+CI success is not proof of game compatibility. Still required:
+1. Run TEa.G3 in PCSX2 with a configured virtual USB mass-storage device.
+2. Confirm UL entries are discovered and the selected game is passed to OPL.
+3. Confirm the game reaches gameplay and continues reading all split parts.
+4. Test manual `motor = opl` for USB ISO/ZSO.
+5. Repeat on real PS2 hardware and verify stability and in-game reads.
+
+Do not merge or advertise this path as release-ready until the runtime checks
+are recorded. Neutrino must remain available as the default path.
