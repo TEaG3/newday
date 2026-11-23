@@ -2331,7 +2331,7 @@ static void wiz_panel(void) // design: the △ options panel
 		snprintf(a, sizeof(a), L("Ahora ese botón abre: %s", "That button now runs: %s"), cnf_get(fmcb_txt[w_fmcb_card()], key, cur, sizeof(cur)) ? cur : "-");
 		gfx_text(&gfx_font_mono, x + 28, y + h - 48, a, LABEL);
 	}
-	gfx_text(&gfx_font_mono, x + 28, y + h - 22, L("Modified and developed by Iraqi developer TEa.G3", "Modified and developed by Iraqi developer TEa.G3"), ACID);
+	gfx_text(&gfx_font_ui, x + 28, y + h - 22, L("Modified and developed by Iraqi developer TEa.G3", "Modified and developed by Iraqi developer TEa.G3"), ACID);
 }
 
 // ○ Logros panel (phase 16): the game's achievements from the client's page, earned first (design: options panel)
