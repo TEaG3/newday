@@ -1,38 +1,49 @@
 # OPL ZSO/LZ4 reader — vendored source
 
-This directory contains the ZSO sector decoder and its LZ4 dependency copied from
-[TEaG3/OPL](https://github.com/TEaG3/OPL), branch `main`.
+This directory contains the bounded ZSO sector decoder and its LZ4 format header,
+copied from [TEaG3/OPL](https://github.com/TEaG3/OPL), branch `main`.
 
-## Source files
+## Runtime wiring on this branch
 
-- `zso.c`, `zso.h`: OPL's ZISO/ZSO block-index and sector decoder
-- `lz4.c`, `lz4.h`: LZ4 implementation included by OPL
-- `OPL-LICENSE-AFL-3.0.txt`: OPL project license text
+The `integration/zso-neutrino-fhi` branch (not yet merged/released) connects the
+same decoder at two separate layers:
 
-The upstream ZSO implementation declares two host hooks:
-`ziso_alloc()` and `read_raw_data()`. Those hooks are not wired to TEa.G3 yet.
-The OPL frontend's `src/zso.c` supplies them using OPL's own file descriptors
-and HDD sector API; those assumptions cannot be copied directly into TEa.G3,
-whose game launch path currently delegates ISO access to Neutrino.
+1. `zso_ee.c` reads a ZSO image while TEa.G3 scans its ISO9660
+   `SYSTEM.CNF`, allowing the launcher to obtain the game serial and title.
+2. `third_party/neutrino-igr/patch_neutrino.py` copies the decoder into the
+   pinned Neutrino tree and routes CDVD FHI sector reads through it. The
+   FHI interface is shared by Neutrino's supported file backends, so the
+   compression layer is not tied to USB or SMB.
 
-## Integration status
+The build script now rebuilds and packages the modified
+`cdvdman_emu.irx`. The ordinary ISO path remains unchanged. A malformed
+ZSO header or a short/invalid block read returns a read error rather than
+silently being treated as an uncompressed ISO.
 
-**Vendored for review; not enabled for game launch.** No `.zso` extension is
-advertised or scanned as runnable by this commit. A follow-up adapter must:
+## What is tested, and what is not
 
-1. Validate the ZISO header (magic, header size, block size, alignment and total
-   byte count) before initializing the decoder.
-2. Provide bounded, seek-safe `read_raw_data` and aligned allocation hooks for
-   the actual TEa.G3/Neutrino storage backend.
-3. Route Neutrino's sector reads through the decoder without changing the
-   existing ISO path for ordinary `.iso` games.
-4. Add host-side fixtures for raw and compressed blocks, truncation and
-   out-of-range reads, then build with PS2SDK and test on hardware.
+CI now has three separate layers of evidence:
 
-Do not treat the presence of these source files as ZSO runtime support.
+- Host decoder fixtures cover raw blocks, valid LZ4 blocks, malformed blocks,
+  header validation, bounds, I/O errors and allocation failure.
+- A host test exercises the EE file adapter, including ISO fallback and
+  truncated ZSO payloads.
+- The PS2SDK workflow builds the launcher and the rebuilt Neutrino
+  `cdvdman_emu.irx`.
+
+These tests do **not** prove that a ZSO game has booted in PCSX2 or on a
+physical PS2. That is still a required manual smoke test before merge/release.
+The SMB source is also not yet selectable from the TEa.G3 interface: adding
+ZSO at the common FHI layer does not enable SMB discovery or credentials UI.
+
+## Format scope
+
+This reader handles `.zso` images with ZISO/ZSO headers and LZ4-compressed
+blocks. It does not add CSO/Deflate, CHD, ZIP or 7z support. Those formats
+require separate decoders and independent compatibility tests.
 
 ## Licensing
 
 The ZSO integration files are from the OPL project and are covered by its
 Academic Free License 3.0; retain the upstream attribution and license notice.
-The LZ4 files retain Yann Collet's BSD 2-Clause notice in their source headers.
+The LZ4 header retains Yann Collet's BSD 2-Clause notice.
