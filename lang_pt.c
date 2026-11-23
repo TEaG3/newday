@@ -151,6 +151,7 @@ static const char *const pt[][2] = {
 	{"Install a Neutrino build with the SMB modules first", "Instale primeiro uma versão do Neutrino com os módulos SMB"},
 	{"Physical (SMB: read-only)", "Físico (SMB: somente leitura)"},
 	{"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "SMB e UDPBD/UDPFS compartilham o adaptador: prioridade para SMB"},
+	{"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "REDE Neutrino (UDPBD / UDPFS / SMB), IP %s\n"},
 };
 
 // ponytail: linear strcmp over ~140 rows per call (a few dozen calls a frame); index by pointer if it ever shows
