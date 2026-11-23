@@ -16,7 +16,7 @@ out = os.path.join(ROOT, "dist", name + ".zip")
 QUICKSTART = f"""TEa.G3 {ver} - quick start
 ============================
 
-1. Copy TEa.G3.ELF, OPL.ELF, neutrino/, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive.\n   TEa.G3 starts the selected engine automatically. OPL.ELF is a runtime component; do not launch it manually.
+1. Copy TEa.G3.ELF, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive. The OPL and Neutrino engines and their modules are embedded in TEa.G3.ELF and installed automatically under tea_g3/runtime/ on first boot.
 2. Put your PS2 ISOs in DVD/ (CD games in CD/). PS1 games: POPStarter VCDs in POPS/. Homebrew: APPS/.
 3. On the PS2, start mass0:/TEa.G3.ELF (uLaunchELF, or FreeMcBoot's autoboot).
 4. Pick a game and press X. The first boot writes mass0:/tea_g3/config.ini with every setting, commented.
