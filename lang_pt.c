@@ -24,6 +24,7 @@ static const char *const pt[][2] = {
 	{"bad response", "resposta inválida"},
 	{"the adapter belongs to UDPBD", "o adaptador é do UDPBD"},
 	{"OPL.ELF is missing from the USB root", "OPL.ELF não está na raiz do USB"},
+	{"OPL direct boot currently supports USB games only", "O boot direto do OPL atualmente aceita apenas jogos USB"},
 	{"STARTING WITH OPL", "INICIANDO COM OPL"},
 	{"No network (%s): the server's game catalog was not read", "Sem rede (%s): o catálogo de jogos do servidor não foi lido"},
 	{"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
