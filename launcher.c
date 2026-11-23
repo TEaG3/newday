@@ -195,7 +195,7 @@ static void vmc_name(int i, char *out, int n) // the shared card was VMC/ORBIT.b
 	if (game_mc(i) != MC_SHARED) { snprintf(out, n, "VMC/%s.bin", cv[i].serial); return; }
 	char nuld[64];
 	snprintf(old, sizeof(old), "%s/VMC/ORBIT.bin", src[(int)cv[i].src].root);
-	snprintf(nuld, sizeof(nuld), "%s/VMC/TEa.G3.bin", src[(int)cv[i].src].root);
+	snprintf(nuld, sizeof(nuld), "%s/VMC/NULD.bin", src[(int)cv[i].src].root);
 	const char *shared = on_catalog(i) ? "TEa.G3" : exists(old) ? "ORBIT" : exists(nuld) ? "NULD" : "TEa.G3";
 	snprintf(out, n, "VMC/%s.bin", shared);
 }
