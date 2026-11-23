@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Noto Sans Arabic";
+  src: url("fonts/noto-sans-arabic-variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 /* NULD website: the launcher's palette and type (the canvas "NULD — identidad"). Fonts are served from fonts/
    (SIL OFL 1.1, licences beside them), nothing is loaded from other sites but GitHub's API (release.js). */
 @font-face { font-family: Archivo; src: url(fonts/archivo.woff2) format("woff2"); font-weight: 400 800; font-stretch: 100% 125%; font-display: swap; }
@@ -206,8 +214,7 @@ body.paper { background: var(--fg); color: var(--bg); }
 /* Arabic localization and typography.
    Keep the original LTR page composition; only Arabic text runs are RTL. */
 :root {
-  --font-arabic: "Noto Sans Arabic", "IBM Plex Sans Arabic", "Geeza Pro",
-                 Tahoma, Arial, sans-serif;
+  --font-arabic: "Noto Sans Arabic", "Geeza Pro", Tahoma, Arial, sans-serif;
 }
 html { text-rendering: optimizeLegibility; }
 body.nuld-rtl {
