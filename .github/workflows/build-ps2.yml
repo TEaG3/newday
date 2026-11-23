@@ -24,7 +24,8 @@ jobs:
           set -euo pipefail
           cc -std=c99 -Wall -Wextra -Wno-unused-parameter -include string.h \
             -Itests/zso_host -Ithird_party/opl-zso \
-            tests/zso_host/test_zso.c third_party/opl-zso/zso.c \\\n            third_party/opl-zso/lz4.c \
+            tests/zso_host/test_zso.c third_party/opl-zso/zso.c \\
+            third_party/opl-zso/lz4.c \
             -o /tmp/zso_host_test
           /tmp/zso_host_test
 
