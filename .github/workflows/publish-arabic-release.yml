@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   opl-engine:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Build pinned OPL runtime
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
