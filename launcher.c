@@ -2083,11 +2083,12 @@ static void options_panel(int i, int row) // △ menu: the game's Neutrino optio
 // ---- setup wizard (#15): the config.ini basics, the boot stub on a chosen memory card and how FreeMcBoot 1.966
 // starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts NULD only
 // when the sources or the network changed (read at boot). ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
-enum { W_UPD, W_LANG, W_THEME, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
+enum { W_UPD, W_LANG, W_THEME, W_ENGINE, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
 static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS, SRC_SMB}; // checkboxes
 #define W_NCHIP (int)sizeof(w_chip)
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
 static const char *const w_mcm[3] = {"juego", "compartida", "fisica"}, *const w_vid[3] = {"nativo", "480p", "1080i"};
+static const char *const w_engine_key[3] = {"auto", "neutrino", "opl"};
 static const char *const w_lk[] = {"Auto", "R1", "L1", "R2", "L2", "Triangle", "Circle", "Square", "Cross", "Start", "Select"};
 static const char *const w_lk_ar[] = {"تلقائي", "R1", "L1", "R2", "L2", "مثلث", "دائرة", "مربع", "إكس", "Start", "Select"};
 static const char *const w_lk_es[] = {"Auto", "R1", "L1", "R2", "L2", "Triángulo", "Círculo", "Cuadrado", "X", "Start", "Select"};
@@ -2113,8 +2114,10 @@ static int w_fmcb_card(void) // the FREEMCB.CNF to edit: the chosen card's, else
 static void wiz_open(void)
 {
 	const char *o = ini_get(&cfg, "juegos", "origen", "usb"), *ip = ini_get(&cfg, "red", "ip", "dhcp");
+	const char *motor = ini_get(&cfg, "juegos", "motor", "auto");
 	memset(w_val, 0, sizeof(w_val));
 	w_val[W_LANG] = lang, w_val[W_THEME] = theme_id, w_val[W_SRC] = src_mask(o), w_val[W_VIDEO] = 1, w_val[W_CARD] = mcn[0] >= 0 ? 0 : mcn[1] >= 0 ? 1 : -1;
+	w_val[W_ENGINE] = !strcasecmp(motor, "opl") ? 2 : !strcasecmp(motor, "neutrino") ? 1 : 0;
 	if (!w_val[W_SRC]) w_val[W_SRC] = 1u << SRC_USB;
 	w_cur = 0;
 	for (int k = 0; k < 3; k++) {
@@ -2132,6 +2135,7 @@ static void wiz_save(void) // icon thread
 	static char out[16384];
 	ini_set(&cfg, "ui", "idioma", lang_key[w_val[W_LANG]]);
 	ini_set(&cfg, "ui", "tema", themes[w_val[W_THEME]].key);
+	ini_set(&cfg, "juegos", "motor", w_engine_key[w_val[W_ENGINE]]);
 	char list[64] = ""; // hdd also covers HD Loader disks (src_mask)
 	for (int k = 0; k < W_NCHIP; k++)
 		if (w_val[W_SRC] & 1u << w_chip[k]) snprintf(list + strlen(list), sizeof(list) - strlen(list), "%s%s", *list ? ", " : "", src_key[(int)w_chip[k]]);
@@ -2233,6 +2237,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 	switch (r) {
 	case W_LANG: snprintf(a, n, "%s", v == LANG_EN ? "English" : v == LANG_PT ? "Português" : v == LANG_AR ? "العربية" : "Español"); break;
 	case W_THEME: snprintf(a, n, "%s", themes[v].name); break;
+	case W_ENGINE: snprintf(a, n, "%s", v == 1 ? "Neutrino" : v == 2 ? "OPL" : L("Automático", "Automatic")); break;
 	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Virtual por juego", "Per-game virtual") : v == 1 ? L("Virtual compartida", "Shared virtual") : L("Física", "Physical")); break;
 	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Nativo", "Native") : w_vid[v]); break;
 	case W_NET: snprintf(a, n, "%s", v ? w_ip : "DHCP"); break;
@@ -2255,6 +2260,7 @@ static void wiz_change(int d) // left / right on the selected row
 	int r = wiz, *v = &w_val[r];
 	if (r == W_LANG) *v = (*v + d + LANG_N) % LANG_N, lang = *v; // the panel itself switches language at once
 	else if (r == W_THEME) *v = (*v + d + themes_n) % themes_n, theme_set(*v); // shown at once behind the panel, as the language
+	else if (r == W_ENGINE) *v = (*v + d + 3) % 3;
 	else if (r == W_SRC) w_cur = w_cur + d < 0 ? 0 : w_cur + d >= W_NCHIP ? W_NCHIP - 1 : w_cur + d; // the cursor
 	else if (r == W_MC || r == W_VIDEO) *v = (*v + d + 3) % 3;
 	else if (r == W_NET) *v = *w_ip ? !*v : 0;
@@ -2313,10 +2319,10 @@ static void wiz_panel(void) // design: the △ options panel
 		return;
 	}
 	static const char *const lab[LANG_N][W_ROWS] = {
-		{"", "Idioma", "Tema", "Juegos desde", "Memory card", "Vídeo", "Red", "Arrancador en", "FreeMcBoot", ""},
-		{"", "Language", "Theme", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""},
-		{"", "Idioma", "Tema", "Jogos de", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""},
-		{"", "اللغة", "المظهر", "مصدر الألعاب", "بطاقة الذاكرة", "الفيديو", "الشبكة", "ملف الإقلاع", "FreeMcBoot", ""}};
+		{"", "Idioma", "Tema", "Motor", "Juegos desde", "Memory card", "Vídeo", "Red", "Arrancador en", "FreeMcBoot", ""},
+		{"", "Language", "Theme", "Engine", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""},
+		{"", "Idioma", "Tema", "Motor", "Jogos de", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""},
+		{"", "اللغة", "المظهر", "محرك التشغيل", "مصدر الألعاب", "بطاقة الذاكرة", "الفيديو", "الشبكة", "ملف الإقلاع", "FreeMcBoot", ""}};
 	for (int r = r0; r < W_ROWS; r++, ry += 46) {
 		if (r == wiz) sel_row(x + 12, ry, w - 24, 40);
 		if (r == W_SRC) { gfx_text(&gfx_font_ui, x + 28, ry + 8, lab[lang][r], r == wiz ? TEXT : TEXT2), wiz_chips(x + w - 24, ry, r == wiz); continue; }

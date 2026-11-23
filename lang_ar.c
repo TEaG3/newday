@@ -46,6 +46,7 @@ static const char *const ar[][2] = {
         {"COMPATIBILITY MODES (NEUTRINO -GC)", "أوضاع التوافق (NEUTRINO -GC)"},
         {"Video compatibility", "توافق الفيديو"},
         {"saved", "تم الحفظ"},
+        {"Automatic", "تلقائي"},
         {"ERROR saving", "خطأ في الحفظ"},
         {"menu + TEa.G3", "القائمة + TEa.G3"},
         {"%s: downloading...", "%s: جاري التنزيل..."},
