@@ -3,57 +3,61 @@
 The SMB implementation on this branch uses Neutrino's SMB backend. It is a
 read-only source and requires a complete Neutrino build containing:
 
-- \`modules/smap.irx\`
-- \`modules/ministack.irx\`
-- \`modules/smb_ioman.irx\`
-- \`modules/smb_fhi.irx\`
-- \`config/bsd-smb.toml\` (TEa.G3 rewrites the module arguments before launch)
+- `modules/smap.irx`
+- `modules/ministack.irx`
+- `modules/smb_ioman.irx`
+- `modules/smb_fhi.irx`
+- `config/bsd-smb.toml` (TEa.G3 rewrites the module arguments before launch)
 
 ## Share contents
 
 Make the exported share root contain at least one of these folders:
 
-\`\`\`text
+```text
 ShareRoot/
   DVD/
     Example Game.iso
+    Compressed Game.zso
   CD/
   TEAG3.GAMES
-\`\`\`
+```
 
 The SMB IOMAN module supports reading a known file but does not implement
-directory enumeration. TEa.G3 therefore reads the \`TEAG3.GAMES\` index from the
+directory enumeration. TEa.G3 therefore reads the `TEAG3.GAMES` index from the
 share root. On the computer hosting the share, run:
 
-\`\`\`bash
+```bash
 python tools/smb_catalog.py /path/to/ShareRoot
-\`\`\`
+```
 
-The script indexes \`.iso\` files under \`DVD/\` and \`CD/\` (including subfolders).
-Each row in \`TEAG3.GAMES\` is tab-separated:
+The script indexes `.iso` and `.zso` files under `DVD/` and `CD/` (including subfolders).
+Each row in `TEAG3.GAMES` is tab-separated:
 
-\`\`\`text
+```text
 DVD/Example Game.iso<TAB>Example Game<TAB>SLUS_213.76
+DVD/Compressed Game.zso<TAB>Compressed Game<TAB>SLUS_213.77
 CD/Another Game.iso<TAB>Another Game<TAB>
-\`\`\`
+```
 
-The serial field may be empty. Paths must be ASCII, relative to the share root,
-and remain under \`DVD/\` or \`CD/\`.
+The serial field may be empty; for such entries TEa.G3 attempts to read the
+image's `SYSTEM.CNF` to obtain its serial (including through the ZSO reader).
+Paths must be ASCII, relative to the share root,
+and remain under `DVD/` or `CD/`.
 
 ## TEa.G3 configuration
 
-In \`mass0:/tea_g3/config.ini\` (or the install's equivalent), enable SMB under
-\`[juegos]\`:
+In `mass0:/tea_g3/config.ini` (or the install's equivalent), enable SMB under
+`[juegos]`:
 
-\`\`\`ini
+```ini
 [juegos]
 origen = smb
 auto = no
-\`\`\`
+```
 
-Set a fixed PS2 address in \`[red]\` and enter the share settings:
+Set a fixed PS2 address in `[red]` and enter the share settings:
 
-\`\`\`ini
+```ini
 [red]
 ip = 192.168.1.10
 mascara = 255.255.255.0
@@ -64,7 +68,7 @@ server = 192.168.1.20
 share = PS2GAMES
 user = guest
 password =
-\`\`\`
+```
 
 Replace these example addresses and names with values from the local network.
 The Neutrino SMB driver uses TCP port 445 and does not use DHCP or a custom
@@ -80,13 +84,14 @@ prioritises SMB and disables UDPBD/UDPFS for that session.
 
 ## Current limitations
 
-- Only plain \`.iso\` images are listed from the SMB catalogue on this branch.
-  SMB ZSO and USBExtreme/UL are not claimed as supported.
+- The SMB catalogue now lists `.iso` and `.zso` files. ZSO uses the common
+  Neutrino FHI decoder; SMB ZSO game launch still needs a real runtime test.
+- USBExtreme/UL is not implemented.
 - The share is read-only. Use the PS2's physical memory card; VMC files cannot
   be written to the SMB share.
 - SMB has no directory browser in this TEa.G3 integration; regenerate
-  \`TEAG3.GAMES\` after adding, removing or renaming images.
-- The password is saved in plain text in \`config.ini\` and in
-  \`neutrino/config/bsd-smb.toml\`. Keep these files private.
+  `TEAG3.GAMES` after adding, removing or renaming images.
+- The password is saved in plain text in `config.ini` and in
+  `neutrino/config/bsd-smb.toml`. Keep these files private.
 - Host tests and successful compilation do not prove that a game boots. PCSX2
   testing and a real-console test are still required.
