@@ -5,8 +5,8 @@
 // v1.8.0's config/bsd-*.toml and nhddl src/devices/init.c (reference only, docs/sources.md):
 //   hdd     ps2dev9 + ata_bd (exFAT/FAT disk), else ps2hdd-bdm (-o 4 -n 20) for an APA disk with HD Loader games
 //   mx4sio  mx4sio_bd_mini        ilink  iLinkman + IEEE1394_bd_mini        mmce  mmceman (mmce0: / mmce1:)
-//   udpbd   ps2dev9 + smap + ministack ip= + udpbd          udpfs  nothing: listed from the server's catalog (phase 17);
-//   udpfs without a catalog (#10): ps2dev9 + smap + ministack ip= + udpfs_ioman, mounted as "udpfs:" like nhddl
+//   udpbd   ps2dev9 + smap + ministack ip= + udpbd          udpfs  file-system catalog or udpfs_ioman (phase 17);
+//   smb     ps2dev9 + smap + ministack + smb_ioman; read-only SMB share with a TEAG3.GAMES index (Neutrino SMB FHI)
 // The ps2sdk ones are embedded (same build as our bdm); smap / ministack / udpbd / udpfs_ioman exist only in
 // Neutrino, so they are read from its modules/ folder. With -qb these stay loaded under Neutrino's load stage.
 #include <stdio.h>
@@ -258,7 +258,8 @@ static int smb_write_neutrino_config(const char *ndir, const char *ip, const cha
 	        "args = [\"ip=%s\", \"mask=%s\", \"gw=%s\", \"srv=%s\", \"user=%s\", \"pass=%s\", \"share=%s\"]\n"
 	        "env = [\"EE\"]\n",
 	        ip, ip, mask, gw, server, user, password, share, ip, mask, gw, server, user, password, share);
-	int ok = !ferror(f) && fclose(f) == 0;
+	int ok = !ferror(f);
+	if (fclose(f) != 0) ok = 0;
 	if (!ok) { remove(temp); return 0; }
 	remove(path);
 	if (rename(temp, path)) { remove(temp); return 0; }
