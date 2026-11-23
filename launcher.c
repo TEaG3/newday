@@ -26,6 +26,7 @@
 #include "iso.h"
 #include "zso_ee.h"
 #include "ul.h"
+#include "engine.h"
 #include "ini.h"
 #include "net.h"
 #include "cover.h"
@@ -110,7 +111,6 @@ typedef struct {
 	unsigned size;
 	void *big, *small, *half;
 } entry;
-enum { ENGINE_NEUTRINO, ENGINE_OPL_UL, ENGINE_OPL_USB, ENGINE_UNSUPPORTED };
 static entry cv[MAXC];
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
@@ -735,15 +735,15 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 static ini cfg;               // tentative: defined with the config below
 static const char *src_why;
 
-static int engine_for(const entry *e) // automatic selection with a manual [juegos] motor override
+static int engine_for(const entry *e) // source and image format are independent dimensions
 {
 	if (e->kind != K_PS2) return ENGINE_NEUTRINO;
-	if (e->engine == ENGINE_OPL_UL) return ENGINE_OPL_UL; // UL is OPL-only.
-	const char *preference = ini_get(&cfg, "juegos", "motor", "auto");
-	if (!strcasecmp(preference, "neutrino") || !strcasecmp(preference, "auto")) return ENGINE_NEUTRINO;
-	if (!strcasecmp(preference, "opl"))
-		return e->src >= 0 && e->src < nsrc && src[(int)e->src].type == SRC_USB ? ENGINE_OPL_USB : ENGINE_UNSUPPORTED;
-	return ENGINE_NEUTRINO;
+	engine_format format = e->engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
+	                       has_ext(e->path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO;
+	int source_index = (unsigned char)e->src;
+	engine_source source_type = source_index < nsrc && src[source_index].type == SRC_USB ?
+	                            ENGINE_SOURCE_USB : ENGINE_SOURCE_OTHER;
+	return engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
 }
 static int catalog_load(int s, int n)
 {
