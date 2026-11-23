@@ -23,6 +23,7 @@ static const char *const ar[][2] = {
         {"bad response", "استجابة غير صالحة"},
         {"the adapter belongs to UDPBD", "المحول مخصص ل UDPBD"},
         {"OPL.ELF is missing from the USB root", "ملف OPL.ELF غير موجود في جذر USB"},
+        {"OPL direct boot currently supports USB games only", "الإقلاع المباشر عبر OPL يدعم ألعاب USB فقط حالياً"},
         {"STARTING WITH OPL", "تشغيل OPL الآن"},
         {"No network (%s): the server's game catalog was not read", "لا توجد شبكة (%s): لم تتم قراءة كتالوج ألعاب الخادم"},
         {"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
