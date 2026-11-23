@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "zso_ee.h"
+#include <fileXio_rpc.h>
 #include "third_party/opl-zso/zso.h"
 
 #define TEST_HEADER_SIZE 32
@@ -80,11 +81,11 @@ int main(void)
     ((ZISO_header *)disk)->header_size = sizeof(ZISO_header) - 1;
     assert(zso_ee_open(7) == -1);
 
-    /* Ordinary ISO files are left to the original ISO reader. */
+    /* An image with a .zso extension but no ZISO header is rejected. */
     memset(disk, 0, sizeof(disk));
     memcpy(disk + 2048, "CD001", 5);
     disk_size = sizeof(disk);
-    assert(zso_ee_open(7) == 0);
+    assert(zso_ee_open(7) == -1);
 
     zso_ee_close();
     puts("ZSO EE scanner adapter: PASS (decode + bounds + malformed + ISO fallback)");
