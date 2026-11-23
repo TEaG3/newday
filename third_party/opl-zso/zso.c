@@ -6,31 +6,33 @@
 #include <sysclib.h>
 #endif
 
-// block offset cache, reduces IO access
 u32 *ziso_idx_cache = NULL;
 int ziso_idx_start_block = -1;
-
-// header data that we need for the reader
 u32 ziso_align;
 u32 ziso_total_block;
-
-// block buffers
 u8 *ziso_tmp_buf = NULL;
 
 void ziso_init(ZISO_header *header, u32 first_block)
 {
-    // read header information
-    ziso_align = header->align;
+    (void)first_block;
     ziso_idx_start_block = -1;
-    // calculate number of blocks without using 64bit division library
-    u32 *total_bytes_p = (u32 *)&(header->total_bytes);
-    ziso_total_block = (total_bytes_p[0] >> 11) | ((total_bytes_p[1] & 0x7ff) << 21);
-    // allocate memory
-    if (ziso_tmp_buf == NULL) {
+    ziso_total_block = 0;
+
+    if (!header || header->magic != ZSO_MAGIC || header->block_size != 2048 ||
+        header->align >= 32) {
+        return;
+    }
+
+    ziso_align = header->align;
+    u32 *total_bytes_p = (u32 *)&header->total_bytes;
+    ziso_total_block = (total_bytes_p[0] >> 11) |
+                       ((total_bytes_p[1] & 0x7ff) << 21);
+
+    if (!ziso_tmp_buf) {
         u8 *allocation = ziso_alloc(2048 + sizeof(u32) * ZISO_IDX_MAX_ENTRIES + 63);
         if (!allocation) {
-            ziso_tmp_buf = NULL;
             ziso_idx_cache = NULL;
+            ziso_total_block = 0;
             return;
         }
         uintptr_t aligned = ((uintptr_t)allocation + 63u) & ~(uintptr_t)63u;
@@ -40,65 +42,69 @@ void ziso_init(ZISO_header *header, u32 first_block)
 }
 
 /*
-  The meat of the compressed sector reader.
-  Taken from ARK-4's Inferno 2 ISO Driver.
-  Tailored for OPL.
-  It's made to work with 2048 block size (matching DVD sector size) and LZ4 compression (ZSO).
-*/
+ * Read sectors from a ZSO image. Index offsets are stored in units of
+ * 1 << ziso_align. Compressed blocks are decoded with the bounded LZ4 API.
+ */
 int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 {
-
-    u32 cur_block = lsn;
-
-    if (lsn >= ziso_total_block) {
-        return 0; // can't seek beyond file
+    if (!addr || count == 0 || !ziso_tmp_buf || !ziso_idx_cache ||
+        lsn >= ziso_total_block) {
+        return 0;
     }
 
-    if (lsn + count > ziso_total_block) {
-        count = ziso_total_block - lsn; // adjust oob reads
+    if (count > ziso_total_block - lsn) {
+        count = ziso_total_block - lsn;
+    }
+    if (count > ZISO_IDX_MAX_ENTRIES - 1) {
+        count = ZISO_IDX_MAX_ENTRIES - 1;
     }
 
-    // refresh index table if needed
-    if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
-        read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0);
-        ziso_idx_start_block = lsn;
+    if (ziso_idx_start_block < 0 || lsn < (u32)ziso_idx_start_block ||
+        lsn + count > (u32)ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
+        u64 index_offset = (u64)sizeof(ZISO_header) + (u64)lsn * sizeof(u32);
+        u32 index_bytes = (count + 1) * sizeof(u32);
+        if (index_offset > 0xffffffffu ||
+            read_raw_data((u8 *)ziso_idx_cache, index_bytes, (u32)index_offset, 0) != 0) {
+            ziso_idx_start_block = -1;
+            return 0;
+        }
+        ziso_idx_start_block = (int)lsn;
     }
 
-    u32 o_start = (ziso_idx_cache[cur_block - ziso_idx_start_block] & 0x7FFFFFFF);
-    u32 o_end = (ziso_idx_cache[cur_block + count - ziso_idx_start_block] & 0x7FFFFFFF);
-    u32 compressed_size = (o_end - o_start) << ziso_align;
+    for (unsigned int i = 0; i < count; ++i) {
+        u32 start_entry = ziso_idx_cache[i];
+        u32 end_entry = ziso_idx_cache[i + 1];
+        u32 start_units = start_entry & 0x7fffffffu;
+        u32 end_units = end_entry & 0x7fffffffu;
 
-    // read all compressed data to the end of provided buffer to reduce IO
-    // there should be no overflow or overrun, as long as compressed data is smaller, and it should be
-    u8 *c_buff = addr + (count * 2048) - compressed_size;
-    read_raw_data(c_buff, compressed_size, o_start, ziso_align);
-
-    // process each sector
-    for (unsigned int i = 0; i < count; i++) {
-
-        // read block offset and size from cache
-        u32 b_offset = ziso_idx_cache[cur_block - ziso_idx_start_block];
-        u32 b_size = ziso_idx_cache[cur_block - ziso_idx_start_block + 1];
-        u32 topbit = b_offset & 0x80000000;         // extract top bit
-        b_offset = (b_offset & 0x7FFFFFFF);         // remove top bit
-        b_size = (b_size & 0x7FFFFFFF);             // remove top bit
-        b_size = (b_size - b_offset) << ziso_align; // calculate size of compressed block
-
-        // prevent reading more than a sector (eliminates padding if any)
-        int r = MIN(b_size, 2048);
-
-        // check top bit to determine if block is compressed or raw
-        if (topbit == 0) {                                                 // block is compressed
-            memcpy(ziso_tmp_buf, c_buff, r);                               // read compressed block into temp buffer
-            LZ4_decompress_fast((char *)ziso_tmp_buf, (char *)addr, 2048); // decompress block
-        } else {
-            // move block to its correct position in the buffer
-            memcpy(addr, c_buff, r);
+        if (end_units <= start_units ||
+            start_units > (0xffffffffu >> ziso_align) ||
+            (end_units - start_units) > (0xffffffffu >> ziso_align)) {
+            return (int)i;
         }
 
-        cur_block++;
-        addr += 2048;
-        c_buff += b_size;
+        u32 data_offset = start_units << ziso_align;
+        u32 stored_size = (end_units - start_units) << ziso_align;
+        u8 *sector_out = addr + (i * 2048);
+
+        if (start_entry & 0x80000000u) {
+            if (stored_size != 2048 ||
+                read_raw_data(sector_out, 2048, data_offset, 0) != 0) {
+                return (int)i;
+            }
+        } else {
+            if (stored_size == 0 || stored_size > 2048 ||
+                read_raw_data(ziso_tmp_buf, stored_size, data_offset, 0) != 0) {
+                return (int)i;
+            }
+            int decoded = LZ4_decompress_safe((const char *)ziso_tmp_buf,
+                                              (char *)sector_out,
+                                              (int)stored_size, 2048);
+            if (decoded != 2048) {
+                return (int)i;
+            }
+        }
     }
-    return cur_block - lsn;
+
+    return (int)count;
 }
