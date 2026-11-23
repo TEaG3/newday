@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NULD changelog</title>
-<meta name="description" content="What changed in each version of NULD, the PlayStation 2 game launcher.">
+<title>TEa.G3 changelog</title>
+<meta name="description" content="What changed in each version of TEa.G3, the PlayStation 2 game launcher.">
 <meta name="theme-color" content="#E6E8EC">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
@@ -13,7 +13,7 @@
 <body class="paper log">
 <div class="wrap">
   <nav class="runhead" aria-label="Changelog">
-    <a href="./">NULD changelog</a>
+    <a href="./">TEa.G3 changelog</a>
     <a href="manual.html">Manual</a>
     <a href="themes.html">Theme maker</a>
     <a href="https://github.com/danielnuld/nuld/releases">All downloads</a>
@@ -31,11 +31,11 @@
     <div>
       <p>Themes: twelve looks for the launcher, a selector in the setup panel, and themes anybody can make.</p>
       <h3>New</h3>
-      <ul><li><b>Twelve themes.</b> Torres (the new default: prisms of light in a blue night), NULD (v1.2's look), Cristal, Aurora, Liquid, Onda, Orbit, Techstep, Wireframe, Neuro, Fósforo and Papel. Each has its own colours, animated background, loading screen, launch screen and way of marking the selected game. The layout is the same in all of them.</li><li><b>Theme selector.</b> START, then <b>Theme</b>: each theme is shown at once behind the panel. Saved as <code>[ui] tema</code> in <code>config.ini</code>. To keep v1.2's look, pick NULD.</li><li><b>Themes from folders.</b> A folder in <code>nuld/themes/</code> with a <code>theme.ini</code> (a name, a built-in theme as its base and eleven colours) and, optionally, a 1280 x 720 <code>fondo.jpg</code> is a theme of its own. The guide is in the <a href="https://danielnuld.github.io/nuld/manual.html#themes">manual</a> and in <code>docs/themes.md</code>.</li><li><b>Theme maker.</b> A <a href="https://danielnuld.github.io/nuld/themes.html">page</a> that builds that folder in the browser, with a live preview of the home screen, and downloads it as a zip.</li><li><b>Saving the setup no longer restarts NULD.</b> Language, theme, memory card and video apply at once; it only starts again when the game sources or the network changed.</li><li><b>A loading sound for the new themes</b>: air rising and a low piano strike in a hall. NULD keeps its own.</li></ul>
+      <ul><li><b>Twelve themes.</b> Torres (the new default: prisms of light in a blue night), TEa.G3 (v1.2's look), Cristal, Aurora, Liquid, Onda, Orbit, Techstep, Wireframe, Neuro, Fósforo and Papel. Each has its own colours, animated background, loading screen, launch screen and way of marking the selected game. The layout is the same in all of them.</li><li><b>Theme selector.</b> START, then <b>Theme</b>: each theme is shown at once behind the panel. Saved as <code>[ui] tema</code> in <code>config.ini</code>. To keep v1.2's look, pick TEa.G3.</li><li><b>Themes from folders.</b> A folder in <code>nuld/themes/</code> with a <code>theme.ini</code> (a name, a built-in theme as its base and eleven colours) and, optionally, a 1280 x 720 <code>fondo.jpg</code> is a theme of its own. The guide is in the <a href="https://danielnuld.github.io/nuld/manual.html#themes">manual</a> and in <code>docs/themes.md</code>.</li><li><b>Theme maker.</b> A <a href="https://danielnuld.github.io/nuld/themes.html">page</a> that builds that folder in the browser, with a live preview of the home screen, and downloads it as a zip.</li><li><b>Saving the setup no longer restarts TEa.G3.</b> Language, theme, memory card and video apply at once; it only starts again when the game sources or the network changed.</li><li><b>A loading sound for the new themes</b>: air rising and a low piano strike in a hall. TEa.G3 keeps its own.</li></ul>
       <h3>Fixed</h3>
       <ul><li>After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.</li></ul>
       <h3>Known issues</h3>
-      <ul><li>Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.</li></ul>
+      <ul><li>Only Torres and TEa.G3 have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.</li></ul>
     </div>
   </section>
 
@@ -53,7 +53,7 @@
     <div>
       <p>Apps from your home server, OPL's ART folder, and square covers for PS1 games and apps.</p>
       <h3>New</h3>
-      <ul><li><b>Apps from the home server.</b> The catalog now also lists the server's <code>APPS/</code> folder, in OPL's layout (a loose <code>.elf</code>, or a folder with <code>title.cfg</code> holding <code>title=</code> and <code>boot=</code>). Pressing X downloads the ELF to <code>nuld/red.elf</code> on the USB and runs it. Only the ELF is downloaded: an app that reads other files from its own folder still has to be on the USB. Needs the server's <code>nuld_catalog.py</code> from this zip's <code>server/</code>; restart it with <code>systemctl --user restart nuld-catalog</code>.</li><li><b>OPL's ART folder (#16).</b> Covers are read straight from <code>ART/</code>, with OPL's names: <code>ART/SLUS_209.46_COV.jpg</code> or <code>.png</code> for games, <code>ART/&lt;ELF file&gt;_COV.png</code> for apps (for example <code>ART/OPNPS2LD.ELF_COV.png</code>). The launcher looks in the <code>ART/</code> folder of its own drive and of the game's drive. It converts each image once into <code>covers/</code>, and does not download a cover for that game from the internet. Transparent PNGs are drawn over NULD's background.</li><li><b>Square covers for PS1 games and apps (#27).</b> PS1 covers are no longer squashed into the DVD case shape: they are drawn square, like a CD case, and so are app covers. PS1 covers downloaded by earlier versions are downloaded again in the new shape. <code>tools/covers.py --square</code> makes square covers by hand; app covers made earlier with <code>covers.py</code> have to be made again with <code>--square</code>.</li><li><b>Games on a udpfs server reconnect after a lost link.</b> Before, once udpfs gave up on the server, every later read failed and the game crashed at its next load. Now it finds the server again (for up to about a minute) and retries the read. Not tested on a console yet.</li></ul>
+      <ul><li><b>Apps from the home server.</b> The catalog now also lists the server's <code>APPS/</code> folder, in OPL's layout (a loose <code>.elf</code>, or a folder with <code>title.cfg</code> holding <code>title=</code> and <code>boot=</code>). Pressing X downloads the ELF to <code>nuld/red.elf</code> on the USB and runs it. Only the ELF is downloaded: an app that reads other files from its own folder still has to be on the USB. Needs the server's <code>nuld_catalog.py</code> from this zip's <code>server/</code>; restart it with <code>systemctl --user restart nuld-catalog</code>.</li><li><b>OPL's ART folder (#16).</b> Covers are read straight from <code>ART/</code>, with OPL's names: <code>ART/SLUS_209.46_COV.jpg</code> or <code>.png</code> for games, <code>ART/&lt;ELF file&gt;_COV.png</code> for apps (for example <code>ART/OPNPS2LD.ELF_COV.png</code>). The launcher looks in the <code>ART/</code> folder of its own drive and of the game's drive. It converts each image once into <code>covers/</code>, and does not download a cover for that game from the internet. Transparent PNGs are drawn over TEa.G3's background.</li><li><b>Square covers for PS1 games and apps (#27).</b> PS1 covers are no longer squashed into the DVD case shape: they are drawn square, like a CD case, and so are app covers. PS1 covers downloaded by earlier versions are downloaded again in the new shape. <code>tools/covers.py --square</code> makes square covers by hand; app covers made earlier with <code>covers.py</code> have to be made again with <code>--square</code>.</li><li><b>Games on a udpfs server reconnect after a lost link.</b> Before, once udpfs gave up on the server, every later read failed and the game crashed at its next load. Now it finds the server again (for up to about a minute) and retries the read. Not tested on a console yet.</li></ul>
     </div>
   </section>
 
@@ -160,10 +160,10 @@
   <section class="chapter" id="v1.2">
     <header><b>1.2</b><h2 class="mono">2026-11-05 · <a href="https://github.com/danielnuld/nuld/releases/tag/v1.2">download</a></h2></header>
     <div>
-      <p>ORBIT is now <b>NULD</b>: a new name, a new look, and nothing to redo on your USB drive.</p>
+      <p>ORBIT is now <b>TEa.G3</b>: a new name, a new look, and nothing to redo on your USB drive.</p>
       <p><b>Website, screenshots, manual:</b> <a href="https://danielnuld.github.io/nuld/">https://danielnuld.github.io/nuld/</a></p>
       <h3>New</h3>
-      <ul><li><b>A new name.</b> ORBIT clashed with other PS2 projects; the launcher, its repository and its site are now NULD.</li><li><b>A new look.</b> Black, steel and one acid accent: a loading screen with the four NULD logos taking turns over a wire sphere, 1 px frames and HUD corners on the selection, and the Archivo, IBM Plex Mono and Michroma typefaces. The in-game menu follows the same palette.</li><li><b>A new website</b> with the loading screen running in the browser, every screenshot in a full-size viewer, and the setup guide as a manual of its own.</li></ul>
+      <ul><li><b>A new name.</b> ORBIT clashed with other PS2 projects; the launcher, its repository and its site are now TEa.G3.</li><li><b>A new look.</b> Black, steel and one acid accent: a loading screen with the four TEa.G3 logos taking turns over a wire sphere, 1 px frames and HUD corners on the selection, and the Archivo, IBM Plex Mono and Michroma typefaces. The in-game menu follows the same palette.</li><li><b>A new website</b> with the loading screen running in the browser, every screenshot in a full-size viewer, and the setup guide as a manual of its own.</li></ul>
       <h3>Known issues</h3>
       <ul><li>"Native" video mode can give a black screen on some HDTV setups: there, keep the default 480p.</li><li>Loading over udpfs needs a wired network on both ends.</li></ul>
     </div>
@@ -223,8 +223,8 @@
   </section>
   <footer class="site">
     <span>التعديل والتطوير العربي: المطور العراقي - <a href="https://github.com/TEaG3" rel="noopener">TEa.G3</a></span>
-    <span>NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).</span>
-    <span>PlayStation is a trademark of Sony Interactive Entertainment. NULD is not affiliated with Sony.</span>
+    <span>TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).</span>
+    <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
   </footer>
 </div>
 </body>
