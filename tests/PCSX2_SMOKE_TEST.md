@@ -29,7 +29,19 @@ GitHub Actions run:
    `tea_g3/config.ini`, export `DVD/` and/or `CD/`, generate `TEAG3.GAMES` with
    `tools/smb_catalog.py`, then select SMB and test one plain ISO.
 8. Test the APA/HDLoader source on an emulated or real internal HDD separately.
-   Do not count USBExtreme/UL as supported until the OPL reader is integrated.
+9. Download the `OPL.ELF` artifact from the same successful workflow run and
+   copy it to the USB root as `mass0:/OPL.ELF`.
+10. Put a known-good USBExtreme `ul.cfg` and every declared `ul.*` split part
+    in that same USB root. Keep the part names exactly as recorded in the catalogue.
+11. With `motor = auto`, confirm that UL entries appear in TEa.G3 with the
+    expected title and serial, then launch one and verify that OPL starts the
+    selected game directly. Record whether the first game screen appears and
+    whether in-game reads continue without errors.
+12. For an ordinary USB ISO/ZSO, set `[juegos] motor = opl` in
+    `mass0:/nuld/config.ini`, restart TEa.G3, and verify the manual OPL route.
+    Restore `motor = auto` or `motor = neutrino` after the test.
+13. Repeat the UL and manual-engine checks on real PS2 hardware before calling
+    the integration release-ready.
 
 ## Current scope
 
