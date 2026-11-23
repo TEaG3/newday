@@ -129,6 +129,16 @@ jobs:
           test -f modules/network/lwNBD/Makefile
           test "$(git -C modules/network/lwNBD rev-parse HEAD)" = "15f1c14536d662e2e00d38d0aa91ef24149e8b96"
 
+      - name: Apply TEa.G3 USBExtreme direct-boot patch
+        working-directory: Open-PS2-Loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check "$GITHUB_WORKSPACE/tea-g3/patches/opl-ul-autolaunch.patch"
+          git apply "$GITHUB_WORKSPACE/tea-g3/patches/opl-ul-autolaunch.patch"
+          grep -q 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
+          grep -q 'GAME_FORMAT_USBLD' src/opl.c
+
       - name: Clean and compile OPL ELF
         working-directory: Open-PS2-Loader
         shell: bash
