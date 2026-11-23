@@ -9,7 +9,7 @@ Download all artifacts from one successful GitHub Actions run; do not mix runs:
 
 1. Launcher artifact: `TEa.G3.ELF`.
 2. Neutrino artifact: the complete `neutrino/` directory.
-3. OPL artifact: `OPL.ELF`.
+3. OPL runtime artifact: `OPL.ELF` (a runtime dependency, not a second user entry point).
 
 Verify that each ELF is non-empty and that the Neutrino modules required by
 the selected source configuration are present.
@@ -33,7 +33,7 @@ launcher UI.
    `TEAG3.GAMES` with `tools/smb_catalog.py`, then select SMB and test one
    plain ISO and one ZSO.
 5. Test APA/HDLoader on an emulated or real internal HDD separately.
-6. Copy the OPL artifact to the USB root as `mass0:/OPL.ELF`.
+6. Ensure the release package has placed `OPL.ELF` in the USB root as `mass0:/OPL.ELF`; the user starts only `TEa.G3.ELF`.
 7. Put a valid USBExtreme `ul.cfg` and all of its declared `ul.*` split parts
    in the same USB root. Confirm TEa.G3 lists the game only when every part is
    present, with the correct title and serial.
