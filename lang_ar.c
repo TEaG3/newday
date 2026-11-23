@@ -145,6 +145,11 @@ static const char *const ar[][2] = {
         {"The UDPBD server did not answer (the PS2 is %s, same network?)", "خادم UDPBD لم يستجب (PS2 هو %s، نفس الشبكة؟)"},
         {"udpfs_ioman.irx from neutrino/modules did not load", "udpfs_ioman.irx من neutrino/modules لم يتم تحميله"},
         {"The UDPFS server did not answer (the PS2 is %s, same network?)", "خادم UDPFS لم يستجب (PS2 هو %s، نفس الشبكة؟)"},
+        {"Cannot read TEAG3.GAMES from the SMB share", "تعذرت قراءة TEAG3.GAMES من مشاركة SMB"},
+        {"Error while reading the SMB catalog", "حدث خطأ أثناء قراءة فهرس SMB"},
+        {"Install a Neutrino build with the SMB modules first", "ثبّت إصدار Neutrino الذي يحتوي على وحدات SMB أولاً"},
+        {"Physical (SMB: read-only)", "البطاقة الفعلية (SMB: قراءة فقط)"},
+        {"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "مصادر SMB وUDPBD وUDPFS تتشارك محول الشبكة: الأولوية لـSMB"},
 };
 
 const char *lang_ar(const char *en)
