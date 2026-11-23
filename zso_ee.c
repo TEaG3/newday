@@ -6,6 +6,7 @@
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h>
+#include <io_common.h>
 
 #include "third_party/opl-zso/zso.c"
 
