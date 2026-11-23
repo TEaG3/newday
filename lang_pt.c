@@ -99,7 +99,6 @@ static const char *const pt[][2] = {
 	{"COVERS: NETWORK ERROR (%d)", "CAPAS: ERRO DE REDE (%d)"},
 	{"%-7s OK, %d games\n", "%-7s OK, %d jogos\n"},
 	{"%-7s not found\n", "%-7s não encontrado\n"},
-	{"NETWORK Neutrino's (UDPBD / UDPFS), IP %s\n", "REDE    do Neutrino (UDPBD / UDPFS), IP %s\n"},
 	{"NETWORK not used\n", "REDE    sem uso\n"},
 	{"NETWORK %s\n", "REDE    %s\n"},
 	{"NETWORK %s (%s)\n", "REDE    %s (%s)\n"},
