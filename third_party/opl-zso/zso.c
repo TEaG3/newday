@@ -12,16 +12,59 @@ u32 ziso_align;
 u32 ziso_total_block;
 u8 *ziso_tmp_buf = NULL;
 
+/* Bounded LZ4 block decoder: never reads past input or writes past output. */
+static int zso_lz4_decode(const u8 *src, u32 src_size, u8 *dst, u32 dst_size)
+{
+    const u8 *ip = src, *iend = src + src_size;
+    u8 *op = dst, *oend = dst + dst_size;
+
+    while (ip < iend) {
+        u32 token = *ip++;
+        u32 literals = token >> 4;
+        if (literals == 15) {
+            u8 extension;
+            do {
+                if (ip >= iend) return -1;
+                extension = *ip++;
+                if (literals > 0xffffffffu - extension) return -1;
+                literals += extension;
+            } while (extension == 255);
+        }
+        if ((u32)(iend - ip) < literals || (u32)(oend - op) < literals) return -1;
+        for (u32 i = 0; i < literals; ++i) *op++ = *ip++;
+
+        if (ip == iend) return (op == oend) ? (int)dst_size : -1;
+        if ((u32)(iend - ip) < 2) return -1;
+        u32 offset = ip[0] | ((u32)ip[1] << 8);
+        ip += 2;
+        if (offset == 0 || offset > (u32)(op - dst)) return -1;
+
+        u32 match = (token & 0x0fu) + 4;
+        if ((token & 0x0fu) == 15) {
+            u8 extension;
+            do {
+                if (ip >= iend) return -1;
+                extension = *ip++;
+                if (match > 0xffffffffu - extension) return -1;
+                match += extension;
+            } while (extension == 255);
+        }
+        if ((u32)(oend - op) < match) return -1;
+        while (match--) {
+            *op = *(op - offset);
+            ++op;
+        }
+    }
+    return (op == oend) ? (int)dst_size : -1;
+}
+
 void ziso_init(ZISO_header *header, u32 first_block)
 {
     (void)first_block;
     ziso_idx_start_block = -1;
     ziso_total_block = 0;
-
     if (!header || header->magic != ZSO_MAGIC || header->block_size != 2048 ||
-        header->align >= 32) {
-        return;
-    }
+        header->align >= 32) return;
 
     ziso_align = header->align;
     u32 *total_bytes_p = (u32 *)&header->total_bytes;
@@ -41,23 +84,13 @@ void ziso_init(ZISO_header *header, u32 first_block)
     }
 }
 
-/*
- * Read sectors from a ZSO image. Index offsets are stored in units of
- * 1 << ziso_align. Compressed blocks are decoded with the bounded LZ4 API.
- */
 int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 {
     if (!addr || count == 0 || !ziso_tmp_buf || !ziso_idx_cache ||
-        lsn >= ziso_total_block) {
-        return 0;
-    }
+        lsn >= ziso_total_block) return 0;
 
-    if (count > ziso_total_block - lsn) {
-        count = ziso_total_block - lsn;
-    }
-    if (count > ZISO_IDX_MAX_ENTRIES - 1) {
-        count = ZISO_IDX_MAX_ENTRIES - 1;
-    }
+    if (count > ziso_total_block - lsn) count = ziso_total_block - lsn;
+    if (count > ZISO_IDX_MAX_ENTRIES - 1) count = ZISO_IDX_MAX_ENTRIES - 1;
 
     if (ziso_idx_start_block < 0 || lsn < (u32)ziso_idx_start_block ||
         lsn + count > (u32)ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
@@ -76,12 +109,9 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
         u32 end_entry = ziso_idx_cache[i + 1];
         u32 start_units = start_entry & 0x7fffffffu;
         u32 end_units = end_entry & 0x7fffffffu;
-
         if (end_units <= start_units ||
             start_units > (0xffffffffu >> ziso_align) ||
-            (end_units - start_units) > (0xffffffffu >> ziso_align)) {
-            return (int)i;
-        }
+            (end_units - start_units) > (0xffffffffu >> ziso_align)) return (int)i;
 
         u32 data_offset = start_units << ziso_align;
         u32 stored_size = (end_units - start_units) << ziso_align;
@@ -89,22 +119,12 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 
         if (start_entry & 0x80000000u) {
             if (stored_size != 2048 ||
-                read_raw_data(sector_out, 2048, data_offset, 0) != 0) {
-                return (int)i;
-            }
+                read_raw_data(sector_out, 2048, data_offset, 0) != 0) return (int)i;
         } else {
             if (stored_size == 0 || stored_size > 2048 ||
-                read_raw_data(ziso_tmp_buf, stored_size, data_offset, 0) != 0) {
-                return (int)i;
-            }
-            int decoded = LZ4_decompress_safe((const char *)ziso_tmp_buf,
-                                              (char *)sector_out,
-                                              (int)stored_size, 2048);
-            if (decoded != 2048) {
-                return (int)i;
-            }
+                read_raw_data(ziso_tmp_buf, stored_size, data_offset, 0) != 0 ||
+                zso_lz4_decode(ziso_tmp_buf, stored_size, sector_out, 2048) != 2048) return (int)i;
         }
     }
-
     return (int)count;
 }
