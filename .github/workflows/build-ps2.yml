@@ -100,3 +100,50 @@ jobs:
           name: tea-g3-build-log-${{ github.sha }}
           path: build.log
           if-no-files-found: warn
+
+  opl-engine:
+    name: Build upstream OPL runtime (pinned source)
+    runs-on: ubuntu-latest
+    container: ghcr.io/ps2homebrew/ps2homebrew:main
+    steps:
+      - name: Check out TEa.G3 integration branch
+        uses: actions/checkout@v4
+        with:
+          path: tea-g3
+
+      - name: Check out Open PS2 Loader at pinned revision
+        uses: actions/checkout@v4
+        with:
+          repository: ps2homebrew/Open-PS2-Loader
+          ref: b3a2199795fe89ba7e2dd7b843354472dff2c3eb
+          path: Open-PS2-Loader
+
+      - name: Fetch lwNBD dependency before cleaning
+        working-directory: Open-PS2-Loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/Open-PS2-Loader"
+          git fetch --prune --unshallow || true
+          bash ./download_lwNBD.sh
+          test -f modules/network/lwNBD/Makefile
+          git -C modules/network/lwNBD rev-parse HEAD
+
+      - name: Clean and compile OPL ELF
+        working-directory: Open-PS2-Loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          make clean
+          make NOT_PACKED=1
+          test -s opl.elf
+          cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
+          file "$GITHUB_WORKSPACE/OPL.ELF" || true
+          sha256sum "$GITHUB_WORKSPACE/OPL.ELF"
+
+      - name: Upload standalone OPL runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-opl-${{ github.sha }}
+          path: OPL.ELF
+          if-no-files-found: error
