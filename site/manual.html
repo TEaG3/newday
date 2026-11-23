@@ -227,6 +227,15 @@ inverso = 0E0714</pre>
     </div>
   </section>
 
+  <section class="chapter" id="formats">
+    <header><b>13</b><h2>Game formats and OPL compatibility</h2></header>
+    <div>
+      <p>Do not confuse a game being discovered with its image being supported by the selected loader. At this revision, PS2 ISO files use the existing Neutrino path, while PS1 games use POPStarter-compatible VCD files in <code>POPS/</code>.</p>
+      <p>The OPL ZSO/LZ4 source has been added to the repository, but it is not connected to the runtime yet. Neutrino's current core does not decode ZSO. CSO, CHD and generic PS1 containers are not supported by the current TEa.G3 launch path. SMB is also not packaged in the current Neutrino build.</p>
+      <p><a href="https://github.com/TEaG3/newday/blob/master/docs/opl-compatibility.md">Open the detailed format matrix and OPL feature status</a>. It lists what is present, what is missing, and what tests are required before a format can be marked supported.</p>
+    </div>
+  </section>
+
   <section class="chapter" id="help" style="border-bottom: 0">
     <header><b>12</b><h2>Troubleshooting</h2></header>
     <div>

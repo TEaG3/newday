@@ -9,25 +9,35 @@ This directory contains the ZSO sector decoder and its LZ4 dependency copied fro
 - `lz4.c`, `lz4.h`: LZ4 implementation included by OPL
 - `OPL-LICENSE-AFL-3.0.txt`: OPL project license text
 
-The upstream ZSO implementation declares two host hooks:
-`ziso_alloc()` and `read_raw_data()`. Those hooks are not wired to TEa.G3 yet.
-The OPL frontend's `src/zso.c` supplies them using OPL's own file descriptors
-and HDD sector API; those assumptions cannot be copied directly into TEa.G3,
-whose game launch path currently delegates ISO access to Neutrino.
+## Runtime boundary
 
-## Integration status
+**Vendored only; not enabled for game launch.** The OPL decoder expects frontend hooks
+`ziso_alloc()` and `read_raw_data()`. OPL links its ISOFS reader into its own IOP
+CDVD/device stack. TEa.G3 currently launches PS2 games through Neutrino's FHI and
+CDVD emulation path.
 
-**Vendored for review; not enabled for game launch.** No `.zso` extension is
-advertised or scanned as runnable by this commit. A follow-up adapter must:
+Neutrino's current external core does not decode ZSO. The OPL source files cannot be
+made functional merely by adding them to the EE launcher or by changing the scanner
+to accept `.zso`. A correct implementation needs a deliberate runtime choice:
 
-1. Validate the ZISO header (magic, header size, block size, alignment and total
-   byte count) before initializing the decoder.
-2. Provide bounded, seek-safe `read_raw_data` and aligned allocation hooks for
-   the actual TEa.G3/Neutrino storage backend.
-3. Route Neutrino's sector reads through the decoder without changing the
-   existing ISO path for ordinary `.iso` games.
-4. Add host-side fixtures for raw and compressed blocks, truncation and
-   out-of-range reads, then build with PS2SDK and test on hardware.
+1. **Neutrino integration:** implement ZSO header/index handling and bounded LZ4
+   sector decompression in Neutrino's IOP sector/FHI path, keeping raw ISO reads
+   unchanged; or
+2. **OPL native backend:** port the required OPL CDVD/ISOFS and source-device path
+   as a separate launch backend, then route ZSO titles to it rather than Neutrino.
+
+The second route is broader than these four files: OPL's source tree has multiple
+EE/IOP modules and per-device build variants. SMB and BDM/HDD support must be
+integrated and packaged separately as well.
+
+## Required safety and correctness tests
+
+Before exposing ZSO as launchable:
+- validate magic, header size, block size, alignment, total byte count and index bounds;
+- reject truncated files, invalid block offsets, zero/oversized compressed blocks and out-of-range sector requests;
+- use bounded LZ4 decompression (the vendored upstream fast decoder may read beyond the compressed input on malformed data);
+- test mixed compressed and raw blocks, unaligned reads and multi-sector reads;
+- preserve ordinary ISO behavior and test on PS2 hardware.
 
 Do not treat the presence of these source files as ZSO runtime support.
 
