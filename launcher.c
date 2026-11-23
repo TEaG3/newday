@@ -835,6 +835,7 @@ static const char *const config_template[LANG_N] = {
 	"; udpbd, udpfs. hdd = disco interno exFAT, o APA con particiones de HD Loader. udpbd usa la IP fija de [red];\n"
 	"; udpfs, el servidor de abajo. mx4sio y mmce no van juntos. Configuración, portadas, Neutrino, POPS\n"
 	"; y APPS siguen en la USB.\norigen = usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs\n"
+	"; si = probe all supported sources at boot; no = use only the list above\nauto = si\n"
 	"; udpfs: IP del servidor de juegos con nuld_catalog (da la lista; portadas y logros siguen). Vacío = cualquier\n"
 	"; servidor udpfs de la red (Server2PS2...), con la IP fija de [red], sin portadas ni logros por red\nservidor =\n"
 	"; si = el logo de PlayStation 2 antes de cada juego, como con un disco (unos segundos más). Un juego de otra\n"
