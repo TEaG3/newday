@@ -113,7 +113,9 @@ section { padding-top: 120px; }
 .steps li::before { content: counter(s); display: block; font: 13px var(--mono); color: var(--acid); margin-bottom: 8px; }
 
 footer.site { padding-block: 120px 56px; display: flex; flex-wrap: wrap; gap: 16px 40px; color: var(--mist); font-size: 14px; }
-footer.site > :first-child { margin-right: auto; }\nfooter.site .credit { color: var(--acid); font-size: 16px; letter-spacing: .01em; }\nfooter.site .credit a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+footer.site > :first-child { margin-right: auto; }
+footer.site .credit { color: var(--acid); font-size: 16px; letter-spacing: .01em; }
+footer.site .credit a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 
 @media (max-width: 640px) {
   body { font-size: 16px; }
