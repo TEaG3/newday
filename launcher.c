@@ -2696,7 +2696,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
 		text_c(&gfx_font_mono, 400, engine != ENGINE_NEUTRINO ? L("INICIANDO CON OPL", "STARTING WITH OPL") : how[(int)cv[i].kind], LABEL);
-		if (cv[i].engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
+		if (engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
 			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("CON LOGROS", "WITH ACHIEVEMENTS") : L("SIN LOGROS: AÚN NO HABÍA RESPUESTA", "NO ACHIEVEMENTS: NO ANSWER YET"),
 			       ra_state[i] == RA_SET ? ACID : LABEL);
 		gfx_tracking(0);
