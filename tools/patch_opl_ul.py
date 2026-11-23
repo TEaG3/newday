@@ -26,6 +26,7 @@ old = r'''    int nameLen;
     snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), argv[2]);
 '''
 new = r'''    int isUL = !strcmp(argv[4], "ul");
+    int isUSB = isUL || !strcmp(argv[4], "usb");
     int format;
     if (isUL) {
         char *end;
@@ -73,9 +74,9 @@ old = r'''            if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "ata") && st
                 break; // Exit the loop if "ata" device is found
             }
 '''
-new = r'''            if ((isUL && !strcmp(gAutoLaunchDeviceData->bdmDriver, "usb") && strlen(gAutoLaunchDeviceData->bdmDriver) == 3) ||
-                (!isUL && !strcmp(gAutoLaunchDeviceData->bdmDriver, "ata") && strlen(gAutoLaunchDeviceData->bdmDriver) == 3)) {
-                if (!isUL)
+new = r'''            if ((isUSB && !strcmp(gAutoLaunchDeviceData->bdmDriver, "usb") && strlen(gAutoLaunchDeviceData->bdmDriver) == 3) ||
+                (!isUSB && !strcmp(gAutoLaunchDeviceData->bdmDriver, "ata") && strlen(gAutoLaunchDeviceData->bdmDriver) == 3)) {
+                if (!isUSB)
                     bdmResolveLBA_UDMA(gAutoLaunchDeviceData);
                 snprintf(apaDevicePrefix, sizeof(apaDevicePrefix), "mass%d:", i);
                 fileXioDclose(dir);
@@ -86,7 +87,7 @@ if source.count(old) != 1:
     raise SystemExit(f"expected one BDM device-selection block, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
-old = r'''        if (!strcmp(argv[4], "bdm"))
+old = r'''        if (!strcmp(argv[4], "bdm") || !strcmp(argv[4], "usb"))
             autoLaunchBDMGame(argv);
 '''
 new = r'''        if (!strcmp(argv[4], "bdm"))
