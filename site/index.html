@@ -7,7 +7,7 @@
 <meta name="description" content="TEa.G3 is a game launcher that runs on a real PlayStation 2: covers downloaded by the console, 3D save icons, virtual memory cards, an in-game menu, games from a home server and RetroAchievements on hardware.">
 <meta property="og:title" content="TEa.G3, a game launcher for the PlayStation 2">
 <meta property="og:description" content="Covers, 3D save icons, an in-game menu, a home game server and RetroAchievements, all running on the PS2.">
-<meta property="og:image" content="https://danielnuld.github.io/nuld/img/home-carousel.jpg">
+<meta property="og:image" content="https://danielnuld.github.io/tea_g3/img/home-carousel.jpg">
 <meta name="theme-color" content="#06070A">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
@@ -29,8 +29,8 @@
     <a href="manual.html">Manual</a>
     <a href="themes.html">Theme maker</a>
     <a href="changelog.html">Changelog</a>
-    <a href="https://github.com/danielnuld/nuld">Source</a>
-    <a class="btn solid small" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.1/TEa.G3-Arabic-Edition.zip" data-zip><span data-zip-name>Download</span></a>
+    <a href="https://github.com/danieltea_g3/nuld">Source</a>
+    <a class="btn solid small" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.1/TEa.G3-PS2.zip" data-zip><span data-zip-name>Download</span></a>
   </div>
 </nav>
 
@@ -41,7 +41,7 @@
       <div>
         <p>Covers, 3D save icons, achievements, an in-game menu and games from a server at home. The console fetches and builds all of it; there is nothing to prepare on a PC.</p>
         <div class="btns">
-          <a class="btn solid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.1/TEa.G3-Arabic-Edition.zip" data-zip data-version="Download v{v}">Download</a>
+          <a class="btn solid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.1/TEa.G3-PS2.zip" data-zip data-version="Download v{v}">Download</a>
           <a class="btn" href="manual.html">Read the manual</a>
         </div>
       </div>
@@ -107,13 +107,13 @@
 
   <section id="download" class="wrap">
     <h2>Download</h2>
-    <p class="lead">One zip for the USB drive. Coming from ORBIT? The first boot moves your settings from orbit/ to nuld/ and keeps everything working.</p>
+    <p class="lead">One zip for the USB drive. Upgrading from an older build? TEa.G3 migrates your existing settings from nuld/ or orbit/ into tea_g3/ automatically.</p>
     <div class="scroll">
       <table class="files">
         <tbody>
-          <tr><td><a class="acid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.1/TEa.G3-Arabic-Edition.zip" data-zip><span data-zip-name>TEa.G3 zip</span></a></td><td>TEa.G3.ELF, Neutrino with TEa.G3's in-game menu and achievements agent, the folders, the optional home server and a quick start</td><td data-zip-size></td></tr>
+          <tr><td><a class="acid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.1/TEa.G3-PS2.zip" data-zip><span data-zip-name>TEa.G3 zip</span></a></td><td>TEa.G3.ELF, Neutrino with TEa.G3's in-game menu and achievements agent, the folders, the optional home server and a quick start</td><td data-zip-size></td></tr>
           <tr><td><a href="https://github.com/TEaG3/newday/releases">all releases</a></td><td>Release notes and SHA-256 checksums. What changed in each: the <a href="changelog.html">changelog</a></td><td></td></tr>
-          <tr><td><a href="https://github.com/danielnuld/orbit-jellyfin/releases">jfplay.elf</a></td><td>Optional: your Jellyfin movies and series on the PS2, with subtitles</td><td></td></tr>
+          <tr><td><a href="https://github.com/danieltea_g3/orbit-jellyfin/releases">jfplay.elf</a></td><td>Optional: your Jellyfin movies and series on the PS2, with subtitles</td><td></td></tr>
           <tr><td><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9">xeRAbora v0.1.0-alpha.9</a></td><td>Optional, for achievements: the client TEa.G3 is tested with, on a PC or server at home</td><td></td></tr>
         </tbody>
       </table>
@@ -126,7 +126,7 @@
     <ol class="steps">
       <li>Copy the zip's contents to the root of a FAT32 or exFAT drive. Put PS2 ISOs in <code>DVD/</code>.</li>
       <li>Start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF, or let the setup wizard make it FreeMcBoot's autoboot.</li>
-      <li>Pick a game and press ✕. The first boot writes <code>nuld/config.ini</code>, every setting commented.</li>
+      <li>Pick a game and press ✕. The first boot writes <code>tea_g3/config.ini</code>, every setting commented.</li>
     </ol>
     <p class="dim" style="margin-top: 32px">Videos: the <a href="https://youtu.be/w4V8aKWTCJw">trailer</a> and the <a href="https://youtu.be/eqTNBGMIEXo">setup guide on a real PS2</a>, both recorded when TEa.G3 was still ORBIT.</p>
   </section>
