@@ -5,7 +5,7 @@
     .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function (releases) {
       var rel = (releases || []).find(function (item) {
-        return /^arabic-/i.test(item.tag_name || "") && (item.assets || []).some(function (asset) { return asset.name === "TEa.G3-PS2.zip"; });
+        return /^arabic-/i.test(item.tag_name || "") && (item.assets || []).some(function (asset) { return /\.zip$/i.test(asset.name || ""); });
       });
       if (!rel) return Promise.reject("No TEa.G3 PS2 release found");
       var v = String(rel.tag_name || "").replace(/^arabic-/i, "").replace(/^v/i, ""), assets = rel.assets || [], zip = null;
