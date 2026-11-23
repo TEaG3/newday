@@ -98,7 +98,7 @@ the console).
 
 ## Credits
 
-The launcher's footer includes the small attribution “تعديل المطور العراقي TEa.G3”.
+The launcher settings panel and website footer prominently display “تعديل وتطوير المطور العراقي TEa.G3”.
 
 - [Neutrino](https://github.com/rickgaiser/neutrino) by Maximus32 (AFL-3.0), which loads the games; TEa.G3 ships a
   fork with the in-game menu and the achievements agent (`third_party/neutrino-igr`, AFL-3.0).
