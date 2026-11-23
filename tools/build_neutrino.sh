@@ -27,7 +27,7 @@ git checkout -q -- .
 git checkout -q "$BASE"
 git clean -qfd ee/ee_core ee/loader common iop/raagent iop/udpfs
 git submodule update --init iop/smb/usmb2
-python3 "$REPO/tools/patch_smb_ioman.py"
+python3 "$REPO/tools/patch_smb_ioman.py" "$PWD"
 rm -rf "$WORK/resetspu" && cp -r "$FORK/resetspu" "$WORK/resetspu" # the IGR's SPU2 reset, embedded in ee_core
 make -C "$WORK/resetspu" > "$WORK/resetspu.log" 2>&1 || { tail -20 "$WORK/resetspu.log"; exit 1; }
 bin2c "$WORK/resetspu/resetspu.irx" ee/ee_core/src/resetspu_irx.c resetspu_irx
