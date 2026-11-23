@@ -28,7 +28,7 @@ class SmbCatalogTests(unittest.TestCase):
 
             output = generate_catalog(root)
             self.assertTrue(output.exists())
-            self.assertIn("TEAG3.GAMES", output.read_text(encoding="utf-8"))
+            self.assertIn("TEa.G3 SMB catalog", output.read_text(encoding="utf-8"))
 
     def test_non_ascii_paths_are_not_exported(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
