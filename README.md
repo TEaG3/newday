@@ -78,7 +78,7 @@ The full guide is in [the TEa.G3 site](https://github.com/TEaG3/newday/tree/mast
 
 ## Building
 
-Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3 and Pillow are also required to generate the Arabic-aware font atlas.
+Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3, Pillow, fonttools and mapbox-earcut are also required to generate the Arabic-aware font atlas and TEa.G3 vector logo.
 
 ```
 ./build.sh APP=launcher          # TEa.G3.ELF
