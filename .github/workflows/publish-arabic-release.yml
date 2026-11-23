@@ -130,8 +130,11 @@ jobs:
             grep -q "^neutrino/modules/mmcefhi.irx" runtime-manifest.txt
           '
 
+      - name: Restore workspace ownership after the Docker build
+        run: sudo chown -R "$(id -u):$(id -g)" dist
+
       - name: Create validated single-ELF Arabic package
-        run: python3 tools/package_single_elf_release.py "${{ inputs.release_tag }}"
+        run: python3 tools/package_single_elf_release.py "${{ inputs.release_tag || 'arabic-v1.3.2' }}"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
