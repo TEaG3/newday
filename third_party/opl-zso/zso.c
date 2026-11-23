@@ -59,8 +59,25 @@ static int zso_lz4_decode(const u8 *src, u32 src_size, u8 *dst, u32 dst_size)
     return (op == oend) ? (int)dst_size : -1;
 }
 
+static int zso_total_bytes_to_blocks(const ZISO_header *header, u32 *blocks)
+{
+    const u32 *total = (const u32 *)&header->total_bytes;
+    u32 low = total[0];
+    u32 high = total[1];
+
+    /* PS2 IOP sector offsets are 32-bit. Decode the 64-bit byte count as
+       two words and reject values requiring more than 32-bit logical LBAs. */
+    if ((low & 2047u) != 0 || high > 0x7ffu)
+        return 0;
+
+    *blocks = (high << 21) | (low >> 11);
+    return *blocks != 0;
+}
+
 void ziso_init(ZISO_header *header, u32 first_block)
 {
+    u32 total_blocks;
+    u32 index_capacity;
     (void)first_block;
     ziso_idx_start_block = -1;
     ziso_total_block = 0;
@@ -69,12 +86,14 @@ void ziso_init(ZISO_header *header, u32 first_block)
     if (!header || header->magic != ZSO_MAGIC ||
         header->header_size < sizeof(ZISO_header) || header->header_size > 4096 ||
         header->block_size != 2048 || header->align >= 32 ||
-        header->total_bytes == 0 || (header->total_bytes & 2047ULL) != 0 ||
-        (header->total_bytes >> 11) > 0xffffffffULL) return;
+        !zso_total_bytes_to_blocks(header, &total_blocks)) return;
+
+    index_capacity = (0xffffffffu - header->header_size) / sizeof(u32);
+    if (total_blocks >= index_capacity) return;
 
     ziso_align = header->align;
     ziso_header_size = header->header_size;
-    ziso_total_block = (u32)(header->total_bytes >> 11);
+    ziso_total_block = total_blocks;
 
     if (!ziso_tmp_buf) {
         u8 *allocation = ziso_alloc(2048 + sizeof(u32) * ZISO_IDX_MAX_ENTRIES + 63);
@@ -97,13 +116,14 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     if (count > ziso_total_block - lsn) count = ziso_total_block - lsn;
     if (count > ZISO_IDX_MAX_ENTRIES - 1) count = ZISO_IDX_MAX_ENTRIES - 1;
 
-    u64 index_offset = (u64)ziso_header_size + (u64)lsn * sizeof(u32);
-    u64 index_end = (u64)ziso_header_size + ((u64)ziso_total_block + 1) * sizeof(u32);
-    u64 min_data_units = (index_end + (((u64)1 << ziso_align) - 1)) >> ziso_align;
+    u32 index_offset = ziso_header_size + lsn * sizeof(u32);
+    u32 index_end = ziso_header_size + (ziso_total_block + 1) * sizeof(u32);
+    u32 align_mask = ((u32)1 << ziso_align) - 1u;
+    u32 min_data_units = index_end >> ziso_align;
+    if (index_end & align_mask) min_data_units++;
     {
         u32 index_bytes = (count + 1) * sizeof(u32);
-        if (index_offset > 0xffffffffu || index_offset + index_bytes > 0x100000000ULL ||
-            read_raw_data((u8 *)ziso_idx_cache, index_bytes, (u32)index_offset, 0) != 0) {
+        if (read_raw_data((u8 *)ziso_idx_cache, index_bytes, index_offset, 0) != 0) {
             ziso_idx_start_block = -1;
             return 0;
         }
@@ -115,7 +135,7 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
         u32 end_entry = ziso_idx_cache[i + 1];
         u32 start_units = start_entry & 0x7fffffffu;
         u32 end_units = end_entry & 0x7fffffffu;
-        if (end_units <= start_units || (u64)start_units < min_data_units ||
+        if (end_units <= start_units || start_units < min_data_units ||
             start_units > (0xffffffffu >> ziso_align) ||
             (end_units - start_units) > (0xffffffffu >> ziso_align)) return (int)i;
 
