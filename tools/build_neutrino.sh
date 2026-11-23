@@ -50,10 +50,10 @@ make -C iop/udpfs UDPFS_FHI=1 IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text"
 
 # Build the upstream SMB stack as a separate, opt-in Neutrino backend.
 # Packaging these modules does not by itself enable SMB selection in TEa.G3.
-make -C iop/smap > "$WORK/smap.log" 2>&1 || { tail -20 "$WORK/smap.log"; exit 1; }
-make -C iop/ministack > "$WORK/ministack.log" 2>&1 || { tail -20 "$WORK/ministack.log"; exit 1; }
-make -C iop/smb SMB_IOMAN=1 > "$WORK/smb_ioman.log" 2>&1 || { tail -20 "$WORK/smb_ioman.log"; exit 1; }
-make -C iop/smb SMB_FHI=1 > "$WORK/smb_fhi.log" 2>&1 || { tail -20 "$WORK/smb_fhi.log"; exit 1; }
+make -C iop/smap IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/smap.log" 2>&1 || { tail -20 "$WORK/smap.log"; exit 1; }
+make -C iop/ministack IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/ministack.log" 2>&1 || { tail -20 "$WORK/ministack.log"; exit 1; }
+make -C iop/smb SMB_IOMAN=1 IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/smb_ioman.log" 2>&1 || { tail -20 "$WORK/smb_ioman.log"; exit 1; }
+make -C iop/smb SMB_FHI=1 IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/smb_fhi.log" 2>&1 || { tail -20 "$WORK/smb_fhi.log"; exit 1; }
 
 mkdir -p "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
 cp ee/loader/neutrino_unpacked.elf "$REPO/dist/neutrino/neutrino.elf"
