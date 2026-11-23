@@ -1039,7 +1039,10 @@ static void load_config(void) // loader thread, before the splash sound
 	stub_install = igr_exit || igr_menu; // the reboot ends in FMCB, which autoboots the stub
 	ra_on = !strcasecmp(ini_get(&cfg, "logros", "activos", "si"), "si"); // phase 16
 	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
-	src_want = src_mask(ini_get(&cfg, "juegos", "origen", "usb")); // phase 14
+	// Auto-discover every supported source on first boot unless the user explicitly narrows [juegos] origen.
+	// Missing devices are reported per-source by src_init(); they do not block the sources that are present.
+	static const char *auto_sources = "usb,hdd,mx4sio,ilink,mmce,udpbd,udpfs";
+	src_want = src_mask(ini_get(&cfg, "juegos", "origen", auto_sources)); // automatic source discovery at boot
 	if (!src_want) src_want = 1u << SRC_USB, src_why = L("Origen de juegos desconocido en config.ini: usando USB", "Unknown game source in config.ini: using USB");
 	ini_load(&games, GAMES_INI);
 	static ini state;
