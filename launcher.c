@@ -2316,7 +2316,7 @@ static void wiz_panel(void) // design: the △ options panel
 		{"", "Idioma", "Tema", "Juegos desde", "Memory card", "Vídeo", "Red", "Arrancador en", "FreeMcBoot", ""},
 		{"", "Language", "Theme", "Games from", "Memory card", "Video", "Network", "Boot stub on", "FreeMcBoot", ""},
 		{"", "Idioma", "Tema", "Jogos de", "Memory card", "Vídeo", "Rede", "Inicializador em", "FreeMcBoot", ""},
-		{"", "اللغة", "الثيم", "مصدر الألعاب", "بطاقة الذاكرة", "الفيديو", "الشبكة", "Boot stub", "FreeMcBoot", ""}};
+		{"", "اللغة", "المظهر", "مصدر الألعاب", "بطاقة الذاكرة", "الفيديو", "الشبكة", "ملف الإقلاع", "FreeMcBoot", ""}};
 	for (int r = r0; r < W_ROWS; r++, ry += 46) {
 		if (r == wiz) sel_row(x + 12, ry, w - 24, 40);
 		if (r == W_SRC) { gfx_text(&gfx_font_ui, x + 28, ry + 8, lab[lang][r], r == wiz ? TEXT : TEXT2), wiz_chips(x + w - 24, ry, r == wiz); continue; }
@@ -2329,8 +2329,9 @@ static void wiz_panel(void) // design: the △ options panel
 		char key[24], cur[64];
 		snprintf(key, sizeof(key), "LK_%s_E1", w_lk[w_val[W_FMCB] - 1]);
 		snprintf(a, sizeof(a), L("Ahora ese botón abre: %s", "That button now runs: %s"), cnf_get(fmcb_txt[w_fmcb_card()], key, cur, sizeof(cur)) ? cur : "-");
-		gfx_text(&gfx_font_mono, x + 28, y + h - 30, a, LABEL);
+		gfx_text(&gfx_font_mono, x + 28, y + h - 48, a, LABEL);
 	}
+	gfx_text(&gfx_font_mono, x + 28, y + h - 22, L("Modified and developed by Iraqi developer TEa.G3", "Modified and developed by Iraqi developer TEa.G3"), ACID);
 }
 
 // ○ Logros panel (phase 16): the game's achievements from the client's page, earned first (design: options panel)
