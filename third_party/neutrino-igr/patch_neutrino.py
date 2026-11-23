@@ -373,6 +373,8 @@ D = "iop/cdvdman_emu/src/device-fhi.c"
 edit(D, '#include "ioplib.h"\n',
      '#include "ioplib.h"\n#include "zso.h"\n')
 
+edit(D, "    uint64_t iso_size;\n", "    uint32_t iso_size;\n")
+
 edit(D, "static uint32_t iso_lsn = 0;\n",
      "static uint32_t iso_lsn = 0;\n"
      "static uint32_t iso_file_bytes;\n"
