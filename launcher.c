@@ -632,8 +632,9 @@ static int ul_part_exists(void *context, const char *filename)
 	snprintf(path, sizeof(path), "%s/%s", root, filename);
 	int fd = fileXioOpen(path, FIO_O_RDONLY);
 	if (fd < 0) return 0;
+	s64 size = fileXioLseek64(fd, 0, FIO_SEEK_END);
 	fileXioClose(fd);
-	return 1;
+	return size > 0;
 }
 
 static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
