@@ -40,3 +40,14 @@ continues to serve its existing launch paths.
 
 No OPL feature should be advertised as available merely because the upstream
 OPL executable compiled successfully.
+
+
+## Engine selection in TEa.G3
+
+The launcher uses `[juegos] motor` in `mass0:/nuld/config.ini`:
+
+- `motor = auto`: Neutrino for ordinary ISO/ZSO entries; OPL for USBExtreme UL entries.
+- `motor = neutrino`: keep ordinary PS2 images on Neutrino. UL still uses OPL because it is not a Neutrino format.
+- `motor = opl`: manually route USB ISO/ZSO entries to OPL's direct BDM USB launch path. Other storage-source combinations are rejected with a clear message rather than silently routed to an unsupported engine.
+
+The OPL executable must be copied to `mass0:/OPL.ELF`. This is a configuration-level manual override; a dedicated graphical engine picker is still a possible UI enhancement.
