@@ -949,7 +949,7 @@
   function apply() {
     const ar = lang === "ar";
     document.documentElement.lang = ar ? "ar" : "en";
-    document.documentElement.dir = "ltr";
+    document.documentElement.dir = "ltr"; // Keep navigation and page geometry LTR; Arabic text runs are RTL in site.css.
     document.body.classList.toggle("nuld-rtl", ar);
     translateText(document.body, ar);
     document.querySelectorAll("[data-nuld-lang]").forEach(b => {
