@@ -1,7 +1,6 @@
 # TEa.G3 — a game launcher for the PlayStation 2
 
-TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
-[Neutrino](https://github.com/rickgaiser/neutrino), and adds what a modern console menu has: covers downloaded by the
+TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts ISO/ZSO games through [Neutrino](https://github.com/rickgaiser/neutrino) by default and USBExtreme UL through OPL, and adds what a modern console menu has: covers downloaded by the
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
 RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
 
@@ -81,10 +80,15 @@ The full guide is in [the TEa.G3 site](https://github.com/TEaG3/newday/tree/mast
 Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3, Pillow, fonttools and mapbox-earcut are also required to generate the Arabic-aware font atlas and TEa.G3 vector logo.
 
 ```
-./build.sh APP=launcher          # TEa.G3.ELF
 ./build.sh test                  # host selftests
-bash tools/build_neutrino.sh    # Arabic-capable Neutrino fork: dist/neutrino/\n# Build the pinned OPL runtime, then run tools/embed_runtime.py with OPL.ELF + dist/neutrino/ before building APP=launcher
-./build.sh nuld_hash            # the game server's helper (static)
+bash tools/build_neutrino.sh     # complete Arabic-capable Neutrino runtime: dist/neutrino/
+# Build/download the pinned OPL.ELF, then stage both engines:
+mkdir -p runtime-input
+cp OPL.ELF runtime-input/
+cp -R dist/neutrino runtime-input/
+python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
+./build.sh APP=launcher          # TEa.G3.ELF with both engines embedded
+./build.sh nuld_hash             # the game server's helper (static)
 ```
 
 How it was built, phase by phase, is in `openspec/` (specs and archived changes) and `docs/` (results measured on
