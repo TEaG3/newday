@@ -366,8 +366,8 @@ for name in ("zso.c", "zso.h", "lz4.h"):
     shutil.copyfile(ZSO_SOURCE / name, ZSO_TARGET / name)
 
 edit("iop/cdvdman_emu/Makefile",
-     "IOP_OBJS = cdvdman.o cdvdman_read.o ioops.o ncmd.o scmd.o searchfile.o streaming.o ioplib.o device-fhi.o exports.o imports.o\n",
-     "IOP_OBJS = cdvdman.o cdvdman_read.o ioops.o ncmd.o scmd.o searchfile.o streaming.o ioplib.o device-fhi.o zso.o exports.o imports.o\n")
+     "IOP_OBJS = cdvdman.o cdvdman_read.o ioops.o ncmd.o scmd.o searchfile.o streaming.o ioplib.o device-fhi.o imports.o exports.o\n",
+     "IOP_OBJS = cdvdman.o cdvdman_read.o ioops.o ncmd.o scmd.o searchfile.o streaming.o ioplib.o device-fhi.o zso.o imports.o exports.o\n")
 
 D = "iop/cdvdman_emu/src/device-fhi.c"
 edit(D, '#include "ioplib.h"\n',
