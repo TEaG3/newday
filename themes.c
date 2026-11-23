@@ -800,7 +800,7 @@ static void papel_launch(float u) // an ink rule draws itself
 theme_def themes[TH_MAX] = {
 	{"torres", "Torres", {0x01030F, 0x050C2E, 0x16296B, 0x4962A5, 0x3A4A80, 0xE8EEFF, 0xC3D0F5, 0xA6B8EA, 0x8FD8FF, 0x13235A, 0x031236},
 	 0x4D, 0x80, TF_PIANO, 330, 430, torres_init, torres_bg, torres_orbs, torres_splash, torres_launch, NULL},
-	{"nuld", "TEa.G3", {NULD_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, NULD_FG, 0xA9B0BA, NULD_MUTED, NULD_ACID, NULD_STEEL, NULD_BG},
+	{"nuld", "Classic", {NULD_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, NULD_FG, 0xA9B0BA, NULD_MUTED, NULD_ACID, NULD_STEEL, NULD_BG},
 	 0, 0x80, TF_MARK, 240, 0, NULL, nuld_bg, nuld_sel, NULL, nuld_launch, splash_scan},
 	{"cristal", "Cristal", {0x0B0A14, 0x15122A, 0x2E2A48, 0x6A6880, 0x4A4860, 0xFFFFFF, 0xEFECF6, 0xDAD5E8, 0xFFB454, 0x26233A, 0x15101F},
 	 0x50, 0x58, TF_ACCENT | TF_MARK | TF_PIANO, 240, 446, NULL, cristal_bg, cristal_sel, cristal_splash, cristal_launch, NULL},
