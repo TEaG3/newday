@@ -97,6 +97,7 @@ jobs:
               test -s dist/neutrino/modules/ministack.irx
               test -s dist/neutrino/modules/smb_ioman.irx
               test -s dist/neutrino/modules/smb_fhi.irx
+              test -s dist/neutrino/modules/mmcefhi.irx
               test -s dist/neutrino/config/bsd-smb.toml
               ls -lh dist/neutrino/neutrino.elf dist/neutrino/modules/*.elf dist/neutrino/modules/*.irx
             '
@@ -229,6 +230,7 @@ jobs:
           test -s bundle/neutrino/neutrino.elf
           test -s bundle/neutrino/modules/cdvdman_emu.irx
           test -s bundle/neutrino/modules/smb_fhi.irx
+          test -s bundle/neutrino/modules/mmcefhi.irx
           mkdir -p bundle/docs
           cp docs/game-formats.md docs/opl-engine-integration.md docs/smb.md bundle/docs/
           cp tests/PCSX2_SMOKE_TEST.md bundle/PCSX2_SMOKE_TEST.md
