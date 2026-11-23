@@ -59,7 +59,7 @@ make -C iop/smb SMB_FHI=1 IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "
 
 mkdir -p "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
 cp ee/loader/neutrino_unpacked.elf "$REPO/dist/neutrino/neutrino.elf"
-cp ee/ee_core/ee_core.elf iop/raagent/irx/raagent.irx iop/udpfs/irx/udpfs_fhi.irx \\
+cp ee/ee_core/ee_core.elf iop/raagent/irx/raagent.irx iop/udpfs/irx/udpfs_fhi.irx \
    iop/cdvdman_emu/irx/cdvdman_emu.irx "$REPO/dist/neutrino/modules/"
 cp iop/smap/irx/smap.irx iop/ministack/irx/ministack.irx \
    iop/smb/irx/smb_ioman.irx iop/smb/irx/smb_fhi.irx "$REPO/dist/neutrino/modules/"
