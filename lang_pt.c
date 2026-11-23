@@ -23,6 +23,8 @@ static const char *const pt[][2] = {
 	{"connection failed", "falha na conexão"},
 	{"bad response", "resposta inválida"},
 	{"the adapter belongs to UDPBD", "o adaptador é do UDPBD"},
+	{"OPL.ELF is missing from the USB root", "OPL.ELF não está na raiz do USB"},
+	{"STARTING WITH OPL", "INICIANDO COM OPL"},
 	{"No network (%s): the server's game catalog was not read", "Sem rede (%s): o catálogo de jogos do servidor não foi lido"},
 	{"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
 	 "O catálogo em %s:18290 não respondeu (%s): o nuld_catalog.py está rodando? (sem ele: servidor vazio)"},
