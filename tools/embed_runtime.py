@@ -36,7 +36,7 @@ def main() -> None:
     digest = hashlib.sha256()
     for path in assets:
         rel = path.relative_to(source).as_posix()
-        digest.update(rel.encode("utf-8") + b"\\0")
+        digest.update(rel.encode("utf-8") + b"\0")
         digest.update(path.read_bytes())
     bundle_id = digest.hexdigest()[:16]
     out = ROOT
@@ -50,22 +50,22 @@ def main() -> None:
         declarations.append(f"extern unsigned int size_{symbol};")
         entries.append(f'    {{"{path.relative_to(source).as_posix()}", {symbol}, &size_{symbol}}}')
     (out / "runtime_payload.h").write_text(
-        "#ifndef TEA_RUNTIME_PAYLOAD_H\\n#define TEA_RUNTIME_PAYLOAD_H\\n"
-        "#include <stddef.h>\\n"
-        "typedef struct { const char *path; const unsigned char *data; const unsigned int *size; } tea_runtime_asset;\\n"
-        "extern const tea_runtime_asset tea_runtime_assets[];\\n"
-        "extern const unsigned int tea_runtime_assets_count;\\n"
-        "extern const char tea_runtime_bundle_id[];\\n"
-        "#endif\\n", encoding="utf-8")
+        "#ifndef TEA_RUNTIME_PAYLOAD_H\n#define TEA_RUNTIME_PAYLOAD_H\n"
+        "#include <stddef.h>\n"
+        "typedef struct { const char *path; const unsigned char *data; const unsigned int *size; } tea_runtime_asset;\n"
+        "extern const tea_runtime_asset tea_runtime_assets[];\n"
+        "extern const unsigned int tea_runtime_assets_count;\n"
+        "extern const char tea_runtime_bundle_id[];\n"
+        "#endif\n", encoding="utf-8")
     (out / "runtime_payload.c").write_text(
-        '#include "runtime_payload.h"\\n' + "\\n".join(declarations) + "\\n"
-        "const tea_runtime_asset tea_runtime_assets[] = {\\n" + ",\\n".join(entries) + "\\n};\\n"
-        f"const unsigned int tea_runtime_assets_count = {len(entries)};\\n"
-        f'const char tea_runtime_bundle_id[] = "{bundle_id}";\\n',
+        '#include "runtime_payload.h"\n' + "\n".join(declarations) + "\n"
+        "const tea_runtime_asset tea_runtime_assets[] = {\n" + ",\n".join(entries) + "\n};\n"
+        f"const unsigned int tea_runtime_assets_count = {len(entries)};\n"
+        f'const char tea_runtime_bundle_id[] = "{bundle_id}";\n',
         encoding="utf-8")
     (out / "runtime-manifest.txt").write_text(
-        f"bundle={bundle_id}\\nfiles={len(assets)}\\n" +
-        "".join(f"{p.relative_to(source).as_posix()}\\t{p.stat().st_size}\\n" for p in assets),
+        f"bundle={bundle_id}\nfiles={len(assets)}\n" +
+        "".join(f"{p.relative_to(source).as_posix()}\t{p.stat().st_size}\n" for p in assets),
         encoding="utf-8")
     print(f"embedded {len(assets)} runtime files ({bundle_id})")
 
