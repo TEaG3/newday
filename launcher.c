@@ -834,7 +834,8 @@ static const char *const config_template[LANG_N] = {
 	"\n[juegos]\n; dónde buscar juegos de PS2 (carpetas DVD y CD), separados por comas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, o APA con particiones de HD Loader. udpbd usa la IP fija de [red];\n"
 	"; udpfs, el servidor de abajo. mx4sio y mmce no van juntos. Configuración, portadas, Neutrino, POPS\n"
-	"; y APPS siguen en la USB.\norigen = usb\n"
+	"; y APPS siguen en la USB.\norigen = usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs\n"
+	"; si = probe all supported sources at boot; no = use only the list above\nauto = si\n"
 	"; udpfs: IP del servidor de juegos con nuld_catalog (da la lista; portadas y logros siguen). Vacío = cualquier\n"
 	"; servidor udpfs de la red (Server2PS2...), con la IP fija de [red], sin portadas ni logros por red\nservidor =\n"
 	"; si = el logo de PlayStation 2 antes de cada juego, como con un disco (unos segundos más). Un juego de otra\n"
@@ -1039,7 +1040,12 @@ static void load_config(void) // loader thread, before the splash sound
 	stub_install = igr_exit || igr_menu; // the reboot ends in FMCB, which autoboots the stub
 	ra_on = !strcasecmp(ini_get(&cfg, "logros", "activos", "si"), "si"); // phase 16
 	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
-	src_want = src_mask(ini_get(&cfg, "juegos", "origen", "usb")); // phase 14
+	// Auto-discover every supported source on first boot unless the user explicitly narrows [juegos] origen.
+	// Missing devices are reported per-source by src_init(); they do not block the sources that are present.
+	static const char *auto_sources = "usb,hdd,mx4sio,ilink,mmce,udpbd,udpfs";
+	src_want = src_mask(ini_get(&cfg, "juegos", "origen", auto_sources));
+	if (!strcasecmp(ini_get(&cfg, "juegos", "auto", "si"), "si"))
+		src_want |= src_mask(auto_sources); // existing configs also probe every supported source unless auto=no
 	if (!src_want) src_want = 1u << SRC_USB, src_why = L("Origen de juegos desconocido en config.ini: usando USB", "Unknown game source in config.ini: using USB");
 	ini_load(&games, GAMES_INI);
 	static ini state;
