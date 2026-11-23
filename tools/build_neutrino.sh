@@ -73,6 +73,9 @@ make -f Makefile.embedded all IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text"
 make -f Makefile.embedded copy > "$WORK/neutrino_copy.log" 2>&1 || {
     tail -40 "$WORK/neutrino_copy.log"; exit 1;
 }
+make -f Makefile.embedded copy_extra >> "$WORK/neutrino_copy.log" 2>&1 || {
+    tail -40 "$WORK/neutrino_copy.log"; exit 1;
+}
 mkdir -p "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
 cp -R ee/loader/modules/. "$REPO/dist/neutrino/modules/"
 cp -R ee/loader/config/. "$REPO/dist/neutrino/config/"
