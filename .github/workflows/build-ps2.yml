@@ -124,10 +124,10 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE/Open-PS2-Loader"
-          git fetch --prune --unshallow || true
+          git fetch --prune --unshallow
           bash ./download_lwNBD.sh
           test -f modules/network/lwNBD/Makefile
-          git -C modules/network/lwNBD rev-parse HEAD
+          test "$(git -C modules/network/lwNBD rev-parse HEAD)" = "15f1c14536d662e2e00d38d0aa91ef24149e8b96"
 
       - name: Clean and compile OPL ELF
         working-directory: Open-PS2-Loader
