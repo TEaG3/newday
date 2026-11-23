@@ -1,5 +1,6 @@
 """Apply the ORBIT IGR integration edits to a Neutrino v1.8.0 checkout (cwd = neutrino root)."""
 import re
+import shutil
 from pathlib import Path
 
 
@@ -355,3 +356,84 @@ edit(U + "udpfs_core.c",
 # (fhi_read / fhi_write: no early return when disconnected, the core reconnects)
 edit(U + "udpfs_fhi.c", "    if (!udpfs_core_is_connected())\n        return 0;\n\n", "", count=2)
 print("patched")
+
+
+# 7. ZSO runtime: use the same bounded decoder in Neutrino's FHI sector path. FHI is shared by block devices,
+#    UDPFS and SMB, so this keeps the compression layer independent from the selected storage backend.
+ZSO_SOURCE = Path(__file__).resolve().parent.parent / "opl-zso"
+ZSO_TARGET = Path("iop/cdvdman_emu/src")
+for name in ("zso.c", "zso.h", "lz4.h"):
+    shutil.copyfile(ZSO_SOURCE / name, ZSO_TARGET / name)
+
+edit("iop/cdvdman_emu/Makefile",
+     "IOP_OBJS = cdvdman.o cdvdman_read.o ioops.o ncmd.o scmd.o searchfile.o streaming.o ioplib.o device-fhi.o exports.o imports.o\n",
+     "IOP_OBJS = cdvdman.o cdvdman_read.o ioops.o ncmd.o scmd.o searchfile.o streaming.o ioplib.o device-fhi.o zso.o exports.o imports.o\n")
+
+D = "iop/cdvdman_emu/src/device-fhi.c"
+edit(D, '#include "ioplib.h"\n',
+     '#include "ioplib.h"\n#include "zso.h"\n')
+
+edit(D, "static uint32_t iso_lsn = 0;\n",
+     "static uint32_t iso_lsn = 0;\n"
+     "static uint64_t iso_file_bytes;\n"
+     "static int fhi_ready, fhi_zso, fhi_zso_error;\n"
+     "static uint8_t zso_raw_bounce[512] __attribute__((aligned(64)));\n\n"
+     "void *ziso_alloc(u32 size)\n"
+     "{\n"
+     "    return size ? AllocSysMemory(ALLOC_FIRST, size + 63, NULL) : NULL;\n"
+     "}\n\n"
+     "int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)\n"
+     "{\n"
+     "    uint64_t start;\n"
+     "    if (addr == NULL || shift >= 32) return -1;\n"
+     "    start = (uint64_t)offset << shift;\n"
+     "    if (start > iso_file_bytes || (uint64_t)size > iso_file_bytes - start) return -1;\n"
+     "    while (size > 0) {\n"
+     "        uint64_t sector = start >> 9;\n"
+     "        uint32_t within = (uint32_t)(start & 511), amount = 512 - within;\n"
+     "        if (sector > 0xffffffffULL) return -1;\n"
+     "        if (amount > size) amount = size;\n"
+     "        if (fp_fhi_read(FHI_FID_CDVD, zso_raw_bounce, (unsigned int)sector, 1) != 1) return -1;\n"
+     "        memcpy(addr, zso_raw_bounce + within, amount);\n"
+     "        addr += amount; start += amount; size -= amount;\n"
+     "    }\n"
+     "    return 0;\n"
+     "}\n")
+
+edit(D, "    if (iso_lsn)\n        return iso_lsn;\n",
+     "    if (fhi_ready)\n        return iso_lsn;\n")
+
+edit(D, "    iso_lsn = (iso_size + 3) / 4;\n\n"
+        "    M_DEBUG(\"Waiting for device...done! connected to %dMiB iso\\n\", iso_lsn/512);\n",
+     "    iso_file_bytes = iso_size * 512ULL;\n"
+     "    iso_lsn = (iso_size + 3) / 4;\n"
+     "    fhi_zso = 0; fhi_zso_error = 0;\n"
+     "    if (iso_file_bytes >= sizeof(ZISO_header)) {\n"
+     "        ZISO_header header;\n"
+     "        if (read_raw_data((u8 *)&header, sizeof(header), 0, 0) == 0 && header.magic == ZSO_MAGIC) {\n"
+     "            fhi_zso = 1;\n"
+     "            ziso_init(&header, 0);\n"
+     "            if (ziso_total_block == 0 || ziso_idx_cache == NULL || ziso_tmp_buf == NULL) {\n"
+     "                fhi_zso_error = 1; iso_lsn = 0;\n"
+     "            } else iso_lsn = ziso_total_block;\n"
+     "        }\n"
+     "    }\n"
+     "    fhi_ready = 1;\n\n"
+     "    M_DEBUG(\"Waiting for device...done! connected to %dMiB %s\\n\", iso_lsn/512, fhi_zso ? \"ZSO\" : \"ISO\");\n")
+
+edit(D, "    // M_DEBUG(\"%s(%u-%u, 0x%p, %u)\\n\", __func__, (unsigned int)fid, (unsigned int)lsn, buffer, sectors);\n\n"
+        "    if (fp_fhi_read(fid, buffer, lsn * 4, sectors * 4) != (sectors * 4)) {\n",
+     "    // M_DEBUG(\"%s(%u-%u, 0x%p, %u)\\n\", __func__, (unsigned int)fid, (unsigned int)lsn, buffer, sectors);\n\n"
+     "    if (fid == FHI_FID_CDVD && fhi_zso) {\n"
+     "        u8 *out = (u8 *)buffer;\n"
+     "        if (fhi_zso_error || lsn >= ziso_total_block || sectors > ziso_total_block - lsn)\n"
+     "            return SCECdErREAD;\n"
+     "        while (sectors > 0) {\n"
+     "            unsigned int chunk = sectors > (ZISO_IDX_MAX_ENTRIES - 1) ? (ZISO_IDX_MAX_ENTRIES - 1) : sectors;\n"
+     "            int got = ziso_read_sector(out, lsn, chunk);\n"
+     "            if (got != (int)chunk) return SCECdErREAD;\n"
+     "            out += chunk * 2048; lsn += chunk; sectors -= chunk;\n"
+     "        }\n"
+     "        return SCECdErNO;\n"
+     "    }\n"
+     "    if (fp_fhi_read(fid, buffer, lsn * 4, sectors * 4) != (sectors * 4)) {\n")
