@@ -146,6 +146,11 @@ static const char *const pt[][2] = {
 	{"The UDPBD server did not answer (the PS2 is %s, same network?)", "O servidor UDPBD não respondeu (o PS2 é %s, mesma rede?)"},
 	{"udpfs_ioman.irx from neutrino/modules did not load", "udpfs_ioman.irx de neutrino/modules não carregou"},
 	{"The UDPFS server did not answer (the PS2 is %s, same network?)", "O servidor UDPFS não respondeu (o PS2 é %s, mesma rede?)"},
+	{"Cannot read TEAG3.GAMES from the SMB share", "Não foi possível ler TEAG3.GAMES da pasta SMB"},
+	{"Error while reading the SMB catalog", "Erro ao ler o catálogo SMB"},
+	{"Install a Neutrino build with the SMB modules first", "Instale primeiro uma versão do Neutrino com os módulos SMB"},
+	{"Physical (SMB: read-only)", "Físico (SMB: somente leitura)"},
+	{"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "SMB e UDPBD/UDPFS compartilham o adaptador: prioridade para SMB"},
 };
 
 // ponytail: linear strcmp over ~140 rows per call (a few dozen calls a frame); index by pointer if it ever shows
