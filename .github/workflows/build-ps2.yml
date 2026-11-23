@@ -48,7 +48,7 @@ jobs:
       - name: Fetch pinned upstream MMCE FHI module
         run: |
           sudo apt-get update
-          sudo apt-get install -y 7zip
+          sudo apt-get install -y libarchive-tools
           bash tools/fetch_neutrino_mmcefhi.sh
 
       - name: Download pinned OPL runtime
