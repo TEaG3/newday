@@ -40,7 +40,7 @@ Previously named ORBIT and then NULD. Upgrading preserves existing data: the fir
 
 ## Quick start
 
-1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `TEa.G3.ELF`, `OPL.ELF` and `neutrino/`. OPL is started automatically for USBExtreme UL (and for USB ISO/ZSO only when manually selected); never launch `OPL.ELF` yourself.
+1. **Copy** `TEa.G3.ELF` and your `DVD/` / `CD/` game folders to the root of a FAT32 or exFAT USB drive. OPL, Neutrino and their required modules are embedded in TEa.G3; the first boot installs them automatically under `tea_g3/runtime/`. No separate engine files or folders are required.
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
 2. **Start** `mass0:/TEa.G3.ELF` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
 3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card. By default TEa.G3 probes USB, internal HDD/HDL, MX4SIO, iLink, MMCE, UDPBD and UDPFS at startup and scans detected sources automatically; no Discover/Show Games button is needed. You can narrow the source list in `tea_g3/config.ini`.
@@ -83,7 +83,7 @@ Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and
 ```
 ./build.sh APP=launcher          # TEa.G3.ELF
 ./build.sh test                  # host selftests
-bash tools/build_neutrino.sh    # Arabic-capable Neutrino fork: dist/neutrino/; copy it over mass0:/neutrino/
+bash tools/build_neutrino.sh    # Arabic-capable Neutrino fork: dist/neutrino/\n# Build the pinned OPL runtime, then run tools/embed_runtime.py with OPL.ELF + dist/neutrino/ before building APP=launcher
 ./build.sh nuld_hash            # the game server's helper (static)
 ```
 
