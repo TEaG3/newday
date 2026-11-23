@@ -2,7 +2,7 @@
 // taught with Torres (2026-11-18) holds for all: a full-screen picture sent every frame costs 3 ms, so the dithered
 // backdrops are a 64-px strip repeated (vertical gradients) or a left half mirrored (radial ones); libm's sinf is
 // software on the EE, so what moves uses fsin, a parabola; and the lights are added (gfx_add), never sorted.
-// ponytail: only Torres and NULD were timed on a console; the others are sized by the same rules and PCSX2.
+// ponytail: only Torres and Classic was timed on a console; the others are sized by the same rules and PCSX2.
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,13 +85,13 @@ static void frame(float x, float y, float w, float h, int t, unsigned rgb, float
 	gfx_rect(X, Y + t, t, Hg - 2 * t, rgb), gfx_rect(X + Wd - t, Y + t, t, Hg - 2 * t, rgb);
 	gfx_alpha(0x80);
 }
-static void wordmark(float cx, float cy, float cap, unsigned ink, unsigned slash, float a) // the mark and NULD in Michroma
+static void wordmark(float cx, float cy, float cap, unsigned ink, unsigned slash, float a) // the mark and TEa.G3 in Michroma
 {
-	float r = cap * 0.6875f, gap = cap * 0.42f, x = cx - (2 * r + gap + splash_vtext_w(&vfont_michroma, cap, 0.06f, "NULD")) / 2;
+	float r = cap * 0.6875f, gap = cap * 0.42f, x = cx - (2 * r + gap + splash_vtext_w(&vfont_michroma, cap, 0.06f, "TEa.G3")) / 2;
 	if (a <= 0.01f) return;
 	gfx_alpha((int)(0x80 * clampf(a)));
 	splash_mark(x + r, cy, r, ink, slash);
-	splash_vtext(&vfont_michroma, x + 2 * r + gap, cy + cap / 2, cap, 0.06f, "NULD", ink);
+	splash_vtext(&vfont_michroma, x + 2 * r + gap, cy + cap / 2, cap, 0.06f, "TEa.G3", ink);
 	gfx_alpha(0x80);
 }
 
@@ -182,7 +182,7 @@ static void blurred(float a, float zoom) // the cover out of focus over the whol
 	gfx_dither(0), gfx_alpha(0x80);
 }
 
-// ---- NULD (v1.2): splash.c's floor, corners and scanlines ----
+// ---- Classic (former NULD theme): splash.c's floor, corners and scanlines ----
 static void nuld_bg(float turn) { (void)turn; tick(); splash_floor(now * 0.5f, NULD_FG, 0x12); }
 static void nuld_sel(float x, float y, float w, float h, float f, int front)
 {
@@ -544,7 +544,7 @@ static float st4(float n) { return ceilf(clampf(n) * 4) / 4; } // four hard step
 static float tech_splash(float u) // a band of colour snaps open and the name is pushed in from the side, in steps
 {
 	int hg = (int)(280 * st4(u / 0.3f)), top = 290 - hg / 2;
-	float sl = (1 - st4((u - 0.3f) / 0.3f)) * 1300, cap = 130, ww = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "NULD"), x0 = 640 - (150 + 40 + ww) / 2;
+	float sl = (1 - st4((u - 0.3f) / 0.3f)) * 1300, cap = 130, ww = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "TEa.G3"), x0 = 640 - (150 + 40 + ww) / 2;
 	tick();
 	gfx_alpha(0x80), gfx_rect(0, 0, W, H, TK);
 	if (hg <= 0) return 0;
@@ -552,7 +552,7 @@ static float tech_splash(float u) // a band of colour snaps open and the name is
 	if (hg > 40) hazard(top), hazard(top + hg - 12);
 	gfx_scissor(0, top, W - 1, top + hg - 1);
 	splash_mark(x0 + 75 - sl, 290, 75, TK, 0xFF5A36);
-	splash_vtext(&vfont_archivo_heavy, x0 + 190 + sl, 290 + cap / 2, cap, 0.02f, "NULD", TK);
+	splash_vtext(&vfont_archivo_heavy, x0 + 190 + sl, 290 + cap / 2, cap, 0.02f, "TEa.G3", TK);
 	gfx_scissor(0, 0, W - 1, H - 1);
 	return u > 0.7f;
 }
@@ -735,7 +735,7 @@ static void fos_sel(float x, float y, float w, float h, float f, int front)
 }
 static float fos_splash(float u) // a boot log types itself out, then the name
 {
-	static const char *const log[5] = {"NULD BIOS", "EE R5900  294.912 MHz ............ OK", "RAM  32 MB ....................... OK",
+	static const char *const log[5] = {"TEa.G3 BIOS", "EE R5900  294.912 MHz ............ OK", "RAM  32 MB ....................... OK",
 	                                   "GS  1280 x 720 ................... OK", "USB MASS ......................... OK"};
 	float w = ease((u - 2.6f) / 0.6f);
 	int rows = 0;
@@ -800,7 +800,7 @@ static void papel_launch(float u) // an ink rule draws itself
 theme_def themes[TH_MAX] = {
 	{"torres", "Torres", {0x01030F, 0x050C2E, 0x16296B, 0x4962A5, 0x3A4A80, 0xE8EEFF, 0xC3D0F5, 0xA6B8EA, 0x8FD8FF, 0x13235A, 0x031236},
 	 0x4D, 0x80, TF_PIANO, 330, 430, torres_init, torres_bg, torres_orbs, torres_splash, torres_launch, NULL},
-	{"nuld", "NULD", {NULD_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, NULD_FG, 0xA9B0BA, NULD_MUTED, NULD_ACID, NULD_STEEL, NULD_BG},
+	{"nuld", "TEa.G3", {NULD_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, NULD_FG, 0xA9B0BA, NULD_MUTED, NULD_ACID, NULD_STEEL, NULD_BG},
 	 0, 0x80, TF_MARK, 240, 0, NULL, nuld_bg, nuld_sel, NULL, nuld_launch, splash_scan},
 	{"cristal", "Cristal", {0x0B0A14, 0x15122A, 0x2E2A48, 0x6A6880, 0x4A4860, 0xFFFFFF, 0xEFECF6, 0xDAD5E8, 0xFFB454, 0x26233A, 0x15101F},
 	 0x50, 0x58, TF_ACCENT | TF_MARK | TF_PIANO, 240, 446, NULL, cristal_bg, cristal_sel, cristal_splash, cristal_launch, NULL},
