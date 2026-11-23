@@ -3,7 +3,7 @@
 build.sh nuld_hash). Usage: python tools/make_release.py v1.0 <neutrino dev release dir> <udpfs_server.py>
 
 Layout, to be copied to the root of the USB drive (server/ goes to the game server instead):
-  TEa.G3.ELF  neutrino/ (official dev release + TEa.G3's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
+  TEa.G3.ELF  OPL.ELF  neutrino/ (official dev release + TEa.G3's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
   server/ (nuld_catalog.py, nuld_hash, udpfs_server.py, systemd units)  tools/covers.py  QUICKSTART.txt  LICENSE
 """
 import hashlib, os, sys, zipfile
@@ -16,7 +16,7 @@ out = os.path.join(ROOT, "dist", name + ".zip")
 QUICKSTART = f"""TEa.G3 {ver} - quick start
 ============================
 
-1. Copy TEa.G3.ELF, neutrino/, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive.
+1. Copy TEa.G3.ELF, OPL.ELF, neutrino/, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive.\n   TEa.G3 starts the selected engine automatically. OPL.ELF is a runtime component; do not launch it manually.
 2. Put your PS2 ISOs in DVD/ (CD games in CD/). PS1 games: POPStarter VCDs in POPS/. Homebrew: APPS/.
 3. On the PS2, start mass0:/TEa.G3.ELF (uLaunchELF, or FreeMcBoot's autoboot).
 4. Pick a game and press X. The first boot writes mass0:/tea_g3/config.ini with every setting, commented.
@@ -104,6 +104,12 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(info, s.replace("\n", "\r\n") if arc.endswith(".txt") else s, zipfile.ZIP_DEFLATED)
 
     add(os.path.join(ROOT, "TEa.G3.ELF"), "TEa.G3.ELF")
+    # OPL is a runtime selected by TEa.G3 for USBExtreme UL and optional USB ISO/ZSO.
+    # Fail the release build rather than silently publishing a package with a broken UL path.
+    opl = os.path.join(ROOT, "OPL.ELF")
+    if not os.path.isfile(opl) or os.path.getsize(opl) == 0:
+        raise SystemExit("OPL.ELF is required: build/download the pinned OPL runtime before packaging")
+    add(opl, "OPL.ELF")
     # TEa.G3 runtime plus SMB modules/config built into dist/neutrino by build_neutrino.sh.
     overlay = {
         "neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx",
