@@ -3,7 +3,7 @@
 build.sh nuld_hash). Usage: python tools/make_release.py v1.0 <neutrino dev release dir> <udpfs_server.py>
 
 Layout, to be copied to the root of the USB drive (server/ goes to the game server instead):
-  TEa.G3.ELF  neutrino/ (official dev release + NULD's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
+  TEa.G3.ELF  neutrino/ (official dev release + TEa.G3's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
   server/ (nuld_catalog.py, nuld_hash, udpfs_server.py, systemd units)  tools/covers.py  QUICKSTART.txt  LICENSE
 """
 import hashlib, os, sys, zipfile
@@ -13,13 +13,13 @@ ver, ndev, udpfs = sys.argv[1], sys.argv[2], sys.argv[3]
 name = "TEa.G3-PS2"
 out = os.path.join(ROOT, "dist", name + ".zip")
 
-QUICKSTART = f"""NULD {ver} - quick start
+QUICKSTART = f"""TEa.G3 {ver} - quick start
 ============================
 
 1. Copy TEa.G3.ELF, neutrino/, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive.
 2. Put your PS2 ISOs in DVD/ (CD games in CD/). PS1 games: POPStarter VCDs in POPS/. Homebrew: APPS/.
 3. On the PS2, start mass0:/TEa.G3.ELF (uLaunchELF, or FreeMcBoot's autoboot).
-4. Pick a game and press X. The first boot writes mass0:/nuld/config.ini with every setting, commented.
+4. Pick a game and press X. The first boot writes mass0:/tea_g3/config.ini with every setting, commented.
 
 Buttons: left/right (or up/down) move, L1/R1 filter, square changes the view, triangle per-game options,
 circle achievements, X play, SELECT data overlay.
@@ -31,21 +31,21 @@ Optional
   Your own: tools/covers.py turns PNG/JPG files named by serial (SLUS-21376.png) into the .c16 pair for
   mass0:/covers/ (python3 covers.py IN_DIR OUT_DIR; needs numpy and Pillow).
   No DNS on your router? Set  [red] dns = 1.1.1.1  in config.ini.
-- Back to NULD from a game: NULD installs BOOT/NULD.ELF on your memory card; set it as FMCB's autoboot.
-- Coming from ORBIT (v1.1 or older): the first boot moves mass0:/orbit/ to mass0:/nuld/, keeps BOOT/ORBIT.ELF
+- Back to TEa.G3 from a game: TEa.G3 installs BOOT/TEa.G3.ELF on your memory card; set it as FMCB's autoboot.
+- Coming from ORBIT (v1.1 or older): the first boot moves mass0:/orbit/ or mass0:/nuld/ to mass0:/tea_g3/, keeps BOOT/ORBIT.ELF
   up to date (an FMCB autoboot pointing at it keeps working) and keeps using VMC/ORBIT.bin as the shared card.
 - Achievements: run the xeRAbora client v0.1.0-alpha.9, signed in, on your network
-  (github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9: the version NULD is tested with).
+  (github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9: the version TEa.G3 is tested with).
 - Games from a home server: see server/README.txt (wired network needed).
 
 Website and setup video: https://danielnuld.github.io/nuld/
 Source: https://github.com/danielnuld/nuld (GPL-3.0; the Neutrino fork is AFL-3.0)
 """
 
-SERVER = """NULD game server (Linux)
+SERVER = """TEa.G3 game server (Linux)
 =========================
 
-Serves your ISOs to the PS2 over the network, with udpfs (Neutrino's) and NULD's catalog.
+Serves your ISOs to the PS2 over the network, with udpfs (Neutrino's) and TEa.G3's catalog.
 
 1. Put the ISOs in <root>/DVD (and <root>/CD), e.g. /srv/data/ps2/DVD.
 2. Copy this folder to the server, e.g. ~/nuld, and install both services (user services):
@@ -63,7 +63,7 @@ only Python 3. curl http://<server>:18290/catalog lists what the PS2 will see.
 
 UNITS = {
     "nuld-catalog.service": """[Unit]
-Description=NULD game catalog for the PS2 launcher
+Description=TEa.G3 game catalog for the PS2 launcher
 After=network-online.target
 
 [Service]
@@ -104,7 +104,7 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(info, s.replace("\n", "\r\n") if arc.endswith(".txt") else s, zipfile.ZIP_DEFLATED)
 
     add(os.path.join(ROOT, "TEa.G3.ELF"), "TEa.G3.ELF")
-    overlay = {"neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx"}  # NULD's fork over the official release
+    overlay = {"neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx"}  # TEa.G3's fork over the official release
     for dirpath, _, files in os.walk(ndev):
         for f in files:
             rel = os.path.relpath(os.path.join(dirpath, f), ndev).replace("\\", "/")
@@ -130,6 +130,6 @@ print(out, os.path.getsize(out), "bytes")
 print("TEa.G3.ELF SHA-256", hashlib.sha256(open(os.path.join(ROOT, "TEa.G3.ELF"), "rb").read()).hexdigest().upper())
 print("zip SHA-256", h)
 
-# self-update assets (#15): update.txt + update.sig + NULD's files, uploaded next to the zip
+# self-update assets (#15): update.txt + update.sig + TEa.G3's files, uploaded next to the zip
 import subprocess
 subprocess.run([sys.executable, os.path.join(ROOT, "tools", "make_update.py"), ver], check=True)
