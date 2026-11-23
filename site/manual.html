@@ -148,7 +148,7 @@
     <div>
       <p>Keep your ISOs on a Linux machine and play them over the cable. The zip's <code>server/</code> folder has everything:</p>
 <pre># on the server, with the ISOs in /srv/data/ps2/DVD
-cp -r server ~/nuld &amp;&amp; cd ~/nuld
+cp -r server ~/tea_g3-server &amp;&amp; cd ~/tea_g3-server
 mkdir -p ~/.config/systemd/user &amp;&amp; cp *.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now udpfs nuld-catalog
@@ -170,7 +170,7 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
     <header><b>10</b><h2>Updates</h2></header>
     <div>
       <p>With the cable in, TEa.G3 looks for a newer release at boot and says so; START installs it. Every file is checked against a manifest signed with the release key before anything is replaced, and the old files stay as <code>.old</code>.</p>
-      <p>Upgrading from NULD or ORBIT: the first boot automatically migrates <code>tea_g3/</code> (or <code>orbit/</code>) to <code>tea_g3/</code>, preserves settings and theme files, and installs <code>BOOT/TEa.G3.ELF</code>. The legacy <code>BOOT/NULD.ELF</code> entry remains supported.</p>
+      <p>Upgrading from NULD or ORBIT: the first boot automatically migrates <code>nuld/</code> (or <code>orbit/</code>) to <code>tea_g3/</code>, preserves settings and theme files, and installs <code>BOOT/TEa.G3.ELF</code>. The legacy <code>BOOT/NULD.ELF</code> entry remains supported.</p>
     </div>
   </section>
 
