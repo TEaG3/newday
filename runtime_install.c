@@ -19,6 +19,11 @@ static int make_parents(char *path)
         }
         *p = '/';
     }
+    if (*path && mkdir(path, 0777) < 0) {
+        FILE *f = fopen(path, "rb");
+        if (!f) return 0;
+        fclose(f);
+    }
     return 1;
 }
 
