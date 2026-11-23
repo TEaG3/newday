@@ -25,6 +25,7 @@
 #include "iop.h"
 #include "iso.h"
 #include "zso_ee.h"
+#include "ul.h"
 #include "ini.h"
 #include "net.h"
 #include "cover.h"
@@ -102,12 +103,14 @@ static float span(int t, int a, int b) { return clampf((float)(t - a) / (b - a))
 // _s.c16 on the USB, NULL = drawn card
 enum { K_PS2, K_PS1, K_APP, K_DISC };
 typedef struct {
-	char title[64], serial[16], path[160], boot[64]; // boot: disc only, the SYSTEM.CNF BOOT2 path / PS1 file name
-	char hash[33];                                     // RetroAchievements hash: the catalog's (phase 17) or computed
-	char kind, cd, disc, src;                          // cd: PS2 CD media; disc: K_DISC's content (D_*); src: src[]
-	unsigned size;                                     // a server app's ELF bytes (catalog, launch downloads it)
-	void *big, *small, *half;                          // half: grid
+	char title[64], serial[16], path[160], boot[64]; // boot: disc path or PS2 startup ID
+	char hash[33];
+	char ul_name[UL_NAME_SIZE + 1];                   // exact fixed-width UL name used by OPL's CRC
+	char kind, cd, disc, src, engine, parts;
+	unsigned size;
+	void *big, *small, *half;
 } entry;
+enum { ENGINE_NEUTRINO, ENGINE_OPL_UL };
 static entry cv[MAXC];
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
@@ -622,6 +625,58 @@ static int count_dir(const char *root, const char *dir, const char *ext)
 
 static unsigned src_want; // config [juegos] origen (phase 14)
 
+static int ul_part_exists(void *context, const char *filename)
+{
+	const char *root = (const char *)context;
+	char path[320];
+	snprintf(path, sizeof(path), "%s/%s", root, filename);
+	int fd = fileXioOpen(path, FIO_O_RDONLY);
+	if (fd < 0) return 0;
+	fileXioClose(fd);
+	return 1;
+}
+
+static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
+{
+	if (src[s].type != SRC_USB || n >= MAXC) return n;
+	char cfg_path[300];
+	snprintf(cfg_path, sizeof(cfg_path), "%s/ul.cfg", src[s].root);
+	int fd = fileXioOpen(cfg_path, FIO_O_RDONLY);
+	if (fd < 0) return n;
+	s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
+	if (end <= 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
+		printf("UL: invalid ul.cfg size %lld\\n", end);
+		fileXioClose(fd);
+		return n;
+	}
+	if (fileXioLseek64(fd, 0, FIO_SEEK_SET) < 0) {
+		fileXioClose(fd);
+		return n;
+	}
+	int records = (int)(end / UL_CFG_RECORD_SIZE);
+	for (int r = 0; r < records && n < MAXC; r++) {
+		unsigned char raw[UL_CFG_RECORD_SIZE];
+		ul_game game;
+		if (fileXioRead(fd, raw, sizeof(raw)) != sizeof(raw)) break;
+		if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
+		entry *e = &cv[n++];
+		memset(e, 0, sizeof(*e));
+		snprintf(e->title, sizeof(e->title), "%s", game.name);
+		serial_dash(game.startup, e->serial);
+		snprintf(e->path, sizeof(e->path), "ul.cfg#%d", r);
+		snprintf(e->boot, sizeof(e->boot), "%s", game.startup);
+		memcpy(e->ul_name, game.raw_name, sizeof(e->ul_name));
+		e->kind = K_PS2;
+		e->cd = game.media == 0x12;
+		e->src = s;
+		e->engine = ENGINE_OPL_UL;
+		e->parts = game.parts;
+		done_n++, total_n++;
+	}
+	fileXioClose(fd);
+	return n;
+}
+
 static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (2 POPS, the USB only) of source s from cv[n]
 {
 	static const char *dirs[3] = {"DVD", "CD", "POPS"};
@@ -819,8 +874,10 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 			n = catalog_load(s, n);
 		else if (src[s].type == SRC_SMB)
 			n = smb_catalog_load(s, n);
-		else if (s || src_want & 1u << src[0].type) // src[0] is the home: its PS2 games only if it is a source
+		else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
 			n = scan_dir(s, 1, scan_dir(s, 0, n));
+			if (src[s].type == SRC_USB) n = scan_ul(s, n);
+		}
 	}
 	if (src[0].type == SRC_USB) n = scan_dir(0, 2, n); // PS1: POPStarter reads mass:
 	snprintf(path, sizeof(path), "%s/APPS", homedev);
@@ -2526,7 +2583,8 @@ static int status_text(char *b, int max)
 
 static const char *launch_problem(int i) // why X cannot start entry i, or NULL (shown as a toast)
 {
-	if (cv[i].kind == K_PS2 && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder");
+	if (cv[i].kind == K_PS2 && cv[i].engine == ENGINE_NEUTRINO && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder");
+	if (cv[i].engine == ENGINE_OPL_UL && !exists("mass0:/OPL.ELF")) return L("Falta OPL.ELF en la raíz del USB", "OPL.ELF is missing from the USB root");
 	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB &&
 	    (!exists("mass0:/neutrino/modules/smb_fhi.irx") || !exists("mass0:/neutrino/config/bsd-smb.toml")))
 		return L("تثبيت Neutrino مع وحدات SMB مطلوب", "Install a Neutrino build with the SMB modules first");
@@ -2621,14 +2679,14 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
 		text_c(&gfx_font_mono, 400, how[(int)cv[i].kind], LABEL);
-		if (ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
+		if (cv[i].engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
 			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("CON LOGROS", "WITH ACHIEVEMENTS") : L("SIN LOGROS: AÚN NO HABÍA RESPUESTA", "NO ACHIEVEMENTS: NO ANSWER YET"),
 			       ra_state[i] == RA_SET ? ACID : LABEL);
 		gfx_tracking(0);
 		gfx_end();
 		gfx_flip();
 	}
-	if (cv[i].kind == K_PS2 && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("No se pudo crear la memory card virtual", "Could not create the virtual memory card"); return; }
+	if (cv[i].kind == K_PS2 && cv[i].engine == ENGINE_NEUTRINO && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("No se pudo crear la memory card virtual", "Could not create the virtual memory card"); return; }
 	// no ISO read nor socket call of the achievements worker left half-way under the IOP reset (phase 16: the game
 	// hung when launched while its hash was being computed); the render thread sleeps so the worker can stop
 	ra_launching = 1, ra_abort = 1;
@@ -2642,13 +2700,23 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
 	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down(); // ponytail: a cover download in flight keeps it up
 	// no libcdvd call of the disc thread left half-way under the next program (Neutrino's branch: after its checks)
-	if (cv[i].kind != K_PS2 && disc_tid >= 0) TerminateThread(disc_tid);
+	if ((cv[i].kind != K_PS2 || cv[i].engine == ENGINE_OPL_UL) && disc_tid >= 0) TerminateThread(disc_tid);
 	if (cv[i].kind == K_DISC) { // the BIOS: PS2LOGO checks and runs the BOOT2 path; PS1DRV takes file name + version
 		char *a[2] = {cv[i].boot, "???"}; // ponytail: version "???", as the OSD libraries fall back to
 		printf("launch: %s %s\n", cv[i].disc == D_PS2 ? "rom0:PS2LOGO" : "rom0:PS1DRV", cv[i].boot);
 		gfx_shutdown();
 		SifExitRpc();
 		LoadExecPS2(cv[i].disc == D_PS2 ? "rom0:PS2LOGO" : "rom0:PS1DRV", cv[i].disc == D_PS2 ? 1 : 2, a);
+		return;
+	}
+	if (cv[i].engine == ENGINE_OPL_UL) {
+		static char part_count[8];
+		snprintf(part_count, sizeof(part_count), "%u", (unsigned char)cv[i].parts);
+		char *opl_argv[6] = {"mass0:/OPL.ELF", cv[i].ul_name, cv[i].boot, cv[i].cd ? "CD" : "DVD", "ul", part_count};
+		printf("launch OPL UL: %s parts=%s\\n", cv[i].boot, part_count);
+		gfx_shutdown();
+		run_loader(6, opl_argv);
+		printf("OPL launch failed\\n");
 		return;
 	}
 	if (cv[i].kind != K_PS2) { // loader argv: the file, then the program's argv
