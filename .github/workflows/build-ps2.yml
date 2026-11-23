@@ -135,8 +135,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
-          grep -q 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
-          grep -q 'GAME_FORMAT_USBLD' src/opl.c
+          grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
+          grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
 
       - name: Clean and compile OPL ELF
         working-directory: Open-PS2-Loader
