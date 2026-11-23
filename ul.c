@@ -141,6 +141,21 @@ int main(void)
     assert(game.parts == 2 && game.media == 0x14);
     assert(game.name_crc == crc);
 
+    /* USBExtreme stores a fixed-width 32-byte title; spaces are part of OPL's CRC input. */
+    unsigned char padded_record[UL_CFG_RECORD_SIZE];
+    char padded_name[UL_NAME_SIZE + 1];
+    memset(padded_name, ' ', UL_NAME_SIZE);
+    memcpy(padded_name, "Test Game", 9);
+    padded_name[UL_NAME_SIZE] = 0;
+    make_record(padded_record, padded_name, "SLUS_209.46", 0x14, 2);
+    crc = ul_name_crc32(padded_name);
+    snprintf(parts.names[0], sizeof(parts.names[0]), "ul.%08X.SLUS_209.46.00", crc);
+    snprintf(parts.names[1], sizeof(parts.names[1]), "ul.%08X.SLUS_209.46.01", crc);
+    parts.count = 2;
+    assert(ul_decode_record(padded_record, &game, fake_exists, &parts));
+    assert(strcmp(game.name, "Test Game") == 0);
+    assert(memcmp(game.raw_name, padded_name, UL_NAME_SIZE) == 0);
+
     parts.count = 1;
     assert(!ul_decode_record(record, &game, fake_exists, &parts)); /* missing second split part */
     parts.count = 2;
