@@ -373,11 +373,9 @@ D = "iop/cdvdman_emu/src/device-fhi.c"
 edit(D, '#include "ioplib.h"\n',
      '#include "ioplib.h"\n#include "zso.h"\n')
 
-edit(D, "    uint64_t iso_size;\n", "    uint32_t iso_size;\n")
-
 edit(D, "static uint32_t iso_lsn = 0;\n",
      "static uint32_t iso_lsn = 0;\n"
-     "static uint32_t iso_file_bytes;\n"
+     "static uint64_t iso_file_bytes;\n"
      "static int fhi_ready, fhi_zso, fhi_zso_error;\n"
      "static uint8_t zso_raw_bounce[512] __attribute__((aligned(64)));\n\n"
      "void *ziso_alloc(u32 size)\n"
@@ -386,12 +384,14 @@ edit(D, "static uint32_t iso_lsn = 0;\n",
      "}\n\n"
      "int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)\n"
      "{\n"
-     "    uint32_t start;\n"
-     "    if (addr == NULL || shift >= 32 || offset > (0xffffffffu >> shift)) return -1;\n"
-     "    start = offset << shift;\n"
-     "    if (start > iso_file_bytes || size > iso_file_bytes - start) return -1;\n"
+     "    uint64_t start;\n"
+     "    if (addr == NULL || shift >= 32 || (uint64_t)offset > (UINT64_MAX >> shift)) return -1;\n"
+     "    start = (uint64_t)offset << shift;\n"
+     "    if (start > iso_file_bytes || (uint64_t)size > iso_file_bytes - start) return -1;\n"
      "    while (size > 0) {\n"
-     "        uint32_t sector = start >> 9;\n"
+     "        uint64_t sector64 = start >> 9;\n"
+     "        if (sector64 > UINT32_MAX) return -1;\n"
+     "        uint32_t sector = (uint32_t)sector64;\n"
      "        uint32_t within = start & 511, amount = 512 - within;\n"
      "        if (amount > size) amount = size;\n"
      "        if (fp_fhi_read(FHI_FID_CDVD, zso_raw_bounce, sector, 1) != 1) return -1;\n"
@@ -406,7 +406,7 @@ edit(D, "    if (iso_lsn)\n        return iso_lsn;\n",
 
 edit(D, "    iso_lsn = (iso_size + 3) / 4;\n\n"
         "    M_DEBUG(\"Waiting for device...done! connected to %dMiB iso\\n\", iso_lsn/512);\n",
-     "    iso_file_bytes = iso_size > (0xffffffffu / 512u) ? 0xffffffffu : iso_size * 512u;\n"
+     "    iso_file_bytes = (uint64_t)iso_size * 512u;\n"
      "    iso_lsn = iso_size / 4 + ((iso_size & 3u) != 0);\n"
      "    fhi_zso = 0; fhi_zso_error = 0;\n"
      "    if (iso_file_bytes >= sizeof(ZISO_header)) {\n"
