@@ -2,7 +2,7 @@
 (() => {
   const P = window.NULDPreview, themes = document.querySelector('[data-themes]'), views = document.querySelector('[data-views]');
   if (!P || !themes) return;
-  const NAMES = { torres: 'Torres', nuld: 'NULD', cristal: 'Cristal', aurora: 'Aurora', liquid: 'Liquid', onda: 'Onda', orbit: 'Orbit',
+  const NAMES = { torres: 'Torres', nuld: 'TEa.G3', cristal: 'Cristal', aurora: 'Aurora', liquid: 'Liquid', onda: 'Onda', orbit: 'Orbit',
     techstep: 'Techstep', wireframe: 'Wireframe', neuro: 'Neuro', fosforo: 'Fósforo', papel: 'Papel' };
   // each theme's palette (themes.c's table: bg, panel, row, edge, dim, text, text2, label, accent, steel), for the page itself
   const PAL = { torres: '01030F 050C2E 16296B 4962A5 3A4A80 E8EEFF C3D0F5 A6B8EA 8FD8FF 13235A', nuld: '06070A 0C0E12 161A21 2A303A 3A4150 E6E8EC A9B0BA 8A919C C8FF2E 1A1D23',
