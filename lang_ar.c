@@ -98,7 +98,6 @@ static const char *const ar[][2] = {
         {"COVERS: NETWORK ERROR (%d)", "الأغلفة: خطأ شبكة (%d)"},
         {"%-7s OK, %d games\n", "%-7s OK، %d لعبة\n"},
         {"%-7s not found\n", "%-7s غير موجود\n"},
-        {"NETWORK Neutrino's (UDPBD / UDPFS), IP %s\n", "الشبكة  Neutrino (UDPBD / UDPFS)، IP %s\n"},
         {"NETWORK not used\n", "الشبكة  غير مستخدمة\n"},
         {"NETWORK %s\n", "الشبكة  %s\n"},
         {"NETWORK %s (%s)\n", "الشبكة  %s (%s)\n"},
