@@ -43,12 +43,12 @@ int zso_ee_open(int fd)
     zso_ee_file_bytes = 0;
     end = fileXioLseek64(fd, 0, FIO_SEEK_END);
     if (end < 0)
-        return 0;
+        return -1;
     zso_ee_file_bytes = (u64)end;
 
     if (read_raw_data((u8 *)&header, sizeof(header), 0, 0) != 0 ||
         header.magic != ZSO_MAGIC)
-        return 0;
+        return -1;
 
     ziso_init(&header, 0);
     if (ziso_total_block == 0 || ziso_idx_cache == NULL || ziso_tmp_buf == NULL)
