@@ -33,6 +33,7 @@ jobs:
             tests/zso_host/test_zso_ee.c zso_ee.c \
             -o /tmp/zso_ee_host_test
           /tmp/zso_ee_host_test
+          python3 -m unittest tests/test_smb_catalog.py
 
   launcher:
     name: Validate Arabic localization and build launcher + Neutrino
@@ -68,6 +69,11 @@ jobs:
               test -s dist/neutrino/modules/ee_core.elf
               test -s dist/neutrino/modules/raagent.irx
               test -s dist/neutrino/modules/cdvdman_emu.irx
+              test -s dist/neutrino/modules/smap.irx
+              test -s dist/neutrino/modules/ministack.irx
+              test -s dist/neutrino/modules/smb_ioman.irx
+              test -s dist/neutrino/modules/smb_fhi.irx
+              test -s dist/neutrino/config/bsd-smb.toml
               ls -lh dist/neutrino/neutrino.elf dist/neutrino/modules/*.elf dist/neutrino/modules/*.irx
             '
 
