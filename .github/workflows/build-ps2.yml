@@ -45,6 +45,12 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Fetch pinned upstream MMCE FHI module
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y 7zip
+          bash tools/fetch_neutrino_mmcefhi.sh
+
       - name: Download pinned OPL runtime
         uses: actions/download-artifact@v4
         with:
