@@ -23,7 +23,7 @@ jobs:
       - name: Compile and run bounded ZSO decoder and scanner fixtures
         run: |
           set -euo pipefail
-          python3 -m py_compile tools/make_release.py tools/embed_runtime.py
+          python3 -m py_compile tools/make_release.py tools/embed_runtime.py tools/theme_check.py
           cc -std=c99 -Wall -Wextra -Wno-unused-parameter -include string.h \
             -Itests/zso_host -Ithird_party/opl-zso \
             tests/zso_host/test_zso.c third_party/opl-zso/zso.c \
@@ -76,6 +76,7 @@ jobs:
               command -v mips64r5900el-ps2-elf-gcc
               test -x "$PS2DEV/ee/bin/mips64r5900el-ps2-elf-gcc"
               make test
+              python3 tools/theme_check.py
               make clean
               bash tools/build_neutrino.sh 2>&1 | tee build.log
               mkdir -p runtime-input
