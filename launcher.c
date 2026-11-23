@@ -979,7 +979,7 @@ static int crt;             // [video] pantalla = 480i: menu in 480i / 576i, gam
 
 static void load_config(void) // loader thread, before the splash sound
 {
-	char dir[24], old[24];
+	char dir[24];
 	snprintf(dir, sizeof(dir), "%s/tea_g3", homedev);
 	char legacy[24], orbit[24];
 	snprintf(legacy, sizeof(legacy), "%s/nuld", homedev);
@@ -2109,7 +2109,7 @@ static void wiz_panel(void) // design: the △ options panel
 	char a[128];
 	int r0 = upd_avail ? W_UPD : W_LANG, x = 270, y = upd_avail ? 74 : 96, w = 740, h = 70 + (W_ROWS - r0) * 46 + 40;
 	panel_dim = wiz == W_THEME ? 0x20 : 0x60; // on the theme's row the home stays in sight: it is the preview
-	panel(x, y, w, h, UI_GEAR_18, L("Configuración de NULD", "NULD setup"));
+	panel(x, y, w, h, UI_GEAR_18, L("Configuración de TEa.G3", "TEa.G3 setup"));
 	panel_dim = 0x60;
 	int ry = y + 70;
 	if (w_done == 2 || w_job == 3) { // the summary (an update fills it as it goes)
