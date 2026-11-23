@@ -16,7 +16,7 @@
 <body class="paper">
 <div class="wrap">
   <nav class="runhead" aria-label="Manual">
-    <a href="./">TEa.G3 instruction manual, <span data-version="version {v}">version 1.2</span></a>
+    <a href="./">TEa.G3 instruction manual, <span data-version="version {v}">version 1.3</span></a>
     <a href="#usb">1 The USB drive</a>
     <a href="#buttons">2 Buttons</a>
     <a href="#config">3 config.ini</a>
@@ -34,7 +34,7 @@
       </div>
       <h1>A game launcher that runs on the PlayStation&nbsp;2 and does its own <span class="mark">homework</span>.</h1>
     </div>
-    <p>Everything TEa.G3 can do, and how to turn it on. You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. <br><br><a class="btn ink" href="https://github.com/TEaG3/newday/releases/latest" data-zip data-version="Download v{v}">Download</a></p>
+    <p>Everything TEa.G3 can do, and how to turn it on. You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. <br><br><a class="btn ink" href="https://github.com/TEaG3/newday/releases/latest/download/TEa.G3-PS2.zip" data-zip data-version="Download v{v}">Download</a> <a class="btn" href="INSTALL-AR.txt" download>دليل التثبيت العربي</a></p>
     <figure class="fig">
       <div class="frame"><canvas data-nuld-splash data-version="1.2" role="img" aria-label="TEa.G3's loading screen, animated: a wire sphere over a perspective floor and the four logo variants taking turns"></canvas></div>
       <figcaption>Fig. 1, the loading screen at every boot, while the console starts the USB, reads the memory cards and loads the covers.</figcaption>
@@ -44,17 +44,16 @@
   <section class="chapter" id="usb">
     <header><b>1</b><h2>The USB drive</h2></header>
     <div>
-      <p>Copy the zip's contents to the root of the drive, put your ISOs in <code>DVD/</code> (CD games in <code>CD/</code>) and start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF. The setup wizard opens on the first boot.</p>
+      <p>Copy <code>TEa.G3.ELF</code> and the game folders to the USB root. OPL, Neutrino and their modules are embedded in the ELF and extracted automatically on first boot. Put DVD ISOs in <code>DVD/</code> and CD games in <code>CD/</code>, then start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF. The setup wizard opens on the first boot.</p>
 <pre>USB root
 ├── TEa.G3.ELF
-├── neutrino/     the loader, with TEa.G3's in-game menu and achievements agent
 ├── DVD/          PS2 DVD ISOs
 ├── CD/           PS2 CD ISOs
 ├── POPS/         PS1 games (POPStarter .VCD), optional
 ├── APPS/         homebrew .ELF files, optional
 ├── covers/       written by TEa.G3: the covers it downloads
-└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini</pre>
-      <p>FAT32 cannot hold files over 4 GB: format the drive as exFAT for big ISOs. Virtual memory cards live in <code>VMC/</code> on the game's own device.</p>
+└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini, runtime/ (engines installed automatically)</pre>
+      <p>FAT32 cannot hold files over 4 GB: format the drive as exFAT for big ISOs. For USBExtreme UL, keep <code>ul.cfg</code> and all <code>ul.*</code> parts on the USB. Virtual memory cards live in <code>VMC/</code> on the game's own device.</p>
     </div>
   </section>
 
@@ -85,8 +84,8 @@
       <p>TEa.G3 writes <code>mass0:/tea_g3/config.ini</code> on its first boot, and the setup wizard (START) edits the main keys for you. Each key is explained in the file. The main ones:</p>
       <div class="scroll"><table>
         <tr><th>Section and key</th><th>Values</th><th>What it does</th></tr>
-        <tr><td>[ui] idioma</td><td>es, en</td><td>Language of the menus and of the file's comments</td></tr>
-        <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes</td><td>The theme (<a href="#themes">chapter 11</a>)</td></tr>
+        <tr><td>[ui] idioma</td><td>ar, en, es, pt</td><td>Language of the menus and of the file's comments; Arabic is the default on a fresh install</td></tr>
+        <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes</td><td>The theme; change it live in the START setup panel (<a href="#themes">chapter 11</a>)</td></tr>
         <tr><td>[juegos] origen</td><td>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</td><td>Where to look for games, comma-separated</td></tr>
         <tr><td>[juegos] servidor</td><td>an IP</td><td>The home game server (udpfs)</td></tr>
         <tr><td>[memorycard] modo</td><td>juego, compartida, fisica</td><td>A virtual card per game, one shared, or the physical one</td></tr>
