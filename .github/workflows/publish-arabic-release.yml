@@ -53,8 +53,14 @@ jobs:
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
           grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
           grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path("src/opl.c").read_text(encoding="utf-8")
+          assert "if (!isUL && gBDMPrefix[0] != '\\\\0') {" in source
+          assert 'snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), "%s", argv[2]);' in source
+          PY
 
-      - name: Build OPL ELF
+      - name: Clean and compile OPL ELF
         working-directory: Open-PS2-Loader
         shell: bash
         run: |
