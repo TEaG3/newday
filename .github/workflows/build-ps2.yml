@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature/tea-g3-rebrand
   pull_request:
     branches:
       - master
