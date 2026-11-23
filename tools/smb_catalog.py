@@ -34,7 +34,7 @@ def safe_relative_path(path: str) -> bool:
         and "\\" not in path
         and ":" not in path
         and ".." not in path
-        and all(0x21 <= byte <= 0x7E for byte in encoded)
+        and all(0x20 <= byte <= 0x7E for byte in encoded)
     )
 
 
