@@ -136,7 +136,7 @@ static int view;
 static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
-static char STATE_INI[32], NEUTRINO[128], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[96], LOG_TXT[24], OPL_PATH[128];
+static char STATE_INI[32], NEUTRINO[128], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[96], RUNTIME_DIR[96], LOG_TXT[24], OPL_PATH[128];
 static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
@@ -144,9 +144,10 @@ static void home_paths(void)
 	snprintf(CONFIG, sizeof(CONFIG), "%s/%s/config.ini", homedev, home_dir);
 	snprintf(GAMES_INI, sizeof(GAMES_INI), "%s/%s/juegos.ini", homedev, home_dir);
 	snprintf(RA_DIR, sizeof(RA_DIR), "%s/%s/ra", homedev, home_dir);
-	snprintf(NDIR, sizeof(NDIR), "%s/%s/runtime/neutrino", homedev, home_dir);
+	snprintf(RUNTIME_DIR, sizeof(RUNTIME_DIR), "%s/%s/runtime", homedev, home_dir);
+	snprintf(NDIR, sizeof(NDIR), "%s/neutrino", RUNTIME_DIR);
 	snprintf(NEUTRINO, sizeof(NEUTRINO), "%s/neutrino.elf", NDIR);
-	snprintf(OPL_PATH, sizeof(OPL_PATH), "%s/%s/runtime/OPL.ELF", homedev, home_dir);
+	snprintf(OPL_PATH, sizeof(OPL_PATH), "%s/OPL.ELF", RUNTIME_DIR);
 	snprintf(LOG_TXT, sizeof(LOG_TXT), "%s/launcher.txt", homedev);
 }
 
@@ -1674,8 +1675,8 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	sound = ok ? sound_init() : -1;
 	usb = ok && (src_home(homedev) || (!strcmp(homedev, "mass0:") && usb_wait())); // usb: the home is mounted
 	if (usb) {
-		if (!runtime_install(homedev)) printf("runtime: embedded engines could not be installed\\n");
-		load_config();
+		load_config(); // migrate legacy nuld/orbit data before creating tea_g3/runtime
+		if (!runtime_install(RUNTIME_DIR)) printf("runtime: embedded engines could not be installed\\n");
 	}
 	stage = 1; // the splash sound waits for this: the volume is known
 	scan_cards();
