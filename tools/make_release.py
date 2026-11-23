@@ -32,8 +32,8 @@ Optional
   mass0:/covers/ (python3 covers.py IN_DIR OUT_DIR; needs numpy and Pillow).
   No DNS on your router? Set  [red] dns = 1.1.1.1  in config.ini.
 - Back to TEa.G3 from a game: TEa.G3 installs BOOT/TEa.G3.ELF on your memory card; set it as FMCB's autoboot.
-- Coming from ORBIT (v1.1 or older): the first boot moves mass0:/orbit/ or mass0:/nuld/ to mass0:/tea_g3/, keeps BOOT/ORBIT.ELF
-  up to date (an FMCB autoboot pointing at it keeps working) and keeps using VMC/ORBIT.bin as the shared card.
+- Coming from ORBIT (v1.1 or older): the first boot moves mass0:/nuld/ or mass0:/orbit/ to mass0:/tea_g3/ to mass0:/tea_g3/, keeps BOOT/ORBIT.ELF
+  up to date (an FMCB autoboot pointing at it keeps working) and keeps using VMC/ORBIT.bin (legacy) as the shared card.
 - Achievements: run the xeRAbora client v0.1.0-alpha.9, signed in, on your network
   (github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9: the version TEa.G3 is tested with).
 - Games from a home server: see server/README.txt (wired network needed).
