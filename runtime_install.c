@@ -44,14 +44,16 @@ static int write_asset(const char *root, const tea_runtime_asset *asset)
     if (!f) return 0;
     int ok = fwrite(asset->data, 1, *asset->size, f) == *asset->size;
     if (fclose(f) != 0) ok = 0;
-    if (!ok || rename(tmp, path) != 0) { remove(tmp); return 0; }
+    if (!ok) { remove(tmp); return 0; }
+    remove(path);
+    if (rename(tmp, path) != 0) { remove(tmp); return 0; }
     return 1;
 }
 
 int runtime_install(const char *home)
 {
     char root[128], marker[144], expected[32], actual[32];
-    if (snprintf(root, sizeof(root), "%s/tea_g3/runtime", home) >= (int)sizeof(root) ||
+    if (snprintf(root, sizeof(root), "%s", home) >= (int)sizeof(root) ||
         snprintf(marker, sizeof(marker), "%s/.bundle-id", root) >= (int)sizeof(marker))
         return 0;
     if (!make_parents(root)) return 0;
@@ -61,6 +63,7 @@ int runtime_install(const char *home)
         size_t n = fread(actual, 1, sizeof(actual) - 1, f);
         actual[n] = 0;
         fclose(f);
+        if (n && actual[n - 1] == '\\n') actual[n - 1] = 0;
         if (!strcmp(actual, expected)) return 1;
     }
     for (unsigned int i = 0; i < tea_runtime_assets_count; i++) {
