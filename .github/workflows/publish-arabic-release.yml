@@ -7,17 +7,12 @@ on:
         description: "New GitHub release tag"
         required: true
         default: "arabic-v1.3.2"
-      prerelease:
-        description: "Mark this release as a prerelease until PS2 hardware validation is complete"
-        type: boolean
-        required: true
-        default: true
-
 permissions:
   contents: write
 
 jobs:
   opl-engine:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master' && contains(github.event.workflow_run.head_commit.message, 'Merge pull request #15')) }}
     name: Build pinned OPL runtime
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
@@ -137,7 +132,7 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.release_tag }}
+          tag_name: ${{ inputs.release_tag || 'arabic-v1.3.2' }}
           name: "TEa.G3 PS2 — النسخة العربية"
           body: |
             النسخة العربية من TEa.G3، تعديل وتطوير المطور العراقي TEa.G3.
@@ -149,7 +144,7 @@ jobs:
             - يتضمن الأرشيف INSTALL-AR.txt وتراخيص المحركات وبصمات SHA-256.
 
             This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
-          prerelease: ${{ inputs.prerelease }}
+          prerelease: true
           files: |
             dist/TEa.G3-PS2.zip
             dist/SHA256SUMS.txt
