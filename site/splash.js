@@ -1,4 +1,4 @@
-// NULD loading screen for the web: splash.c (the launcher's and link.elf's) redrawn on a <canvas data-nuld-splash>.
+// TEa.G3 loading screen for the web: splash.c (the launcher's and link.elf's) redrawn on a <canvas data-nuld-splash>.
 // Same 1280x720 coordinates, floor, wire sphere, the four logo variants 3 s each with a glitch cut, status line,
 // HUD corners and scanlines. Reduced motion: one still frame of variant A.
 (function () {
@@ -27,11 +27,11 @@
   function variant(g, k, dx, s, accent, ver) {
     g.textBaseline = 'alphabetic';
     if ('fontStretch' in g) g.fontStretch = 'normal';
-    if (k === 0) { // A: ring + NULD in Michroma
+    if (k === 0) { // A: ring + TEa.G3 in Michroma
       font(g, '134px Michroma'); g.letterSpacing = '8px';
-      var ww = g.measureText('NULD').width, x = 640 - (132 + 40 + ww) / 2 + dx;
+      var ww = g.measureText('TEa.G3').width, x = 640 - (132 + 40 + ww) / 2 + dx;
       mark(g, x + 66, 300, 66, accent);
-      g.fillStyle = FG; g.fillText('NULD', x + 172, 348);
+      g.fillStyle = FG; g.fillText('TEa.G3', x + 172, 348);
       g.letterSpacing = '0px';
     } else if (k === 1) { // B: $ nulld in Plex Mono 500 with a block cursor
       font(g, '500 132px "IBM Plex Mono"');
@@ -42,8 +42,8 @@
     } else if (k === 2) { // C: NULD// in Archivo 800 at 125 %
       if ('fontStretch' in g) g.fontStretch = 'expanded';
       font(g, '800 132px Archivo');
-      var wn = g.measureText('NULD').width, wt = wn + g.measureText('//').width, cx = 640 - wt / 2 + dx;
-      g.fillStyle = FG; g.fillText('NULD', cx, 345);
+      var wn = g.measureText('TEa.G3').width, wt = wn + g.measureText('//').width, cx = 640 - wt / 2 + dx;
+      g.fillStyle = FG; g.fillText('TEa.G3', cx, 345);
       g.fillStyle = accent; g.fillText('//', cx + wn, 345);
     } else { // D: the hardware label
       var lw = 680, lx = 300 + dx, ly = 196, top = 150, bot = 64;
@@ -52,7 +52,7 @@
       g.fillRect(lx, ly, 2, top + bot + 2); g.fillRect(lx + lw - 2, ly, 2, top + bot + 2); g.fillRect(lx, ly + top, lw, 2);
       mark(g, lx + 86, ly + top / 2 + 2, 52, accent);
       if ('fontStretch' in g) g.fontStretch = 'expanded';
-      font(g, '800 88px Archivo'); g.fillStyle = FG; g.fillText('NULD', lx + 170, ly + top / 2 + 34);
+      font(g, '800 88px Archivo'); g.fillStyle = FG; g.fillText('TEa.G3', lx + 170, ly + top / 2 + 34);
       if ('fontStretch' in g) g.fontStretch = 'normal';
       var b = lx + 18;
       for (var i = 0; i < BARS.length; i++) { g.fillRect(b, ly + top + 14, BARS[i], bot - 26); b += BARS[i] + 2; }
@@ -146,7 +146,7 @@
     g.fillStyle = accent; g.fillRect(490, 524, 300 * prog, 2);
     hud(g, 24, 24, 1232, 672, 28, accent);
     font(g, '14px "IBM Plex Mono"'); g.fillStyle = MUTED;
-    g.fillText('NULD ' + ver, 64, 46);
+    g.fillText('TEa.G3 ' + ver, 64, 46);
     var r = 'EE R5900 · 294.912 MHz';
     g.fillText(r, 1216 - g.measureText(r).width, 46);
     g.fillText('SCPH-75001', 1216 - g.measureText('SCPH-75001').width, 690);
