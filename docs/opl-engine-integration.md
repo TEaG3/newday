@@ -66,7 +66,7 @@ that device's root as well.
 
 ## Validation status
 
-The successful CI run `45246675082` validated:
+The successful CI run `45247139396` validated:
 - ZSO host decoder/scanner fixtures;
 - UL record and split-part fixtures;
 - engine-selection capability matrix;
