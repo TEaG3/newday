@@ -1,6 +1,6 @@
-# NULD — a game launcher for the PlayStation 2
+# TEa.G3 — a game launcher for the PlayStation 2
 
-NULD is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
+TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
 [Neutrino](https://github.com/rickgaiser/neutrino), and adds what a modern console menu has: covers downloaded by the
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
 RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
@@ -10,7 +10,7 @@ RetroAchievements on real hardware. Arabic is the default interface language, wi
 **Download:** [latest release](https://github.com/danielnuld/nuld/releases/latest)
 
 Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit/` to `nuld/`, keeps
-`BOOT/ORBIT.ELF` up to date next to the new `BOOT/NULD.ELF`, and keeps using `VMC/ORBIT.bin` as the shared card.
+`BOOT/ORBIT.ELF` up to date next to the new `BOOT/TEa.G3.ELF`, and keeps using `VMC/ORBIT.bin` as the shared card.
 
 ![Home screen](site/img/home-carousel.jpg)
 
@@ -22,7 +22,7 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
   decoded and dithered on the console, saved to the USB. No PC step.
 - **3D save icons**: the newest save of each game, read from the memory card, spinning on the detail card.
 - **Every source Neutrino knows**: USB, internal HDD (exFAT or HD Loader), MX4SIO, iLink, MMCE, UDPBD, and a
-  **home game server** (udpfs + NULD's catalog service) whose games list instantly and keep every feature.
+  **home game server** (udpfs + TEa.G3's catalog service) whose games list instantly and keep every feature.
 - **Virtual memory cards**, one per game (or one shared), created on first play, on the game's own device.
 - **Per-game options** (△): video mode forced to 480p or 1080i, compatibility modes, memory card. No 720p: the GS
   only scales lines by whole numbers, so a game's ~448 lines would come out squashed or cropped; 1080i fills an HDTV best.
@@ -41,9 +41,9 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
 
 ## Quick start
 
-1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `launcher.elf` and `neutrino/`.
+1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `TEa.G3.ELF` and `neutrino/`.
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
-2. **Start** `mass0:/launcher.elf` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
+2. **Start** `mass0:/TEa.G3.ELF` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
 3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card,
    video, network, the memory card for `BOOT/NULD.ELF` and how FreeMcBoot 1.966 starts it (autoboot, a button or
    its menu; the original `FREEMCB.CNF` is kept as `.bak`). Every setting is also in `nuld/config.ini`, commented.
