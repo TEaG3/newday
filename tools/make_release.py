@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Build the release zip: dist/NULD-<version>.zip (run after build.sh APP=launcher, tools/build_neutrino.sh and
+"""Build the release zip: dist/TEa.G3-PS2.zip (run after build.sh APP=launcher, tools/build_neutrino.sh and
 build.sh nuld_hash). Usage: python tools/make_release.py v1.0 <neutrino dev release dir> <udpfs_server.py>
 
 Layout, to be copied to the root of the USB drive (server/ goes to the game server instead):
-  launcher.elf  neutrino/ (official dev release + NULD's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
+  TEa.G3.ELF  neutrino/ (official dev release + NULD's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
   server/ (nuld_catalog.py, nuld_hash, udpfs_server.py, systemd units)  tools/covers.py  QUICKSTART.txt  LICENSE
 """
 import hashlib, os, sys, zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ver, ndev, udpfs = sys.argv[1], sys.argv[2], sys.argv[3]
-name = f"NULD-{ver}"
+name = "TEa.G3-PS2"
 out = os.path.join(ROOT, "dist", name + ".zip")
 
 QUICKSTART = f"""NULD {ver} - quick start
 ============================
 
-1. Copy launcher.elf, neutrino/, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive.
+1. Copy TEa.G3.ELF, neutrino/, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive.
 2. Put your PS2 ISOs in DVD/ (CD games in CD/). PS1 games: POPStarter VCDs in POPS/. Homebrew: APPS/.
-3. On the PS2, start mass0:/launcher.elf (uLaunchELF, or FreeMcBoot's autoboot).
+3. On the PS2, start mass0:/TEa.G3.ELF (uLaunchELF, or FreeMcBoot's autoboot).
 4. Pick a game and press X. The first boot writes mass0:/nuld/config.ini with every setting, commented.
 
 Buttons: left/right (or up/down) move, L1/R1 filter, square changes the view, triangle per-game options,
@@ -103,7 +103,7 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         info.external_attr = (mode | 0o100000) << 16
         z.writestr(info, s.replace("\n", "\r\n") if arc.endswith(".txt") else s, zipfile.ZIP_DEFLATED)
 
-    add(os.path.join(ROOT, "launcher.elf"), "launcher.elf")
+    add(os.path.join(ROOT, "TEa.G3.ELF"), "TEa.G3.ELF")
     overlay = {"neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx"}  # NULD's fork over the official release
     for dirpath, _, files in os.walk(ndev):
         for f in files:
@@ -127,7 +127,7 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
 
 h = hashlib.sha256(open(out, "rb").read()).hexdigest().upper()
 print(out, os.path.getsize(out), "bytes")
-print("launcher.elf SHA-256", hashlib.sha256(open(os.path.join(ROOT, "launcher.elf"), "rb").read()).hexdigest().upper())
+print("TEa.G3.ELF SHA-256", hashlib.sha256(open(os.path.join(ROOT, "TEa.G3.ELF"), "rb").read()).hexdigest().upper())
 print("zip SHA-256", h)
 
 # self-update assets (#15): update.txt + update.sig + NULD's files, uploaded next to the zip
