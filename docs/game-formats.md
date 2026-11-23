@@ -101,3 +101,12 @@ root. TEa.G3 scans the UL catalogue on its USB source and only lists a record
 when its metadata is valid and every declared part is present. Selecting that
 entry invokes the OPL direct-boot arguments. This is an integration test
 instruction, not a release-ready installer or a claim of verified gameplay.
+
+
+### Selecting the runtime engine
+
+In `mass0:/nuld/config.ini`, the `[juegos]` option `motor` accepts
+`auto`, `neutrino`, or `opl`. Automatic mode keeps ISO/ZSO on Neutrino and
+routes USBExtreme UL to OPL. Setting `motor = opl` manually routes USB ISO/ZSO
+games to OPL as well; other storage-source combinations are rejected until a
+direct OPL hand-off exists for them. UL remains OPL-only.
