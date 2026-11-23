@@ -53,7 +53,7 @@ Optional:
 - **Covers**: plug in the network cable; missing covers download at boot. If you see "No DNS", set
   `[red] dns = 1.1.1.1` in config.ini. Your own covers: `python3 tools/covers.py IN_DIR OUT_DIR` (numpy, Pillow)
   turns PNG/JPG files named by serial (`SLUS-21376.png`) into the `.c16` pair that goes in `mass0:/covers/`.
-- **Back to TEa.G3 from a game**: with FMCB set to autoboot `BOOT/NULD.ELF` (the wizard does it), "Restart" in
+- **Back to TEa.G3 from a game**: with FMCB set to autoboot `BOOT/TEa.G3.ELF` (the wizard does it), "Restart" in
   the in-game menu brings you back.
 - **MemCard PRO 2 / SD2PSX**: they switch to the game's own card when a game starts. To save there instead of the
   USB's virtual card, set the game's memory card to `fisica` (△, or `[memorycard] modo = fisica` for every game).
@@ -66,7 +66,7 @@ Optional:
   achievements then.
 - **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy the same files to the card's SD and start
   `mmce0:/TEa.G3.ELF` (point FMCB's autoboot straight at it). Settings, covers and Neutrino live on the card; PS1
-  games need NULD on a USB; MX4SIO can't be used alongside.
+  games need TEa.G3 on a USB; MX4SIO can't be used alongside.
 - **Status**: SELECT shows each game source (games found, or why it failed) and the network.
 
 The full guide is on the [website](https://danielnuld.github.io/nuld/#guide) and in the setup video.
@@ -95,7 +95,7 @@ the console).
 
 The launcher's footer includes the small attribution “تعديل المطور العراقي TEa.G3”.
 
-- [Neutrino](https://github.com/rickgaiser/neutrino) by Maximus32 (AFL-3.0), which loads the games; NULD ships a
+- [Neutrino](https://github.com/rickgaiser/neutrino) by Maximus32 (AFL-3.0), which loads the games; TEa.G3 ships a
   fork with the in-game menu and the achievements agent (`third_party/neutrino-igr`, AFL-3.0).
 - [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) (AFL-3.0): the In Game Reset technique.
 - [xeRAbora](https://github.com/hacan359/xerabora) (MIT client): the RetroAchievements protocol and PC client;
