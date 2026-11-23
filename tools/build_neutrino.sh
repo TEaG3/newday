@@ -5,7 +5,7 @@
 # Rebuilt: the loader (neutrino.elf: -igr / -igroff / -igrexit / -igrmenu / -ra options), modules/ee_core.elf (In
 # Game Reset, in-game menu, achievements telemetry: third_party/neutrino-igr), modules/raagent.irx (phase 16b) and
 # modules/udpfs_fhi.irx (reconnects after a lost link).
-# Every other module stays the official dev release's, already on the USB.
+# The complete upstream module set is rebuilt from the pinned source and staged with the custom IGR/RA components.
 set -e
 export PS2DEV=/usr/local/ps2dev PS2SDK=/usr/local/ps2dev/ps2sdk GSKIT=/usr/local/ps2dev/gsKit
 export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2SDK/bin
