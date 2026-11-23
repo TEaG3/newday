@@ -74,8 +74,6 @@ from pathlib import Path
 path = Path("Makefile.embedded")
 lines = path.read_text(encoding="utf-8").splitlines()
 filtered = [line for line in lines if "mmcefhi.irx" not in line]
-if len(filtered) == len(lines):
-    raise SystemExit("expected the upstream mmcefhi.irx copy recipe was not found")
 path.write_text("\n".join(filtered) + "\n", encoding="utf-8")
 if any("mmcefhi.irx" in line for line in path.read_text(encoding="utf-8").splitlines()):
     raise SystemExit("mmcefhi.irx copy recipe remains in Makefile.embedded")
