@@ -53,7 +53,7 @@ def build_rows(root: Path) -> list[str]:
         if not directory.is_dir():
             continue
         for image in sorted(directory.rglob("*")):
-            if not image.is_file() or image.suffix.lower() != ".iso":
+            if not image.is_file() or image.suffix.lower() not in {".iso", ".zso"}:
                 continue
             relative = image.relative_to(root).as_posix()
             if not safe_relative_path(relative):
@@ -87,7 +87,7 @@ def main() -> int:
         parser.error(f"not a directory: {args.share_root}")
     rows = build_rows(args.share_root)
     output = generate_catalog(args.share_root)
-    print(f"{len(rows)} ISO image(s) indexed in {output}")
+    print(f"{len(rows)} ISO/ZSO image(s) indexed in {output}")
     return 0
 
 
