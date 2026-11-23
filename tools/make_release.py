@@ -13,34 +13,24 @@ ver, ndev, udpfs = sys.argv[1], sys.argv[2], sys.argv[3]
 name = "TEa.G3-PS2"
 out = os.path.join(ROOT, "dist", name + ".zip")
 
-QUICKSTART = f"""TEa.G3 {ver} - quick start
-============================
+QUICKSTART = f"""TEa.G3 {ver} — دليل البدء السريع
+================================
 
-1. Copy TEa.G3.ELF, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive. The OPL and Neutrino engines and their modules are embedded in TEa.G3.ELF and installed automatically under tea_g3/runtime/ on first boot.
-2. Put your PS2 ISOs in DVD/ (CD games in CD/). PS1 games: POPStarter VCDs in POPS/. Homebrew: APPS/.
-3. On the PS2, start mass0:/TEa.G3.ELF (uLaunchELF, or FreeMcBoot's autoboot).
-4. Pick a game and press X. The first boot writes mass0:/tea_g3/config.ini with every setting, commented.
+1. انسخ TEa.G3.ELF ومجلدي DVD/ وCD/ إلى جذر وحدة USB بنظام FAT32 أو exFAT.
+2. لا تنسخ OPL.ELF أو مجلد neutrino؛ فمحركا OPL وNeutrino ووحداتهما مضمّنة داخل TEa.G3.ELF وتُجهّز تلقائياً في tea_g3/runtime/ عند التشغيل الأول.
+3. ضع ألعاب PS2 بصيغة ISO/ZSO داخل DVD/ أو CD/. لألعاب USBExtreme UL احتفظ بملف ul.cfg وأجزاء ul.* على USB.
+4. شغّل mass0:/TEa.G3.ELF من uLaunchELF أو FreeMcBoot.
+5. اللغة الافتراضية هي العربية. افتح الإعدادات بزر START لتغيير اللغة أو المظهر ومصادر الألعاب.
+6. ISO/ZSO يستخدم Neutrino تلقائياً، وUSBExtreme UL يستخدم OPL تلقائياً. يمكن اختيار OPL يدوياً لألعاب USB ISO/ZSO.
+7. لا تفصل USB أثناء تجهيز المحركات في أول تشغيل.
 
-Buttons: left/right (or up/down) move, L1/R1 filter, square changes the view, triangle per-game options,
-circle achievements, X play, SELECT data overlay.
-In a game: L1+L2+R1+R2+START+SELECT opens the menu (restart, power off).
+للتفاصيل راجع INSTALL-AR.txt. تراخيص OPL وNeutrino مرفقة داخل licenses/.
 
-Optional
-- العربية هي اللغة الافتراضية. يمكن تغيير لغة الواجهة من معالج الإعدادات (START) أو من [ui] idioma في config.ini؛ تتوفر العربية والإنجليزية والإسبانية والبرتغالية.
-- Covers: plug in the network cable; the missing ones download at boot.
-  Your own: tools/covers.py turns PNG/JPG files named by serial (SLUS-21376.png) into the .c16 pair for
-  mass0:/covers/ (python3 covers.py IN_DIR OUT_DIR; needs numpy and Pillow).
-  No DNS on your router? Set  [red] dns = 1.1.1.1  in config.ini.
-- Back to TEa.G3 from a game: TEa.G3 installs BOOT/TEa.G3.ELF on your memory card; set it as FMCB's autoboot.
-- Coming from NULD or ORBIT (v1.1 or older): the first boot moves mass0:/nuld/ or mass0:/orbit/ to mass0:/tea_g3/, keeps BOOT/ORBIT.ELF
-  up to date (an FMCB autoboot pointing at it keeps working) and reuses VMC/ORBIT.bin or VMC/NULD.bin when present; new installs use VMC/TEa.G3.bin.
-- Achievements: run the xeRAbora client v0.1.0-alpha.9, signed in, on your network
-  (github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9: the version TEa.G3 is tested with).
-- Games from a home server: see server/README.txt (wired network needed).
-
-Website and setup video: https://danielnuld.github.io/nuld/
-Source: https://github.com/danielnuld/nuld (GPL-3.0; the Neutrino fork is AFL-3.0)
-"""
+تعديل وتطوير المطور العراقي
+TEa.G3
+المصدر: https://github.com/TEaG3/newday
+الموقع والملفات: https://github.com/TEaG3/newday/tree/master/site
+""
 
 SERVER = """TEa.G3 game server (Linux)
 =========================
