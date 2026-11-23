@@ -1,5 +1,5 @@
 #pragma once
-// Self-update (#15): signed manifest of ORBIT's files (update.c)
+// Self-update (#15): signed manifest of TEa.G3 files (update.c)
 #define UPD_MAXF 8
 typedef struct { char asset[32], dest[64], sha[65]; int size; } upd_file; // dest: relative to the home device
 typedef struct { char version[16]; upd_file f[UPD_MAXF]; int n; } upd_manifest;
