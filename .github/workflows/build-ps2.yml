@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - feature/tea-g3-rebrand
+      - feature/single-entrypoint-runtime
   pull_request:
     branches:
       - master
@@ -22,6 +23,7 @@ jobs:
       - name: Compile and run bounded ZSO decoder and scanner fixtures
         run: |
           set -euo pipefail
+          python3 -m py_compile tools/make_release.py
           cc -std=c99 -Wall -Wextra -Wno-unused-parameter -include string.h \
             -Itests/zso_host -Ithird_party/opl-zso \
             tests/zso_host/test_zso.c third_party/opl-zso/zso.c \
