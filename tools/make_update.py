@@ -29,7 +29,7 @@ def main():
     src = open(os.path.join(ROOT, "launcher.c"), encoding="utf-8").read()
     built = re.search(r'#define TEAG3_VERSION "([^"]+)"', src).group(1)
     if built != ver and not only:
-        sys.exit(f"launcher.c NULD_VERSION is {built}, not {ver}: bump it and rebuild")
+        sys.exit(f"launcher.c TEAG3_VERSION is {built}, not {ver}: bump it and rebuild")
     os.makedirs(out, exist_ok=True)
     lines = [f"version = {ver}"]
     for asset, dest, path in FILES:
