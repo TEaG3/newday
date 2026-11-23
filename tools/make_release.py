@@ -119,6 +119,10 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
             raise SystemExit("embedded runtime is incomplete: " + required)
     add(manifest, "runtime-manifest.txt")
     add(os.path.join(ROOT, "third_party", "neutrino-igr", "LICENSE"), "licenses/Neutrino-AFL-3.0.txt")
+    opl_license = os.path.join(ROOT, "OPL-LICENSE.txt")
+    if not os.path.isfile(opl_license) or os.path.getsize(opl_license) == 0:
+        raise SystemExit("OPL-LICENSE.txt is required to distribute the embedded OPL runtime")
+    add(opl_license, "licenses/OPL-AFL-3.0.txt")
     text("DVD/put your PS2 DVD ISOs here.txt", "")
     text("CD/put your PS2 CD ISOs here.txt", "")
     add(os.path.join(ROOT, "tools", "covers.py"), "tools/covers.py", 0o755)
