@@ -19,6 +19,7 @@ REQUIRED = (
     "neutrino/modules/ministack.irx",
     "neutrino/modules/smb_ioman.irx",
     "neutrino/modules/smb_fhi.irx",
+    "neutrino/modules/mmcefhi.irx",
     "neutrino/config/bsd-smb.toml",
 )
 
