@@ -148,7 +148,7 @@
     <div>
       <p>Keep your ISOs on a Linux machine and play them over the cable. The zip's <code>server/</code> folder has everything:</p>
 <pre># on the server, with the ISOs in /srv/data/ps2/DVD
-cp -r server ~/tea_g3-server &amp;&amp; cd ~/tea_g3-server
+cp -r server ~/nuld &amp;&amp; cd ~/nuld
 mkdir -p ~/.config/systemd/user &amp;&amp; cp *.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now udpfs nuld-catalog
