@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compile and run ZSO raw-sector fixture
+      - name: Compile and run bounded ZSO decoder and scanner fixtures
         run: |
           set -euo pipefail
           cc -std=c99 -Wall -Wextra -Wno-unused-parameter -include string.h \
@@ -28,6 +28,11 @@ jobs:
             third_party/opl-zso/lz4.c \
             -o /tmp/zso_host_test
           /tmp/zso_host_test
+          cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter \
+            -Itests/zso_host/include -I. -Ithird_party/opl-zso \
+            tests/zso_host/test_zso_ee.c zso_ee.c \
+            -o /tmp/zso_ee_host_test
+          /tmp/zso_ee_host_test
 
   launcher:
     name: Validate Arabic localization and build launcher + Neutrino
@@ -62,6 +67,7 @@ jobs:
               test -s dist/neutrino/neutrino.elf
               test -s dist/neutrino/modules/ee_core.elf
               test -s dist/neutrino/modules/raagent.irx
+              test -s dist/neutrino/modules/cdvdman_emu.irx
               ls -lh dist/neutrino/neutrino.elf dist/neutrino/modules/*.elf dist/neutrino/modules/*.irx
             '
 
