@@ -131,6 +131,7 @@ int main(void)
     make_record(record, title, "SLUS_209.46", 0x14, 2);
     memset(&game, 0, sizeof(game));
     crc = ul_name_crc32("Test Game");
+    assert(crc == 0x1C9B6AE0u); /* independently calculated from upstream OPL USBA_crc32 */
     snprintf(parts.names[0], sizeof(parts.names[0]), "ul.%08X.SLUS_209.46.00", crc);
     snprintf(parts.names[1], sizeof(parts.names[1]), "ul.%08X.SLUS_209.46.01", crc);
     parts.count = 2;
@@ -149,6 +150,7 @@ int main(void)
     padded_name[UL_NAME_SIZE] = 0;
     make_record(padded_record, padded_name, "SLUS_209.46", 0x14, 2);
     crc = ul_name_crc32(padded_name);
+    assert(crc == 0x26059BC2u); /* 32-byte padded title, same upstream CRC */
     snprintf(parts.names[0], sizeof(parts.names[0]), "ul.%08X.SLUS_209.46.00", crc);
     snprintf(parts.names[1], sizeof(parts.names[1]), "ul.%08X.SLUS_209.46.01", crc);
     parts.count = 2;
