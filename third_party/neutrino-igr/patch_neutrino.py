@@ -380,7 +380,7 @@ edit(D, "static uint32_t iso_lsn = 0;\n",
      "static uint8_t zso_raw_bounce[512] __attribute__((aligned(64)));\n\n"
      "void *ziso_alloc(u32 size)\n"
      "{\n"
-     "    return size ? AllocSysMemory(ALLOC_FIRST, size + 63, NULL) : NULL;\n"
+     "    return size ? AllocSysMemory(ALLOC_FIRST, size, NULL) : NULL;\n"
      "}\n\n"
      "int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)\n"
      "{\n"
