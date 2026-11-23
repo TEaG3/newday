@@ -7,12 +7,10 @@ CI build does not prove that a game boots or that all split files are read.
 
 Download all artifacts from one successful GitHub Actions run; do not mix runs:
 
-1. Launcher artifact: `TEa.G3.ELF`.
-2. Neutrino artifact: the complete `neutrino/` directory.
-3. OPL runtime artifact: `OPL.ELF` (a runtime dependency, not a second user entry point).
+1. User artifact: `TEa.G3.ELF` (contains OPL, Neutrino and their runtime modules).
+2. Diagnostic CI artifacts: standalone `OPL.ELF` and `neutrino/` may be downloaded separately for inspection; they are not copied to the user's USB.
 
-Verify that each ELF is non-empty and that the Neutrino modules required by
-the selected source configuration are present.
+Verify that `TEa.G3.ELF` and `runtime-manifest.txt` are non-empty and that the manifest lists OPL, Neutrino, `ee_core`, `raagent`, `cdvdman_emu`, UDPFS and SMB assets.
 
 ## PCSX2 checks
 
@@ -22,8 +20,7 @@ launcher can still display its UI, but the game scanner will have no USB library
 to enumerate; a `0 games loaded` message is not by itself evidence of a broken
 launcher UI.
 
-1. Boot `TEa.G3.ELF`. Record whether the first menu appears, Arabic text
-   renders correctly, and controller navigation works.
+1. Put only `TEa.G3.ELF` on a clean USB (plus the test game folder). Boot it. Verify that first boot creates `tea_g3/runtime/OPL.ELF` and `tea_g3/runtime/neutrino/neutrino.elf`, with all modules/config files, then record whether the first menu appears, Arabic text renders correctly, and controller navigation works.
 2. Place one known-good, legally owned ISO in `DVD/`; confirm it appears and
    launch it with `motor = auto` (Neutrino).
 3. Place a matching ZSO in `DVD/`; confirm title/serial discovery and launch
@@ -33,7 +30,7 @@ launcher UI.
    `TEAG3.GAMES` with `tools/smb_catalog.py`, then select SMB and test one
    plain ISO and one ZSO.
 5. Test APA/HDLoader on an emulated or real internal HDD separately.
-6. Ensure the release package has placed `OPL.ELF` in the USB root as `mass0:/OPL.ELF`; the user starts only `TEa.G3.ELF`.
+6. Confirm no root-level `OPL.ELF` or `neutrino/` folder is needed; TEa.G3 must install its embedded runtime under `tea_g3/runtime/` automatically.
 7. Put a valid USBExtreme `ul.cfg` and all of its declared `ul.*` split parts
    in the same USB root. Confirm TEa.G3 lists the game only when every part is
    present, with the correct title and serial.
