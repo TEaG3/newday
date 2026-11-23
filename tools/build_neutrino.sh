@@ -64,7 +64,22 @@ cp ee/ee_core/ee_core.elf iop/raagent/irx/raagent.irx iop/udpfs/irx/udpfs_fhi.ir
 cp iop/smap/irx/smap.irx iop/ministack/irx/ministack.irx \
    iop/smb/irx/smb_ioman.irx iop/smb/irx/smb_fhi.irx "$REPO/dist/neutrino/modules/"
 cp ee/loader/config/bsd-smb.toml "$REPO/dist/neutrino/config/"
+# Build the remaining upstream IOP modules from this exact Neutrino source revision. The loader target is
+# intentionally omitted: this toolchain cannot produce its packed ELF, and the custom unpacked ELF above is used.
+sed '/$(MAKE) -C ee\/loader         all DEBUG=0/d' Makefile > Makefile.embedded
+make -f Makefile.embedded all IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/neutrino_modules.log" 2>&1 || {
+    tail -40 "$WORK/neutrino_modules.log"; exit 1;
+}
+make -f Makefile.embedded copy > "$WORK/neutrino_copy.log" 2>&1 || {
+    tail -40 "$WORK/neutrino_copy.log"; exit 1;
+}
+mkdir -p "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
+cp -R ee/loader/modules/. "$REPO/dist/neutrino/modules/"
+cp -R ee/loader/config/. "$REPO/dist/neutrino/config/"
+# Restore the TEa.G3-specific achievements agent after the upstream module copy.
+cp iop/raagent/irx/raagent.irx "$REPO/dist/neutrino/modules/raagent.irx"
 test -s "$REPO/dist/neutrino/modules/cdvdman_emu.irx"
+test -s "$REPO/dist/neutrino/modules/ee_core.elf"
+test -s "$REPO/dist/neutrino/modules/udnl.irx"
 ls -la "$REPO/dist/neutrino" "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
-echo "copy dist/neutrino/ over mass0:/neutrino/ (ZSO FHI + SMB-capable Neutrino build from $BASE)"
-echo "NOTE: SMB is packaged but TEa.G3 source selection and credentials handoff are not enabled yet."
+echo "complete Neutrino runtime staged at dist/neutrino/ from $BASE"
