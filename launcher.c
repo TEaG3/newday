@@ -2678,7 +2678,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		if (T->flags & TF_MARK) splash_mark(640, 278, 28, TEXT, ACID); // the others put a light of their own there
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
-		text_c(&gfx_font_mono, 400, how[(int)cv[i].kind], LABEL);
+		text_c(&gfx_font_mono, 400, cv[i].engine == ENGINE_OPL_UL ? L("INICIANDO CON OPL", "STARTING WITH OPL") : how[(int)cv[i].kind], LABEL);
 		if (cv[i].engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
 			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("CON LOGROS", "WITH ACHIEVEMENTS") : L("SIN LOGROS: AÚN NO HABÍA RESPUESTA", "NO ACHIEVEMENTS: NO ANSWER YET"),
 			       ra_state[i] == RA_SET ? ACID : LABEL);
@@ -2694,7 +2694,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	// phase 16b: the watch list and the agent's config, while the network is still up (the worker takes no new work)
 	static char ra_arg[72];
 	int ra = 0;
-	if (!ra_busy && neutrino_ra && ra_game_ok(i) && ra_state[i] == RA_SET && ra_on)
+	if (!ra_busy && cv[i].engine == ENGINE_NEUTRINO && neutrino_ra && ra_game_ok(i) && ra_state[i] == RA_SET && ra_on)
 		ra_abort = 0, ra = ra_prepare(i, ra_arg, sizeof(ra_arg)), ra_abort = 1;
 	static char file[200], arg0[200];
 	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
