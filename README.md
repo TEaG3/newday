@@ -43,7 +43,7 @@ Previously named ORBIT and then NULD. Upgrading preserves existing data: the fir
 1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `TEa.G3.ELF` and `neutrino/`.
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
 2. **Start** `mass0:/TEa.G3.ELF` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
-3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card,
+3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card. By default TEa.G3 probes USB, internal HDD/HDL, MX4SIO, iLink, MMCE, UDPBD and UDPFS at startup and scans detected sources automatically; no Discover/Show Games button is needed. You can narrow the source list in `tea_g3/config.ini`.
    video, network, the memory card for `BOOT/TEa.G3.ELF` and how FreeMcBoot 1.966 starts it (autoboot, a button or
    its menu; the original `FREEMCB.CNF` is kept as `.bak`). Every setting is also in `tea_g3/config.ini`, commented.
 4. **Play**: pick a game, press ✕.
