@@ -8,7 +8,7 @@ launch-compatibility claim.
 |---|---|---|
 | PlayStation 2 disc image | `.iso` in `DVD/` or `CD/` | Existing Neutrino path; baseline regression test |
 | Compressed PS2 image | `.zso` in `DVD/` or `CD/` | Bounded LZ4 decoding is integrated into the Neutrino FHI path on this branch; CI builds it, but PCSX2/PS2 game-launch verification remains pending |
-| USBExtreme split image | `ul.cfg` + `ul.*` parts | TEa.G3 now has a bounded 64-byte UL record parser, verifies every sequential split part, and routes entries to a patched OPL direct-boot path; CI validation and PCSX2/PS2 runtime tests are pending |
+| USBExtreme split image | `ul.cfg` + `ul.*` parts | TEa.G3 now has a bounded 64-byte UL record parser, verifies every sequential split part, and routes entries to a patched OPL direct-boot path; parser, engine-selection and OPL build checks pass in CI, while PCSX2/PS2 runtime tests remain pending |
 | SMB PS2 image | `DVD/*.iso`, `CD/*.iso`, `.zso` on a share | SMB source and Neutrino hand-off are wired. The generated `TEAG3.GAMES` index now lists ISO and ZSO. ZSO uses the common FHI decoder; end-to-end SMB game launch tests remain pending |
 | Internal HDD / HD Loader | APA partitions | Existing APA/HDL scanner and Neutrino `-bsd=ata -bsdfs=hdl` launch path are retained |
 | PlayStation 1 image | `.vcd` in `POPS/` | Existing POPStarter path; separate from Neutrino's PS2 CDVD path |
@@ -106,7 +106,7 @@ instruction, not a release-ready installer or a claim of verified gameplay.
 
 ### Selecting the runtime engine
 
-In `mass0:/nuld/config.ini`, the `[juegos]` option `motor` accepts
+In `mass0:/tea_g3/config.ini`, the `[juegos]` option `motor` accepts
 `auto`, `neutrino`, or `opl`. Automatic mode keeps ISO/ZSO on Neutrino and
 routes USBExtreme UL to OPL. Setting `motor = opl` manually routes USB ISO/ZSO
 games to OPL as well; other storage-source combinations are rejected until a
