@@ -1964,7 +1964,7 @@ static void wiz_save(void) // icon thread
 	w_nsum = 1;
 	w_quiet = ok && !w_restart && !w_val[W_FMCB];
 	int c = w_val[W_CARD], stub = c >= 0 && stub_write(c), v = w_val[W_FMCB], fp = w_fmcb_card();
-	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/NULD.ELF: %s", c, stub ? "ok" : "ERROR"), w_quiet &= stub;
+	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/TEa.G3.ELF: %s", c, stub ? "ok" : "ERROR"), w_quiet &= stub;
 	if (v > 0 && fp >= 0 && stub) {
 		char *t = fmcb_txt[fp], key[24];
 		int bn, max = fmcb_len[fp] + FMCB_ROOM;
