@@ -5,12 +5,11 @@ TEa.G3 is a launcher that runs on a real PS2. It lists your games with their cov
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
 RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
 
-**Website, screenshots and videos:** https://danielnuld.github.io/nuld/
+**Website, screenshots and videos:** https://github.com/TEaG3/newday/tree/master/site
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
-**Download:** [latest release](https://github.com/danielnuld/nuld/releases/latest)
+**Download:** [latest TEa.G3 release](https://github.com/TEaG3/newday/releases/latest)
 
-Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit/` to `nuld/`, keeps
-`BOOT/ORBIT.ELF` up to date next to the new `BOOT/TEa.G3.ELF`, and keeps using `VMC/ORBIT.bin` as the shared card.
+Previously named ORBIT and then NULD. Upgrading preserves existing data: the first boot automatically moves `orbit/` or `nuld/` to `tea_g3/`, installs `BOOT/TEa.G3.ELF`, and refreshes existing `BOOT/TEa.G3.ELF` / `BOOT/ORBIT.ELF` entry points so old FreeMcBoot shortcuts continue to work. Existing `VMC/ORBIT.bin` and `VMC/NULD.bin` shared cards are reused; new installs use `VMC/TEa.G3.bin`.
 
 ![Home screen](site/img/home-carousel.jpg)
 
@@ -69,7 +68,7 @@ Optional:
   games need TEa.G3 on a USB; MX4SIO can't be used alongside.
 - **Status**: SELECT shows each game source (games found, or why it failed) and the network.
 
-The full guide is on the [website](https://danielnuld.github.io/nuld/#guide) and in the setup video.
+The full guide is in [the TEa.G3 site](https://github.com/TEaG3/newday/tree/master/site) and in the setup video.
 
 ## Requirements
 
