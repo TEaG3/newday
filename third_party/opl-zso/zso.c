@@ -92,8 +92,7 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     if (count > ziso_total_block - lsn) count = ziso_total_block - lsn;
     if (count > ZISO_IDX_MAX_ENTRIES - 1) count = ZISO_IDX_MAX_ENTRIES - 1;
 
-    if (ziso_idx_start_block < 0 || lsn < (u32)ziso_idx_start_block ||
-        lsn + count > (u32)ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
+    {
         u64 index_offset = (u64)sizeof(ZISO_header) + (u64)lsn * sizeof(u32);
         u32 index_bytes = (count + 1) * sizeof(u32);
         if (index_offset > 0xffffffffu ||
