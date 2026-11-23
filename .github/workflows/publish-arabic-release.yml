@@ -7,20 +7,16 @@ on:
         description: "New GitHub release tag"
         required: true
         default: "arabic-v1.3.2"
-  workflow_run:
-    workflows: ["PS2 launcher build"]
-    types: [completed]
   push:
     branches: [master]
     paths:
       - ".github/workflows/publish-arabic-release.yml"
-
 permissions:
   contents: write
 
 jobs:
   opl-engine:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master' && contains(github.event.workflow_run.head_commit.message, 'Merge pull request #15 from TEaG3/feature/single-entrypoint-runtime')) || (github.event_name == 'push' && contains(github.event.head_commit.message, 'publish-arabic-v1.3.2-now')) }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     name: Build pinned OPL runtime
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
