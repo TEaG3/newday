@@ -66,7 +66,20 @@ cp iop/smap/irx/smap.irx iop/ministack/irx/ministack.irx \
 cp ee/loader/config/bsd-smb.toml "$REPO/dist/neutrino/config/"
 # Build the remaining upstream IOP modules from this exact Neutrino source revision. The loader target is
 # intentionally omitted: this toolchain cannot produce its packed ELF, and the custom unpacked ELF above is used.
-sed -e '/$(MAKE) -C ee\/loader.*all DEBUG=0/d' -e '/mmcefhi\.irx/d' Makefile > Makefile.embedded
+sed -e '/$(MAKE) -C ee\/loader.*all DEBUG=0/d' Makefile > Makefile.embedded
+# The PS2SDK image does not ship mmcefhi.irx. Remove its copy recipe explicitly;
+# the SHA-256-pinned release module is staged below instead.
+python3 - <<'PYFIX'
+from pathlib import Path
+path = Path("Makefile.embedded")
+lines = path.read_text(encoding="utf-8").splitlines()
+filtered = [line for line in lines if "mmcefhi.irx" not in line]
+if len(filtered) == len(lines):
+    raise SystemExit("expected the upstream mmcefhi.irx copy recipe was not found")
+path.write_text("\\n".join(filtered) + "\\n", encoding="utf-8")
+if any("mmcefhi.irx" in line for line in path.read_text(encoding="utf-8").splitlines()):
+    raise SystemExit("mmcefhi.irx copy recipe remains in Makefile.embedded")
+PYFIX
 make -f Makefile.embedded all IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/neutrino_modules.log" 2>&1 || {
     tail -40 "$WORK/neutrino_modules.log"; exit 1;
 }
