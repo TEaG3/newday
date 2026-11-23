@@ -154,6 +154,7 @@ static const char *const pt[][2] = {
 	{"Physical (SMB: read-only)", "Físico (SMB: somente leitura)"},
 	{"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "SMB e UDPBD/UDPFS compartilham o adaptador: prioridade para SMB"},
 	{"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "REDE Neutrino (UDPBD / UDPFS / SMB), IP %s\n"},
+    {"Modified and developed by Iraqi developer TEa.G3", "Modificado e desenvolvido pelo desenvolvedor iraquiano TEa.G3"},
 };
 
 // ponytail: linear strcmp over ~140 rows per call (a few dozen calls a frame); index by pointer if it ever shows
