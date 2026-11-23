@@ -32,7 +32,8 @@ jobs:
             export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
             export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"
             export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
-            apk add --no-cache python3 make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
+            apk add --no-cache python3 py3-pip make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
+              pip3 install --break-system-packages --no-cache-dir fonttools mapbox-earcut
             make test
             make clean
             make APP=launcher
