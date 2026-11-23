@@ -64,12 +64,12 @@ jobs:
           TEa.G3 PS2
           
           1. Back up your USB drive before replacing the old launcher.
-          2. Extract this ZIP and copy the CONTENTS of the NULD folder to the USB root.
+          2. Extract this ZIP and copy the CONTENTS of the TEa.G3 folder to the USB root.
           3. Keep TEa.G3.ELF, neutrino/, DVD/ and CD/ together at the root.
           4. Put PS2 DVD ISO files in DVD/ and CD images in CD/.
           5. Start mass0:/TEa.G3.ELF from uLaunchELF or FreeMcBoot.
-          6. The first start creates nuld/config.ini. Arabic is the default language.
-          7. If upgrading an existing install, preserve your nuld/ folder and game files.
+          6. The first start creates tea_g3/config.ini. Arabic is the default language.
+          7. If upgrading an existing install, preserve your tea_g3/ folder and game files.
           
           Arabic support includes RTL text shaping in the launcher and Arabic labels in the
           Neutrino in-game menu. The build and localization tests run in GitHub Actions;
