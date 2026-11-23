@@ -4,6 +4,7 @@
 #include <string.h>
 #include "zso_ee.h"
 #include <fileXio_rpc.h>
+#include <io_common.h>
 #include "third_party/opl-zso/zso.h"
 
 #define TEST_HEADER_SIZE 32
