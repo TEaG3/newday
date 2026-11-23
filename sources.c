@@ -261,7 +261,6 @@ static int smb_write_neutrino_config(const char *ndir, const char *ip, const cha
 	int ok = !ferror(f);
 	if (fclose(f) != 0) ok = 0;
 	if (!ok) { remove(temp); return 0; }
-	remove(path);
 	if (rename(temp, path)) { remove(temp); return 0; }
 	return 1;
 }
