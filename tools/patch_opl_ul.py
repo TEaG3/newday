@@ -101,7 +101,7 @@ if source.count(old) != 1:
     raise SystemExit(f"expected one BDM main dispatch, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
-old = r'''    if (gBDMPrefix[0] != '\\0') {'''
+old = r'''    if (gBDMPrefix[0] != '\0') {'''
 new = r'''    if (!isUL && gBDMPrefix[0] != '\\0') {'''
 if source.count(old) != 1:
     raise SystemExit(f"expected one BDM prefix branch, found {source.count(old)}")
