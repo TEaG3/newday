@@ -176,7 +176,7 @@ static void scan_cards(void)
 }
 
 // ---- virtual memory cards (phase 14): the default for PS2 games. Per game (VMC/<serial>.bin) or shared
-// (VMC/NULD.bin), on the game's own source, created at the first launch; Neutrino -mc0 serves it as the card in slot
+// (VMC/TEa.G3.bin), on the game's own source, created at the first launch; Neutrino -mc0 serves it as the card in slot
 // 1 (its mc_emu emulates port 0 only). HD Loader cannot hold one (Neutrino README: hdl is read-only, DVD only), and
 // an MMCE switches its own per-game card instead. The saves card reads it: the icon thread lists its root once ----
 enum { MC_DEFAULT, MC_GAME, MC_SHARED, MC_REAL, MC_N };
@@ -193,8 +193,11 @@ static void vmc_name(int i, char *out, int n) // the shared card was VMC/ORBIT.b
 {                                             // catalog server renames its own, tools/nuld_catalog.py)
 	char old[64];
 	if (game_mc(i) != MC_SHARED) { snprintf(out, n, "VMC/%s.bin", cv[i].serial); return; }
+	char nuld[64];
 	snprintf(old, sizeof(old), "%s/VMC/ORBIT.bin", src[(int)cv[i].src].root);
-	snprintf(out, n, "VMC/%s.bin", !on_catalog(i) && exists(old) ? "ORBIT" : "NULD");
+	snprintf(nuld, sizeof(nuld), "%s/VMC/TEa.G3.bin", src[(int)cv[i].src].root);
+	const char *shared = on_catalog(i) ? "TEa.G3" : exists(old) ? "ORBIT" : exists(nuld) ? "NULD" : "TEa.G3";
+	snprintf(out, n, "VMC/%s.bin", shared);
 }
 static void vmc_file(int i, char *out, int n) // the launcher's path to it
 {
@@ -837,7 +840,7 @@ static const char *const config_template[LANG_N] = {
 	"; si = el logo de PlayStation 2 antes de cada juego, como con un disco (unos segundos más). Un juego de otra\n"
 	"; región que la consola (PAL en NTSC o al revés) puede no arrancar así: déjalo en no\nlogo = no\n"
 	"\n[memorycard]\n; memory card de los juegos de PS2: juego = una virtual por juego (VMC/<serie>.bin en el mismo\n"
-	"; dispositivo, se crea al jugar), compartida = una virtual para todos (VMC/NULD.bin), fisica = la de la ranura 1.\n"
+	"; dispositivo, se crea al jugar), compartida = una virtual para todos (VMC/TEa.G3.bin), fisica = la de la ranura 1.\n"
 	"; Cada juego lo cambia con triángulo. HD Loader solo admite la física; un MMCE cambia solo a la del juego.\n"
 	"modo = juego\n"
 	"\n[video]\n; modo de video de los juegos: nativo, 480p o 1080i (cada juego lo cambia con triángulo)\nmodo = 480p\n"
@@ -876,7 +879,7 @@ static const char *const config_template[LANG_N] = {
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
 	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
 	"\n[memorycard]\n; memory card for PS2 games: juego = a virtual card per game (VMC/<serial>.bin on the same\n"
-	"; device, created on first play), compartida = one virtual card for all (VMC/NULD.bin), fisica = the one in slot 1.\n"
+	"; device, created on first play), compartida = one virtual card for all (VMC/TEa.G3.bin), fisica = the one in slot 1.\n"
 	"; Each game can change it with triangle. HD Loader only allows the physical one; an MMCE switches to the game's.\n"
 	"modo = juego\n"
 	"\n[video]\n; video mode of the games: nativo, 480p or 1080i (each game can change it with triangle)\nmodo = 480p\n"
@@ -915,7 +918,7 @@ static const char *const config_template[LANG_N] = {
 	"; si = o logo do PlayStation 2 antes de cada jogo, como com um disco (alguns segundos a mais). Um jogo de outra\n"
 	"; região que o console (PAL em NTSC ou o contrário) pode não iniciar assim: deixe em no\nlogo = no\n"
 	"\n[memorycard]\n; memory card dos jogos de PS2: juego = um virtual por jogo (VMC/<serial>.bin no mesmo\n"
-	"; dispositivo, criado ao jogar), compartida = um virtual para todos (VMC/NULD.bin), fisica = o do slot 1.\n"
+	"; dispositivo, criado ao jogar), compartida = um virtual para todos (VMC/TEa.G3.bin), fisica = o do slot 1.\n"
 	"; Cada jogo pode mudar com triângulo. O HD Loader só aceita o físico; um MMCE muda sozinho para o do jogo.\n"
 	"modo = juego\n"
 	"\n[video]\n; modo de vídeo dos jogos: nativo, 480p ou 1080i (cada jogo pode mudar com triângulo)\nmodo = 480p\n"
@@ -1450,7 +1453,7 @@ static int ra_prepare(int i, char *arg, int n)
 	snprintf(path, sizeof(path), "%s/config/ra.toml", NDIR);
 	if (ok && (f = fopen(path, "w"))) {
 		ok = fputs("# written by NULD at each launch (phase 16b): RetroAchievements agent in the game\n"
-		           "name = \"NULD RetroAchievements\"\n", f) >= 0;
+		           "name = \"TEa.G3 RetroAchievements\"\n", f) >= 0;
 		if (src[(int)cv[i].src].type != SRC_UDPFS) // a nuld game's bsd-udpfs config already loads these (phase 17)
 			ok &= fprintf(f, "depends = [\"i_dev9_hidden\"]\n[[module]]\nfile = \"smap.irx\"\nenv = [\"EE\"]\n"
 			                 "[[module]]\nfile = \"ministack.irx\"\nargs = [\"ip=%s\"]\nenv = [\"EE\"]\n", ra_me) > 0;
@@ -1974,7 +1977,7 @@ static void wiz_save(void) // icon thread
 		snprintf(key, sizeof(key), "LK_%s_E1", w_lk[v <= W_NLK ? v - 1 : 0]);
 		ok = ok && (v <= W_NLK ? cnf_set(t, max, key, W_STUB) : cnf_menu_add(t, max, "TEa.G3", W_STUB) > 0);
 		ok = ok && mc_write(fp, "/SYS-CONF/FREEMCB.CNF", t, strlen(t));
-		snprintf(w_sum[w_nsum++], 100, "mc%d:/SYS-CONF/FREEMCB.CNF: %s", fp, ok ? (v <= W_NLK ? key : L("menú + NULD", "menu + NULD")) : "ERROR");
+		snprintf(w_sum[w_nsum++], 100, "mc%d:/SYS-CONF/FREEMCB.CNF: %s", fp, ok ? (v <= W_NLK ? key : L("menú + TEa.G3", "menu + TEa.G3")) : "ERROR");
 	}
 }
 
@@ -2061,7 +2064,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 		else if (v <= W_NLK) snprintf(a, n, L("Botón %s", "Button %s"), (lang == LANG_EN ? w_lk : lang == LANG_PT ? w_lk_pt : lang == LANG_AR ? w_lk_ar : w_lk_es)[v - 1]);
 		else snprintf(a, n, L("Entrada en el menú de FMCB", "Item in FMCB's menu"));
 		break;
-	case W_UPD: snprintf(a, n, L("Actualizar NULD a %s", "Update NULD to %s"), upd.version); break;
+	case W_UPD: snprintf(a, n, L("Actualizar TEa.G3 a %s", "Update TEa.G3 to %s"), upd.version); break;
 	default: snprintf(a, n, "%s", L("Guardar", "Save"));
 	}
 }
@@ -2114,7 +2117,7 @@ static void wiz_panel(void) // design: the △ options panel
 	int ry = y + 70;
 	if (w_done == 2 || w_job == 3) { // the summary (an update fills it as it goes)
 		for (int k = 0; k < w_nsum; k++, ry += 40) gfx_text(&gfx_font_mono, x + 28, ry + 10, w_sum[k], TEXT);
-		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, w_restart ? L("X: reiniciar NULD", "X: restart NULD") : L("X: cerrar", "X: close"), ACID);
+		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, w_restart ? L("X: reiniciar TEa.G3", "X: restart TEa.G3") : L("X: cerrar", "X: close"), ACID);
 		else if (upd_phase && upd_k >= 0) { // the current file: its download, then its write to the USB
 			int size = upd.f[upd_k].size, got = upd_phase == 1 ? net_got : upd_done, pct = size > 0 ? (int)(100LL * got / size) : 0;
 			pct = pct > 100 ? 100 : pct;
@@ -2716,7 +2719,7 @@ int main(int argc, char *argv[])
 		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("تم تثبيت TEa.G3 في بطاقة الذاكرة: BOOT/TEa.G3.ELF", "TEa.G3 boot stub installed: BOOT/TEa.G3.ELF");
 		static char upd_msg[96];
 		if (upd_avail == 1) upd_avail = 2, toast = 360, toast_msg = upd_msg, // #15
-			snprintf(upd_msg, sizeof(upd_msg), L("NULD %s disponible: START para actualizar", "NULD %s available: START to update"), upd.version);
+			snprintf(upd_msg, sizeof(upd_msg), L("TEa.G3 %s disponible: START para actualizar", "TEa.G3 %s available: START to update"), upd.version);
 		static int ra_told; // phase 16: once per boot
 		if (ra_down && !ra_told) ra_told = 1, toast = 240, toast_msg = ra_down == 1 ? L("Logros: sin red", "Achievements: no network") : L("Logros: sin servidor", "Achievements: no server");
 		if (w_first && usb && booted) w_first = 0, wiz_open(), play(S_PANEL, 70); // first boot (#15)
