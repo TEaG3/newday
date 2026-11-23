@@ -38,7 +38,7 @@
 #include "torres.h"
 #include "theme.h"
 
-#define NULD_VERSION "v1.3" // tools/make_release.py checks it against the release tag
+#define TEAG3_VERSION "v1.3" // tools/make_release.py checks it against the release tag
 #include "lang.h"
 #include "achievements.h"
 #include "third_party/neutrino-igr/raagent/ra_watch.h"
@@ -132,7 +132,7 @@ static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
 static char STATE_INI[32], NEUTRINO[40], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[24], LOG_TXT[24];
-static const char *home_dir = "nuld"; // the settings folder; ORBIT's "orbit" when load_config could not move it
+static const char *home_dir = "tea_g3"; // the settings folder; ORBIT's "orbit" when load_config could not move it
 static void home_paths(void)
 {
 	snprintf(STATE_INI, sizeof(STATE_INI), "%s/%s/estado.ini", homedev, home_dir);
@@ -418,9 +418,10 @@ static int stub_write(int port) // 1 if mc<port>:/BOOT/NULD.ELF is this launcher
 	int r;
 	mcMkDir(port, 0, "/BOOT"), mcSync(0, NULL, &r);
 	stub_file(port, "/BOOT/ORBIT.ELF", 0); // ORBIT's (until v1.1): updated only where it is, FMCB may still start it
-	r = stub_file(port, "/BOOT/NULD.ELF", 1);
-	if (r > 0) stub_new = 1;
-	return r >= 0;
+	int legacy = stub_file(port, "/BOOT/NULD.ELF", 1); // old FMCB entries remain valid
+	r = stub_file(port, "/BOOT/TEa.G3.ELF", 1);
+	if (r > 0 || legacy > 0) stub_new = 1;
+	return r >= 0 && legacy >= 0;
 }
 
 static void install_stub(void)
@@ -979,13 +980,21 @@ static int crt;             // [video] pantalla = 480i: menu in 480i / 576i, gam
 static void load_config(void) // loader thread, before the splash sound
 {
 	char dir[24], old[24];
-	snprintf(dir, sizeof(dir), "%s/nuld", homedev), snprintf(old, sizeof(old), "%s/orbit", homedev);
-	DIR *d = opendir(dir), *o = d ? NULL : opendir(old);
+	snprintf(dir, sizeof(dir), "%s/tea_g3", homedev);
+	char legacy[24], orbit[24];
+	snprintf(legacy, sizeof(legacy), "%s/nuld", homedev);
+	snprintf(orbit, sizeof(orbit), "%s/orbit", homedev);
+	DIR *d = opendir(dir);
 	if (d) closedir(d);
-	if (o) { // v1.2: ORBIT's folder becomes NULD's; if the driver cannot move it, it is used where it is
-		closedir(o);
-		if (rename(old, dir)) home_dir = "orbit", home_paths();
-	} else if (!d) mkdir(dir, 0777);
+	else {
+		DIR *o = opendir(legacy);
+		if (o) { closedir(o); if (rename(legacy, dir)) home_dir = "nuld", home_paths(); }
+		else {
+			DIR *v = opendir(orbit);
+			if (v) { closedir(v); if (rename(orbit, dir)) home_dir = "orbit", home_paths(); }
+			else mkdir(dir, 0777);
+		}
+	}
 	if (!ini_load(&cfg, CONFIG)) { // Arabic is the default for a fresh configuration
 		w_first = 1;               // the setup wizard opens on the home screen (#15)
 		FILE *f = fopen(CONFIG, "wb");
@@ -1459,7 +1468,7 @@ static int ra_prepare(int i, char *arg, int n)
 
 // ---- self-update (#15): the latest release's signed update.txt (update.c) names NULD's own files; a newer version
 // shows a toast and the wizard's first row, which downloads, checks and swaps them (the old ones stay as .old) ----
-#define UPD_URL "https://github.com/danielnuld/nuld/releases/latest/download/"
+#define UPD_URL "https://github.com/TEaG3/newday/releases/latest/download/"
 static upd_manifest upd;
 static volatile int upd_avail; // 1 a newer signed release (toast pending), 2 told
 static char upd_base[160];
@@ -1477,7 +1486,7 @@ static void update_check(void) // loader thread; the network is up for the cover
 		snprintf(url, sizeof(url), "%supdate.sig", upd_base);
 		ss = net_fetch(url, g, max, &sbody, &slen);
 		sig = ss == 200 && upd_verify(t + body, len, (unsigned char *)g + sbody, slen);
-		if (sig && upd_parse(t + body, &upd) && upd_newer(upd.version, NULD_VERSION)) upd_avail = 1;
+		if (sig && upd_parse(t + body, &upd) && upd_newer(upd.version, TEAG3_VERSION)) upd_avail = 1;
 	}
 	FILE *lf = fopen(LOG_TXT, "a");
 	if (lf) fprintf(lf, "nuld update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
@@ -1900,7 +1909,7 @@ static const char *const w_lk_ar[] = {"تلقائي", "R1", "L1", "R2", "L2", "�
 static const char *const w_lk_es[] = {"Auto", "R1", "L1", "R2", "L2", "Triángulo", "Círculo", "Cuadrado", "X", "Start", "Select"};
 static const char *const w_lk_pt[] = {"Auto", "R1", "L1", "R2", "L2", "Triângulo", "Círculo", "Quadrado", "X", "Start", "Select"};
 #define W_NLK 11 // w_val[W_FMCB]: 0 no change, 1 autoboot, 2..W_NLK a button, W_NLK + 1 an item in FMCB's menu
-#define W_STUB "mc?:/BOOT/NULD.ELF"
+#define W_STUB "mc?:/BOOT/TEa.G3.ELF"
 #define FMCB_ROOM 1024
 static int wiz = -1, w_val[W_ROWS]; // the selected row, -1 closed; each row's choice
 static volatile int w_job, w_done;  // for the icon thread (libmc): 1 read the FMCB configs, 2 save; w_done when over
@@ -1963,7 +1972,7 @@ static void wiz_save(void) // icon thread
 		ok = bak || mc_write(fp, "/SYS-CONF/FREEMCB.CNF.bak", t, strlen(t));
 		free(bak);
 		snprintf(key, sizeof(key), "LK_%s_E1", w_lk[v <= W_NLK ? v - 1 : 0]);
-		ok = ok && (v <= W_NLK ? cnf_set(t, max, key, W_STUB) : cnf_menu_add(t, max, "NULD", W_STUB) > 0);
+		ok = ok && (v <= W_NLK ? cnf_set(t, max, key, W_STUB) : cnf_menu_add(t, max, "TEa.G3", W_STUB) > 0);
 		ok = ok && mc_write(fp, "/SYS-CONF/FREEMCB.CNF", t, strlen(t));
 		snprintf(w_sum[w_nsum++], 100, "mc%d:/SYS-CONF/FREEMCB.CNF: %s", fp, ok ? (v <= W_NLK ? key : L("menú + NULD", "menu + NULD")) : "ERROR");
 	}
@@ -2013,7 +2022,7 @@ static void update_install(void) // icon thread: every file that differs, downlo
 	}
 	upd_phase = 0;
 	free(buf);
-	snprintf(w_sum[w_nsum++], 100, ok ? L("NULD %s instalado", "NULD %s installed") : L("No se actualizó", "Not updated"), upd.version);
+	snprintf(w_sum[w_nsum++], 100, ok ? L("TEa.G3 %s instalado", "TEa.G3 %s installed") : L("No se actualizó", "Not updated"), upd.version);
 	if (ok) upd_avail = 0;
 }
 
