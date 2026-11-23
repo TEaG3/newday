@@ -389,7 +389,7 @@ function genLaunch(u, t, o) {
 
 // ---- the themes ----
 const THEMES = {
-  nuld: { name: 'TEa.G3',
+  nuld: { name: 'Classic',
     tx: '#E6E8EC', t2: '#A9B0BA', lb: '#8A919C', ed: '#2A303A', pn: '#0C0E12', inv: '#06070A', oa: '#06070A', cedge: '#232833', acc: [200, 255, 46],
     r: 0, R: 0, cr: 0, rule: 1, glitch: 1, back: false,
     bg(t) {
@@ -700,7 +700,7 @@ Object.assign(THEMES.nuld, {
     g.fillStyle = '#06070A'; g.fillRect(0, 0, W, H); floor(t, acid, .5); sphere(t, acid);
     const logo = dx => {
       if (!k) { wordmark(640, 300, 96, fg, rgb(acid), dx); return; }
-      font('800 132px Archivo, sans-serif', true); const x = 640 - g.measureText('NULD//').width / 2 + dx, wn = g.measureText('TEa.G3').width + 3;
+      font('800 132px Archivo, sans-serif', true); const x = 640 - g.measureText('TEa.G3//').width / 2 + dx, wn = g.measureText('TEa.G3').width + 3;
       g.fillStyle = fg; g.fillText('TEa.G3', x, 345); g.fillStyle = rgb(acid); g.fillText('//', x + wn, 345);
     };
     if (!cut) logo(0);
