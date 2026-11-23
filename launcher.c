@@ -1676,7 +1676,7 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	usb = ok && (src_home(homedev) || (!strcmp(homedev, "mass0:") && usb_wait())); // usb: the home is mounted
 	if (usb) {
 		load_config(); // migrate legacy nuld/orbit data before creating tea_g3/runtime
-		if (!runtime_install(RUNTIME_DIR)) printf("runtime: embedded engines could not be installed\\n");
+		if (!runtime_install(RUNTIME_DIR)) printf("runtime: embedded engines could not be installed");
 	}
 	stage = 1; // the splash sound waits for this: the volume is known
 	scan_cards();
