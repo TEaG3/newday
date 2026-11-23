@@ -731,7 +731,7 @@ static int smb_game_path(const char *path)
 	if (strncmp(path, "DVD/", 4) && strncmp(path, "CD/", 3)) return 0;
 	if (!has_ext(path, ".iso") || strstr(path, "..")) return 0;
 	for (const unsigned char *p = (const unsigned char *)path; *p; p++)
-		if (*p < 0x21 || *p > 0x7e || *p == '\\' || *p == ':') return 0;
+		if (*p < 0x20 || *p > 0x7e || *p == '\\' || *p == ':') return 0;
 	return strlen(path) < sizeof(cv[0].path);
 }
 
