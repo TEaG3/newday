@@ -40,6 +40,7 @@
 #include "splash.h"
 #include "torres.h"
 #include "theme.h"
+#include "runtime_install.h"
 
 #define TEAG3_VERSION "v1.3" // tools/make_release.py checks it against the release tag
 #include "lang.h"
@@ -135,7 +136,7 @@ static int view;
 static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
-static char STATE_INI[32], NEUTRINO[40], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[24], LOG_TXT[24];
+static char STATE_INI[32], NEUTRINO[128], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[96], LOG_TXT[24], OPL_PATH[128];
 static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
@@ -143,8 +144,9 @@ static void home_paths(void)
 	snprintf(CONFIG, sizeof(CONFIG), "%s/%s/config.ini", homedev, home_dir);
 	snprintf(GAMES_INI, sizeof(GAMES_INI), "%s/%s/juegos.ini", homedev, home_dir);
 	snprintf(RA_DIR, sizeof(RA_DIR), "%s/%s/ra", homedev, home_dir);
-	snprintf(NDIR, sizeof(NDIR), "%s/neutrino", homedev);
+	snprintf(NDIR, sizeof(NDIR), "%s/%s/runtime/neutrino", homedev, home_dir);
 	snprintf(NEUTRINO, sizeof(NEUTRINO), "%s/neutrino.elf", NDIR);
+	snprintf(OPL_PATH, sizeof(OPL_PATH), "%s/%s/runtime/OPL.ELF", homedev, home_dir);
 	snprintf(LOG_TXT, sizeof(LOG_TXT), "%s/launcher.txt", homedev);
 }
 
@@ -1671,7 +1673,10 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	int ok = iop_load();
 	sound = ok ? sound_init() : -1;
 	usb = ok && (src_home(homedev) || (!strcmp(homedev, "mass0:") && usb_wait())); // usb: the home is mounted
-	if (usb) load_config();
+	if (usb) {
+		if (!runtime_install(homedev)) printf("runtime: embedded engines could not be installed\\n");
+		load_config();
+	}
 	stage = 1; // the splash sound waits for this: the volume is known
 	scan_cards();
 	ee_sema_t sema = { .init_count = 0, .max_count = 1 };
@@ -2598,11 +2603,11 @@ static const char *launch_problem(int i) // why X cannot start entry i, or NULL 
 {
 	int engine = engine_for(&cv[i]);
 	if (engine == ENGINE_UNSUPPORTED) return L("OPL directo solo admite juegos USB en esta versión", "OPL direct boot currently supports USB games only");
-	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_USB)
-		if (!exists("mass0:/OPL.ELF")) return L("Falta OPL.ELF en la raíz del USB", "OPL.ELF is missing from the USB root");
+		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
 	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB &&
-	    (!exists("mass0:/neutrino/modules/smb_fhi.irx") || !exists("mass0:/neutrino/config/bsd-smb.toml")))
+	    (!exists("mass0:/tea_g3/runtime/neutrino/modules/smb_fhi.irx") || !exists("mass0:/tea_g3/runtime/neutrino/config/bsd-smb.toml")))
 		return L("تثبيت Neutrino مع وحدات SMB مطلوب", "Install a Neutrino build with the SMB modules first");
 	if (cv[i].kind == K_PS1 && (!exists(POPSTARTER) || !exists("mass0:/POPS/POPS_IOX.PAK")))
 		return L("Faltan POPSTARTER.ELF y POPS_IOX.PAK en mass0:/POPS/", "POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/");
@@ -2729,7 +2734,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	if (engine == ENGINE_OPL_UL) {
 		static char part_count[8];
 		snprintf(part_count, sizeof(part_count), "%u", (unsigned char)cv[i].parts);
-		char *opl_argv[6] = {"mass0:/OPL.ELF", cv[i].ul_name, cv[i].boot, cv[i].cd ? "CD" : "DVD", "ul", part_count};
+		char *opl_argv[6] = {OPL_PATH, cv[i].ul_name, cv[i].boot, cv[i].cd ? "CD" : "DVD", "ul", part_count};
 		printf("launch OPL UL: %s parts=%s\\n", cv[i].boot, part_count);
 		gfx_shutdown();
 		run_loader(6, opl_argv);
@@ -2740,7 +2745,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		const char *filename = strrchr(cv[i].path, '/');
 		char *opl_argv[5];
 		filename = filename ? filename + 1 : cv[i].path;
-		opl_argv[0] = "mass0:/OPL.ELF";
+		opl_argv[0] = OPL_PATH;
 		opl_argv[1] = (char *)filename;
 		opl_argv[2] = cv[i].boot;
 		opl_argv[3] = cv[i].cd ? "CD" : "DVD";
