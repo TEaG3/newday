@@ -111,10 +111,14 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     with open(manifest, encoding="utf-8") as f:
         embedded = f.read()
     for required in ("OPL.ELF", "neutrino/neutrino.elf", "neutrino/modules/ee_core.elf",
-                     "neutrino/modules/raagent.irx", "neutrino/modules/smb_fhi.irx"):
+                     "neutrino/modules/raagent.irx", "neutrino/modules/cdvdman_emu.irx",
+                     "neutrino/modules/udpfs_fhi.irx", "neutrino/modules/smap.irx",
+                     "neutrino/modules/ministack.irx", "neutrino/modules/smb_ioman.irx",
+                     "neutrino/modules/smb_fhi.irx", "neutrino/config/bsd-smb.toml"):
         if required not in embedded:
             raise SystemExit("embedded runtime is incomplete: " + required)
     add(manifest, "runtime-manifest.txt")
+    add(os.path.join(ROOT, "third_party", "neutrino-igr", "LICENSE"), "licenses/Neutrino-AFL-3.0.txt")
     text("DVD/put your PS2 DVD ISOs here.txt", "")
     text("CD/put your PS2 CD ISOs here.txt", "")
     add(os.path.join(ROOT, "tools", "covers.py"), "tools/covers.py", 0o755)
