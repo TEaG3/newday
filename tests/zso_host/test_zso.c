@@ -5,7 +5,8 @@
 #include <string.h>
 #include "zso.h"
 
-#define DATA_OFFSET (sizeof(ZISO_header) + ZISO_IDX_MAX_ENTRIES * sizeof(u32))
+#define TEST_HEADER_SIZE 32
+#define DATA_OFFSET (TEST_HEADER_SIZE + ZISO_IDX_MAX_ENTRIES * sizeof(u32))
 #define IMAGE_SIZE (DATA_OFFSET + 4096)
 static u8 image[IMAGE_SIZE];
 static int fail_alloc;
@@ -26,7 +27,7 @@ static void reset_fixture(ZISO_header *header)
     memset(image, 0, sizeof(image));
     memset(header, 0, sizeof(*header));
     header->magic = ZSO_MAGIC;
-    header->header_size = sizeof(*header);
+    header->header_size = TEST_HEADER_SIZE;
     header->total_bytes = 4096;
     header->block_size = 2048;
     memcpy(image, header, sizeof(*header));
@@ -38,12 +39,13 @@ int main(void)
 {
     ZISO_header header;
     u8 output[4096], raw[2048];
-    u32 *index = (u32 *)(image + sizeof(ZISO_header));
+    u32 *index;
     static const u8 compressed_block[] = {
         0x1f, 'A', 0x01, 0x00, 255, 255, 255, 255, 255, 255, 255, 243
     };
 
     reset_fixture(&header);
+    index = (u32 *)(image + header.header_size);
     for (u32 i = 0; i < 2048; ++i) raw[i] = (u8)(i & 0xff);
     index[0] = DATA_OFFSET | 0x80000000u;
     index[1] = DATA_OFFSET + 2048;
@@ -58,6 +60,18 @@ int main(void)
     for (u32 i = 0; i < 2048; ++i) assert(output[2048 + i] == 'A');
     assert(ziso_read_sector(output, 2, 1) == 0);
     assert(ziso_read_sector(output, 0, 0) == 0);
+
+    /* Header extensions move the index table; malformed headers are rejected. */
+    ZISO_header invalid = header;
+    invalid.header_size = sizeof(invalid) - 1;
+    ziso_init(&invalid, 0);
+    assert(ziso_total_block == 0);
+    invalid = header;
+    invalid.total_bytes = 4097;
+    ziso_init(&invalid, 0);
+    assert(ziso_total_block == 0);
+    ziso_init(&header, 0);
+    assert(ziso_total_block == 2);
 
     /* Malformed LZ4 stream is rejected. */
     index[1] = DATA_OFFSET + 2048;
@@ -81,6 +95,6 @@ int main(void)
     assert(ziso_read_sector(output, 0, 1) == 0);
     fail_alloc = 0;
 
-    puts("ZSO host fixture: PASS (raw + compressed + bounds + I/O/allocation failures)");
+    puts("ZSO host fixture: PASS (raw + compressed + header + bounds + I/O/allocation failures)");
     return 0;
 }
