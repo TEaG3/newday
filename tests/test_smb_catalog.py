@@ -19,12 +19,14 @@ class SmbCatalogTests(unittest.TestCase):
             (root / "CD").mkdir()
             (root / "DVD" / "Racing" / "SLUS-21376_Racing.iso").write_bytes(b"iso")
             (root / "CD" / "Disc Two.iso").write_bytes(b"iso")
+            (root / "DVD" / "Compressed.zso").write_bytes(b"zso")
             (root / "DVD" / "archive.zip").write_bytes(b"zip")
 
             rows = build_rows(root)
-            self.assertEqual(len(rows), 2)
+            self.assertEqual(len(rows), 3)
             self.assertIn("DVD/Racing/SLUS-21376_Racing.iso\tRacing\tSLUS_213.76", rows)
             self.assertIn("CD/Disc Two.iso\tDisc Two\t", rows)
+            self.assertIn("DVD/Compressed.zso\tCompressed\t", rows)
 
             output = generate_catalog(root)
             self.assertTrue(output.exists())
