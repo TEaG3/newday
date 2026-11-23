@@ -137,6 +137,13 @@ jobs:
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
           grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
           grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path("src/opl.c").read_text(encoding="utf-8")
+          assert "if (!isUL && gBDMPrefix[0] != '\\0') {" in source
+          assert "if (!isUL && gBDMPrefix[0] != '\\\\0') {" not in source
+          assert 'snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), "%s", argv[2]);' in source
+          PY
 
       - name: Clean and compile OPL ELF
         working-directory: Open-PS2-Loader
@@ -156,3 +163,63 @@ jobs:
           name: tea-g3-opl-${{ github.sha }}
           path: OPL.ELF
           if-no-files-found: error
+
+  test-bundle:
+    name: Assemble unified TEa.G3 runtime test bundle
+    runs-on: ubuntu-latest
+    needs: [host-zso-tests, launcher, opl-engine]
+    steps:
+      - name: Check out integration docs
+        uses: actions/checkout@v4
+
+      - name: Download launcher ELF
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-launcher-${{ github.sha }}
+          path: bundle
+
+      - name: Download Neutrino runtime and modules
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-neutrino-${{ github.sha }}
+          path: bundle/neutrino
+
+      - name: Download OPL runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-opl-${{ github.sha }}
+          path: bundle
+
+      - name: Verify and add integration test instructions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s bundle/TEa.G3.ELF
+          test -s bundle/OPL.ELF
+          test -s bundle/neutrino/neutrino.elf
+          test -s bundle/neutrino/modules/cdvdman_emu.irx
+          test -s bundle/neutrino/modules/smb_fhi.irx
+          mkdir -p bundle/docs
+          cp docs/game-formats.md docs/opl-engine-integration.md docs/smb.md bundle/docs/
+          cp tests/PCSX2_SMOKE_TEST.md bundle/PCSX2_SMOKE_TEST.md
+          cat > bundle/README-TEST-BUNDLE.txt <<'EOF'
+          TEa.G3 integrated runtime test bundle
+
+          Contents:
+          - TEa.G3.ELF: launcher/front end
+          - OPL.ELF: OPL runtime used for USBExtreme UL and optional USB ISO/ZSO
+          - neutrino/: default engine and its modules/configuration
+
+          Copy the three runtime components to the same USB device, keeping the
+          neutrino/ directory intact. For USBExtreme tests, keep ul.cfg and every
+          ul.* part in the USB root. Follow PCSX2_SMOKE_TEST.md before reporting
+          runtime compatibility. A successful CI build does not prove gameplay.
+          EOF
+
+      - name: Upload unified integration test bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-integration-test-bundle-${{ github.sha }}
+          path: bundle/
+          if-no-files-found: error
+          retention-days: 30
