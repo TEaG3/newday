@@ -41,7 +41,7 @@ launcher UI.
    directly, that the selected game starts, and that reads continue across all
    split parts.
 9. For an ordinary USB ISO/ZSO, set `[juegos] motor = opl` in
-   `nuld/config.ini`, restart TEa.G3, and verify the manual OPL direct-boot
+   `tea_g3/config.ini`, restart TEa.G3, and verify the manual OPL direct-boot
    route. Restore `motor = auto` or `motor = neutrino` afterwards.
 
 ## Real PS2 checks
