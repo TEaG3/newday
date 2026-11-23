@@ -1,7 +1,7 @@
 # make            -> bench.elf
 # make APP=modetest -> modetest.elf
 # make APP=launcher -> TEa.G3.ELF (NULD: gfx.c, splash.c + generated logo_data.c, font_data.c, ui_data.c)
-# make APP=boot     -> boot.elf (memory-card stub that runs mass0:/launcher.elf; embedded in the launcher)
+# make APP=boot     -> boot.elf (memory-card stub that runs mass0:/TEa.G3.ELF; embedded in the launcher)
 # Jellyfin (jfplay.elf) lives in its own repo, danielnuld/orbit-jellyfin, installed as mass0:/APPS/Jellyfin
 APP ?= bench
 SFX = splash torres move edge confirm panel # sfx/*.wav from tools/sfx.py -> SPU2 ADPCM (ps2sdk adpenc)
