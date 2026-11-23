@@ -52,7 +52,7 @@
 ├── POPS/         PS1 games (POPStarter .VCD), optional
 ├── APPS/         homebrew .ELF files, optional
 ├── covers/       written by TEa.G3: the covers it downloads
-└── nuld/         written by TEa.G3: config.ini, juegos.ini, estado.ini</pre>
+└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini</pre>
       <p>FAT32 cannot hold files over 4 GB: format the drive as exFAT for big ISOs. Virtual memory cards live in <code>VMC/</code> on the game's own device.</p>
     </div>
   </section>
@@ -81,11 +81,11 @@
   <section class="chapter" id="config">
     <header><b>3</b><h2>config.ini</h2></header>
     <div>
-      <p>TEa.G3 writes <code>mass0:/nuld/config.ini</code> on its first boot, and the setup wizard (START) edits the main keys for you. Each key is explained in the file. The main ones:</p>
+      <p>TEa.G3 writes <code>mass0:/tea_g3/config.ini</code> on its first boot, and the setup wizard (START) edits the main keys for you. Each key is explained in the file. The main ones:</p>
       <div class="scroll"><table>
         <tr><th>Section and key</th><th>Values</th><th>What it does</th></tr>
         <tr><td>[ui] idioma</td><td>es, en</td><td>Language of the menus and of the file's comments</td></tr>
-        <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of nuld/themes</td><td>The theme (<a href="#themes">chapter 11</a>)</td></tr>
+        <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes</td><td>The theme (<a href="#themes">chapter 11</a>)</td></tr>
         <tr><td>[juegos] origen</td><td>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</td><td>Where to look for games, comma-separated</td></tr>
         <tr><td>[juegos] servidor</td><td>an IP</td><td>The home game server (udpfs)</td></tr>
         <tr><td>[memorycard] modo</td><td>juego, compartida, fisica</td><td>A virtual card per game, one shared, or the physical one</td></tr>
@@ -123,7 +123,7 @@
         <figcaption>Fig. 3, △ on a PS2 game.</figcaption>
       </figure>
       <p>The card at the top right shows the game's newest save and its 3D icon: from the virtual card, or from the physical one in slot 1 when you choose it here.</p>
-      <p>Video mode (480p or 1080i, forced), Neutrino's compatibility modes for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in <code>nuld/juegos.ini</code>.</p>
+      <p>Video mode (480p or 1080i, forced), Neutrino's compatibility modes for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in <code>tea_g3/juegos.ini</code>.</p>
     </div>
   </section>
 
@@ -170,7 +170,7 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
     <header><b>10</b><h2>Updates</h2></header>
     <div>
       <p>With the cable in, TEa.G3 looks for a newer release at boot and says so; START installs it. Every file is checked against a manifest signed with the release key before anything is replaced, and the old files stay as <code>.old</code>.</p>
-      <p>Coming from ORBIT (v1.1 or older): the first boot moves <code>orbit/</code> to <code>nuld/</code>, keeps <code>BOOT/ORBIT.ELF</code> up to date next to the new <code>BOOT/TEa.G3.ELF</code>, and keeps using <code>VMC/ORBIT.bin</code> as the shared card.</p>
+      <p>Upgrading from NULD or ORBIT: the first boot automatically migrates <code>tea_g3/</code> (or <code>orbit/</code>) to <code>tea_g3/</code>, preserves settings and theme files, and installs <code>BOOT/TEa.G3.ELF</code>. The legacy <code>BOOT/NULD.ELF</code> entry remains supported.</p>
     </div>
   </section>
 
@@ -184,7 +184,7 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
       </figure>
       <h3>Make your own</h3>
       <p>A theme is a folder with a text file and, if you want, a picture. The <a href="themes.html">theme maker</a> builds one in the browser, with a preview; or write it by hand:</p>
-<pre>mass0:/nuld/themes/
+<pre>mass0:/tea_g3/themes/
 └── ocaso/           the folder's name is the theme's key
     ├── theme.ini    name, base and colours
     └── fondo.jpg    optional background, 1280 x 720 (or fondo.png)</pre>
@@ -220,7 +220,7 @@ inverso = 0E0714</pre>
       <ul>
         <li><b>The picture</b> takes the place of the base's animated background. Make it 1280 x 720, RGB, under 4 MB, and calm where the text goes (top left, the left half, the bottom edge). The console turns it into 15-bit colour, so film grain becomes dots.</li>
         <li><b>A theme cannot change</b> positions and sizes, fonts, icons, sounds, or add animations of its own.</li>
-        <li>Up to 8 folders are read. If yours does not show up, check that <code>theme.ini</code> is at <code>nuld/themes/&lt;name&gt;/</code> on the drive TEa.G3 starts from; a colour that is not six hex digits is ignored.</li>
+        <li>Up to 8 folders are read. If yours does not show up, check that <code>theme.ini</code> is at <code>tea_g3/themes/&lt;name&gt;/</code> on the drive TEa.G3 starts from; a colour that is not six hex digits is ignored.</li>
       </ul>
       <p>The full guide and the example folder: <a href="https://github.com/danielnuld/nuld/blob/master/docs/themes.md">docs/themes.md</a>, <a href="https://github.com/danielnuld/nuld/tree/master/docs/themes/ocaso">docs/themes/ocaso</a>.</p>
     </div>
