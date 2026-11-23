@@ -2499,7 +2499,7 @@ static int status_text(char *b, int max)
 	}
 	const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
 	if (k >= max) return max - 1;
-	if (net_busy) k += snprintf(b + k, max - k, L("RED     de Neutrino (UDPBD / UDPFS), IP %s\n", "NETWORK Neutrino's (UDPBD / UDPFS), IP %s\n"), ip);
+	if (net_busy) k += snprintf(b + k, max - k, L("RED     de Neutrino (UDPBD / UDPFS / SMB), IP %s\n", "NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n"), ip);
 	else if (net_res == 1) k += snprintf(b + k, max - k, L("RED     sin usar\n", "NETWORK not used\n"));
 	else if (net_res < 0) k += snprintf(b + k, max - k, L("RED     %s\n", "NETWORK %s\n"), net_err(net_res));
 	else k += snprintf(b + k, max - k, L("RED     %s (%s)\n", "NETWORK %s (%s)\n"), net_ip(), strcasecmp(ip, "dhcp") ? L("fija", "fixed") : "DHCP");
