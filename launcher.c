@@ -38,7 +38,7 @@
 #include "torres.h"
 #include "theme.h"
 
-#define NULD_VERSION "v1.3" // tools/make_release.py checks it against the release tag
+#define TEAG3_VERSION "v1.3" // tools/make_release.py checks it against the release tag
 #include "lang.h"
 #include "achievements.h"
 #include "third_party/neutrino-igr/raagent/ra_watch.h"
@@ -132,7 +132,7 @@ static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
 static char STATE_INI[32], NEUTRINO[40], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[24], LOG_TXT[24];
-static const char *home_dir = "nuld"; // the settings folder; ORBIT's "orbit" when load_config could not move it
+static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
 	snprintf(STATE_INI, sizeof(STATE_INI), "%s/%s/estado.ini", homedev, home_dir);
@@ -176,7 +176,7 @@ static void scan_cards(void)
 }
 
 // ---- virtual memory cards (phase 14): the default for PS2 games. Per game (VMC/<serial>.bin) or shared
-// (VMC/NULD.bin), on the game's own source, created at the first launch; Neutrino -mc0 serves it as the card in slot
+// (VMC/TEa.G3.bin), on the game's own source, created at the first launch; Neutrino -mc0 serves it as the card in slot
 // 1 (its mc_emu emulates port 0 only). HD Loader cannot hold one (Neutrino README: hdl is read-only, DVD only), and
 // an MMCE switches its own per-game card instead. The saves card reads it: the icon thread lists its root once ----
 enum { MC_DEFAULT, MC_GAME, MC_SHARED, MC_REAL, MC_N };
@@ -193,8 +193,11 @@ static void vmc_name(int i, char *out, int n) // the shared card was VMC/ORBIT.b
 {                                             // catalog server renames its own, tools/nuld_catalog.py)
 	char old[64];
 	if (game_mc(i) != MC_SHARED) { snprintf(out, n, "VMC/%s.bin", cv[i].serial); return; }
+	char nuld[64];
 	snprintf(old, sizeof(old), "%s/VMC/ORBIT.bin", src[(int)cv[i].src].root);
-	snprintf(out, n, "VMC/%s.bin", !on_catalog(i) && exists(old) ? "ORBIT" : "NULD");
+	snprintf(nuld, sizeof(nuld), "%s/VMC/NULD.bin", src[(int)cv[i].src].root);
+	const char *shared = on_catalog(i) ? "TEa.G3" : exists(old) ? "ORBIT" : exists(nuld) ? "NULD" : "TEa.G3";
+	snprintf(out, n, "VMC/%s.bin", shared);
 }
 static void vmc_file(int i, char *out, int n) // the launcher's path to it
 {
@@ -378,7 +381,7 @@ static icon *load_icon(int i)
 }
 
 // ---- In Game Reset (phase 12): the NULD Neutrino fork reboots through rom0:OSDSYS, and FMCB autoboots
-// mc?:/BOOT/NULD.ELF (boot.c, embedded here), which runs mass0:/launcher.elf. The icon thread (the libmc owner)
+// mc?:/BOOT/NULD.ELF (boot.c, embedded here), which runs mass0:/TEa.G3.ELF. The icon thread (the libmc owner)
 // installs it, rewriting it only when it differs ----
 extern unsigned char boot_elf[];
 extern unsigned int size_boot_elf;
@@ -418,9 +421,10 @@ static int stub_write(int port) // 1 if mc<port>:/BOOT/NULD.ELF is this launcher
 	int r;
 	mcMkDir(port, 0, "/BOOT"), mcSync(0, NULL, &r);
 	stub_file(port, "/BOOT/ORBIT.ELF", 0); // ORBIT's (until v1.1): updated only where it is, FMCB may still start it
-	r = stub_file(port, "/BOOT/NULD.ELF", 1);
-	if (r > 0) stub_new = 1;
-	return r >= 0;
+	int legacy = stub_file(port, "/BOOT/NULD.ELF", 1); // old FMCB entries remain valid
+	r = stub_file(port, "/BOOT/TEa.G3.ELF", 1);
+	if (r > 0 || legacy > 0) stub_new = 1;
+	return r >= 0 && legacy >= 0;
 }
 
 static void install_stub(void)
@@ -449,7 +453,7 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 		if (state_dirty && usb) { // the chosen view, for the next boot (phase 10)
 			state_dirty = 0;
 			FILE *f = fopen(STATE_INI, "w");
-			if (f) fprintf(f, "; NULD - estado de la interfaz (lo escribe el launcher)\n[ui]\nvista = %s\n",
+			if (f) fprintf(f, "; TEa.G3 - estado de la interfaz (lo escribe el launcher)\n[ui]\nvista = %s\n",
 			               view_key[view]), fclose(f);
 		}
 		int i = icon_want, port;
@@ -823,10 +827,10 @@ static void disc_thread(void *arg)
 // ---- config (phase 7): mass0:/nuld/config.ini, created from this template when missing; per-game options in
 // juegos.ini, one section per dash serial with only the keys that differ from the defaults ----
 static const char *const config_template[LANG_N] = {
-	"; NULD - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
+	"; TEa.G3 - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
 	"\n[ui]\n; idioma de la interfaz y de estos comentarios: es = español, en = inglés (english), pt = portugués (português)\nidioma = es\n"
 	"; tema: torres (prismas de luz en una noche azul), nuld (negro y verde ácido, el de v1.2), cristal, aurora, liquid,\n"
-	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. También se elige en la configuración (START);\n; o el nombre de una carpeta de nuld/themes (un tema hecho por alguien: docs/themes.md)\ntema = torres\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. También se elige en la configuración (START);\n; o el nombre de una carpeta de tea_g3/themes (un tema hecho por alguien: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; dónde buscar juegos de PS2 (carpetas DVD y CD), separados por comas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, o APA con particiones de HD Loader. udpbd usa la IP fija de [red];\n"
 	"; udpfs, el servidor de abajo. mx4sio y mmce no van juntos. Configuración, portadas, Neutrino, POPS\n"
@@ -836,7 +840,7 @@ static const char *const config_template[LANG_N] = {
 	"; si = el logo de PlayStation 2 antes de cada juego, como con un disco (unos segundos más). Un juego de otra\n"
 	"; región que la consola (PAL en NTSC o al revés) puede no arrancar así: déjalo en no\nlogo = no\n"
 	"\n[memorycard]\n; memory card de los juegos de PS2: juego = una virtual por juego (VMC/<serie>.bin en el mismo\n"
-	"; dispositivo, se crea al jugar), compartida = una virtual para todos (VMC/NULD.bin), fisica = la de la ranura 1.\n"
+	"; dispositivo, se crea al jugar), compartida = una virtual para todos (VMC/TEa.G3.bin), fisica = la de la ranura 1.\n"
 	"; Cada juego lo cambia con triángulo. HD Loader solo admite la física; un MMCE cambia solo a la del juego.\n"
 	"modo = juego\n"
 	"\n[video]\n; modo de video de los juegos: nativo, 480p o 1080i (cada juego lo cambia con triángulo)\nmodo = 480p\n"
@@ -847,7 +851,7 @@ static const char *const config_template[LANG_N] = {
 	"puerta =\ndns =\n"
 	"\n[portadas]\n; si = descargar de internet (github xlenore/ps2-covers) las que falten, con el cable de red conectado\n"
 	"descargar = si\n"
-	"\n[actualizaciones]\n; si = al arrancar, con el cable de red, mirar si hay una versión nueva de NULD (se instala con START)\n"
+	"\n[actualizaciones]\n; si = al arrancar, con el cable de red, mirar si hay una versión nueva de TEa.G3 (se instala con START)\n"
 	"buscar = si\n"
 	"\n[logros]\n; RetroAchievements: si = preguntar al cliente xeRAbora de la casa si el juego tiene logros (con el cable\n"
 	"; de red conectado), no = nada de logros\nactivos = si\n"
@@ -856,16 +860,16 @@ static const char *const config_template[LANG_N] = {
 	"; vacío = sin Jellyfin\nservidor =\nusuario =\nclave =\n"
 	"; subtítulos (texto, no quemados): idiomas en orden de preferencia (spa, eng, por...), no = sin subtítulos;\n"
 	"; durante el video, cuadrado cambia de pista\nsubtitulos = spa\n"
-	"\n[igr]\n; desde un juego (Neutrino de NULD): menu abre el menu sobre el juego en pausa; reiniciar y apagar\n"
-	"; actuan directo. Reiniciar arranca la consola como al encenderla: FMCB vuelve a lanzar NULD si su\n"
-	"; autoarranque apunta a mc?:/BOOT/NULD.ELF (lo instala el launcher).\n"
+	"\n[igr]\n; desde un juego (Neutrino de TEa.G3): menu abre el menu sobre el juego en pausa; reiniciar y apagar\n"
+	"; actuan directo. Reiniciar arranca la consola como al encenderla: FMCB vuelve a lanzar TEa.G3 si su\n"
+	"; autoarranque apunta a mc?:/BOOT/TEa.G3.ELF (lo instala el launcher).\n"
 	"; botones: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO,\n"
 	"; unidos con +; vacio = desactivado\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
-	"; NULD - configuration, read at boot\n"
+	"; TEa.G3 - configuration, read at boot\n"
 	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = en\n"
 	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
-	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in nuld/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
+	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in tea_g3/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = internal exFAT disk, or APA with HD Loader partitions. udpbd uses the fixed IP of [red];\n"
 	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
@@ -875,7 +879,7 @@ static const char *const config_template[LANG_N] = {
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
 	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
 	"\n[memorycard]\n; memory card for PS2 games: juego = a virtual card per game (VMC/<serial>.bin on the same\n"
-	"; device, created on first play), compartida = one virtual card for all (VMC/NULD.bin), fisica = the one in slot 1.\n"
+	"; device, created on first play), compartida = one virtual card for all (VMC/TEa.G3.bin), fisica = the one in slot 1.\n"
 	"; Each game can change it with triangle. HD Loader only allows the physical one; an MMCE switches to the game's.\n"
 	"modo = juego\n"
 	"\n[video]\n; video mode of the games: nativo, 480p or 1080i (each game can change it with triangle)\nmodo = 480p\n"
@@ -886,7 +890,7 @@ static const char *const config_template[LANG_N] = {
 	"puerta =\ndns =\n"
 	"\n[portadas]\n; si = download the missing covers from the internet (github xlenore/ps2-covers), with the cable in\n"
 	"descargar = si\n"
-	"\n[actualizaciones]\n; si = at boot, with the network cable in, check for a new NULD version (installed with START)\n"
+	"\n[actualizaciones]\n; si = at boot, with the network cable in, check for a new TEa.G3 version (installed with START)\n"
 	"buscar = si\n"
 	"\n[logros]\n; RetroAchievements: si = ask the home xeRAbora client whether the game has achievements (with the\n"
 	"; network cable in), no = no achievements at all\nactivos = si\n"
@@ -895,16 +899,16 @@ static const char *const config_template[LANG_N] = {
 	"; empty = no Jellyfin\nservidor =\nusuario =\nclave =\n"
 	"; subtitles (text, not burned in): languages in order of preference (spa, eng, por...), no = no subtitles;\n"
 	"; during the video, square changes the track\nsubtitulos = spa\n"
-	"\n[igr]\n; from a game (NULD's Neutrino): menu opens the menu over the paused game; reiniciar (restart) and\n"
-	"; apagar (power off) act at once. Restart boots the console as when powered on: FMCB starts NULD again if\n"
-	"; its autoboot points to mc?:/BOOT/NULD.ELF (the launcher installs it).\n"
+	"\n[igr]\n; from a game (TEa.G3's Neutrino): menu opens the menu over the paused game; reiniciar (restart) and\n"
+	"; apagar (power off) act at once. Restart boots the console as when powered on: FMCB starts TEa.G3 again if\n"
+	"; its autoboot points to mc?:/BOOT/TEa.G3.ELF (the launcher installs it).\n"
 	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (up down left right triangle circle x square), joined with +; empty = off\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
-	"; NULD - configuração, lida ao iniciar\n"
+	"; TEa.G3 - configuração, lida ao iniciar\n"
 	"\n[ui]\n; idioma da interface e destes comentários: es = espanhol (español), en = inglês (english), pt = português\nidioma = pt\n"
 	"; tema: torres (prismas de luz numa noite azul), nuld (preto e verde ácido, o da v1.2), cristal, aurora, liquid,\n"
-	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START);\n; ou o nome de uma pasta de nuld/themes (um tema feito por alguém: docs/themes.md)\ntema = torres\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START);\n; ou o nome de uma pasta de tea_g3/themes (um tema feito por alguém: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; onde procurar jogos de PS2 (pastas DVD e CD), separados por vírgulas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, ou APA com partições do HD Loader. udpbd usa o IP fixo de [red];\n"
 	"; udpfs, o servidor abaixo. mx4sio e mmce não funcionam juntos. Configuração, capas, Neutrino, POPS\n"
@@ -914,7 +918,7 @@ static const char *const config_template[LANG_N] = {
 	"; si = o logo do PlayStation 2 antes de cada jogo, como com um disco (alguns segundos a mais). Um jogo de outra\n"
 	"; região que o console (PAL em NTSC ou o contrário) pode não iniciar assim: deixe em no\nlogo = no\n"
 	"\n[memorycard]\n; memory card dos jogos de PS2: juego = um virtual por jogo (VMC/<serial>.bin no mesmo\n"
-	"; dispositivo, criado ao jogar), compartida = um virtual para todos (VMC/NULD.bin), fisica = o do slot 1.\n"
+	"; dispositivo, criado ao jogar), compartida = um virtual para todos (VMC/TEa.G3.bin), fisica = o do slot 1.\n"
 	"; Cada jogo pode mudar com triângulo. O HD Loader só aceita o físico; um MMCE muda sozinho para o do jogo.\n"
 	"modo = juego\n"
 	"\n[video]\n; modo de vídeo dos jogos: nativo, 480p ou 1080i (cada jogo pode mudar com triângulo)\nmodo = 480p\n"
@@ -925,7 +929,7 @@ static const char *const config_template[LANG_N] = {
 	"puerta =\ndns =\n"
 	"\n[portadas]\n; si = baixar da internet (github xlenore/ps2-covers) as capas que faltam, com o cabo de rede conectado\n"
 	"descargar = si\n"
-	"\n[actualizaciones]\n; si = ao iniciar, com o cabo de rede, ver se há uma versão nova do NULD (instala-se com START)\n"
+	"\n[actualizaciones]\n; si = ao iniciar, com o cabo de rede, ver se há uma versão nova do TEa.G3 (instala-se com START)\n"
 	"buscar = si\n"
 	"\n[logros]\n; RetroAchievements: si = perguntar ao cliente xeRAbora da casa se o jogo tem conquistas (com o cabo\n"
 	"; de rede conectado), no = sem conquistas\nactivos = si\n"
@@ -935,15 +939,15 @@ static const char *const config_template[LANG_N] = {
 	"; legendas (texto, não gravadas no vídeo): idiomas em ordem de preferência (por, spa, eng...), no = sem legendas;\n"
 	"; durante o vídeo, quadrado troca a faixa\nsubtitulos = por\n"
 	"\n[igr]\n; de dentro de um jogo (Neutrino do NULD): menu abre o menu sobre o jogo pausado; reiniciar e apagar\n"
-	"; (desligar) agem na hora. Reiniciar inicia o console como ao ligá-lo: o FMCB abre o NULD de novo se a sua\n"
-	"; inicialização automática aponta para mc?:/BOOT/NULD.ELF (o launcher a instala).\n"
+	"; (desligar) agem na hora. Reiniciar inicia o console como ao ligá-lo: o FMCB abre o TEa.G3 de novo se a sua\n"
+	"; inicialização automática aponta para mc?:/BOOT/TEa.G3.ELF (o launcher a instala).\n"
 	"; botões: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (cima baixo esquerda direita triângulo círculo x quadrado), unidos com +; vazio = desativado\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
-	"; NULD - إعدادات عربية\n"
+	"; TEa.G3 - إعدادات عربية\n"
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، es = الإسبانية، en = الإنجليزية، pt = البرتغالية\nidioma = ar\n"
 	"; المظهر: torres أو nuld أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
-	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من nuld/themes\ntema = torres\n"
+	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n"
 	"; عنوان خادم الألعاب الذي يشغل nuld_catalog. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
@@ -978,14 +982,22 @@ static int crt;             // [video] pantalla = 480i: menu in 480i / 576i, gam
 
 static void load_config(void) // loader thread, before the splash sound
 {
-	char dir[24], old[24];
-	snprintf(dir, sizeof(dir), "%s/nuld", homedev), snprintf(old, sizeof(old), "%s/orbit", homedev);
-	DIR *d = opendir(dir), *o = d ? NULL : opendir(old);
+	char dir[24];
+	snprintf(dir, sizeof(dir), "%s/tea_g3", homedev);
+	char legacy[24], orbit[24];
+	snprintf(legacy, sizeof(legacy), "%s/nuld", homedev);
+	snprintf(orbit, sizeof(orbit), "%s/orbit", homedev);
+	DIR *d = opendir(dir);
 	if (d) closedir(d);
-	if (o) { // v1.2: ORBIT's folder becomes NULD's; if the driver cannot move it, it is used where it is
-		closedir(o);
-		if (rename(old, dir)) home_dir = "orbit", home_paths();
-	} else if (!d) mkdir(dir, 0777);
+	else {
+		DIR *o = opendir(legacy);
+		if (o) { closedir(o); if (rename(legacy, dir)) home_dir = "nuld", home_paths(); }
+		else {
+			DIR *v = opendir(orbit);
+			if (v) { closedir(v); if (rename(orbit, dir)) home_dir = "orbit", home_paths(); }
+			else mkdir(dir, 0777);
+		}
+	}
 	if (!ini_load(&cfg, CONFIG)) { // Arabic is the default for a fresh configuration
 		w_first = 1;               // the setup wizard opens on the home screen (#15)
 		FILE *f = fopen(CONFIG, "wb");
@@ -1006,7 +1018,7 @@ static void load_config(void) // loader thread, before the splash sound
 	char first[48] = "";
 	FILE *cf = fopen(CONFIG, "rb");
 	if (cf) fgets(first, sizeof(first), cf), fclose(cf);
-	const char *body = first + (!strncmp(first, "; NULD - ", 9) ? 9 : !strncmp(first, "; ORBIT - ", 10) ? 10 : 0);
+	const char *body = first + (!strncmp(first, "; TEa.G3 - ", 11) ? 11 : !strncmp(first, "; NULD - ", 9) ? 9 : !strncmp(first, "; ORBIT - ", 10) ? 10 : 0);
 	int file = body == first ? -1 : !strncmp(body, "إعدادات عربية", strlen("إعدادات عربية")) ? LANG_AR :
 	           !strncmp(body, "configuration", 13) ? LANG_EN : !strncmp(body, "configuraci", 11) ? LANG_ES :
 	           !strncmp(body, "configuração", 13) ? LANG_PT : -1;
@@ -1441,7 +1453,7 @@ static int ra_prepare(int i, char *arg, int n)
 	snprintf(path, sizeof(path), "%s/config/ra.toml", NDIR);
 	if (ok && (f = fopen(path, "w"))) {
 		ok = fputs("# written by NULD at each launch (phase 16b): RetroAchievements agent in the game\n"
-		           "name = \"NULD RetroAchievements\"\n", f) >= 0;
+		           "name = \"TEa.G3 RetroAchievements\"\n", f) >= 0;
 		if (src[(int)cv[i].src].type != SRC_UDPFS) // a nuld game's bsd-udpfs config already loads these (phase 17)
 			ok &= fprintf(f, "depends = [\"i_dev9_hidden\"]\n[[module]]\nfile = \"smap.irx\"\nenv = [\"EE\"]\n"
 			                 "[[module]]\nfile = \"ministack.irx\"\nargs = [\"ip=%s\"]\nenv = [\"EE\"]\n", ra_me) > 0;
@@ -1459,7 +1471,7 @@ static int ra_prepare(int i, char *arg, int n)
 
 // ---- self-update (#15): the latest release's signed update.txt (update.c) names NULD's own files; a newer version
 // shows a toast and the wizard's first row, which downloads, checks and swaps them (the old ones stay as .old) ----
-#define UPD_URL "https://github.com/danielnuld/nuld/releases/latest/download/"
+#define UPD_URL "https://github.com/TEaG3/newday/releases/latest/download/"
 static upd_manifest upd;
 static volatile int upd_avail; // 1 a newer signed release (toast pending), 2 told
 static char upd_base[160];
@@ -1477,11 +1489,11 @@ static void update_check(void) // loader thread; the network is up for the cover
 		snprintf(url, sizeof(url), "%supdate.sig", upd_base);
 		ss = net_fetch(url, g, max, &sbody, &slen);
 		sig = ss == 200 && upd_verify(t + body, len, (unsigned char *)g + sbody, slen);
-		if (sig && upd_parse(t + body, &upd) && upd_newer(upd.version, NULD_VERSION)) upd_avail = 1;
+		if (sig && upd_parse(t + body, &upd) && upd_newer(upd.version, TEAG3_VERSION)) upd_avail = 1;
 	}
 	FILE *lf = fopen(LOG_TXT, "a");
 	if (lf) fprintf(lf, "nuld update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
-	                sig ? upd.version : "?", NULD_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
+	                sig ? upd.version : "?", TEAG3_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
 	free(t), free(g);
 }
 
@@ -1900,7 +1912,7 @@ static const char *const w_lk_ar[] = {"تلقائي", "R1", "L1", "R2", "L2", "�
 static const char *const w_lk_es[] = {"Auto", "R1", "L1", "R2", "L2", "Triángulo", "Círculo", "Cuadrado", "X", "Start", "Select"};
 static const char *const w_lk_pt[] = {"Auto", "R1", "L1", "R2", "L2", "Triângulo", "Círculo", "Quadrado", "X", "Start", "Select"};
 #define W_NLK 11 // w_val[W_FMCB]: 0 no change, 1 autoboot, 2..W_NLK a button, W_NLK + 1 an item in FMCB's menu
-#define W_STUB "mc?:/BOOT/NULD.ELF"
+#define W_STUB "mc?:/BOOT/TEa.G3.ELF"
 #define FMCB_ROOM 1024
 static int wiz = -1, w_val[W_ROWS]; // the selected row, -1 closed; each row's choice
 static volatile int w_job, w_done;  // for the icon thread (libmc): 1 read the FMCB configs, 2 save; w_done when over
@@ -1955,7 +1967,7 @@ static void wiz_save(void) // icon thread
 	w_nsum = 1;
 	w_quiet = ok && !w_restart && !w_val[W_FMCB];
 	int c = w_val[W_CARD], stub = c >= 0 && stub_write(c), v = w_val[W_FMCB], fp = w_fmcb_card();
-	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/NULD.ELF: %s", c, stub ? "ok" : "ERROR"), w_quiet &= stub;
+	if (c >= 0) snprintf(w_sum[w_nsum++], 100, "mc%d:/BOOT/TEa.G3.ELF: %s", c, stub ? "ok" : "ERROR"), w_quiet &= stub;
 	if (v > 0 && fp >= 0 && stub) {
 		char *t = fmcb_txt[fp], key[24];
 		int bn, max = fmcb_len[fp] + FMCB_ROOM;
@@ -1963,9 +1975,9 @@ static void wiz_save(void) // icon thread
 		ok = bak || mc_write(fp, "/SYS-CONF/FREEMCB.CNF.bak", t, strlen(t));
 		free(bak);
 		snprintf(key, sizeof(key), "LK_%s_E1", w_lk[v <= W_NLK ? v - 1 : 0]);
-		ok = ok && (v <= W_NLK ? cnf_set(t, max, key, W_STUB) : cnf_menu_add(t, max, "NULD", W_STUB) > 0);
+		ok = ok && (v <= W_NLK ? cnf_set(t, max, key, W_STUB) : cnf_menu_add(t, max, "TEa.G3", W_STUB) > 0);
 		ok = ok && mc_write(fp, "/SYS-CONF/FREEMCB.CNF", t, strlen(t));
-		snprintf(w_sum[w_nsum++], 100, "mc%d:/SYS-CONF/FREEMCB.CNF: %s", fp, ok ? (v <= W_NLK ? key : L("menú + NULD", "menu + NULD")) : "ERROR");
+		snprintf(w_sum[w_nsum++], 100, "mc%d:/SYS-CONF/FREEMCB.CNF: %s", fp, ok ? (v <= W_NLK ? key : L("menú + TEa.G3", "menu + TEa.G3")) : "ERROR");
 	}
 }
 
@@ -2013,7 +2025,7 @@ static void update_install(void) // icon thread: every file that differs, downlo
 	}
 	upd_phase = 0;
 	free(buf);
-	snprintf(w_sum[w_nsum++], 100, ok ? L("NULD %s instalado", "NULD %s installed") : L("No se actualizó", "Not updated"), upd.version);
+	snprintf(w_sum[w_nsum++], 100, ok ? L("TEa.G3 %s instalado", "TEa.G3 %s installed") : L("No se actualizó", "Not updated"), upd.version);
 	if (ok) upd_avail = 0;
 }
 
@@ -2052,7 +2064,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 		else if (v <= W_NLK) snprintf(a, n, L("Botón %s", "Button %s"), (lang == LANG_EN ? w_lk : lang == LANG_PT ? w_lk_pt : lang == LANG_AR ? w_lk_ar : w_lk_es)[v - 1]);
 		else snprintf(a, n, L("Entrada en el menú de FMCB", "Item in FMCB's menu"));
 		break;
-	case W_UPD: snprintf(a, n, L("Actualizar NULD a %s", "Update NULD to %s"), upd.version); break;
+	case W_UPD: snprintf(a, n, L("Actualizar TEa.G3 a %s", "Update TEa.G3 to %s"), upd.version); break;
 	default: snprintf(a, n, "%s", L("Guardar", "Save"));
 	}
 }
@@ -2100,12 +2112,12 @@ static void wiz_panel(void) // design: the △ options panel
 	char a[128];
 	int r0 = upd_avail ? W_UPD : W_LANG, x = 270, y = upd_avail ? 74 : 96, w = 740, h = 70 + (W_ROWS - r0) * 46 + 40;
 	panel_dim = wiz == W_THEME ? 0x20 : 0x60; // on the theme's row the home stays in sight: it is the preview
-	panel(x, y, w, h, UI_GEAR_18, L("Configuración de NULD", "NULD setup"));
+	panel(x, y, w, h, UI_GEAR_18, L("Configuración de TEa.G3", "TEa.G3 setup"));
 	panel_dim = 0x60;
 	int ry = y + 70;
 	if (w_done == 2 || w_job == 3) { // the summary (an update fills it as it goes)
 		for (int k = 0; k < w_nsum; k++, ry += 40) gfx_text(&gfx_font_mono, x + 28, ry + 10, w_sum[k], TEXT);
-		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, w_restart ? L("X: reiniciar NULD", "X: restart NULD") : L("X: cerrar", "X: close"), ACID);
+		if (w_job != 3) gfx_text(&gfx_font_ui, x + 28, y + h - 50, w_restart ? L("X: reiniciar TEa.G3", "X: restart TEa.G3") : L("X: cerrar", "X: close"), ACID);
 		else if (upd_phase && upd_k >= 0) { // the current file: its download, then its write to the USB
 			int size = upd.f[upd_k].size, got = upd_phase == 1 ? net_got : upd_done, pct = size > 0 ? (int)(100LL * got / size) : 0;
 			pct = pct > 100 ? 100 : pct;
@@ -2628,12 +2640,12 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 
 int main(int argc, char *argv[])
 {
-	if (argc > 0 && !strncmp(argv[0], "mmce", 4)) // "mmce0:/launcher.elf" (#8); a bare "mmce:" = mmce0:
+	if (argc > 0 && !strncmp(argv[0], "mmce", 4)) // "mmce0:/TEa.G3.ELF" (#8); a bare "mmce:" = mmce0:
 		snprintf(homedev, sizeof(homedev), "mmce%c:", argv[0][4] == '1' ? '1' : '0');
 	home_paths();
-	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/launcher.elf");
+	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/TEa.G3.ELF");
 	if (!gfx_init()) printf("gfx_init: VRAM pool too small\n");
-	splash_ver = NULD_VERSION + 1; // "1.2"
+	splash_ver = TEAG3_VERSION + 1; // "1.2"
 	thm = themes[TH_TORRES].pal;
 	ChangeThreadPriority(GetThreadId(), 0x20); // render thread above the loader
 	ee_thread_t th = { .func = loader, .stack = loader_stack, .stack_size = sizeof(loader_stack), .gp_reg = &_gp,
@@ -2704,10 +2716,10 @@ int main(int argc, char *argv[])
 		}
 		refilter();
 		if (nord && pos[sel] < 0) sel = order[0]; // e.g. the disc changed kind under a PS1 filter
-		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("Arrancador instalado en la memory card: BOOT/NULD.ELF", "Boot stub installed on the memory card: BOOT/NULD.ELF");
+		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("تم تثبيت TEa.G3 في بطاقة الذاكرة: BOOT/TEa.G3.ELF", "TEa.G3 boot stub installed: BOOT/TEa.G3.ELF");
 		static char upd_msg[96];
 		if (upd_avail == 1) upd_avail = 2, toast = 360, toast_msg = upd_msg, // #15
-			snprintf(upd_msg, sizeof(upd_msg), L("NULD %s disponible: START para actualizar", "NULD %s available: START to update"), upd.version);
+			snprintf(upd_msg, sizeof(upd_msg), L("TEa.G3 %s disponible: START para actualizar", "TEa.G3 %s available: START to update"), upd.version);
 		static int ra_told; // phase 16: once per boot
 		if (ra_down && !ra_told) ra_told = 1, toast = 240, toast_msg = ra_down == 1 ? L("Logros: sin red", "Achievements: no network") : L("Logros: sin servidor", "Achievements: no server");
 		if (w_first && usb && booted) w_first = 0, wiz_open(), play(S_PANEL, 70); // first boot (#15)
@@ -2740,10 +2752,10 @@ int main(int argc, char *argv[])
 					if (vmc_state[sel] == 2) free(vdir[sel]), vdir[sel] = NULL, vmc_state[sel] = 0; // 1: in flight, ponytail
 					if (gicon_state[sel] == 2) gicon_state[sel] = 0, gicon[sel] = NULL; // ponytail: the old icon leaks
 				}
-				if (usb && !ini_save(&games, GAMES_INI, L("; NULD - opciones por juego (menú de triángulo)\n"
+				if (usb && !ini_save(&games, GAMES_INI, L("; TEa.G3 - opciones por juego (menú de triángulo)\n"
 				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = modos de Neutrino (0 2 3 5 7),\n"
 				                     "; mc = juego | compartida | fisica\n",
-				                     "; NULD - per-game options (triangle menu)\n"
+				                     "; TEa.G3 - per-game options (triangle menu)\n"
 				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = Neutrino modes (0 2 3 5 7),\n"
 				                     "; mc = juego | compartida | fisica\n")))
 					toast = 180, toast_msg = L("No se pudieron guardar las opciones en el USB", "Could not save the options to the USB");

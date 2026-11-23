@@ -1,11 +1,11 @@
 # make            -> bench.elf
 # make APP=modetest -> modetest.elf
-# make APP=launcher -> launcher.elf (NULD: gfx.c, splash.c + generated logo_data.c, font_data.c, ui_data.c)
-# make APP=boot     -> boot.elf (memory-card stub that runs mass0:/launcher.elf; embedded in the launcher)
+# make APP=launcher -> TEa.G3.ELF (NULD: gfx.c, splash.c + generated logo_data.c, font_data.c, ui_data.c)
+# make APP=boot     -> boot.elf (memory-card stub that runs mass0:/TEa.G3.ELF; embedded in the launcher)
 # Jellyfin (jfplay.elf) lives in its own repo, danielnuld/orbit-jellyfin, installed as mass0:/APPS/Jellyfin
 APP ?= bench
 SFX = splash torres move edge confirm panel # sfx/*.wav from tools/sfx.py -> SPU2 ADPCM (ps2sdk adpenc)
-EE_BIN = $(APP).elf
+EE_BIN = $(if $(filter launcher,$(APP)),TEa.G3.ELF,$(APP).elf)
 IRX_FILES = iomanX fileXio sio2man mcman mcserv freepad libsd audsrv bdm bdmfs_fatfs usbd_mini usbmass_bd_mini $(if $(filter launcher,$(APP)),ps2dev9 netman smap ata_bd ps2hdd_bdm mx4sio_bd_mini iLinkman IEEE1394_bd_mini mmceman)
 # launcher extras: network for cover downloads (net.c); game sources, loaded per config.ini (sources.c, phase 14)
 EE_OBJS = $(APP).o iop.o $(if $(filter launcher,$(APP)),gfx.o splash.o torres.o themes.o logo_data.o iso.o ini.o lang_pt.o lang_ar.o net.o fmcb.o update.o achievements.o sources.o vmc.o cover.o icon.o combo.o font_data.o ui_data.o exec.o loader_elf.o boot_elf.o $(SFX:%=sfx_%.o)) $(if $(filter boot,$(APP)),exec.o loader_elf.o) $(IRX_FILES:=_irx.o)
@@ -22,6 +22,7 @@ font:
 	python3 tools/fetch_arabic_font.py
 	python3 tools/font.py
 	python3 tools/generate_igr_arabic.py
+	python3 tools/logo.py
 
 tools/fonts/NotoSansArabicUI.ttf:
 	python3 tools/fetch_arabic_font.py

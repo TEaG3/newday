@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Self-update assets (#15) for a release: update.txt (signed as update.sig) and NULD's own files, each a loose
-release asset. Usage: python tools/make_update.py v1.1 [OUT_DIR] [--only launcher.elf,...]
+"""Self-update assets (#15) for a release: update.txt (signed as update.sig) and TEa.G3's own files, each a loose
+release asset. Usage: python tools/make_update.py v1.1 [OUT_DIR] [--only TEa.G3.ELF,...]
 
 update.txt:  version = v1.1
              file = <asset> <path on the USB> <size> <sha256>
@@ -12,7 +12,7 @@ import hashlib, os, re, shutil, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILES = [  # asset, path on the USB, built file
-    ("launcher.elf", "launcher.elf", "launcher.elf"),
+    ("TEa.G3.ELF", "TEa.G3.ELF", "TEa.G3.ELF"),
     ("neutrino.elf", "neutrino/neutrino.elf", "dist/neutrino/neutrino.elf"),
     ("ee_core.elf", "neutrino/modules/ee_core.elf", "dist/neutrino/modules/ee_core.elf"),
     ("raagent.irx", "neutrino/modules/raagent.irx", "dist/neutrino/modules/raagent.irx"),
@@ -25,11 +25,11 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--only")]
     only = next((a.split("=", 1)[1].split(",") for a in sys.argv[1:] if a.startswith("--only=")), None)
     ver = args[0]
-    out = args[1] if len(args) > 1 else os.path.join(ROOT, "dist", f"NULD-{ver}-update")
+    out = args[1] if len(args) > 1 else os.path.join(ROOT, "dist", f"TEa.G3-{ver}-update")
     src = open(os.path.join(ROOT, "launcher.c"), encoding="utf-8").read()
-    built = re.search(r'#define NULD_VERSION "([^"]+)"', src).group(1)
+    built = re.search(r'#define TEAG3_VERSION "([^"]+)"', src).group(1)
     if built != ver and not only:
-        sys.exit(f"launcher.c NULD_VERSION is {built}, not {ver}: bump it and rebuild")
+        sys.exit(f"launcher.c TEAG3_VERSION is {built}, not {ver}: bump it and rebuild")
     os.makedirs(out, exist_ok=True)
     lines = [f"version = {ver}"]
     for asset, dest, path in FILES:

@@ -18,9 +18,9 @@ from fontTools.varLib.instancer import instantiateVariableFont
 ROOT = Path(__file__).resolve().parent.parent
 FONTS = ROOT / "tools" / "fonts"
 # C name, file, variation axes, characters (canvas: A Michroma, B Plex Mono 500, C and D Archivo 800 at 125 %)
-SPECS = (("michroma", "Michroma-Regular.ttf", None, "NULD"),
-         ("archivo_heavy", "Archivo.ttf", {"wght": 800, "wdth": 125}, "NULD/"),
-         ("plex_medium", "IBMPlexMono-Medium.ttf", None, "$nuld"))
+SPECS = (("michroma", "Michroma-Regular.ttf", None, "TEa.G3"),
+         ("archivo_heavy", "Archivo.ttf", {"wght": 800, "wdth": 125}, "TEa.G3/"),
+         ("plex_medium", "IBMPlexMono-Medium.ttf", None, "$ TEa.G3"))
 STEPS = 10  # segments per curve
 
 

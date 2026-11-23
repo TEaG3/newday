@@ -5,4 +5,5 @@ export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2SDK/bin
 cd "$(dirname "$0")" || exit 1
 python3 tools/fetch_arabic_font.py
 python3 tools/font.py
+python3 tools/logo.py
 make "$@"

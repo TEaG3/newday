@@ -1,4 +1,4 @@
-name: Publish Arabic NULD release
+name: Publish TEa.G3 PS2 release
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
   package-and-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out Arabic NULD source
+      - name: Check out TEa.G3 source
         uses: actions/checkout@v4
 
       - name: Build PS2 launcher and Arabic Neutrino
@@ -32,11 +32,12 @@ jobs:
             export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
             export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"
             export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
-            apk add --no-cache python3 make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
+            apk add --no-cache python3 py3-pip make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
+              pip3 install --break-system-packages --no-cache-dir fonttools mapbox-earcut
             make test
             make clean
             make APP=launcher
-            test -s launcher.elf
+            test -s TEa.G3.ELF
             bash tools/build_neutrino.sh
             test -s dist/neutrino/neutrino.elf
             test -s dist/neutrino/modules/ee_core.elf
@@ -55,20 +56,21 @@ jobs:
           unzip -q release-work/upstream.zip -d release-work/package
           root="$(find release-work/package -mindepth 1 -maxdepth 1 -type d | head -n1)"
           test -n "$root"
-          cp launcher.elf "$root/launcher.elf"
+          rm -f "$root/launcher.elf"
+          cp TEa.G3.ELF "$root/TEa.G3.ELF"
           cp dist/neutrino/neutrino.elf "$root/neutrino/neutrino.elf"
           mkdir -p "$root/neutrino/modules"
           cp dist/neutrino/modules/* "$root/neutrino/modules/"
           cat > "$root/INSTALL-AR.txt" <<'EOF'
-          NULD Arabic Edition — TEa.G3
+          TEa.G3 PS2
           
           1. Back up your USB drive before replacing the old launcher.
-          2. Extract this ZIP and copy the CONTENTS of the NULD folder to the USB root.
-          3. Keep launcher.elf, neutrino/, DVD/ and CD/ together at the root.
+          2. Extract this ZIP and copy the CONTENTS of the TEa.G3 folder to the USB root.
+          3. Keep TEa.G3.ELF, neutrino/, DVD/ and CD/ together at the root.
           4. Put PS2 DVD ISO files in DVD/ and CD images in CD/.
-          5. Start mass0:/launcher.elf from uLaunchELF or FreeMcBoot.
-          6. The first start creates nuld/config.ini. Arabic is the default language.
-          7. If upgrading an existing install, preserve your nuld/ folder and game files.
+          5. Start mass0:/TEa.G3.ELF from uLaunchELF or FreeMcBoot.
+          6. The first start creates tea_g3/config.ini. Arabic is the default language.
+          7. If upgrading an existing install, preserve your tea_g3/ folder and game files.
           
           Arabic support includes RTL text shaping in the launcher and Arabic labels in the
           Neutrino in-game menu. The build and localization tests run in GitHub Actions;
@@ -77,16 +79,18 @@ jobs:
           Project source: https://github.com/TEaG3/newday
           Upstream NULD: https://github.com/danielnuld/nuld
           EOF
-          (cd release-work/package && zip -qr ../NULD-Arabic-Edition.zip "$(basename "$root")")
-          sha256sum release-work/NULD-Arabic-Edition.zip > release-work/SHA256SUMS.txt
+          mv "$root" release-work/package/TEa.G3
+          root="release-work/package/TEa.G3"
+          (cd release-work/package && zip -qr ../TEa.G3-PS2.zip TEa.G3)
+          sha256sum release-work/TEa.G3-PS2.zip > release-work/SHA256SUMS.txt
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
-          name: "NULD Arabic Edition — TEa.G3"
+          name: "TEa.G3 PS2"
           body: |
-            Arabic-first NULD build based on upstream NULD v1.3.
+            TEa.G3 Arabic edition based on upstream NULD v1.3, retaining all upstream license notices.
 
             - Arabic launcher interface with right-to-left shaping.
             - Arabic Neutrino in-game menu labels.
@@ -96,7 +100,7 @@ jobs:
             Build and localization checks run in GitHub Actions. A physical PS2 visual test is still required.
           prerelease: ${{ inputs.prerelease }}
           files: |
-            release-work/NULD-Arabic-Edition.zip
+            release-work/TEa.G3-PS2.zip
             release-work/SHA256SUMS.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

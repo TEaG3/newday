@@ -1,7 +1,7 @@
-// NULD loading screen for link.elf (2026-11-03): the "NULD — identidad" canvas drawn by the GS. A thread at a lower
+// TEa.G3 loading screen for link.elf (2026-11-03): the "NULD — identidad" canvas drawn by the GS. A thread at a lower
 // priority than the main one draws it while the main thread sleeps in the IOP reset, DHCP, the HTTP connects and
 // the cover downloads: a perspective floor and a wire sphere (gfx_line, alpha fading with depth), the four logo
-// variants (A ring, B "$ nulld", C NULD//, D label) 3 s each with a glitch cut (the logo redrawn in scissored bands,
+// variants (A ring, B "$ TEa.G3", C NULD//, D label) 3 s each with a glitch cut (the logo redrawn in scissored bands,
 // shifted), the status line with a blinking cursor, scanlines. The logo type is vector (logo_data.c, tools/logo.py):
 // the real Michroma / Archivo / IBM Plex Mono outlines, which no atlas has room for at these sizes.
 #include <stdio.h>
@@ -73,19 +73,19 @@ static int blink(float s) { return (int)(s * 1.9f) & 1; }
 static void variant(int k, float dx, float s)
 {
 	if (k == 0) { // A: the ring + NULD in Michroma (128 px type: 96 px caps)
-		float cap = 96, ww = splash_vtext_w(&vfont_michroma, cap, 0.06f, "NULD"), x = 640 - (132 + 40 + ww) / 2 + dx;
+		float cap = 96, ww = splash_vtext_w(&vfont_michroma, cap, 0.06f, "TEa.G3"), x = 640 - (132 + 40 + ww) / 2 + dx;
 		splash_mark(x + 66, 300, 66, FG, ACID);
-		splash_vtext(&vfont_michroma, x + 172, 300 + cap / 2, cap, 0.06f, "NULD", FG);
+		splash_vtext(&vfont_michroma, x + 172, 300 + cap / 2, cap, 0.06f, "TEa.G3", FG);
 	} else if (k == 1) { // B: $ nulld in IBM Plex Mono 500 (132 px type) + a block cursor
 		float fs = 132, cap = fs * vfont_plex_medium.cap / vfont_plex_medium.upm, base = 300 + cap / 2;
-		float ww = splash_vtext_w(&vfont_plex_medium, cap, -0.02f, "$ nulld"), x = 640 - (ww + 0.52f * fs) / 2 + dx;
+		float ww = splash_vtext_w(&vfont_plex_medium, cap, -0.02f, "$ TEa.G3"), x = 640 - (ww + 0.52f * fs) / 2 + dx;
 		splash_vtext(&vfont_plex_medium, x, base, cap, -0.02f, "$", ACID);
-		splash_vtext(&vfont_plex_medium, x + splash_vtext_w(&vfont_plex_medium, cap, -0.02f, "$ ") - 0.02f * fs, base, cap, -0.02f, "nulld", FG);
+		splash_vtext(&vfont_plex_medium, x + splash_vtext_w(&vfont_plex_medium, cap, -0.02f, "$ ") - 0.02f * fs, base, cap, -0.02f, "TEa.G3", FG);
 		if (!blink(s)) gfx_rect((int)(x + ww + 0.08f * fs), (int)(base - cap), (int)(0.44f * fs), (int)(cap + 0.1f * fs), ACID);
 	} else if (k == 2) { // C: NULD// in Archivo 800 at 125 % (132 px type)
-		float cap = 132 * 0.686f, ww = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "NULD//"), x = 640 - ww / 2 + dx;
-		float wn = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "NULD") + 0.02f * 132;
-		splash_vtext(&vfont_archivo_heavy, x, 300 + cap / 2, cap, 0.02f, "NULD", FG);
+		float cap = 132 * 0.686f, ww = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "TEa.G3//"), x = 640 - ww / 2 + dx;
+		float wn = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "TEa.G3") + 0.02f * 132;
+		splash_vtext(&vfont_archivo_heavy, x, 300 + cap / 2, cap, 0.02f, "TEa.G3", FG);
 		splash_vtext(&vfont_archivo_heavy, x + wn, 300 + cap / 2, cap, 0.02f, "//", ACID);
 	} else { // D: the hardware label
 		int bw = 680, x = 300 + (int)dx, y = 196, top = 150, bot = 64;
@@ -94,14 +94,14 @@ static void variant(int k, float dx, float s)
 		gfx_rect(x, y + top, bw, 2, FG);
 		splash_mark(x + 34 + 52, y + top / 2 + 2, 52, FG, ACID);
 		float cap = 88 * 0.686f;
-		splash_vtext(&vfont_archivo_heavy, x + 34 + 104 + 32, y + top / 2 + 2 + cap / 2, cap, 0.02f, "NULD", FG);
+		splash_vtext(&vfont_archivo_heavy, x + 34 + 104 + 32, y + top / 2 + 2 + cap / 2, cap, 0.02f, "TEa.G3", FG);
 		static const unsigned char bars[30] = {3, 1, 2, 1, 4, 1, 1, 3, 2, 1, 1, 2, 4, 1, 3, 1, 2, 2, 1, 4, 1, 1, 3, 1, 2, 1, 4, 2, 1, 3};
 		int bx = x + 18;
 		for (int i = 0; i < 30; i++) gfx_rect(bx, y + top + 14, bars[i], bot - 26, FG), bx += bars[i] + 2;
 		gfx_rect(bx + 14, y + top, 2, bot, FG);
 		gfx_text(&gfx_font_mono, bx + 32, y + top + 12, "SCPH-75001 · EE 294.912 MHz", 0xC9CED6);
 		char v[48];
-		snprintf(v, sizeof(v), "v%s · 2026 · nuld.local", splash_ver);
+		snprintf(v, sizeof(v), "v%s · 2026 · tea-g3.local", splash_ver);
 		gfx_text(&gfx_font_mono, bx + 32, y + top + 34, v, ACID);
 		int sx = x + (int)fmodf(s * 175, (float)bw); // the scanner passing over the label
 		gfx_alpha(0x60), gfx_rect(sx, y + 2, 2, top + bot - 2, ACID), gfx_alpha(0x80);
@@ -199,7 +199,7 @@ void splash_draw(float s)
 	splash_hud(24, 24, GFX_W - 48, GFX_H - 48, 28, ACID);
 	gfx_tracking(1);
 	char ver[24];
-	snprintf(ver, sizeof(ver), "NULD %s", splash_ver);
+	snprintf(ver, sizeof(ver), "TEa.G3 %s", splash_ver);
 	gfx_text(&gfx_font_mono, 64, 30, ver, MUTED);
 	const char *r = "EE R5900 · 294.912 MHz";
 	gfx_text(&gfx_font_mono, GFX_W - 64 - gfx_text_width(&gfx_font_mono, r), 30, r, MUTED);

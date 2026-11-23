@@ -5,9 +5,9 @@
     .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function (releases) {
       var rel = (releases || []).find(function (item) {
-        return /^arabic-/i.test(item.tag_name || "") && (item.assets || []).some(function (asset) { return asset.name === "NULD-Arabic-Edition.zip"; });
+        return /^arabic-/i.test(item.tag_name || "") && (item.assets || []).some(function (asset) { return asset.name === "TEa.G3-PS2.zip"; });
       });
-      if (!rel) return Promise.reject("No Arabic NULD release found");
+      if (!rel) return Promise.reject("No TEa.G3 PS2 release found");
       var v = String(rel.tag_name || "").replace(/^arabic-/i, "").replace(/^v/i, ""), assets = rel.assets || [], zip = null;
       for (var i = 0; i < assets.length; i++) if (/\.zip$/.test(assets[i].name)) zip = assets[i];
       document.querySelectorAll("[data-version]").forEach(function (el) { if (v) el.textContent = el.getAttribute("data-version").replace("{v}", v); });

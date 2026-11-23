@@ -343,8 +343,8 @@ function mark(cx, cy, r, ringc, slash) { // NULD's mark: a ring and a slash
 }
 function wordmark(cx, cy, cap, inkc, slash, dx = 0) { // the mark and NULD in Michroma, centred on (cx, cy); cap: capital height
   font(`400 ${cap * 128 / 96}px Michroma, Archivo, sans-serif`); if ('letterSpacing' in g) g.letterSpacing = cap * .08 + 'px';
-  const r = cap * .6875, ww = g.measureText('NULD').width, x = cx - (2 * r + cap * .42 + ww) / 2 + dx;
-  g.fillStyle = inkc; g.fillText('NULD', x + 2 * r + cap * .42, cy + cap / 2);
+  const r = cap * .6875, ww = g.measureText('TEa.G3').width, x = cx - (2 * r + cap * .42 + ww) / 2 + dx;
+  g.fillStyle = inkc; g.fillText('TEa.G3', x + 2 * r + cap * .42, cy + cap / 2);
   if ('letterSpacing' in g) g.letterSpacing = '0px';
   mark(x + r, cy, r, inkc, slash);
 }
@@ -389,7 +389,7 @@ function genLaunch(u, t, o) {
 
 // ---- the themes ----
 const THEMES = {
-  nuld: { name: 'NULD',
+  nuld: { name: 'Classic',
     tx: '#E6E8EC', t2: '#A9B0BA', lb: '#8A919C', ed: '#2A303A', pn: '#0C0E12', inv: '#06070A', oa: '#06070A', cedge: '#232833', acc: [200, 255, 46],
     r: 0, R: 0, cr: 0, rule: 1, glitch: 1, back: false,
     bg(t) {
@@ -507,7 +507,7 @@ const THEMES = {
         g.restore();
         g.fillRect(540, 604, 676, 2); for (let x = 540; x <= 1216; x += 52) g.fillRect(x, 596, 2, 8); // a ruler and its small print
         font(FM); putText(isArabic() ? 'المكتبة / ' + String(N).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) + ' لعبة' : 'LIBRARY / ' + N + ' TITLES', 540, 626);
-        const tx = 'NTSC-U · 480P · NULD 1.3'; g.fillText(tx, 1216 - g.measureText(tx).width, 626);
+        const tx = 'NTSC-U · 480P · TEa.G3 1.3'; g.fillText(tx, 1216 - g.measureText(tx).width, 626);
         if ((t * 174 / 60) % 1 < .5) g.fillRect(1216 - g.measureText(tx).width - 20, 615, 10, 10); // blinks on the beat
       }
       g.fillRect(0, 0, W, 138); // header: a solid bar and marching hazard stripes
@@ -524,7 +524,7 @@ const THEMES = {
     mid(t) { // footer bar, with a ticker running along its top
       g.fillStyle = '#0A0A0A'; g.fillRect(0, 640, W, 80);
       g.fillStyle = rgb(A); g.fillRect(0, 668, W, 1);
-      font(FM); const s = 'NULD SYS 1.3  ///  ' + N + ' TITLES  ///  SRC USB  ///  NTSC-U  ///  174 BPM  ///  ', w = g.measureText(s).width;
+      font(FM); const s = 'TEa.G3 SYS 1.3  ///  ' + N + ' TITLES  ///  SRC USB  ///  NTSC-U  ///  174 BPM  ///  ', w = g.measureText(s).width;
       for (let x = -((t * 60) % w); x < W; x += w) g.fillText(s, x, 660);
     } },
 
@@ -700,8 +700,8 @@ Object.assign(THEMES.nuld, {
     g.fillStyle = '#06070A'; g.fillRect(0, 0, W, H); floor(t, acid, .5); sphere(t, acid);
     const logo = dx => {
       if (!k) { wordmark(640, 300, 96, fg, rgb(acid), dx); return; }
-      font('800 132px Archivo, sans-serif', true); const x = 640 - g.measureText('NULD//').width / 2 + dx, wn = g.measureText('NULD').width + 3;
-      g.fillStyle = fg; g.fillText('NULD', x, 345); g.fillStyle = rgb(acid); g.fillText('//', x + wn, 345);
+      font('800 132px Archivo, sans-serif', true); const x = 640 - g.measureText('TEa.G3//').width / 2 + dx, wn = g.measureText('TEa.G3').width + 3;
+      g.fillStyle = fg; g.fillText('TEa.G3', x, 345); g.fillStyle = rgb(acid); g.fillText('//', x + wn, 345);
     };
     if (!cut) logo(0);
     else {
@@ -714,7 +714,7 @@ Object.assign(THEMES.nuld, {
     if (Math.floor(t * 1.9) % 2 === 0) { g.fillStyle = rgb(acid); g.fillRect(x + w + 4, 486, 8, 16); }
     corners(24, 24, W - 48, H - 48, 28, rgb(acid));
     font(FM); if ('letterSpacing' in g) g.letterSpacing = '1px';
-    g.fillStyle = '#8A919C'; g.fillText('NULD 1.3', 64, 44); const r = 'EE R5900 · 294.912 MHz'; g.fillText(r, W - 64 - g.measureText(r).width, 44);
+    g.fillStyle = '#8A919C'; g.fillText('TEa.G3 1.3', 64, 44); const r = 'EE R5900 · 294.912 MHz'; g.fillText(r, W - 64 - g.measureText(r).width, 44);
     g.fillText('SCPH-75001', W - 64 - g.measureText('SCPH-75001').width, H - 30);
     if ('letterSpacing' in g) g.letterSpacing = '0px';
     this.fx();
@@ -833,15 +833,15 @@ Object.assign(THEMES.techstep, {
     const Y = rgb(T.acc), K = '#0A0A0A', hgt = Math.round(500 * st4(u / .3)), top = 360 - hgt / 2, sl = (1 - st4((u - .3) / .3)) * 1300;
     g.fillStyle = K; g.fillRect(0, 0, W, H); g.fillStyle = Y; g.fillRect(0, top, W, hgt);
     if (hgt > 40) { g.fillStyle = K; hazard(top, t); hazard(top + hgt - 12, t); }
-    font('800 250px Archivo, sans-serif', true); const w = g.measureText('NULD').width, x0 = Math.round(640 - (230 + w) / 2);
-    g.save(); g.beginPath(); g.rect(0, top, W, hgt); g.clip(); g.fillStyle = K; g.fillText('NULD', x0 + 230 + sl, 448); mark(x0 + 95 - sl, 362, 95, K, '#FF5A36'); g.restore();
+    font('800 250px Archivo, sans-serif', true); const w = g.measureText('TEa.G3').width, x0 = Math.round(640 - (230 + w) / 2);
+    g.save(); g.beginPath(); g.rect(0, top, W, hgt); g.clip(); g.fillStyle = K; g.fillText('TEa.G3', x0 + 230 + sl, 448); mark(x0 + 95 - sl, 362, 95, K, '#FF5A36'); g.restore();
     font(FM);
     if (u > .7) {
       const m = status(u), b = '174 BPM', bw = g.measureText(b).width;
       g.fillStyle = K; g.fillRect(64, 548, Math.round(g.measureText(m).width) + 24, 26); g.fillText(b, 1216 - bw, 566); if ((t * 174 / 60) % 1 < .5) g.fillRect(1216 - bw - 20, 555, 10, 10);
       g.fillStyle = Y; putText(m, 76, 566);
     }
-    g.fillStyle = Y; const tk = 'NULD SYS 1.3  ///  EE R5900  ///  294.912 MHZ  ///  174 BPM  ///  ', tw = g.measureText(tk).width;
+    g.fillStyle = Y; const tk = 'TEa.G3 SYS 1.3  ///  EE R5900  ///  294.912 MHZ  ///  174 BPM  ///  ', tw = g.measureText(tk).width;
     for (let x = -((t * 60) % tw); x < W; x += tw) { g.fillText(tk, x, 62); g.fillText(tk, x - tw / 2, 672); }
   },
   launch(u, t, o) { // a black block slams in with the cover; the load counts up in squares
@@ -951,8 +951,8 @@ Object.assign(THEMES.fosforo, {
   ground() { g.fillStyle = '#010703'; g.fillRect(0, 0, W, H); const r = g.createRadialGradient(640, 360, 0, 640, 360, 760); r.addColorStop(0, 'rgba(20,90,40,.42)'); r.addColorStop(1, 'rgba(1,7,3,0)'); g.fillStyle = r; g.fillRect(0, 0, W, H); },
   splash(u, t) { // a boot log types itself out, then the name
     const gr = '#6BFF96', L = isArabic()
-      ? ['NULD BIOS 1.3', 'معالج EE R5900  294.912 MHz ............ OK', 'ذاكرة RAM  32 MB ....................... OK', 'وحدة USB MASS ......................... OK', 'شبكة NET  100 MBIT .................... OK', 'المكتبة  ١٦ لعبة ............. OK']
-      : ['NULD BIOS 1.3', 'EE R5900  294.912 MHz ............ OK', 'RAM  32 MB ....................... OK', 'USB MASS ......................... OK', 'NET  100 MBIT .................... OK', 'LIBRARY  16 GAMES ............. OK'];
+      ? ['TEa.G3 BIOS 1.3', 'معالج EE R5900  294.912 MHz ............ OK', 'ذاكرة RAM  32 MB ....................... OK', 'وحدة USB MASS ......................... OK', 'شبكة NET  100 MBIT .................... OK', 'المكتبة  ١٦ لعبة ............. OK']
+      : ['TEa.G3 BIOS 1.3', 'EE R5900  294.912 MHz ............ OK', 'RAM  32 MB ....................... OK', 'USB MASS ......................... OK', 'NET  100 MBIT .................... OK', 'LIBRARY  16 GAMES ............. OK'];
     const n = clamp(Math.floor((u - .3) / .5) + 1, 0, L.length), w = ease((u - 3.4) / .6);
     this.ground(); font(isArabic() ? FU : FM); g.shadowColor = 'rgba(80,255,130,.8)'; g.shadowBlur = 8; g.fillStyle = gr;
     L.forEach((m, i) => { const a = (u - .3 - i * .5) / .35; if (a > 0) putText(m.slice(0, Math.ceil(clamp(a) * m.length)), 96, 96 + i * 22); });
@@ -1045,7 +1045,7 @@ function frame(ms) {
   if (mode !== 'home') { // splash or launch screen; keep the animation loop alive until it finishes
     const u = t - tMode, spl = mode === 'splash', end = spl ? SPL : LCH, out = (u - end + .45) / .45;
     if (u < end) (spl ? T.splash || genSplash : T.launch || genLaunch).call(T, u, t, o);
-    else { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); if (!spl) centred(isArabic() ? 'تم تشغيل اللعبة' : 'THE GAME STARTS HERE', 366, isArabic() ? FU : FM, '#8A919C', 3); }
+    else { T.bg(t); if (!spl) { const msg = isArabic() ? 'هذه معاينة للواجهة فقط — لا يتم تشغيل ملف لعبة في المتصفح' : 'Interface preview only — no game executable runs in the browser'; centred(msg, 366, isArabic() ? FU : FM, '#8A919C', 3); } }
     const dark = Math.max(u < .45 ? 1 - ease(u / .45) : 0, out > 0 && u < end ? ease(out) : 0);
     if (dark > 0) { g.fillStyle = `rgba(0,0,0,${dark})`; g.fillRect(0, 0, W, H); }
     if (u >= end + (spl ? 0 : 1.3)) { mode = 'home'; tFade = t; if (!spl) tTheme = t; lastInput = Math.max(lastInput, t - 3); }

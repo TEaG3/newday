@@ -126,8 +126,13 @@ class Catalog:
         if not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", name) or name.startswith("."):
             return 400
         path = os.path.join(self.root, "VMC", name + ".bin")
-        old = os.path.join(self.root, "VMC", "ORBIT.bin")  # the shared card's name until v1.1
-        if name == "NULD" and not os.path.exists(path) and os.path.exists(old):
+        old = os.path.join(self.root, "VMC", "ORBIT.bin")  # pre-NULD shared card
+        nuld = os.path.join(self.root, "VMC", "NULD.bin")  # previous TEa.G3 release
+        if name == "TEa.G3" and not os.path.exists(path):
+            legacy = nuld if os.path.exists(nuld) else old
+            if os.path.exists(legacy):
+                os.replace(legacy, path)
+        elif name == "NULD" and not os.path.exists(path) and os.path.exists(old):
             os.replace(old, path)
         if os.path.exists(path):
             if os.path.getsize(path) == 8 * 1024 * 1024:

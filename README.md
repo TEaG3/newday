@@ -1,16 +1,15 @@
-# NULD — a game launcher for the PlayStation 2
+# TEa.G3 — a game launcher for the PlayStation 2
 
-NULD is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
+TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
 [Neutrino](https://github.com/rickgaiser/neutrino), and adds what a modern console menu has: covers downloaded by the
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
 RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
 
-**Website, screenshots and videos:** https://danielnuld.github.io/nuld/
+**Website, screenshots and videos:** https://github.com/TEaG3/newday/tree/master/site
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
-**Download:** [latest release](https://github.com/danielnuld/nuld/releases/latest)
+**Download:** [latest TEa.G3 release](https://github.com/TEaG3/newday/releases/latest)
 
-Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit/` to `nuld/`, keeps
-`BOOT/ORBIT.ELF` up to date next to the new `BOOT/NULD.ELF`, and keeps using `VMC/ORBIT.bin` as the shared card.
+Previously named ORBIT and then NULD. Upgrading preserves existing data: the first boot automatically moves `orbit/` or `nuld/` to `tea_g3/`, installs `BOOT/TEa.G3.ELF`, and refreshes existing `BOOT/NULD.ELF` / `BOOT/ORBIT.ELF` entry points so old FreeMcBoot shortcuts continue to work. Existing `VMC/ORBIT.bin` and `VMC/NULD.bin` shared cards are reused; new installs use `VMC/TEa.G3.bin`.
 
 ![Home screen](site/img/home-carousel.jpg)
 
@@ -22,7 +21,7 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
   decoded and dithered on the console, saved to the USB. No PC step.
 - **3D save icons**: the newest save of each game, read from the memory card, spinning on the detail card.
 - **Every source Neutrino knows**: USB, internal HDD (exFAT or HD Loader), MX4SIO, iLink, MMCE, UDPBD, and a
-  **home game server** (udpfs + NULD's catalog service) whose games list instantly and keep every feature.
+  **home game server** (udpfs + TEa.G3's catalog service) whose games list instantly and keep every feature.
 - **Virtual memory cards**, one per game (or one shared), created on first play, on the game's own device.
 - **Per-game options** (△): video mode forced to 480p or 1080i, compatibility modes, memory card. No 720p: the GS
   only scales lines by whole numbers, so a game's ~448 lines would come out squashed or cropped; 1080i fills an HDTV best.
@@ -41,35 +40,35 @@ Called ORBIT until v1.1. Upgrading keeps everything: the first boot moves `orbit
 
 ## Quick start
 
-1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `launcher.elf` and `neutrino/`.
+1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `TEa.G3.ELF` and `neutrino/`.
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
-2. **Start** `mass0:/launcher.elf` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
+2. **Start** `mass0:/TEa.G3.ELF` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
 3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card,
-   video, network, the memory card for `BOOT/NULD.ELF` and how FreeMcBoot 1.966 starts it (autoboot, a button or
-   its menu; the original `FREEMCB.CNF` is kept as `.bak`). Every setting is also in `nuld/config.ini`, commented.
+   video, network, the memory card for `BOOT/TEa.G3.ELF` and how FreeMcBoot 1.966 starts it (autoboot, a button or
+   its menu; the original `FREEMCB.CNF` is kept as `.bak`). Every setting is also in `tea_g3/config.ini`, commented.
 4. **Play**: pick a game, press ✕.
 
 Optional:
 - **Covers**: plug in the network cable; missing covers download at boot. If you see "No DNS", set
   `[red] dns = 1.1.1.1` in config.ini. Your own covers: `python3 tools/covers.py IN_DIR OUT_DIR` (numpy, Pillow)
   turns PNG/JPG files named by serial (`SLUS-21376.png`) into the `.c16` pair that goes in `mass0:/covers/`.
-- **Back to NULD from a game**: with FMCB set to autoboot `BOOT/NULD.ELF` (the wizard does it), "Restart" in
+- **Back to TEa.G3 from a game**: with FMCB set to autoboot `BOOT/TEa.G3.ELF` (the wizard does it), "Restart" in
   the in-game menu brings you back.
 - **MemCard PRO 2 / SD2PSX**: they switch to the game's own card when a game starts. To save there instead of the
   USB's virtual card, set the game's memory card to `fisica` (△, or `[memorycard] modo = fisica` for every game).
 - **Achievements**: run the xeRAbora client (signed in to your RetroAchievements account) on a PC or server on the
   same network. Use [v0.1.0-alpha.9](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9), the version
-  NULD is tested with: xeRAbora is in active development and newer releases may change the protocol.
-- **Home game server**: on a Linux box, run Neutrino's `udpfs_server.py` and NULD's `server/nuld_catalog.py`
+  TEa.G3 is tested with: xeRAbora is in active development and newer releases may change the protocol.
+- **Home game server**: on a Linux box, run Neutrino's `udpfs_server.py` and TEa.G3's `server/nuld_catalog.py`
   (zip, `server/`) over `<root>/DVD`; set `[juegos] origen = usb, udpfs` and `servidor = <server IP>`. Use a cable.
   Any other udpfs server (Server2PS2, ...): leave `servidor` empty and set a fixed `[red] ip`; no online covers or
   achievements then.
 - **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy the same files to the card's SD and start
-  `mmce0:/launcher.elf` (point FMCB's autoboot straight at it). Settings, covers and Neutrino live on the card; PS1
-  games need NULD on a USB; MX4SIO can't be used alongside.
+  `mmce0:/TEa.G3.ELF` (point FMCB's autoboot straight at it). Settings, covers and Neutrino live on the card; PS1
+  games need TEa.G3 on a USB; MX4SIO can't be used alongside.
 - **Status**: SELECT shows each game source (games found, or why it failed) and the network.
 
-The full guide is on the [website](https://danielnuld.github.io/nuld/#guide) and in the setup video.
+The full guide is in [the TEa.G3 site](https://github.com/TEaG3/newday/tree/master/site) and in the setup video.
 
 ## Requirements
 
@@ -79,10 +78,10 @@ The full guide is on the [website](https://danielnuld.github.io/nuld/#guide) and
 
 ## Building
 
-Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3 and Pillow are also required to generate the Arabic-aware font atlas.
+Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3, Pillow, fonttools and mapbox-earcut are also required to generate the Arabic-aware font atlas and TEa.G3 vector logo.
 
 ```
-./build.sh APP=launcher          # launcher.elf
+./build.sh APP=launcher          # TEa.G3.ELF
 ./build.sh test                  # host selftests
 bash tools/build_neutrino.sh    # Arabic-capable Neutrino fork: dist/neutrino/; copy it over mass0:/neutrino/
 ./build.sh nuld_hash            # the game server's helper (static)
@@ -95,7 +94,7 @@ the console).
 
 The launcher's footer includes the small attribution “تعديل المطور العراقي TEa.G3”.
 
-- [Neutrino](https://github.com/rickgaiser/neutrino) by Maximus32 (AFL-3.0), which loads the games; NULD ships a
+- [Neutrino](https://github.com/rickgaiser/neutrino) by Maximus32 (AFL-3.0), which loads the games; TEa.G3 ships a
   fork with the in-game menu and the achievements agent (`third_party/neutrino-igr`, AFL-3.0).
 - [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) (AFL-3.0): the In Game Reset technique.
 - [xeRAbora](https://github.com/hacan359/xerabora) (MIT client): the RetroAchievements protocol and PC client;
