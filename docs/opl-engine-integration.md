@@ -66,14 +66,14 @@ that device's root as well.
 
 ## Validation status
 
-The successful CI run `45246675082` validated:
+The successful CI run `45247633906` validated:
 - ZSO host decoder/scanner fixtures;
 - UL record and split-part fixtures;
 - engine-selection capability matrix;
 - Arabic and Portuguese localization;
 - TEa.G3 launcher and Neutrino PS2SDK builds;
 - pinned OPL dependency retrieval, patch application, compilation and artifact
-  upload.
+  upload; the final bundle job also assembled and uploaded the combined test package.
 
 CI success is not proof of game compatibility. Still required:
 1. Run TEa.G3 in PCSX2 with a configured virtual USB mass-storage device.
@@ -81,6 +81,8 @@ CI success is not proof of game compatibility. Still required:
 3. Confirm the game reaches gameplay and continues reading all split parts.
 4. Test manual `motor = opl` for USB ISO/ZSO.
 5. Repeat on real PS2 hardware and verify stability and in-game reads.
+
+The unified test bundle is available from [CI run #45247633906](https://github.com/TEaG3/newday/actions/runs/45247633906) as `tea-g3-integration-test-bundle-c600bfcc3d4868144f2ce8d78aa5b2f0b503151e`.
 
 Do not merge or advertise this path as release-ready until the runtime checks
 are recorded. Neutrino must remain available as the default path.
