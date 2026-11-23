@@ -5,7 +5,7 @@
 # Rebuilt: the loader (neutrino.elf: -igr / -igroff / -igrexit / -igrmenu / -ra options), modules/ee_core.elf (In
 # Game Reset, in-game menu, achievements telemetry: third_party/neutrino-igr), modules/raagent.irx (phase 16b) and
 # modules/udpfs_fhi.irx (reconnects after a lost link).
-# Every other module stays the official dev release's, already on the USB.
+# The complete upstream module set is rebuilt from the pinned source and staged with the custom IGR/RA components.
 set -e
 export PS2DEV=/usr/local/ps2dev PS2SDK=/usr/local/ps2dev/ps2sdk GSKIT=/usr/local/ps2dev/gsKit
 export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2SDK/bin
@@ -64,7 +64,41 @@ cp ee/ee_core/ee_core.elf iop/raagent/irx/raagent.irx iop/udpfs/irx/udpfs_fhi.ir
 cp iop/smap/irx/smap.irx iop/ministack/irx/ministack.irx \
    iop/smb/irx/smb_ioman.irx iop/smb/irx/smb_fhi.irx "$REPO/dist/neutrino/modules/"
 cp ee/loader/config/bsd-smb.toml "$REPO/dist/neutrino/config/"
+# Build the remaining upstream IOP modules from this exact Neutrino source revision. The loader target is
+# intentionally omitted: this toolchain cannot produce its packed ELF, and the custom unpacked ELF above is used.
+sed -e '/$(MAKE) -C ee\/loader.*all DEBUG=0/d' Makefile > Makefile.embedded
+# The PS2SDK image does not ship mmcefhi.irx. Remove its copy recipe explicitly;
+# the SHA-256-pinned release module is staged below instead.
+python3 - <<'PYFIX'
+from pathlib import Path
+path = Path("Makefile.embedded")
+lines = path.read_text(encoding="utf-8").splitlines()
+filtered = [line for line in lines if "mmcefhi.irx" not in line]
+path.write_text("\n".join(filtered) + "\n", encoding="utf-8")
+if any("mmcefhi.irx" in line for line in path.read_text(encoding="utf-8").splitlines()):
+    raise SystemExit("mmcefhi.irx copy recipe remains in Makefile.embedded")
+PYFIX
+make -f Makefile.embedded all IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/neutrino_modules.log" 2>&1 || {
+    tail -40 "$WORK/neutrino_modules.log"; exit 1;
+}
+make -f Makefile.embedded copy > "$WORK/neutrino_copy.log" 2>&1 || {
+    tail -40 "$WORK/neutrino_copy.log"; exit 1;
+}
+make -f Makefile.embedded copy_extra >> "$WORK/neutrino_copy.log" 2>&1 || {
+    tail -40 "$WORK/neutrino_copy.log"; exit 1;
+}
+mkdir -p "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
+cp -R ee/loader/modules/. "$REPO/dist/neutrino/modules/"
+cp -R ee/loader/config/. "$REPO/dist/neutrino/config/"
+# PS2SDK does not ship mmcefhi.irx; use the SHA-256-pinned official Neutrino release module.
+MMCE_FHI="$REPO/third_party/neutrino-igr/runtime/mmcefhi.irx"
+test -s "$MMCE_FHI"
+cp "$MMCE_FHI" "$REPO/dist/neutrino/modules/mmcefhi.irx"
+# Restore the TEa.G3-specific achievements agent after the upstream module copy.
+cp iop/raagent/irx/raagent.irx "$REPO/dist/neutrino/modules/raagent.irx"
 test -s "$REPO/dist/neutrino/modules/cdvdman_emu.irx"
+test -s "$REPO/dist/neutrino/modules/ee_core.elf"
+test -s "$REPO/dist/neutrino/modules/udnl.irx"
+test -s "$REPO/dist/neutrino/modules/mmcefhi.irx"
 ls -la "$REPO/dist/neutrino" "$REPO/dist/neutrino/modules" "$REPO/dist/neutrino/config"
-echo "copy dist/neutrino/ over mass0:/neutrino/ (ZSO FHI + SMB-capable Neutrino build from $BASE)"
-echo "NOTE: SMB is packaged but TEa.G3 source selection and credentials handoff are not enabled yet."
+echo "complete Neutrino runtime staged at dist/neutrino/ from $BASE"

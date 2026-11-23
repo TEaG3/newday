@@ -22,7 +22,8 @@ static const char *const ar[][2] = {
         {"connection failed", "فشل الاتصال"},
         {"bad response", "استجابة غير صالحة"},
         {"the adapter belongs to UDPBD", "المحول مخصص ل UDPBD"},
-        {"OPL.ELF is missing from the USB root", "ملف OPL.ELF غير موجود في جذر USB"},
+        {"Could not install the embedded Neutrino runtime", "تعذر تثبيت محرك Neutrino المضمن"},
+        {"Could not install the embedded OPL runtime", "تعذر تثبيت محرك OPL المضمن"},
         {"OPL direct boot currently supports USB games only", "الإقلاع المباشر عبر OPL يدعم ألعاب USB فقط"},
         {"STARTING WITH OPL", "تشغيل OPL الآن"},
         {"No network (%s): the server's game catalog was not read", "لا توجد شبكة (%s): لم تتم قراءة كتالوج ألعاب الخادم"},
@@ -105,7 +106,6 @@ static const char *const ar[][2] = {
         {"NETWORK %s\n", "الشبكة  %s\n"},
         {"NETWORK %s (%s)\n", "الشبكة  %s (%s)\n"},
         {"fixed", "ثابت"},
-        {"Neutrino missing: copy it to the neutrino/ folder", "Neutrino مفقود: انسخه إلى مجلد neutrino/"},
         {"POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/", "POPSTARTER.ELF و POPS_IOX.PAK مفقودان في mass0:/POPS/"},
         {"No disc ready", "لا يوجد قرص جاهز"},
         {"This disc cannot be started", "لا يمكن بدء تشغيل هذا القرص"},
@@ -153,6 +153,7 @@ static const char *const ar[][2] = {
         {"Physical (SMB: read-only)", "البطاقة الفعلية (SMB: قراءة فقط)"},
         {"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "مصادر SMB وUDPBD وUDPFS تتشارك محول الشبكة: الأولوية إلى SMB"},
         {"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "شبكة Neutrino (UDPBD / UDPFS / SMB)، IP %s\n"},
+        {"Modified and developed by Iraqi developer TEa.G3", "تعديل وتطوير المطور العراقي TEa.G3"},
 };
 
 const char *lang_ar(const char *en)

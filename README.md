@@ -1,9 +1,10 @@
 # TEa.G3 — a game launcher for the PlayStation 2
 
-TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts them through
-[Neutrino](https://github.com/rickgaiser/neutrino), and adds what a modern console menu has: covers downloaded by the
+TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts ISO/ZSO games through [Neutrino](https://github.com/rickgaiser/neutrino) by default and USBExtreme UL through OPL, and adds what a modern console menu has: covers downloaded by the
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
 RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
+
+**تعديل وتطوير المطور العراقي: TEa.G3** · [دليل التثبيت العربي](INSTALL-AR.txt)
 
 **Website, screenshots and videos:** https://github.com/TEaG3/newday/tree/master/site
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
@@ -40,7 +41,7 @@ Previously named ORBIT and then NULD. Upgrading preserves existing data: the fir
 
 ## Quick start
 
-1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `TEa.G3.ELF` and `neutrino/`.
+1. **Copy** `TEa.G3.ELF` and your `DVD/` / `CD/` game folders to the root of a FAT32 or exFAT USB drive. OPL, Neutrino and their required modules are embedded in TEa.G3; the first boot installs them automatically under `tea_g3/runtime/`. No separate engine files or folders are required.
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
 2. **Start** `mass0:/TEa.G3.ELF` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
 3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card. By default TEa.G3 probes USB, internal HDD/HDL, MX4SIO, iLink, MMCE, UDPBD and UDPFS at startup and scans detected sources automatically; no Discover/Show Games button is needed. You can narrow the source list in `tea_g3/config.ini`.
@@ -63,7 +64,7 @@ Optional:
   (zip, `server/`) over `<root>/DVD`; set `[juegos] origen = usb, udpfs` and `servidor = <server IP>`. Use a cable.
   Any other udpfs server (Server2PS2, ...): leave `servidor` empty and set a fixed `[red] ip`; no online covers or
   achievements then.
-- **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy the same files to the card's SD and start
+- **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy `TEa.G3.ELF` to the card's SD and start
   `mmce0:/TEa.G3.ELF` (point FMCB's autoboot straight at it). Settings, covers and Neutrino live on the card; PS1
   games need TEa.G3 on a USB; MX4SIO can't be used alongside.
 - **Status**: SELECT shows each game source (games found, or why it failed) and the network.
@@ -81,10 +82,15 @@ The full guide is in [the TEa.G3 site](https://github.com/TEaG3/newday/tree/mast
 Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3, Pillow, fonttools and mapbox-earcut are also required to generate the Arabic-aware font atlas and TEa.G3 vector logo.
 
 ```
-./build.sh APP=launcher          # TEa.G3.ELF
 ./build.sh test                  # host selftests
-bash tools/build_neutrino.sh    # Arabic-capable Neutrino fork: dist/neutrino/; copy it over mass0:/neutrino/
-./build.sh nuld_hash            # the game server's helper (static)
+bash tools/build_neutrino.sh     # complete Arabic-capable Neutrino runtime: dist/neutrino/
+# Build/download the pinned OPL.ELF, then stage both engines:
+mkdir -p runtime-input
+cp OPL.ELF runtime-input/
+cp -R dist/neutrino runtime-input/
+python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
+./build.sh APP=launcher          # TEa.G3.ELF with both engines embedded
+./build.sh nuld_hash             # the game server's helper (static)
 ```
 
 How it was built, phase by phase, is in `openspec/` (specs and archived changes) and `docs/` (results measured on
@@ -92,7 +98,7 @@ the console).
 
 ## Credits
 
-The launcher's footer includes the small attribution “تعديل المطور العراقي TEa.G3”.
+The launcher settings panel and website footer prominently display “تعديل وتطوير المطور العراقي TEa.G3”.
 
 - [Neutrino](https://github.com/rickgaiser/neutrino) by Maximus32 (AFL-3.0), which loads the games; TEa.G3 ships a
   fork with the in-game menu and the achievements agent (`third_party/neutrino-igr`, AFL-3.0).

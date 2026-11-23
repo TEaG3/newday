@@ -3,7 +3,7 @@
 build.sh nuld_hash). Usage: python tools/make_release.py v1.0 <neutrino dev release dir> <udpfs_server.py>
 
 Layout, to be copied to the root of the USB drive (server/ goes to the game server instead):
-  TEa.G3.ELF  neutrino/ (official dev release + TEa.G3's neutrino.elf, ee_core.elf, raagent.irx)  DVD/  CD/
+  TEa.G3.ELF  DVD/  CD/  (OPL and Neutrino are embedded in TEa.G3.ELF)
   server/ (nuld_catalog.py, nuld_hash, udpfs_server.py, systemd units)  tools/covers.py  QUICKSTART.txt  LICENSE
 """
 import hashlib, os, sys, zipfile
@@ -13,33 +13,23 @@ ver, ndev, udpfs = sys.argv[1], sys.argv[2], sys.argv[3]
 name = "TEa.G3-PS2"
 out = os.path.join(ROOT, "dist", name + ".zip")
 
-QUICKSTART = f"""TEa.G3 {ver} - quick start
-============================
+QUICKSTART = f"""TEa.G3 {ver} — دليل البدء السريع
+================================
 
-1. Copy TEa.G3.ELF, neutrino/, DVD/ and CD/ to the root of a FAT32 or exFAT USB drive.
-2. Put your PS2 ISOs in DVD/ (CD games in CD/). PS1 games: POPStarter VCDs in POPS/. Homebrew: APPS/.
-3. On the PS2, start mass0:/TEa.G3.ELF (uLaunchELF, or FreeMcBoot's autoboot).
-4. Pick a game and press X. The first boot writes mass0:/tea_g3/config.ini with every setting, commented.
+1. انسخ TEa.G3.ELF ومجلدي DVD/ وCD/ إلى جذر وحدة USB بنظام FAT32 أو exFAT.
+2. لا تنسخ OPL.ELF أو مجلد neutrino؛ فمحركا OPL وNeutrino ووحداتهما مضمّنة داخل TEa.G3.ELF وتُجهّز تلقائياً في tea_g3/runtime/ عند التشغيل الأول.
+3. ضع ألعاب PS2 بصيغة ISO/ZSO داخل DVD/ أو CD/. لألعاب USBExtreme UL احتفظ بملف ul.cfg وأجزاء ul.* على USB.
+4. شغّل mass0:/TEa.G3.ELF من uLaunchELF أو FreeMcBoot.
+5. اللغة الافتراضية هي العربية. افتح الإعدادات بزر START لتغيير اللغة أو المظهر ومصادر الألعاب.
+6. ISO/ZSO يستخدم Neutrino تلقائياً، وUSBExtreme UL يستخدم OPL تلقائياً. يمكن اختيار OPL يدوياً لألعاب USB ISO/ZSO.
+7. لا تفصل USB أثناء تجهيز المحركات في أول تشغيل.
 
-Buttons: left/right (or up/down) move, L1/R1 filter, square changes the view, triangle per-game options,
-circle achievements, X play, SELECT data overlay.
-In a game: L1+L2+R1+R2+START+SELECT opens the menu (restart, power off).
+للتفاصيل راجع INSTALL-AR.txt. تراخيص OPL وNeutrino مرفقة داخل licenses/.
 
-Optional
-- English / Português: in config.ini set  [ui] idioma = en  or  idioma = pt  (Spanish is the default).
-- Covers: plug in the network cable; the missing ones download at boot.
-  Your own: tools/covers.py turns PNG/JPG files named by serial (SLUS-21376.png) into the .c16 pair for
-  mass0:/covers/ (python3 covers.py IN_DIR OUT_DIR; needs numpy and Pillow).
-  No DNS on your router? Set  [red] dns = 1.1.1.1  in config.ini.
-- Back to TEa.G3 from a game: TEa.G3 installs BOOT/TEa.G3.ELF on your memory card; set it as FMCB's autoboot.
-- Coming from NULD or ORBIT (v1.1 or older): the first boot moves mass0:/nuld/ or mass0:/orbit/ to mass0:/tea_g3/, keeps BOOT/ORBIT.ELF
-  up to date (an FMCB autoboot pointing at it keeps working) and reuses VMC/ORBIT.bin or VMC/NULD.bin when present; new installs use VMC/TEa.G3.bin.
-- Achievements: run the xeRAbora client v0.1.0-alpha.9, signed in, on your network
-  (github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9: the version TEa.G3 is tested with).
-- Games from a home server: see server/README.txt (wired network needed).
-
-Website and setup video: https://danielnuld.github.io/nuld/
-Source: https://github.com/danielnuld/nuld (GPL-3.0; the Neutrino fork is AFL-3.0)
+تعديل وتطوير المطور العراقي
+TEa.G3
+المصدر: https://github.com/TEaG3/newday
+الموقع والملفات: https://github.com/TEaG3/newday/tree/master/site
 """
 
 SERVER = """TEa.G3 game server (Linux)
@@ -104,21 +94,26 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(info, s.replace("\n", "\r\n") if arc.endswith(".txt") else s, zipfile.ZIP_DEFLATED)
 
     add(os.path.join(ROOT, "TEa.G3.ELF"), "TEa.G3.ELF")
-    # TEa.G3 runtime plus SMB modules/config built into dist/neutrino by build_neutrino.sh.
-    overlay = {
-        "neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx",
-        "modules/smap.irx", "modules/ministack.irx",
-        "modules/smb_ioman.irx", "modules/smb_fhi.irx",
-        "config/bsd-smb.toml",
-    }
-    for dirpath, _, files in os.walk(ndev):
-        for f in files:
-            rel = os.path.relpath(os.path.join(dirpath, f), ndev).replace("\\", "/")
-            if rel.startswith("udpfs_server"):
-                continue
-            add(os.path.join(ROOT, "dist", "neutrino", rel) if rel in overlay else os.path.join(dirpath, f), "neutrino/" + rel)
-    add(os.path.join(ROOT, "dist", "neutrino", "modules", "raagent.irx"), "neutrino/modules/raagent.irx")
-    add(os.path.join(ROOT, "third_party", "neutrino-igr", "LICENSE"), "neutrino/LICENSE")
+    # The runtime payload is linked into TEa.G3.ELF and extracted to tea_g3/runtime on first boot.
+    manifest = os.path.join(ROOT, "runtime-manifest.txt")
+    if not os.path.isfile(manifest) or os.path.getsize(manifest) == 0:
+        raise SystemExit("runtime-manifest.txt is missing: build the launcher with embedded OPL and Neutrino first")
+    with open(manifest, encoding="utf-8") as f:
+        embedded = f.read()
+    for required in ("OPL.ELF", "neutrino/neutrino.elf", "neutrino/modules/ee_core.elf",
+                     "neutrino/modules/raagent.irx", "neutrino/modules/cdvdman_emu.irx",
+                     "neutrino/modules/udpfs_fhi.irx", "neutrino/modules/smap.irx",
+                     "neutrino/modules/ministack.irx", "neutrino/modules/smb_ioman.irx",
+                     "neutrino/modules/smb_fhi.irx", "neutrino/modules/mmcefhi.irx",
+                     "neutrino/config/bsd-smb.toml"):
+        if required not in embedded:
+            raise SystemExit("embedded runtime is incomplete: " + required)
+    add(manifest, "runtime-manifest.txt")
+    add(os.path.join(ROOT, "third_party", "neutrino-igr", "LICENSE"), "licenses/Neutrino-AFL-3.0.txt")
+    opl_license = os.path.join(ROOT, "OPL-LICENSE.txt")
+    if not os.path.isfile(opl_license) or os.path.getsize(opl_license) == 0:
+        raise SystemExit("OPL-LICENSE.txt is required to distribute the embedded OPL runtime")
+    add(opl_license, "licenses/OPL-AFL-3.0.txt")
     text("DVD/put your PS2 DVD ISOs here.txt", "")
     text("CD/put your PS2 CD ISOs here.txt", "")
     add(os.path.join(ROOT, "tools", "covers.py"), "tools/covers.py", 0o755)
@@ -129,6 +124,7 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         text("server/" + n, s)
     text("server/README.txt", SERVER)
     text("QUICKSTART.txt", QUICKSTART)
+    add(os.path.join(ROOT, "INSTALL-AR.txt"), "INSTALL-AR.txt")
     add(os.path.join(ROOT, "LICENSE"), "LICENSE")
 
 h = hashlib.sha256(open(out, "rb").read()).hexdigest().upper()

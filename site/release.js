@@ -9,7 +9,8 @@
       });
       if (!rel) return Promise.reject("No TEa.G3 PS2 release found");
       var v = String(rel.tag_name || "").replace(/^arabic-/i, "").replace(/^v/i, ""), assets = rel.assets || [], zip = null;
-      for (var i = 0; i < assets.length; i++) if (/\.zip$/.test(assets[i].name)) zip = assets[i];
+      for (var i = 0; i < assets.length; i++) if (/^TEa\.G3-PS2\.zip$/i.test(assets[i].name)) zip = assets[i];
+      if (!zip) for (var j = 0; j < assets.length; j++) if (/\.zip$/i.test(assets[j].name)) zip = assets[j];
       document.querySelectorAll("[data-version]").forEach(function (el) { if (v) el.textContent = el.getAttribute("data-version").replace("{v}", v); });
       if (!zip) return;
       document.querySelectorAll("[data-zip]").forEach(function (a) { a.href = zip.browser_download_url; });
