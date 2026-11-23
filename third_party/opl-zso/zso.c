@@ -97,10 +97,10 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     if (count > ziso_total_block - lsn) count = ziso_total_block - lsn;
     if (count > ZISO_IDX_MAX_ENTRIES - 1) count = ZISO_IDX_MAX_ENTRIES - 1;
 
+    u64 index_offset = (u64)ziso_header_size + (u64)lsn * sizeof(u32);
+    u64 index_end = (u64)ziso_header_size + ((u64)ziso_total_block + 1) * sizeof(u32);
+    u64 min_data_units = (index_end + (((u64)1 << ziso_align) - 1)) >> ziso_align;
     {
-        u64 index_offset = (u64)ziso_header_size + (u64)lsn * sizeof(u32);
-        u64 index_end = (u64)ziso_header_size + ((u64)ziso_total_block + 1) * sizeof(u32);
-        u64 min_data_units = (index_end + (((u64)1 << ziso_align) - 1)) >> ziso_align;
         u32 index_bytes = (count + 1) * sizeof(u32);
         if (index_offset > 0xffffffffu || index_offset + index_bytes > 0x100000000ULL ||
             read_raw_data((u8 *)ziso_idx_cache, index_bytes, (u32)index_offset, 0) != 0) {
