@@ -8,7 +8,7 @@ launch-compatibility claim.
 |---|---|---|
 | PlayStation 2 disc image | `.iso` in `DVD/` or `CD/` | Existing Neutrino path; baseline regression test |
 | Compressed PS2 image | `.zso` in `DVD/` or `CD/` | Bounded LZ4 decoding is integrated into the Neutrino FHI path on this branch; CI builds it, but PCSX2/PS2 game-launch verification remains pending |
-| USBExtreme split image | `ul.cfg` + `ul.*` parts | Not implemented; requires a compatible reader/engine and validation of split ordering and metadata |
+| USBExtreme split image | `ul.cfg` + `ul.*` parts | OPL upstream contains UL support and CI now builds a pinned standalone OPL ELF; TEa.G3 UL catalogue parsing and runtime hand-off are not implemented yet |
 | SMB PS2 image | `DVD/*.iso`, `CD/*.iso`, `.zso` on a share | SMB source and Neutrino hand-off are wired. The generated `TEAG3.GAMES` index now lists ISO and ZSO. ZSO uses the common FHI decoder; end-to-end SMB game launch tests remain pending |
 | Internal HDD / HD Loader | APA partitions | Existing APA/HDL scanner and Neutrino `-bsd=ata -bsdfs=hdl` launch path are retained |
 | PlayStation 1 image | `.vcd` in `POPS/` | Existing POPStarter path; separate from Neutrino's PS2 CDVD path |
@@ -64,3 +64,32 @@ folders. Custom themes can select a built-in base, set palette colors and use
 an optional background picture. Layout positions, fonts, icons, sounds and
 additional animation definitions remain controlled by the built-in theme.
 See [themes.md](themes.md).
+
+
+## OPL build status (integration branch)
+
+The `opl-engine` CI job checks out Open PS2 Loader at
+`b3a2199795fe89ba7e2dd7b843354472dff2c3eb`, fetches its separately pinned
+`lwNBD` dependency using the upstream `download_lwNBD.sh` script, then builds
+an uncompressed `opl.elf` and uploads it as `OPL.ELF`.
+
+Important: `lwNBD` is not a Git submodule in the upstream OPL repository.
+The upstream Makefile exposes a `download_lwNBD` target and makes `clean`
+depend on it. Therefore enabling `submodules: recursive` on checkout alone
+does not fetch this dependency; the workflow explicitly runs and verifies the
+upstream downloader before `make clean`.
+
+This CI artifact proves that the upstream OPL executable compiles. It does
+**not** yet mean TEa.G3 can select OPL, scan UL images, or launch a game through
+OPL. The next integration work is:
+1. Add a TEa.G3 engine abstraction that keeps Neutrino as the default ISO/ZSO
+   runtime and adds OPL as a separate selectable engine.
+2. Implement a safe UL catalogue reader for `ul.cfg` and all split parts,
+   validating entry metadata, part order, missing parts and bounds.
+3. Define and implement the game-launch hand-off from TEa.G3 to OPL without
+   replacing or deleting Neutrino.
+4. Add host fixtures and PS2SDK packaging checks, then test actual game boots
+   in PCSX2 with a configured mass-storage device and on real PS2 hardware.
+
+Do not mark UL or OPL engine selection as supported until those steps and
+runtime tests pass.
