@@ -1101,7 +1101,7 @@ static const char *const config_template[LANG_N] = {
 	"; المظهر: torres أو nuld أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
-	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; motor = auto (Neutrino by default; OPL for USB games when selected)\nmotor = auto\n"
+	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يستخدم Neutrino ويدعم UL عبر OPL\nmotor = auto\n"
 	"; عنوان خادم الألعاب الذي يشغل nuld_catalog. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
 	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
