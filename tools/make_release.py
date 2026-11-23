@@ -114,7 +114,8 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
                      "neutrino/modules/raagent.irx", "neutrino/modules/cdvdman_emu.irx",
                      "neutrino/modules/udpfs_fhi.irx", "neutrino/modules/smap.irx",
                      "neutrino/modules/ministack.irx", "neutrino/modules/smb_ioman.irx",
-                     "neutrino/modules/smb_fhi.irx", "neutrino/config/bsd-smb.toml"):
+                     "neutrino/modules/smb_fhi.irx", "neutrino/modules/mmcefhi.irx",
+                     "neutrino/config/bsd-smb.toml"):
         if required not in embedded:
             raise SystemExit("embedded runtime is incomplete: " + required)
     add(manifest, "runtime-manifest.txt")
