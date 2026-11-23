@@ -2,6 +2,7 @@
 #include "runtime_payload.h"
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -20,9 +21,9 @@ static int make_parents(char *path)
         *p = '/';
     }
     if (*path && mkdir(path, 0777) < 0) {
-        FILE *f = fopen(path, "rb");
-        if (!f) return 0;
-        fclose(f);
+        DIR *d = opendir(path);
+        if (!d) return 0;
+        closedir(d);
     }
     return 1;
 }
