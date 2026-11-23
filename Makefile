@@ -22,6 +22,7 @@ font:
 	python3 tools/fetch_arabic_font.py
 	python3 tools/font.py
 	python3 tools/generate_igr_arabic.py
+	python3 tools/logo.py
 
 tools/fonts/NotoSansArabicUI.ttf:
 	python3 tools/fetch_arabic_font.py
