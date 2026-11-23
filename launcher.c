@@ -635,17 +635,16 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (2 POPS
 		snprintf(cv[n].path, sizeof(cv[n].path), "%s/%s", dirs[k], e->d_name);
 		snprintf(path, sizeof(path), "%s/%s", src[s].root, cv[n].path);
 		int fd = fileXioOpen(path, FIO_O_RDONLY);
+		int zso_file = !ps1 && has_ext(e->d_name, ".zso");
 		int ok = 0;
 		if (fd >= 0) {
-			if (!ps1 && has_ext(e->d_name, ".zso")) {
-				int zr = zso_ee_open(fd);
-				if (zr == 1) ok = iso_serial(zso_fx_read, &fd, 0, raw);
-				else if (zr == 0) ok = iso_serial(fx_read, &fd, 0, raw);
+			if (zso_file) {
+				if (zso_ee_open(fd) == 1) ok = iso_serial(zso_fx_read, &fd, 0, raw);
 				zso_ee_close();
 			} else ok = iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw);
 			fileXioClose(fd);
 		} // SYSTEM.CNF; compressed files use the same decoder as the runtime
-		if (!ok) ok = name_serial(e->d_name, raw);
+		if (!ok && !zso_file) ok = name_serial(e->d_name, raw);
 		done_n++;
 		if (!ok && !ps1) { printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\n", path); continue; }
 		memset(cv[n].serial, 0, sizeof(cv[n].serial));
