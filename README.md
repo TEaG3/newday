@@ -4,7 +4,9 @@ TEa.G3 is a launcher that runs on a real PS2. It lists your games with their cov
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
 RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
 
-**تعديل وتطوير المطور العراقي: TEa.G3** · [دليل التثبيت العربي](INSTALL-AR.txt)\n\n**Website, screenshots and videos:** https://github.com/TEaG3/newday/tree/master/site
+**تعديل وتطوير المطور العراقي: TEa.G3** · [دليل التثبيت العربي](INSTALL-AR.txt)
+
+**Website, screenshots and videos:** https://github.com/TEaG3/newday/tree/master/site
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
 **Download:** [latest TEa.G3 release](https://github.com/TEaG3/newday/releases/latest)
 
