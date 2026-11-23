@@ -183,7 +183,7 @@ static void scan_cards(void)
 enum { MC_DEFAULT, MC_GAME, MC_SHARED, MC_REAL, MC_N };
 static int game_mc(int i);                                 // effective mode, MC_GAME..MC_REAL (config section)
 static int uses_vmc(int i) { int m = game_mc(i); return cv[i].kind == K_PS2 && (m == MC_GAME || m == MC_SHARED) &&
-	src[(int)cv[i].src].type != SRC_HDL && src[(int)cv[i].src].type != SRC_MMCE; }
+	src[(int)cv[i].src].type != SRC_HDL && src[(int)cv[i].src].type != SRC_MMCE && src[(int)cv[i].src].type != SRC_SMB; }
 static sceMcTblGetDir *vdir[MAXC];  // the card's root; written by the icon thread before vmc_state = 2
 static int vmc_n[MAXC];             // entries in vdir, -1: no card file yet
 static volatile char vmc_state[MAXC]; // 0 not read, 1 reading, 2 done
@@ -726,6 +726,52 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 	done_n++, total_n++; // as the catalog: not counted beforehand
 }
 
+static int smb_game_path(const char *path)
+{
+	if (strncmp(path, "DVD/", 4) && strncmp(path, "CD/", 3)) return 0;
+	if (!has_ext(path, ".iso") || strstr(path, "..")) return 0;
+	for (const unsigned char *p = (const unsigned char *)path; *p; p++)
+		if (*p < 0x21 || *p > 0x7e || *p == '\\' || *p == ':') return 0;
+	return strlen(path) < sizeof(cv[0].path);
+}
+
+static int smb_catalog_load(int s, int n)
+{
+	FILE *f = fopen("smb:/TEAG3.GAMES", "rb");
+	char line[320];
+	int got = 0;
+	if (!f) {
+		src_err[SRC_SMB] = L("لا يمكن قراءة TEAG3.GAMES من مشاركة SMB", "Cannot read TEAG3.GAMES from the SMB share");
+		printf("smb: missing TEAG3.GAMES catalog\n");
+		return n;
+	}
+	while (n < MAXC && fgets(line, sizeof(line), f)) {
+		char *end = strpbrk(line, "\r\n");
+		if (end) *end = 0;
+		if (!*line || line[0] == '#') continue;
+		char *t1 = strchr(line, '\t');
+		if (!t1) continue;
+		*t1++ = 0;
+		char *t2 = strchr(t1, '\t');
+		if (!t2) continue;
+		*t2++ = 0;
+		if (!smb_game_path(line) || !*t1 || strlen(t1) >= sizeof(cv[0].title)) continue;
+		entry *e = &cv[n++];
+		memset(e, 0, sizeof(*e));
+		snprintf(e->path, sizeof(e->path), "%s", line);
+		snprintf(e->title, sizeof(e->title), "%s", t1);
+		if (strlen(t2) == 11) serial_dash(t2, e->serial);
+		e->kind = K_PS2, e->cd = !strncmp(line, "CD/", 3), e->src = s;
+		done_n++, total_n++, got++;
+	}
+	int read_error = ferror(f);
+	fclose(f);
+	if (read_error) src_err[SRC_SMB] = L("حدث خطأ أثناء قراءة فهرس SMB", "Error while reading the SMB catalog");
+	else if (got) src_err[SRC_SMB] = NULL;
+	printf("smb catalog: %d games%s\n", got, read_error ? ", read error" : "");
+	return n;
+}
+
 static int by_title(const void *a, const void *b) // then by source
 {
 	const entry *x = a, *y = b;
@@ -743,7 +789,7 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	snprintf(cv[0].title, sizeof(cv[0].title), L("Sin disco", "No disc"));
 	total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
 	for (int s = 0; s < nsrc; s++)
-		if (src[s].type != SRC_HDL && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
+		if (src[s].type != SRC_HDL && src[s].type != SRC_SMB && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
 			total_n += count_dir(src[s].root, "DVD", ".iso") + count_dir(src[s].root, "DVD", ".zso") +
 			           count_dir(src[s].root, "CD", ".iso") + count_dir(src[s].root, "CD", ".zso");
 	for (int s = 0; s < nsrc; s++) {
@@ -753,6 +799,8 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 			n = c.n;
 		} else if (src[s].type == SRC_UDPFS && udpfs_cat)
 			n = catalog_load(s, n);
+		else if (src[s].type == SRC_SMB)
+			n = smb_catalog_load(s, n);
 		else if (s || src_want & 1u << src[0].type) // src[0] is the home: its PS2 games only if it is a source
 			n = scan_dir(s, 1, scan_dir(s, 0, n));
 	}
@@ -1061,6 +1109,13 @@ static void load_config(void) // loader thread, before the splash sound
 	src_want = src_mask(ini_get(&cfg, "juegos", "origen", auto_sources));
 	if (!strcasecmp(ini_get(&cfg, "juegos", "auto", "si"), "si"))
 		src_want |= src_mask(auto_sources); // existing configs also probe every supported source unless auto=no
+	if (src_want & 1u << SRC_SMB) {
+		unsigned udp_sources = (1u << SRC_UDPBD) | (1u << SRC_UDPFS);
+		if (src_want & udp_sources) {
+			src_want &= ~udp_sources;
+			src_why = L("SMB y UDPBD/UDPFS comparten el adaptador: se prioriza SMB", "SMB and UDPBD/UDPFS share the network adapter: SMB takes priority");
+		}
+	}
 	if (!src_want) src_want = 1u << SRC_USB, src_why = L("Origen de juegos desconocido en config.ini: usando USB", "Unknown game source in config.ini: using USB");
 	ini_load(&games, GAMES_INI);
 	static ini state;
@@ -1112,9 +1167,9 @@ static int mc_index(const char *s)
 	return 0;
 }
 static int game_mcv(int i) { return mc_index(ini_get(&games, cv[i].serial, "mc", "")); }
-static int game_mc(int i) // effective memory card mode (phase 14); HD Loader games only have the real one
+static int game_mc(int i) // effective memory card mode (phase 14); HD Loader and read-only SMB use the real card
 {
-	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_HDL) return MC_REAL;
+	if (cv[i].kind == K_PS2 && (src[(int)cv[i].src].type == SRC_HDL || src[(int)cv[i].src].type == SRC_SMB)) return MC_REAL;
 	int m = game_mcv(i);
 	if (!m) m = mc_index(ini_get(&cfg, "memorycard", "modo", "juego"));
 	return m ? m : MC_GAME;
@@ -1128,7 +1183,7 @@ static void opt_change(int i, int row, int dir)
 	char v[8];
 	if (row == OPT_VIDEO) ini_set(&games, s, "video", vid_key[(game_vid(i) + dir + 4) % 4]); // NULL = default
 	else if (row == OPT_MC) {
-		if (src[(int)cv[i].src].type != SRC_HDL) ini_set(&games, s, "mc", mc_key[(game_mcv(i) + dir + MC_N) % MC_N]);
+		if (src[(int)cv[i].src].type != SRC_HDL && src[(int)cv[i].src].type != SRC_SMB) ini_set(&games, s, "mc", mc_key[(game_mcv(i) + dir + MC_N) % MC_N]);
 	}
 	else if (row == OPT_COMPAT) {
 		int c = (game_compat(i) + dir + 4) % 4;
@@ -1152,6 +1207,7 @@ static void opt_value(int i, int row, char *out, int n)
 	} else if (row == OPT_MC) {
 		int m = game_mcv(i);
 		if (src[(int)cv[i].src].type == SRC_HDL) snprintf(out, n, L("Física (HD Loader)", "Physical (HD Loader)"));
+		else if (src[(int)cv[i].src].type == SRC_SMB) snprintf(out, n, L("Física (SMB: solo lectura)", "Physical (SMB: read-only)"));
 		else if (m) snprintf(out, n, "%s", mc_label[m]);
 		else snprintf(out, n, L("Predet. (%s)", "Default (%s)"), mc_label[game_mc(i)]);
 	} else if (row == OPT_COMPAT) {
@@ -1560,8 +1616,18 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 		}
 		nsrc = 1, src[0].type = strcmp(homedev, "mass0:") ? SRC_MMCE : SRC_USB, strcpy(src[0].root, homedev); // the home
 		udpfs_cat = *ini_get(&cfg, "juegos", "servidor", "") != 0;
-		const char *why = src_init(src_want & ~(1u << src[0].type), ini_get(&cfg, "red", "ip", "dhcp"), NDIR, !udpfs_cat);
+		const char *why = src_init(src_want & ~(1u << src[0].type) & ~(1u << SRC_SMB), ini_get(&cfg, "red", "ip", "dhcp"), NDIR, !udpfs_cat);
 		if (why && !src_why) src_why = why;
+		if (src_want & 1u << SRC_SMB) {
+			const char *smb_why = src_smb_init(ini_get(&cfg, "red", "ip", "dhcp"),
+			                                  ini_get(&cfg, "red", "mascara", "255.255.255.0"),
+			                                  ini_get(&cfg, "red", "puerta", ""),
+			                                  ini_get(&cfg, "smb", "server", ""),
+			                                  ini_get(&cfg, "smb", "user", "guest"),
+			                                  ini_get(&cfg, "smb", "password", ""),
+			                                  ini_get(&cfg, "smb", "share", ""), NDIR);
+			if (smb_why && !src_why) src_why = smb_why;
+		}
 		load_games();
 	}
 	load_ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
@@ -1924,7 +1990,7 @@ static void options_panel(int i, int row) // △ menu: the game's Neutrino optio
 // starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts NULD only
 // when the sources or the network changed (read at boot). ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
 enum { W_UPD, W_LANG, W_THEME, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
-static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS}; // checkboxes
+static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS, SRC_SMB}; // checkboxes
 #define W_NCHIP (int)sizeof(w_chip)
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
 static const char *const w_mcm[3] = {"juego", "compartida", "fisica"}, *const w_vid[3] = {"nativo", "480p", "1080i"};
@@ -2109,6 +2175,8 @@ static int wiz_toggle(void) // X on the sources row; 0 if refused (the last one 
 	if (m & 1u << w_chip[w_cur]) { // MX4SIO and MMCE share slot 2's SIO2: checking one unchecks the other
 		if (w_chip[w_cur] == SRC_MX4SIO) m &= ~(1u << SRC_MMCE);
 		if (w_chip[w_cur] == SRC_MMCE) m &= ~(1u << SRC_MX4SIO);
+		if (w_chip[w_cur] == SRC_SMB) m &= ~((1u << SRC_UDPBD) | (1u << SRC_UDPFS));
+		if (w_chip[w_cur] == SRC_UDPBD || w_chip[w_cur] == SRC_UDPFS) m &= ~(1u << SRC_SMB);
 	}
 	w_val[W_SRC] = m;
 	return 1;
@@ -2278,7 +2346,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		if (*cv[sel].serial) x = tag(x, cv[sel].serial, -1, EDGE, TEXT2, 0);
 		x = tag(x, kind_label(sel), kind_icon(sel), TEXT, BG, 1);
 		static const int src_icon[SRC_N] = {UI_USB_18, UI_HDD_18, UI_HDD_18, UI_MX4SIO_18, UI_ILINK_18, UI_MMCE_18,
-		                                    UI_NET_18, UI_NET_18};
+		                                    UI_NET_18, UI_NET_18, UI_NET_18};
 		int st = src[(int)cv[sel].src].type;
 		const char *src_txt = cv[sel].kind == K_DISC ? L("UNIDAD", "DRIVE") : st == SRC_HDL ? "HDL" : src_label[st];
 		x = tag(x, src_txt, cv[sel].kind == K_DISC ? UI_DVD_18 : src_icon[st], ACID, ACID, 0); // the source: acid
@@ -2441,6 +2509,9 @@ static int status_text(char *b, int max)
 static const char *launch_problem(int i) // why X cannot start entry i, or NULL (shown as a toast)
 {
 	if (cv[i].kind == K_PS2 && !neutrino) return L("Falta Neutrino: cópialo a la carpeta neutrino/", "Neutrino missing: copy it to the neutrino/ folder");
+	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB &&
+	    (!exists("mass0:/neutrino/modules/smb_fhi.irx") || !exists("mass0:/neutrino/config/bsd-smb.toml")))
+		return L("تثبيت Neutrino مع وحدات SMB مطلوب", "Install a Neutrino build with the SMB modules first");
 	if (cv[i].kind == K_PS1 && (!exists(POPSTARTER) || !exists("mass0:/POPS/POPS_IOX.PAK")))
 		return L("Faltan POPSTARTER.ELF y POPS_IOX.PAK en mass0:/POPS/", "POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/");
 	if (cv[i].kind == K_DISC && (cv[i].disc == D_NONE || cv[i].disc == D_READING)) return L("No hay un disco listo", "No disc ready");
@@ -2596,6 +2667,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 		snprintf(dvd, sizeof(dvd), "-dvd=hdl:%s", cv[i].path);
 	} else snprintf(dvd, sizeof(dvd), "-dvd=%s%s", root, cv[i].path);
 	if (st == SRC_UDPFS) argv[argc++] = "-bsd=udpfs"; // phase 17: Neutrino loads its own smap / ministack / udpfs
+	if (st == SRC_SMB) argv[argc++] = "-bsd=smb"; // read-only share; Neutrino loads its own SMB FHI
 	argv[argc++] = dvd;
 	if (uses_vmc(i)) { // virtual memory card in slot 1, on the game's own source (Neutrino -mc0=<file>)
 		char name[40];
@@ -2629,7 +2701,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 	if (!strcasecmp(ini_get(&cfg, "juegos", "logo", "no"), "si")) argv[argc++] = "-logo"; // Neutrino runs the game through rom0:PS2LOGO
 	// HD Loader needs Neutrino's own load stage (hdlfs; nhddl neutrino.c); so do nuld games, whose network stack is
 	// Neutrino's own (the launcher's lwIP is shut down, phase 17)
-	if (st != SRC_HDL && st != SRC_UDPFS) argv[argc++] = "-qb";
+	if (st != SRC_HDL && st != SRC_UDPFS && st != SRC_SMB) argv[argc++] = "-qb";
 	int len = 0;
 	for (int k = 0; k < argc; k++) len += strlen(argv[k]) + 1;
 	if (len > 255) { // the documented limit for Neutrino's arguments (nhddl README "Argument files")
