@@ -17,7 +17,7 @@ inputs. Its current capability policy is:
 | USBExtreme UL | USB | OPL | OPL-only |
 | ISO/ZSO | SMB, APA/HDL, MX4SIO, iLink, MMCE, UDPBD/UDPFS | Neutrino | Rejected until an OPL hand-off exists |
 
-The config key is `[juegos] motor` in `nuld/config.ini` on the launcher's home
+The config key is `[juegos] motor` in `tea_g3/config.ini` on the launcher's home
 device:
 - `auto`: Neutrino for ISO/ZSO; OPL for UL.
 - `neutrino`: keep ISO/ZSO on Neutrino; UL remains OPL-only.
@@ -66,7 +66,7 @@ that device's root as well.
 
 ## Validation status
 
-The successful CI run `45247139396` validated:
+The successful CI run `45246675082` validated:
 - ZSO host decoder/scanner fixtures;
 - UL record and split-part fixtures;
 - engine-selection capability matrix;
