@@ -104,7 +104,13 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(info, s.replace("\n", "\r\n") if arc.endswith(".txt") else s, zipfile.ZIP_DEFLATED)
 
     add(os.path.join(ROOT, "TEa.G3.ELF"), "TEa.G3.ELF")
-    overlay = {"neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx"}  # TEa.G3's fork over the official release
+    # TEa.G3 runtime plus SMB modules/config built into dist/neutrino by build_neutrino.sh.
+    overlay = {
+        "neutrino.elf", "modules/ee_core.elf", "modules/udpfs_fhi.irx",
+        "modules/smap.irx", "modules/ministack.irx",
+        "modules/smb_ioman.irx", "modules/smb_fhi.irx",
+        "config/bsd-smb.toml",
+    }
     for dirpath, _, files in os.walk(ndev):
         for f in files:
             rel = os.path.relpath(os.path.join(dirpath, f), ndev).replace("\\", "/")
