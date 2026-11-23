@@ -99,7 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y 7zip
+          sudo apt-get install -y libarchive-tools
           bash tools/fetch_neutrino_mmcefhi.sh
 
       - name: Build TEa.G3 with embedded OPL and Neutrino
