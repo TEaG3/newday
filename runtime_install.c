@@ -14,9 +14,9 @@ static int make_parents(char *path)
         if (*p != '/') continue;
         *p = 0;
         if (*path && mkdir(path, 0777) < 0) {
-            FILE *f = fopen(path, "rb");
-            if (!f) { *p = '/'; return 0; }
-            fclose(f);
+            DIR *d = opendir(path);
+            if (!d) { *p = '/'; return 0; }
+            closedir(d);
         }
         *p = '/';
     }
@@ -65,7 +65,7 @@ int runtime_install(const char *home)
     }
     for (unsigned int i = 0; i < tea_runtime_assets_count; i++) {
         if (!write_asset(root, &tea_runtime_assets[i])) {
-            printf("runtime: failed to install %s\\n", tea_runtime_assets[i].path);
+            printf("runtime: failed to install %s\n", tea_runtime_assets[i].path);
             return 0;
         }
     }
@@ -73,9 +73,9 @@ int runtime_install(const char *home)
     snprintf(tmp, sizeof(tmp), "%s.tmp", marker);
     f = fopen(tmp, "wb");
     if (!f) return 0;
-    int ok = fprintf(f, "%s\\n", expected) > 0;
+    int ok = fprintf(f, "%s\n", expected) > 0;
     if (fclose(f) != 0) ok = 0;
     if (!ok || rename(tmp, marker) != 0) { remove(tmp); return 0; }
-    printf("runtime: installed bundle %s (%u files)\\n", expected, tea_runtime_assets_count);
+    printf("runtime: installed bundle %s (%u files)\n", expected, tea_runtime_assets_count);
     return 1;
 }
