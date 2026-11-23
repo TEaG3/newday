@@ -24,6 +24,7 @@
 #include "ui_data.h"
 #include "iop.h"
 #include "iso.h"
+#include "zso_ee.h"
 #include "ini.h"
 #include "net.h"
 #include "cover.h"
@@ -493,6 +494,12 @@ static int fx_read(void *ctx, unsigned lba, void *buf, unsigned n) // 64-bit see
 	return fileXioLseek64(fd, (s64)lba * 2048, FIO_SEEK_SET) >= 0 && fileXioRead(fd, buf, n) == (int)n;
 }
 
+static int zso_fx_read(void *ctx, unsigned lba, void *buf, unsigned n)
+{
+	(void)ctx;
+	return zso_ee_read(lba, buf, n);
+}
+
 // VCD (POPStarter): a 1 MB header, then the disc's raw 2352-byte Mode 2 sectors, data 24 bytes in (cue2pops layout;
 // sources.md E). ponytail: Mode 2 assumed; Mode 1 PS1 data tracks would need offset 16
 static int vcd_read(void *ctx, unsigned lba, void *buf, unsigned n)
@@ -624,12 +631,20 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (2 POPS
 	DIR *d = opendir(path);
 	while (d && (e = readdir(d)) && n < MAXC) {
 		int ps1 = k == 2;
-		if (!has_ext(e->d_name, ps1 ? ".vcd" : ".iso")) continue;
+		if (!has_ext(e->d_name, ps1 ? ".vcd" : ".iso") && (ps1 || !has_ext(e->d_name, ".zso"))) continue;
 		snprintf(cv[n].path, sizeof(cv[n].path), "%s/%s", dirs[k], e->d_name);
 		snprintf(path, sizeof(path), "%s/%s", src[s].root, cv[n].path);
 		int fd = fileXioOpen(path, FIO_O_RDONLY);
-		int ok = fd >= 0 && iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw); // SYSTEM.CNF; the OPL name after
-		if (fd >= 0) fileXioClose(fd);
+		int ok = 0;
+		if (fd >= 0) {
+			if (!ps1 && has_ext(e->d_name, ".zso")) {
+				int zr = zso_ee_open(fd);
+				if (zr == 1) ok = iso_serial(zso_fx_read, &fd, 0, raw);
+				else if (zr == 0) ok = iso_serial(fx_read, &fd, 0, raw);
+				zso_ee_close();
+			} else ok = iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw);
+			fileXioClose(fd);
+		} // SYSTEM.CNF; compressed files use the same decoder as the runtime
 		if (!ok) ok = name_serial(e->d_name, raw);
 		done_n++;
 		if (!ok && !ps1) { printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\n", path); continue; }
@@ -730,7 +745,8 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
 	for (int s = 0; s < nsrc; s++)
 		if (src[s].type != SRC_HDL && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
-			total_n += count_dir(src[s].root, "DVD", ".iso") + count_dir(src[s].root, "CD", ".iso");
+			total_n += count_dir(src[s].root, "DVD", ".iso") + count_dir(src[s].root, "DVD", ".zso") +
+			           count_dir(src[s].root, "CD", ".iso") + count_dir(src[s].root, "CD", ".zso");
 	for (int s = 0; s < nsrc; s++) {
 		if (src[s].type == SRC_HDL) {
 			hdl_ctx c = {s, n};
