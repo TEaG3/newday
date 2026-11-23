@@ -39,7 +39,7 @@
       g.fillStyle = accent; g.fillText('$', bx, 346);
       g.fillStyle = FG; g.fillText('nulld', bx + w1, 346);
       if (!blink(s)) { g.fillStyle = accent; g.fillRect(bx + w1 + w2 + 12, 254, 58, 104); }
-    } else if (k === 2) { // C: NULD// in Archivo 800 at 125 %
+    } else if (k === 2) { // C: TEa.G3// in Archivo 800 at 125 %
       if ('fontStretch' in g) g.fontStretch = 'expanded';
       font(g, '800 132px Archivo');
       var wn = g.measureText('TEa.G3').width, wt = wn + g.measureText('//').width, cx = 640 - wt / 2 + dx;
@@ -59,7 +59,7 @@
       g.fillRect(b + 14, ly + top, 2, bot);
       font(g, '14px "IBM Plex Mono"');
       g.fillStyle = '#C9CED6'; g.fillText('SCPH-75001 · EE 294.912 MHz', b + 32, ly + top + 26);
-      g.fillStyle = accent; g.fillText('v' + ver + ' · 2026 · nuld.local', b + 32, ly + top + 48);
+      g.fillStyle = accent; g.fillText('v' + ver + ' · 2026 · tea-g3.local', b + 32, ly + top + 48);
       var sx = lx + (s * 175) % lw;
       g.fillStyle = rgba(accent, 0.75); g.fillRect(sx, ly + 2, 2, top + bot - 2);
     }
