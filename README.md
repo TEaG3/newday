@@ -9,7 +9,7 @@ RetroAchievements on real hardware. Arabic is the default interface language, wi
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
 **Download:** [latest TEa.G3 release](https://github.com/TEaG3/newday/releases/latest)
 
-Previously named ORBIT and then NULD. Upgrading preserves existing data: the first boot automatically moves `orbit/` or `nuld/` to `tea_g3/`, installs `BOOT/TEa.G3.ELF`, and refreshes existing `BOOT/TEa.G3.ELF` / `BOOT/ORBIT.ELF` entry points so old FreeMcBoot shortcuts continue to work. Existing `VMC/ORBIT.bin` and `VMC/NULD.bin` shared cards are reused; new installs use `VMC/TEa.G3.bin`.
+Previously named ORBIT and then NULD. Upgrading preserves existing data: the first boot automatically moves `orbit/` or `nuld/` to `tea_g3/`, installs `BOOT/TEa.G3.ELF`, and refreshes existing `BOOT/NULD.ELF` / `BOOT/ORBIT.ELF` entry points so old FreeMcBoot shortcuts continue to work. Existing `VMC/ORBIT.bin` and `VMC/NULD.bin` shared cards are reused; new installs use `VMC/TEa.G3.bin`.
 
 ![Home screen](site/img/home-carousel.jpg)
 
