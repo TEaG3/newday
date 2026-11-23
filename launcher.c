@@ -2606,9 +2606,13 @@ static const char *launch_problem(int i) // why X cannot start entry i, or NULL 
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_USB)
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
-	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB &&
-	    (!exists("mass0:/tea_g3/runtime/neutrino/modules/smb_fhi.irx") || !exists("mass0:/tea_g3/runtime/neutrino/config/bsd-smb.toml")))
-		return L("تثبيت Neutrino مع وحدات SMB مطلوب", "Install a Neutrino build with the SMB modules first");
+	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB) {
+		char smb_module[128], smb_config[128];
+		snprintf(smb_module, sizeof(smb_module), "%s/modules/smb_fhi.irx", NDIR);
+		snprintf(smb_config, sizeof(smb_config), "%s/config/bsd-smb.toml", NDIR);
+		if (!exists(smb_module) || !exists(smb_config))
+			return L("تثبيت Neutrino مع وحدات SMB مطلوب", "Install a Neutrino build with the SMB modules first");
+	}
 	if (cv[i].kind == K_PS1 && (!exists(POPSTARTER) || !exists("mass0:/POPS/POPS_IOX.PAK")))
 		return L("Faltan POPSTARTER.ELF y POPS_IOX.PAK en mass0:/POPS/", "POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/");
 	if (cv[i].kind == K_DISC && (cv[i].disc == D_NONE || cv[i].disc == D_READING)) return L("No hay un disco listo", "No disc ready");
