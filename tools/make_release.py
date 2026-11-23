@@ -26,7 +26,7 @@ circle achievements, X play, SELECT data overlay.
 In a game: L1+L2+R1+R2+START+SELECT opens the menu (restart, power off).
 
 Optional
-- English / Português: in config.ini set  [ui] idioma = en  or  idioma = pt  (Spanish is the default).
+- العربية هي اللغة الافتراضية. يمكن تغيير لغة الواجهة من معالج الإعدادات (START) أو من [ui] idioma في config.ini؛ تتوفر العربية والإنجليزية والإسبانية والبرتغالية.
 - Covers: plug in the network cable; the missing ones download at boot.
   Your own: tools/covers.py turns PNG/JPG files named by serial (SLUS-21376.png) into the .c16 pair for
   mass0:/covers/ (python3 covers.py IN_DIR OUT_DIR; needs numpy and Pillow).
@@ -133,6 +133,7 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         text("server/" + n, s)
     text("server/README.txt", SERVER)
     text("QUICKSTART.txt", QUICKSTART)
+    add(os.path.join(ROOT, "INSTALL-AR.txt"), "INSTALL-AR.txt")
     add(os.path.join(ROOT, "LICENSE"), "LICENSE")
 
 h = hashlib.sha256(open(out, "rb").read()).hexdigest().upper()
