@@ -40,7 +40,7 @@ Previously named ORBIT and then NULD. Upgrading preserves existing data: the fir
 
 ## Quick start
 
-1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `TEa.G3.ELF` and `neutrino/`.
+1. **Copy** the release zip's contents to the root of a FAT32 or exFAT USB drive: `TEa.G3.ELF`, `OPL.ELF` and `neutrino/`. OPL is started automatically for USBExtreme UL (and for USB ISO/ZSO only when manually selected); never launch `OPL.ELF` yourself.
    Put your PS2 ISOs in `DVD/` (and CD games in `CD/`).
 2. **Start** `mass0:/TEa.G3.ELF` from uLaunchELF or FreeMcBoot (for example as FMCB's autoboot).
 3. **Set up**: the first boot opens the setup wizard in Arabic (START reopens it): language, game sources, memory card. By default TEa.G3 probes USB, internal HDD/HDL, MX4SIO, iLink, MMCE, UDPBD and UDPFS at startup and scans detected sources automatically; no Discover/Show Games button is needed. You can narrow the source list in `tea_g3/config.ini`.
