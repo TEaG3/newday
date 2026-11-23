@@ -1,5 +1,5 @@
 #pragma once
-// The NULD logo glyphs as vector meshes (tools/logo.py): font units, y up
+// The TEa.G3 logo glyphs as vector meshes (tools/logo.py): font units, y up
 typedef struct {
 	char ch;
 	const short *v; int nv;              // points, x y pairs
