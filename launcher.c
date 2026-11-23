@@ -1042,7 +1042,9 @@ static void load_config(void) // loader thread, before the splash sound
 	// Auto-discover every supported source on first boot unless the user explicitly narrows [juegos] origen.
 	// Missing devices are reported per-source by src_init(); they do not block the sources that are present.
 	static const char *auto_sources = "usb,hdd,mx4sio,ilink,mmce,udpbd,udpfs";
-	src_want = src_mask(ini_get(&cfg, "juegos", "origen", auto_sources)); // automatic source discovery at boot
+	src_want = src_mask(ini_get(&cfg, "juegos", "origen", auto_sources));
+	if (!strcasecmp(ini_get(&cfg, "juegos", "auto", "si"), "si"))
+		src_want |= src_mask(auto_sources); // existing configs also probe every supported source unless auto=no
 	if (!src_want) src_want = 1u << SRC_USB, src_why = L("Origen de juegos desconocido en config.ini: usando USB", "Unknown game source in config.ini: using USB");
 	ini_load(&games, GAMES_INI);
 	static ini state;
