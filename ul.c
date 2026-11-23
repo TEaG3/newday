@@ -124,7 +124,7 @@ int main(void)
 {
     unsigned char record[UL_CFG_RECORD_SIZE];
     ul_game game;
-    fake_parts parts = {{{0}}, 0};
+    fake_parts parts = {0};
     char title[33] = "Test Game";
     unsigned int crc;
 
