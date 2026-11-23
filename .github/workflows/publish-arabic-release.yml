@@ -79,15 +79,15 @@ jobs:
           Upstream NULD: https://github.com/danielnuld/nuld
           EOF
           (cd release-work/package && zip -qr ../TEa.G3-PS2.zip "$(basename "$root")")
-          sha256sum release-work/NULD-Arabic-Edition.zip > release-work/SHA256SUMS.txt
+          sha256sum release-work/TEa.G3-PS2.zip > release-work/SHA256SUMS.txt
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
-          name: "NULD Arabic Edition — TEa.G3"
+          name: "TEa.G3 PS2"
           body: |
-            Arabic-first NULD build based on upstream NULD v1.3.
+            TEa.G3 Arabic edition based on upstream NULD v1.3, retaining all upstream license notices.
 
             - Arabic launcher interface with right-to-left shaping.
             - Arabic Neutrino in-game menu labels.
@@ -97,7 +97,7 @@ jobs:
             Build and localization checks run in GitHub Actions. A physical PS2 visual test is still required.
           prerelease: ${{ inputs.prerelease }}
           files: |
-            release-work/NULD-Arabic-Edition.zip
+            release-work/TEa.G3-PS2.zip
             release-work/SHA256SUMS.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
