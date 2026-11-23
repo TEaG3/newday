@@ -150,6 +150,7 @@ static const char *const ar[][2] = {
         {"Install a Neutrino build with the SMB modules first", "ثبت إصدار Neutrino الذي يحتوي على وحدات SMB أولا"},
         {"Physical (SMB: read-only)", "البطاقة الفعلية (SMB: قراءة فقط)"},
         {"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "مصادر SMB وUDPBD وUDPFS تتشارك محول الشبكة: الأولوية إلى SMB"},
+        {"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "شبكة Neutrino (UDPBD / UDPFS / SMB)، IP %s\n"},
 };
 
 const char *lang_ar(const char *en)
