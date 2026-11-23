@@ -378,7 +378,7 @@ static icon *load_icon(int i)
 }
 
 // ---- In Game Reset (phase 12): the NULD Neutrino fork reboots through rom0:OSDSYS, and FMCB autoboots
-// mc?:/BOOT/NULD.ELF (boot.c, embedded here), which runs mass0:/launcher.elf. The icon thread (the libmc owner)
+// mc?:/BOOT/NULD.ELF (boot.c, embedded here), which runs mass0:/TEa.G3.ELF. The icon thread (the libmc owner)
 // installs it, rewriting it only when it differs ----
 extern unsigned char boot_elf[];
 extern unsigned int size_boot_elf;
@@ -450,7 +450,7 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 		if (state_dirty && usb) { // the chosen view, for the next boot (phase 10)
 			state_dirty = 0;
 			FILE *f = fopen(STATE_INI, "w");
-			if (f) fprintf(f, "; NULD - estado de la interfaz (lo escribe el launcher)\n[ui]\nvista = %s\n",
+			if (f) fprintf(f, "; TEa.G3 - estado de la interfaz (lo escribe el launcher)\n[ui]\nvista = %s\n",
 			               view_key[view]), fclose(f);
 		}
 		int i = icon_want, port;
@@ -824,10 +824,10 @@ static void disc_thread(void *arg)
 // ---- config (phase 7): mass0:/nuld/config.ini, created from this template when missing; per-game options in
 // juegos.ini, one section per dash serial with only the keys that differ from the defaults ----
 static const char *const config_template[LANG_N] = {
-	"; NULD - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
+	"; TEa.G3 - configuración, se lee al arrancar\n" // the first line names the language (phase 18)
 	"\n[ui]\n; idioma de la interfaz y de estos comentarios: es = español, en = inglés (english), pt = portugués (português)\nidioma = es\n"
 	"; tema: torres (prismas de luz en una noche azul), nuld (negro y verde ácido, el de v1.2), cristal, aurora, liquid,\n"
-	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. También se elige en la configuración (START);\n; o el nombre de una carpeta de nuld/themes (un tema hecho por alguien: docs/themes.md)\ntema = torres\n"
+	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. También se elige en la configuración (START);\n; o el nombre de una carpeta de tea_g3/themes (un tema hecho por alguien: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; dónde buscar juegos de PS2 (carpetas DVD y CD), separados por comas: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs. hdd = disco interno exFAT, o APA con particiones de HD Loader. udpbd usa la IP fija de [red];\n"
 	"; udpfs, el servidor de abajo. mx4sio y mmce no van juntos. Configuración, portadas, Neutrino, POPS\n"
@@ -863,7 +863,7 @@ static const char *const config_template[LANG_N] = {
 	"; botones: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO,\n"
 	"; unidos con +; vacio = desactivado\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
-	"; NULD - configuration, read at boot\n"
+	"; TEa.G3 - configuration, read at boot\n"
 	"\n[ui]\n; language of the interface and of these comments: es = Spanish (español), en = English, pt = Portuguese (português)\nidioma = en\n"
 	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
 	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in nuld/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
@@ -902,7 +902,7 @@ static const char *const config_template[LANG_N] = {
 	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (up down left right triangle circle x square), joined with +; empty = off\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
-	"; NULD - configuração, lida ao iniciar\n"
+	"; TEa.G3 - configuração, lida ao iniciar\n"
 	"\n[ui]\n; idioma da interface e destes comentários: es = espanhol (español), en = inglês (english), pt = português\nidioma = pt\n"
 	"; tema: torres (prismas de luz numa noite azul), nuld (preto e verde ácido, o da v1.2), cristal, aurora, liquid,\n"
 	"; onda, orbit, techstep, wireframe, neuro, fosforo, papel. Também se escolhe na configuração (START);\n; ou o nome de uma pasta de nuld/themes (um tema feito por alguém: docs/themes.md)\ntema = torres\n"
@@ -941,7 +941,7 @@ static const char *const config_template[LANG_N] = {
 	"; botões: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (cima baixo esquerda direita triângulo círculo x quadrado), unidos com +; vazio = desativado\n"
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
-	"; NULD - إعدادات عربية\n"
+	"; TEa.G3 - إعدادات عربية\n"
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، es = الإسبانية، en = الإنجليزية، pt = البرتغالية\nidioma = ar\n"
 	"; المظهر: torres أو nuld أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من nuld/themes\ntema = torres\n"
@@ -1015,7 +1015,7 @@ static void load_config(void) // loader thread, before the splash sound
 	char first[48] = "";
 	FILE *cf = fopen(CONFIG, "rb");
 	if (cf) fgets(first, sizeof(first), cf), fclose(cf);
-	const char *body = first + (!strncmp(first, "; NULD - ", 9) ? 9 : !strncmp(first, "; ORBIT - ", 10) ? 10 : 0);
+	const char *body = first + (!strncmp(first, "; TEa.G3 - ", 11) ? 11 : !strncmp(first, "; NULD - ", 9) ? 9 : !strncmp(first, "; ORBIT - ", 10) ? 10 : 0);
 	int file = body == first ? -1 : !strncmp(body, "إعدادات عربية", strlen("إعدادات عربية")) ? LANG_AR :
 	           !strncmp(body, "configuration", 13) ? LANG_EN : !strncmp(body, "configuraci", 11) ? LANG_ES :
 	           !strncmp(body, "configuração", 13) ? LANG_PT : -1;
@@ -1490,7 +1490,7 @@ static void update_check(void) // loader thread; the network is up for the cover
 	}
 	FILE *lf = fopen(LOG_TXT, "a");
 	if (lf) fprintf(lf, "nuld update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
-	                sig ? upd.version : "?", NULD_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
+	                sig ? upd.version : "?", TEAG3_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
 	free(t), free(g);
 }
 
@@ -2637,12 +2637,12 @@ static void launch(int i) // per kind (phase 11): Neutrino, POPStarter, an app E
 
 int main(int argc, char *argv[])
 {
-	if (argc > 0 && !strncmp(argv[0], "mmce", 4)) // "mmce0:/launcher.elf" (#8); a bare "mmce:" = mmce0:
+	if (argc > 0 && !strncmp(argv[0], "mmce", 4)) // "mmce0:/TEa.G3.ELF" (#8); a bare "mmce:" = mmce0:
 		snprintf(homedev, sizeof(homedev), "mmce%c:", argv[0][4] == '1' ? '1' : '0');
 	home_paths();
-	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/launcher.elf");
+	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/TEa.G3.ELF");
 	if (!gfx_init()) printf("gfx_init: VRAM pool too small\n");
-	splash_ver = NULD_VERSION + 1; // "1.2"
+	splash_ver = TEAG3_VERSION + 1; // "1.2"
 	thm = themes[TH_TORRES].pal;
 	ChangeThreadPriority(GetThreadId(), 0x20); // render thread above the loader
 	ee_thread_t th = { .func = loader, .stack = loader_stack, .stack_size = sizeof(loader_stack), .gp_reg = &_gp,
@@ -2713,7 +2713,7 @@ int main(int argc, char *argv[])
 		}
 		refilter();
 		if (nord && pos[sel] < 0) sel = order[0]; // e.g. the disc changed kind under a PS1 filter
-		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("Arrancador instalado en la memory card: BOOT/NULD.ELF", "Boot stub installed on the memory card: BOOT/NULD.ELF");
+		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("تم تثبيت TEa.G3 في بطاقة الذاكرة: BOOT/TEa.G3.ELF", "TEa.G3 boot stub installed: BOOT/TEa.G3.ELF");
 		static char upd_msg[96];
 		if (upd_avail == 1) upd_avail = 2, toast = 360, toast_msg = upd_msg, // #15
 			snprintf(upd_msg, sizeof(upd_msg), L("NULD %s disponible: START para actualizar", "NULD %s available: START to update"), upd.version);
