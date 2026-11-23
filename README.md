@@ -63,7 +63,7 @@ Optional:
   (zip, `server/`) over `<root>/DVD`; set `[juegos] origen = usb, udpfs` and `servidor = <server IP>`. Use a cable.
   Any other udpfs server (Server2PS2, ...): leave `servidor` empty and set a fixed `[red] ip`; no online covers or
   achievements then.
-- **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy the same files to the card's SD and start
+- **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy `TEa.G3.ELF` to the card's SD and start
   `mmce0:/TEa.G3.ELF` (point FMCB's autoboot straight at it). Settings, covers and Neutrino live on the card; PS1
   games need TEa.G3 on a USB; MX4SIO can't be used alongside.
 - **Status**: SELECT shows each game source (games found, or why it failed) and the network.
