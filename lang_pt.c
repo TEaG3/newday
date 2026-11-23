@@ -47,6 +47,7 @@ static const char *const pt[][2] = {
 	{"COMPATIBILITY MODES (NEUTRINO -GC)", "MODOS DE COMPATIBILIDADE (NEUTRINO -GC)"},
 	{"Video compatibility", "Compatibilidade de vídeo"},
 	{"saved", "salvo"},
+	{"Automatic", "Automático"},
 	{"ERROR saving", "ERRO ao salvar"},
 	{"menu + TEa.G3", "menu + TEa.G3"},
 	{"%s: downloading...", "%s: baixando..."},
