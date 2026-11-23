@@ -30,7 +30,7 @@ QUICKSTART = f"""TEa.G3 {ver} — دليل البدء السريع
 TEa.G3
 المصدر: https://github.com/TEaG3/newday
 الموقع والملفات: https://github.com/TEaG3/newday/tree/master/site
-""
+"""
 
 SERVER = """TEa.G3 game server (Linux)
 =========================
