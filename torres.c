@@ -216,10 +216,10 @@ float torres_splash(float u)
 	lights_off();
 	if (w > 0) {
 		const float cap = 72, r = cap * 0.6875f, gap = cap * 0.42f;
-		float x = 640 - (2 * r + gap + splash_vtext_w(&vfont_michroma, cap, 0.06f, "NULD")) / 2;
+		float x = 640 - (2 * r + gap + splash_vtext_w(&vfont_michroma, cap, 0.06f, "TEa.G3")) / 2;
 		gfx_alpha((int)(0x80 * w));
 		splash_mark(x + r, 300, r, INK, ICE);
-		splash_vtext(&vfont_michroma, x + 2 * r + gap, 300 + cap / 2, cap, 0.06f, "NULD", INK);
+		splash_vtext(&vfont_michroma, x + 2 * r + gap, 300 + cap / 2, cap, 0.06f, "TEa.G3", INK);
 		gfx_alpha(0x80);
 	}
 	return w;
