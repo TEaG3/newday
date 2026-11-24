@@ -28,8 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check OPL simulator JavaScript syntax
-        run: node --check site/opl-demo.js
+      - name: Check all website JavaScript syntax
+        run: |
+          set -euo pipefail
+          for file in site/*.js; do node --check "$file"; done
       - name: Test OPL simulator routing matrix
         run: node tests/site-opl-demo.test.cjs
       - name: Validate website links, pages and SVG diagrams
