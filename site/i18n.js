@@ -650,7 +650,7 @@
   "In-game menu": "قائمة داخل اللعبة",
   "Home game server": "خادم الألعاب المنزلي",
   "Sources": "مصادر التخزين",
-  "Spanish or English": "الإسبانية أو الإنجليزية",
+  "Arabic or English": "العربية أو الإنجليزية",
   "What changed,": "ما الذي تغيّر،",
   "Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.": "تُعرض الإصدارات من الأحدث إلى الأقدم. كان اسم المشروع ORBIT حتى الإصدار v1.1. يتوفر ملف ZIP وبصمات التحقق لكل إصدار في صفحة الإصدار.",
   "New": "جديد",
