@@ -284,7 +284,7 @@
     g.fillStyle = BG; g.fillRect(640 - tw / 2 - 12, 482, tw + 24, 26);
     g.fillStyle = FG; g.fillText(st, 640, 500);
     g.direction = oldDirection; g.textAlign = oldAlign;
-    if (!blink(s)) { g.fillStyle = accent; g.fillRect(tx + tw + 4, 486, 8, 16); }
+    if (!blink(s)) { g.fillStyle = accent; g.fillRect(640 + tw / 2 + 4, 486, 8, 16); }
     g.fillStyle = '#2A303A'; g.fillRect(490, 524, 300, 2);
     g.fillStyle = accent; g.fillRect(490, 524, 300 * prog, 2);
     hud(g, 24, 24, 1232, 672, 28, accent);
