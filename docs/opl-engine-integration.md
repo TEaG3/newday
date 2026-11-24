@@ -20,7 +20,7 @@ The engine selector keeps image format, storage backend and runtime engine as se
 | USBExtreme UL | USB | OPL | OPL-only |
 | ISO/ZSO | SMBv1 share | Neutrino | OPL ETH direct launch |
 | ISO/ZSO | MMCE, UDPBD/UDPFS | Neutrino | Neutrino fallback (OPL adapter not enabled) |
-| HDLoader/APA | internal HDD | Neutrino | Neutrino fallback (HDD mini-launch not yet enabled) |
+| HDLoader/APA | internal HDD | Neutrino | Neutrino fallback (TEa.G3 does not yet pass the OPL partition configuration) |
 | OPL ELF apps | APPS/ | TEa.G3 app path | Not an OPL game hand-off |
 
 The config key is `[juegos] motor` in `tea_g3/config.ini` on the launcher's home
@@ -41,8 +41,9 @@ device:
   direct-boot patch, runs `make clean` and `make NOT_PACKED=1`, then uploads
   the standalone `OPL.ELF` artifact.
 
-The direct-boot patch is maintained in `tools/patch_opl_ul.py` and is applied
-to the pinned upstream source during CI. It:
+The direct-boot patches are maintained in `tools/patch_opl_ul.py` and
+`tools/patch_opl_eth.py` and are applied to the pinned upstream source during CI.
+The BDM patch:
 - accepts a `bdm` startup mode with an explicit OPL driver name and device unit;
 - maps USB to `usb`, MX4SIO to `sdc`, iLink to `sd`, and ATA-backed HDD to `ata`;
 - accepts a `ul` startup mode plus split-part count for USBExtreme;
@@ -92,7 +93,7 @@ CI success is not proof of game compatibility. Still required:
 2. Confirm UL entries are discovered and the selected game is passed to OPL.
 3. Confirm gameplay and sustained reads across every UL split part.
 4. Test manual `motor = opl` for USB ISO/ZSO, MX4SIO, iLink and internal FAT/exFAT HDD.
-5. Implement and test the OPL APA/HD Loader mini-launch path without partition creation or modification.
+5. Finish the OPL APA/HD Loader mini-launch hand-off by reading the existing OPL HDD partition setting and passing the APA start sector; fail closed if the configured partition is absent.
 6. Verify read-only SMB share compatibility, VMC/compatibility settings, sustained reads and return behaviour on physical hardware.
 
 The unified test bundle is available from [CI run #45247633906](https://github.com/TEaG3/newday/actions/runs/45337162329) as `tea-g3-integration-test-bundle-cbce23482d2ac918d723be0f5c9ab767afaf0c74`.
