@@ -20,8 +20,11 @@ engine_id engine_select(engine_format format, engine_source source, const char *
     if (source == ENGINE_SOURCE_USB || source == ENGINE_SOURCE_BDM)
         return ENGINE_OPL_BDM;
 
-    /* SMB and APA/HD Loader use distinct OPL boot protocols; keep them on Neutrino
-       until their dedicated, non-mutating auto-launch adapters are available. */
+    /* OPL has a dedicated network/ETH backend for SMB shares. */
+    if (source == ENGINE_SOURCE_SMB)
+        return ENGINE_OPL_ETH;
+
+    /* APA/HD Loader remains on Neutrino until the safe HDD mini-launch adapter is ready. */
     return ENGINE_NEUTRINO;
 }
 
@@ -36,8 +39,8 @@ int main(void)
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_USB, "opl") == ENGINE_OPL_BDM);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_BDM, "opl") == ENGINE_OPL_BDM);
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_BDM, "opl") == ENGINE_OPL_BDM);
-    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "opl") == ENGINE_NEUTRINO);
-    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "opl") == ENGINE_NEUTRINO);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
+    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "opl") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
