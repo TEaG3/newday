@@ -24,7 +24,9 @@ engine_id engine_select(engine_format format, engine_source source, const char *
     if (source == ENGINE_SOURCE_SMB)
         return ENGINE_OPL_ETH;
 
-    /* APA/HD Loader remains on Neutrino until the safe HDD mini-launch adapter is ready. */
+    /* APA/HD Loader uses OPL's HDD mini-launch only when its existing OPL config is present. */
+    if (source == ENGINE_SOURCE_HDL)
+        return ENGINE_OPL_HDD;
     return ENGINE_NEUTRINO;
 }
 
@@ -41,7 +43,7 @@ int main(void)
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_BDM, "opl") == ENGINE_OPL_BDM);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
-    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "opl") == ENGINE_NEUTRINO);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "opl") == ENGINE_OPL_HDD);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_BDM, "neutrino") == ENGINE_NEUTRINO);
