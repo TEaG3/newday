@@ -234,6 +234,8 @@ opl = once(
     gTEaG3HDDMiniReady = 0;
     gOPLPart[0] = '\\0';
     miniInit(HDD_MODE);
+    if (argv[6] && argv[6][0])
+        snprintf(gExitPath, sizeof(gExitPath), "%s", argv[6]);
     gTEaG3HDDMiniMode = 0;
     if (!gTEaG3HDDMiniReady) {
         LOG("TEa.G3 HDL mini-launch refused: existing OPL HDD partition/config not available; no partition was created.\\n");
