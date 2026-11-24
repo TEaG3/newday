@@ -131,6 +131,7 @@ static const char *const ar[][2] = {
         {"Achievements: no server", "الإنجازات: لا خادم"},
         {"Could not save the options to the USB", "تعذر حفظ الخيارات على USB"},
         {"Could not start", "تعذر البدء"},
+        {"HD Loader partition metadata is incomplete", "بيانات قسم HD Loader غير مكتملة"},
         {"  (SAVED TO USB)", "  (تم الحفظ على USB)"},
         {"  (SAVE ERROR)", "  (خطأ في الحفظ)"},
         {"Could not load the hard disk driver", "تعذر تحميل برنامج تشغيل القرص الصلب"},
