@@ -49,6 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
+          python3 -m py_compile "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py"
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py" src/opl.c src/ethsupport.c
           grep -Fq 'if (!strcmp(argv[4], "eth") && argc >= 13)' src/opl.c
           grep -Fq 'int ethAutoLaunchGame(char *argv[])' src/ethsupport.c
