@@ -323,6 +323,7 @@ typedef struct hdl_scan_record {
 	struct hdl_scan_record *next;
 	char part[APA_IDMAX + 1], title[161], startup[61];
 	u32 start_sector, total_size_kb;
+	int is_cd;
 } hdl_scan_record;
 
 int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, int is_cd), void *ctx)
