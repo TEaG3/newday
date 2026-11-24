@@ -2,7 +2,7 @@
 """Bake the NULD fonts (tools/fonts, all SIL OFL 1.1) into font_data.c: one 512-wide PSMT4 alpha atlas + glyph tables.
 
 usage: font.py [OUT.c]  (default: font_data.c next to the Makefile)  |  font.py --selftest
-Fonts and sizes: design of openspec change phase-4-orbit-style. Glyph i < 95 is ASCII 32 + i; i >= 95 is EXTRAS[i - 95] (ui: all, title / mono: BASE, then FALLBACK).
+Fonts and sizes: design of openspec change phase-4-orbit-style. Glyph i < 95 is ASCII 32 + i; i >= 95 is EXTRAS[i - 95] (ui: all, title / mono: LATIN_TITLE_CHARS, then FALLBACK).
 PSMT4 host layout: even-x pixel in the low nibble (docs/sources.md). CLUT index i = alpha i*128/15 (gfx.c).
 """
 import sys
@@ -13,14 +13,14 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent.parent
 FONTS = ROOT / "tools" / "fonts"
 ASCII = "".join(chr(c) for c in range(32, 127))
-BASE = "áéíóúñÁÉÍÓÚÑü¿¡·ãõçâêôàÃÕÇÂÊÔÀ"  # Spanish and Portuguese UI accents
+LATIN_TITLE_CHARS = "áéíóúñÁÉÍÓÚÑü¿¡·ãõçâêôàÃÕÇÂÊÔÀ"  # legacy Latin characters retained for game titles and metadata
 # Unicode Arabic Presentation Forms-B (U+FE80..U+FEFC) are baked as separate contextual glyphs.
 # gfx.c shapes Arabic letters into these code points before drawing. Arabic punctuation is also included.
 ARABIC_FORMS = "".join(chr(cp) for cp in range(0xFE80, 0xFEFD))
 ARABIC_PUNCT = "\u060c\u061b\u061f"  # Arabic comma, semicolon and question mark
 LATIN_MORE = "èœŒ"  # retained for European game titles; non-UI fonts fall back to ASCII
 ARABIC_CHARS = ARABIC_FORMS + ARABIC_PUNCT
-EXTRAS = BASE + LATIN_MORE + ARABIC_CHARS
+EXTRAS = LATIN_TITLE_CHARS + LATIN_MORE + ARABIC_CHARS
 ARABIC_SET = set(ARABIC_CHARS)
 ARABIC_FONT = FONTS / "NotoSansArabicUI.ttf"
 SPECIAL = {"\u00df": "s", "\u00e6": "a", "\u00c6": "A", "\u0153": "o", "\u0152": "O", "\u00f8": "o", "\u00d8": "O", "\u00f0": "d", "\u00d0": "D",
@@ -29,9 +29,9 @@ SPECIAL = {"\u00df": "s", "\u00e6": "a", "\u00c6": "A", "\u0153": "o", "\u0152":
 # TEa.G3 interface fonts: Archivo for titles and UI, IBM Plex Mono for data. The logo is rendered
 # as a vector mesh by tools/logo.py; the small bitmap logo face is retained for API compatibility.
 # Keep the atlas within 512x384 (12 PSMT4 pages); gfx_init allocates it from remaining GS VRAM.
-SPECS = (("title", "Archivo.ttf", 38, (700, 125), ASCII + BASE),
+SPECS = (("title", "Archivo.ttf", 38, (700, 125), ASCII + LATIN_TITLE_CHARS),
          ("ui", "Archivo.ttf", 17, (500, 100), None),
-         ("mono", "IBMPlexMono-Regular.ttf", 14, None, ASCII + BASE),
+         ("mono", "IBMPlexMono-Regular.ttf", 14, None, ASCII + LATIN_TITLE_CHARS),
          ("logo", "Michroma-Regular.ttf", 60, None, "TEa.G3"))
 AW, PAGE_H, MAX_PAGES = 512, 128, 12               # PSMT4 page 128x128 -> 4 pages per 128 rows at 512 wide
 PAD = 2                                            # blank texels between glyphs (phase-3 known issue)
@@ -124,7 +124,7 @@ def c_source(fonts, atlas):
 
 
 def selftest():
-    assert len(BASE) == 30 and len(ARABIC_FORMS) == 125 and len(ARABIC_PUNCT) == 3
+    assert len(LATIN_TITLE_CHARS) == 30 and len(ARABIC_FORMS) == 125 and len(ARABIC_PUNCT) == 3
     assert len(EXTRAS) == 161 == len(set(EXTRAS)) and all(0x80 <= ord(c) < 0x10000 for c in EXTRAS)
     assert all(32 <= ord(fallback(c)) < 127 for c in EXTRAS) and fallback("\u00e8") == "e" and fallback("\u0153") == "o"
     assert ARABIC_FONT.is_file(), "Noto Sans Arabic UI font is required (tools/fetch_arabic_font.py)"
