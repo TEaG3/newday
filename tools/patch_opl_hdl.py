@@ -264,10 +264,10 @@ opl = once(
 
 opl = once(
     opl,
-    '''        if (!strcmp(argv[4], "mini"))
+    '''        if (argc >= 6 && !strcmp(argv[5], "mini"))
             autoLaunchHDDGame(argv);
         /* argv[0] boot path''',
-    '''        if (!strcmp(argv[4], "mini")) {
+    '''        if (argc >= 6 && !strcmp(argv[5], "mini")) {
             autoLaunchHDDGame(argv);
             return 0;
         }
