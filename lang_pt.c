@@ -137,7 +137,7 @@ static const char *const pt[][2] = {
 	{"Could not load the hard disk driver", "Não foi possível carregar o driver do disco rígido"},
 	{"Hard disk not found (exFAT or HD Loader)", "Disco rígido não encontrado (exFAT ou HD Loader)"},
 	{"USB drive not found", "USB não encontrada"},
-	{"MX4SIO does not go with NULD on an MMCE", "MX4SIO não funciona com o NULD num MMCE"},
+	{"MX4SIO does not go with TEa.G3 on an MMCE", "MX4SIO não funciona com o NULD num MMCE"},
 	{"MX4SIO and MMCE do not go together: using MX4SIO", "MX4SIO e MMCE não funcionam juntos: usando MX4SIO"},
 	{"MX4SIO card not found", "Cartão do MX4SIO não encontrado"},
 	{"iLink disk not found", "Disco iLink não encontrado"},
