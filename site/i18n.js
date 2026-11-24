@@ -1018,6 +1018,20 @@
     "candidate package":"حزمة مرشحة",
     "No PS2 game or ELF is executed.":"لا يتم تشغيل لعبة PS2 أو ملف ELF."
   });
+  // Current TEa.G3 theme-maker naming and data folder; keep the legacy theme key "nuld".
+  Object.assign(dict, {
+    "Classic":"الكلاسيكية",
+    "TEa.G3 theme maker":"مصمم سمات TEa.G3",
+    "torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes":"أسماء السمات المدمجة أو مجلد سمة داخل tea_g3/themes",
+    "mass0:/tea_g3/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)":"mass0:/tea_g3/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
+    "Make a theme for TEa.G3, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.":"أنشئ سمة لمشغّل TEa.G3 في المتصفح: اختر الألوان وأضف صورة خلفية، ثم عاينها على الشاشة الرئيسية ونزّل المجلد إلى وحدة USB."
+  });
+  Object.assign(pageTitles, {
+    "TEa.G3 manual":"دليل TEa.G3",
+    "TEa.G3 theme maker":"مصمم سمات TEa.G3",
+    "TEa.G3 changelog":"سجل تغييرات TEa.G3"
+  });
+
   const originalTitle = document.title;
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
 
