@@ -21,13 +21,16 @@ int main(int argc, char *argv[])
 {
 	t_ExecData elf = {0};
 	if (argc < 1) return -1;
+	if (argc < 2 || !argv[0] || !*argv[0]) return -1;
 	SifInitRpc(0);
-	for (u32 a = 0x100000; a < (u32)GetMemorySize(); a += 16) *(volatile u128 *)a = 0; // nothing of the launcher left
-	FlushCache(0);
 	SifLoadFileInit();
-	int r = SifLoadElf(argv[0], &elf); // argv[0]: the file; argv[1..]: the program's own argv (phase 11), so it can
-	SifLoadFileExit();                 // get another argv[0] (POPStarter finds its VCD from that name)
-	if (r != 0 || !elf.epc || argc < 2) { SifExitRpc(); return -1; }
+	int r = SifLoadElf(argv[0], &elf); // argv[0]: the file; argv[1..]: the program's own argv (phase 11)
+	SifLoadFileExit();
+	// Crucial: do not erase the launcher's main memory until the target ELF has loaded successfully.
+	// A missing/corrupt ELF therefore fails before the destructive hand-off boundary.
+	if (r != 0 || !elf.epc) { SifExitRpc(); return -2; }
+	for (u32 a = 0x100000; a < (u32)GetMemorySize(); a += 16) *(volatile u128 *)a = 0;
+	FlushCache(0);
 	if (!*argv[1]) argv[1] = argv[0]; // "": the program's argv[0] is the file (phase 14, shorter arguments)
 	FlushCache(0);
 	FlushCache(2);
