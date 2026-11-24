@@ -18,7 +18,8 @@ The engine selector keeps image format, storage backend and runtime engine as se
 | ISO/ZSO | iLink | Neutrino | OPL BDM (`sd`) |
 | ISO/ZSO | internal FAT/exFAT HDD | Neutrino | OPL BDM (`ata`) |
 | USBExtreme UL | USB | OPL | OPL-only |
-| ISO/ZSO | SMB, APA/HDL, MMCE, UDPBD/UDPFS | Neutrino | Neutrino fallback (OPL adapter not enabled) |
+| ISO/ZSO | SMBv1 share | Neutrino | OPL ETH direct launch |
+| ISO/ZSO | MMCE, UDPBD/UDPFS | Neutrino | Neutrino fallback (OPL adapter not enabled) |
 | HDLoader/APA | internal HDD | Neutrino | Neutrino fallback (HDD mini-launch not yet enabled) |
 | OPL ELF apps | APPS/ | TEa.G3 app path | Not an OPL game hand-off |
 
@@ -26,7 +27,7 @@ The config key is `[juegos] motor` in `tea_g3/config.ini` on the launcher's home
 device:
 - `auto`: Neutrino for ISO/ZSO; OPL for UL.
 - `neutrino`: keep ISO/ZSO on Neutrino; UL remains OPL-only.
-- `opl`: prefer OPL for USB, MX4SIO, iLink and ATA-backed FAT/exFAT HDD ISO/ZSO. SMB, APA/HDL and other unadapted sources silently remain on Neutrino. UL remains OPL-only.
+- `opl`: prefer OPL for USB, MX4SIO, iLink, ATA-backed FAT/exFAT HDD and SMB ISO/ZSO. APA/HDL, MMCE and UDP-based sources remain on Neutrino. UL remains OPL-only.
 
 ## OPL build and dependency pinning
 
@@ -71,7 +72,7 @@ that device's root as well.
 
 ## Upstream OPL capability coverage and remaining adapter work
 
-The OPL build is included, but a successful compile does not mean TEa.G3 can yet invoke every OPL backend. The remaining integration work is to implement and test the dedicated SMBv1/ETH and APA/HD Loader mini-launch paths, plus read compatibility, VMC handling and return-to-launcher behaviour for the BDM adapters. Some formats are backend-specific: UL is a USB/BDM split layout; HDLoader is an APA/PFS HDD layout; ELF files are applications rather than PS2 disc images. Neutrino paths must remain intact while each OPL adapter is added. Do not solve a missing adapter by hiding the source or deleting the option.
+The OPL build is included, but a successful compile does not mean TEa.G3 can yet invoke every OPL backend. The remaining integration work is to implement and test the APA/HD Loader mini-launch path, plus SMB read-only-share compatibility, VMC handling and return-to-launcher behaviour for all direct OPL adapters. Some formats are backend-specific: UL is a USB/BDM split layout; HDLoader is an APA/PFS HDD layout; ELF files are applications rather than PS2 disc images. Neutrino paths must remain intact while each OPL adapter is added. Do not solve a missing adapter by hiding the source or deleting the option.
 
 A feature is complete only after discovery, argument translation, runtime startup, sustained reads, return-to-launcher behavior and physical-console acceptance are all verified.
 
@@ -91,8 +92,8 @@ CI success is not proof of game compatibility. Still required:
 2. Confirm UL entries are discovered and the selected game is passed to OPL.
 3. Confirm gameplay and sustained reads across every UL split part.
 4. Test manual `motor = opl` for USB ISO/ZSO, MX4SIO, iLink and internal FAT/exFAT HDD.
-5. Implement and test the native OPL SMBv1/ETH and APA/HD Loader mini-launch protocols without modifying a user's HDD.
-6. Verify VMC/compatibility settings, sustained reads and return behaviour on physical hardware.
+5. Implement and test the OPL APA/HD Loader mini-launch path without partition creation or modification.
+6. Verify read-only SMB share compatibility, VMC/compatibility settings, sustained reads and return behaviour on physical hardware.
 
 The unified test bundle is available from [CI run #45247633906](https://github.com/TEaG3/newday/actions/runs/45337162329) as `tea-g3-integration-test-bundle-cbce23482d2ac918d723be0f5c9ab767afaf0c74`.
 
