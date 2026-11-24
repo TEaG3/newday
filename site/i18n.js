@@ -989,6 +989,35 @@
     "Explore how TEa.G3 embeds OPL and Neutrino in one ELF, see the verified USBExtreme UL and USB ISO/ZSO routing rules, and try a browser-only launch-path simulation.":"استكشف طريقة دمج OPL وNeutrino داخل ملف ELF واحد في TEa.G3، وراجع مسارات USBExtreme UL وUSB ISO/ZSO، وجرّب محاكاة لمسارات التشغيل داخل المتصفح."
   });
 
+  // Correct normalized text-node keys and translate the new manual chapter.
+  Object.assign(dict, {
+    "USB ISO/ZSO can use OPL when":"يمكن تشغيل ألعاب USB ISO/ZSO عبر OPL عند ضبط",
+    "Choose the image format, storage source and":"اختر صيغة ملف اللعبة ومصدر التخزين و",
+    "preference. The result follows":"كتفضيل للمحرك. تتبع النتيجة دالة",
+    "PS1":"ألعاب PS1",
+    "USBExtreme UL: parse":"USBExtreme UL: تحليل ملف",
+    "Integrated OPL engine":"محرك OPL المدمج",
+    "TEa.G3 ships one user-facing executable:":"يوفر TEa.G3 ملف تشغيل واحداً للمستخدم:",
+    ". The build embeds a pinned OPL runtime and Neutrino, including the required modules. TEa.G3 installs and integrity-checks the runtime under":". يدمج البناء محرك OPL من نسخة مثبتة وNeutrino مع الوحدات المطلوبة. يثبت TEa.G3 موارد التشغيل ويتحقق من سلامتها داخل",
+    " on first boot.":" عند التشغيل الأول.",
+    "What is routed today":"مسارات التشغيل المتاحة حالياً",
+    "Any preference":"أي تفضيل للمحرك",
+    "OPL UL direct boot":"إقلاع OPL المباشر لألعاب UL",
+    "OPL USB direct boot":"إقلاع OPL المباشر لألعاب USB",
+    "Other configured source":"مصدر تخزين آخر مهيأ",
+    "Not connected to OPL":"غير موصول بمسار OPL",
+    "Unsupported by current adapter":"غير مدعوم في المحوّل الحالي",
+    "USBExtreme UL safety checks":"فحوص سلامة USBExtreme UL",
+    "The TEa.G3 scanner reads":"يقرأ ماسح TEa.G3 الملف",
+    ", validates the fixed-size records, and checks that every declared":"، ويتحقق من السجلات ذات الحجم الثابت، ويفحص وجود كل جزء معلن من",
+    ". A record with missing or invalid parts is skipped instead of being offered as a working game. A valid entry receives the OPL UL route with its title, startup ID, media type and part count.":". يتم تجاوز السجل الذي تنقصه أجزاء أو يحتوي بيانات غير صحيحة بدلاً من عرضه كلعبة قابلة للتشغيل. ويحصل السجل الصحيح على مسار OPL UL مع العنوان ومعرّف بدء التشغيل ونوع الوسيط وعدد الأجزاء.",
+    "Important limits":"حدود مهمة",
+    "Embedding upstream OPL does not mean every backend supported by standalone OPL is connected to TEa.G3. The current direct-boot adapters described above are USB-based. MX4SIO, iLink, SMBv1 and ATA/IDE HDD require their own OPL hand-offs and device testing before being described as OPL routes. The current Neutrino paths remain separate and available.":"إن تضمين OPL الأصلي لا يعني ربط جميع مصادر التخزين التي يدعمها OPL المستقل مع TEa.G3. محوّلات الإقلاع المباشر الحالية المذكورة أعلاه تعتمد على USB. وتتطلب MX4SIO وiLink وSMBv1 وATA/IDE HDD مسارات تمرير خاصة إلى OPL واختباراً على الأجهزة قبل وصفها بأنها مسارات OPL. وتبقى مسارات Neutrino الحالية منفصلة ومتاحة.",
+    "Open the interactive OPL Integration Lab":"افتح مختبر تكامل OPL التفاعلي",
+    " — its browser simulation mirrors the route selector; it does not execute an ELF, emulate a console or launch a game.":" — تحاكي آلية المتصفح محدد المسارات فقط؛ فهي لا تشغّل ELF ولا تحاكي جهازاً ولا تبدأ لعبة.",
+    "candidate package":"حزمة مرشحة",
+    "No PS2 game or ELF is executed.":"لا يتم تشغيل لعبة PS2 أو ملف ELF."
+  });
   const originalTitle = document.title;
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
 
