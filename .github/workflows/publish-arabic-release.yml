@@ -6,17 +6,16 @@ on:
       release_tag:
         description: "New GitHub release tag"
         required: true
-        default: "arabic-v1.3.2"
+        default: "arabic-v1.3.3"
   push:
-    branches: [master]
-    paths:
-      - ".github/workflows/publish-arabic-release.yml"
+    tags:
+      - "arabic-v*"
+
 permissions:
   contents: write
 
 jobs:
   opl-engine:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Build pinned OPL runtime
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
@@ -134,12 +133,12 @@ jobs:
         run: sudo chown -R "$(id -u):$(id -g)" dist
 
       - name: Create validated single-ELF Arabic package
-        run: python3 tools/package_single_elf_release.py "${{ inputs.release_tag || 'arabic-v1.3.2' }}"
+        run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || github.ref_name }}"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.release_tag || 'arabic-v1.3.2' }}
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
           name: "TEa.G3 PS2 — النسخة العربية"
           body: |
             النسخة العربية من TEa.G3، تعديل وتطوير المطور العراقي TEa.G3.
@@ -149,6 +148,7 @@ jobs:
             - العربية هي اللغة الافتراضية مع دعم تغيير اللغة والمظاهر من الإعدادات.
             - ISO/ZSO يستخدم Neutrino تلقائياً؛ وUSBExtreme UL يستخدم OPL.
             - يتضمن الأرشيف INSTALL-AR.txt وتراخيص المحركات وبصمات SHA-256.
+            - تم تضمين CRC-32 لكل ملف runtime والتحقق منه بعد الاستخراج.
 
             This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
           prerelease: true
