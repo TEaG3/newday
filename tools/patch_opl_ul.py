@@ -110,12 +110,41 @@ if source.count(old) != 1:
     raise SystemExit(f"expected one BDM device-selection block, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
+old = r'''    char apaDevicePrefix[8] = {0};
+    delay(8);
+'''
+new = r'''    char apaDevicePrefix[8] = {0};
+    int matchedDevice = 0;
+    delay(8);
+'''
+if source.count(old) != 1:
+    raise SystemExit(f"expected one BDM target-scan initialization, found {source.count(old)}")
+source = source.replace(old, new, 1)
+
 old = r'''    if (gBDMPrefix[0] != '\0') {'''
 new = r'''    if (isBDM || isUL || !strcmp(argv[4], "usb"))
         gBDMPrefix[0] = '\0'; // TEa.G3 passes paths relative to the selected device root.
     if (!isUL && gBDMPrefix[0] != '\0') {'''
 if source.count(old) != 1:
     raise SystemExit(f"expected one BDM prefix branch, found {source.count(old)}")
+source = source.replace(old, new, 1)
+
+old = r'''        delay(6);
+    }
+
+    if (gBDMPrefix[0] != '\\0') {
+'''
+new = r'''        delay(6);
+    }
+    if (!matchedDevice) {
+        LOG("TEa.G3 BDM auto-launch: requested device not found\\n");
+        return;
+    }
+
+    if (gBDMPrefix[0] != '\\0') {
+'''
+if source.count(old) != 1:
+    raise SystemExit(f"expected one BDM scan end, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
 old = r'''        if (!strcmp(argv[4], "bdm"))
