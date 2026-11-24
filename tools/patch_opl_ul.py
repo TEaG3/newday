@@ -166,8 +166,10 @@ old_igr = """    miniInit(BDM_MODE);
     gAutoLaunchBDMGame = malloc(sizeof(base_game_info_t));"""
 new_igr = """    miniInit(BDM_MODE);
     /* TEa.G3 appends its memory-card recovery ELF after the launch-mode arguments. */
-    if (isUL && argv[6] && argv[6][0]) snprintf(gExitPath, sizeof(gExitPath), "%s", argv[6]);
-    else if (isBDM && argv[7] && argv[7][0]) snprintf(gExitPath, sizeof(gExitPath), "%s", argv[7]);
+    if (!strcmp(argv[4], "ul") && argv[6] && argv[6][0])
+        snprintf(gExitPath, sizeof(gExitPath), "%s", argv[6]);
+    else if (!strcmp(argv[4], "bdm") && argv[7] && argv[7][0])
+        snprintf(gExitPath, sizeof(gExitPath), "%s", argv[7]);
 
     gAutoLaunchBDMGame = malloc(sizeof(base_game_info_t));"""
 if source.count(old_igr) != 1:
