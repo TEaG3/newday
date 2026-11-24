@@ -136,7 +136,7 @@ static const char *const ar[][2] = {
         {"Could not load the hard disk driver", "تعذر تحميل برنامج تشغيل القرص الصلب"},
         {"Hard disk not found (exFAT or HD Loader)", "لم يتم العثور على القرص الصلب (exFAT أو HD Loader)"},
         {"USB drive not found", "لم يتم العثور على قرص USB"},
-        {"MX4SIO does not go with NULD on an MMCE", "MX4SIO لا يعمل مع NULD على MMCE"},
+        {"MX4SIO does not go with TEa.G3 on an MMCE", "MX4SIO لا يعمل مع TEa.G3 على MMCE"},
         {"MX4SIO and MMCE do not go together: using MX4SIO", "MX4SIO و MMCE لا يعملان معا: استخدام MX4SIO"},
         {"MX4SIO card not found", "لم يتم العثور على بطاقة MX4SIO"},
         {"iLink disk not found", "لم يتم العثور على قرص iLink"},
