@@ -8,7 +8,7 @@ uses source-specific direct-boot adapters for BDM devices (USB, MX4SIO, iLink
 and ATA-backed FAT/exFAT HDD), SMB/ETH, and APA/HD Loader HDD mini-launch.
 MMCE and UDP-based sources remain on Neutrino until their OPL hand-offs exist.
 
-The engine selector keeps image format, storage backend and runtime engine as separate inputs. The current launcher-to-OPL direct-boot adapter is narrower than upstream OPL's full feature set. Upstream OPL supports USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, and ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts (availability depends on OPL build and backend). The launcher must not claim that every upstream OPL capability is already exposed through TEa.G3. The current adapter matrix is:
+The engine controller keeps image format, storage backend, runtime availability and engine choice as separate inputs. It produces an internal decision reason for each launch, writes that reason only to the private launcher log, and never exposes engine selection in the normal interface. Auto remains conservative: ISO/ZSO use the existing Neutrino baseline; USBExtreme UL uses OPL because it is OPL-only. Explicit OPL preference is accepted only when the matching adapter and its required configuration are available; otherwise ISO/ZSO silently fall back to Neutrino. The controller does not infer successful gameplay from a successful ELF hand-off. The current launcher-to-OPL direct-boot adapter is narrower than upstream OPL's full feature set. Upstream OPL supports USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, and ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts (availability depends on OPL build and backend). The launcher must not claim that every upstream OPL capability is already exposed through TEa.G3. The current adapter matrix is:
 
 | Format | Source | Automatic engine | Manual OPL |
 |---|---|---|---|
@@ -25,7 +25,7 @@ The engine selector keeps image format, storage backend and runtime engine as se
 
 The config key is `[juegos] motor` in `tea_g3/config.ini` on the launcher's home
 device:
-- `auto`: Neutrino for ISO/ZSO; OPL for UL.
+- `auto`: Neutrino for ISO/ZSO; OPL for UL. This is an intentional safe baseline until per-adapter physical-console evidence supports broader automatic routing.
 - `neutrino`: keep ISO/ZSO on Neutrino; UL remains OPL-only.
 - `opl`: prefer OPL for USB, MX4SIO, iLink, ATA-backed FAT/exFAT HDD, SMB ISO/ZSO and APA/HD Loader. MMCE and UDP-based sources remain on Neutrino. UL remains OPL-only.
 
