@@ -132,7 +132,7 @@ source = source.replace(old, new, 1)
 old = r'''        delay(6);
     }
 
-    if (gBDMPrefix[0] != '\\0') {
+    if (gBDMPrefix[0] != '\0') {
 '''
 new = r'''        delay(6);
     }
