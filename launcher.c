@@ -2814,7 +2814,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	}
 	if (engine == ENGINE_OPL_HDD) {
 		char sector[16], size_kb[16], disc_type[16];
-		char *opl_argv[8];
+		char *opl_argv[9];
 		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector ||
 		    !cv[i].hdl_size_kb || !cv[i].hdl_disc_type) {
 			launch_err = L("Metadatos de la partición HD Loader incompletos", "HD Loader partition metadata is incomplete");
@@ -2824,17 +2824,18 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		snprintf(size_kb, sizeof(size_kb), "%lu", (unsigned long)cv[i].hdl_size_kb);
 		snprintf(disc_type, sizeof(disc_type), "%lu", (unsigned long)cv[i].hdl_disc_type);
 		opl_argv[0] = OPL_PATH;
-		opl_argv[1] = cv[i].boot;
-		opl_argv[2] = sector;
-		opl_argv[3] = size_kb;
-		opl_argv[4] = disc_type;
-		opl_argv[5] = "mini";
-		opl_argv[6] = (char *)igr_stub_path();
-		opl_argv[7] = NULL;
+		opl_argv[1] = "";
+		opl_argv[2] = cv[i].boot;
+		opl_argv[3] = sector;
+		opl_argv[4] = size_kb;
+		opl_argv[5] = disc_type;
+		opl_argv[6] = "mini";
+		opl_argv[7] = (char *)igr_stub_path();
+		opl_argv[8] = NULL;
 		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s disc_type=%s (existing OPL config only)\n",
 		       cv[i].boot, sector, size_kb, disc_type);
 		gfx_shutdown();
-		run_loader(7, opl_argv);
+		run_loader(8, opl_argv);
 		printf("OPL HD Loader launch returned\n");
 		return;
 	}
