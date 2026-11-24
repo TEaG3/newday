@@ -14,6 +14,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ps2-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   host-zso-tests:
     name: ZSO host decoder fixture
