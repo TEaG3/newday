@@ -334,17 +334,17 @@ int main(void)
 	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
 	assert(shaped_n == 5 && laid[0].cp == 'U' && laid[1].cp == 'S' && laid[2].cp == 'B' && shaped_width > 0);
 	// Mixed Arabic + dotted IPv4: Latin letters, digits and separators must remain in LTR order.
-	s = "\\xD9\\x85 IP 192.168.1.5";
+	s = "\xD9\x85 IP 192.168.1.5";
 	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
 	static const unsigned ip_run[] = {'I', 'P', ' ', '1', '9', '2', '.', '1', '6', '8', '.', '1', '.', '5'};
-	assert(shaped_n == (int)(sizeof(ip_run) / sizeof(ip_run[0])) + 1);
+	assert(shaped_n == (int)(sizeof(ip_run) / sizeof(ip_run[0])) + 2);
 	for (unsigned i = 0; i < sizeof(ip_run) / sizeof(ip_run[0]); i++) assert(laid[i].cp == ip_run[i]);
-	assert(laid[shaped_n - 1].dir == 1 && shaped_width > 0);
+	assert(laid[shaped_n - 2].cp == ' ' && laid[shaped_n - 1].dir == 1 && shaped_width > 0);
 	// Mixed Arabic + USB status: the ASCII status remains readable left-to-right.
-	s = "\\xD9\\x85 USB OK";
+	s = "\xD9\x85 USB OK";
 	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
-	assert(shaped_n == 7 && laid[0].cp == 'U' && laid[1].cp == 'S' && laid[2].cp == 'B' &&
-	       laid[3].cp == ' ' && laid[4].cp == 'O' && laid[5].cp == 'K' && laid[6].dir == 1);
+	assert(shaped_n == 8 && laid[0].cp == 'U' && laid[1].cp == 'S' && laid[2].cp == 'B' &&
+	       laid[3].cp == ' ' && laid[4].cp == 'O' && laid[5].cp == 'K' && laid[6].cp == ' ' && laid[7].dir == 1);
 	assert(gfx_font_logo.g['N' - 32].w > 0 && gfx_font_logo.g['A' - 32].w == 0); // logo: "NULD" only
 	for (int c = 33; c < 127; c++) assert(gfx_font_title.g[c - 32].w > 0 && gfx_font_mono.g[c - 32].w > 0);
 	static unsigned short img[64 * 64], lin[300 * 140], tl[300 * 140];
