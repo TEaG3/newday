@@ -153,7 +153,7 @@ const char *src_init(unsigned mask, const char *ip, const char *ndir, int udpfs_
 	if (mask & 1u << SRC_USB && !add(SRC_USB, "mass0:", 20)) // only when NULD runs from an MMCE (#8)
 		FAIL(SRC_USB, L("No se encontró la USB", "USB drive not found"));
 	if (mask & 1u << SRC_MX4SIO && mmce_up > 0) // NULD runs from an MMCE: same SIO2 port
-		mask &= ~(1u << SRC_MX4SIO), FAIL(SRC_MX4SIO, L("MX4SIO no va con NULD en un MMCE", "MX4SIO does not go with NULD on an MMCE"));
+		mask &= ~(1u << SRC_MX4SIO), FAIL(SRC_MX4SIO, L("MX4SIO no va con TEa.G3 en un MMCE", "MX4SIO does not go with TEa.G3 on an MMCE"));
 	if (mask & 1u << SRC_MX4SIO && mask & 1u << SRC_MMCE) // both on the SIO2 of slot 2 (nhddl README)
 		mask &= ~(1u << SRC_MMCE), FAIL(SRC_MMCE, L("MX4SIO y MMCE no van juntos: se usa MX4SIO", "MX4SIO and MMCE do not go together: using MX4SIO"));
 	if (mask & 1u << SRC_MX4SIO && (!load(mx4sio_bd_mini_irx, size_mx4sio_bd_mini_irx, NULL, 0) || !add(SRC_MX4SIO, "mx4sio0:", 12)))
