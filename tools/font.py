@@ -26,13 +26,13 @@ ARABIC_FONT = FONTS / "NotoSansArabicUI.ttf"
 SPECIAL = {"\u00df": "s", "\u00e6": "a", "\u00c6": "A", "\u0153": "o", "\u0152": "O", "\u00f8": "o", "\u00d8": "O", "\u00f0": "d", "\u00d0": "D",
            "\u00fe": "p", "\u00de": "P", "\u00ab": '"', "\u00bb": '"', "\u00b0": "o", "\u00ba": "o", "\u00aa": "a", "\u00bf": "?", "\u00a1": "!", "\u00b7": "."}
 # name, file, px, variation axes in the font's order (None = static font), characters to bake (None = all).
-# NULD (canvas "NULD — identidad"): Archivo at 125 % width for titles, Archivo for the interface, IBM Plex Mono for
-# data; the logo itself is vector (tools/logo.py), "logo" is only a small Michroma NULD. The atlas must stay at
-# 512x384 or under: at 1280x720 the two framebuffers leave the GS no room for more (gfx_init: 3200 words free)
+# TEa.G3 interface fonts: Archivo for titles and UI, IBM Plex Mono for data. The logo is rendered
+# as a vector mesh by tools/logo.py; the small bitmap logo face is retained for API compatibility.
+# Keep the atlas within 512x384 (12 PSMT4 pages); gfx_init allocates it from remaining GS VRAM.
 SPECS = (("title", "Archivo.ttf", 38, (700, 125), ASCII + BASE),
          ("ui", "Archivo.ttf", 17, (500, 100), None),
          ("mono", "IBMPlexMono-Regular.ttf", 14, None, ASCII + BASE),
-         ("logo", "Michroma-Regular.ttf", 60, None, "NULD"))
+         ("logo", "Michroma-Regular.ttf", 60, None, "TEa.G3"))
 AW, PAGE_H, MAX_PAGES = 512, 128, 12               # PSMT4 page 128x128 -> 4 pages per 128 rows at 512 wide
 PAD = 2                                            # blank texels between glyphs (phase-3 known issue)
 
