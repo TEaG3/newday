@@ -1115,7 +1115,7 @@ static const char *const config_template[LANG_N] = {
 	"\n[red]\n; ip = dhcp أو عنوان ثابت. يمكن ضبط mascara وpuerta وdns، ويعمل dns أيضا مع DHCP\nip = dhcp\nmascara = 255.255.255.0\n"
 	"puerta =\ndns =\n"
 	"\n[portadas]\n; تنزيل أغلفة الألعاب الناقصة من الإنترنت عند توفر اتصال الشبكة\ndescargar = si\n"
-	"\n[actualizaciones]\n; البحث عن إصدار جديد من NULD عند بدء التشغيل، ويثبت من قائمة START\nbuscar = si\n"
+	"\n[actualizaciones]\n; البحث عن إصدار جديد من TEa.G3 عند بدء التشغيل، ويثبت من قائمة START\nbuscar = si\n"
 	"\n[logros]\n; دعم إنجازات RetroAchievements: si للتفعيل وno للإيقاف\nactivos = si\n"
 	"; عنوان جهاز xeRAbora على الشبكة. اتركه فارغا للبحث عنه تلقائيا\nservidor =\n"
 	"\n[jellyfin]\n; خادم Jellyfin لمشاهدة مكتبتك. اترك العنوان فارغا لتعطيل Jellyfin\nservidor =\nusuario =\nclave =\n"
