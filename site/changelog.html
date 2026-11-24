@@ -27,6 +27,27 @@
     <p>Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.</p>
   </header>
 
+  <section class="chapter" id="v1.3.3">
+    <header><b>1.3.3</b><h2 class="mono">2026-11-24 · <a href="https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.3">candidate package</a></h2></header>
+    <div>
+      <p>The embedded OPL runtime and its current TEa.G3 launch routes are documented in a dedicated interactive lab.</p>
+      <h3>New</h3>
+      <ul>
+        <li><b>Embedded OPL integration.</b> The pinned upstream OPL build, its pinned lwNBD dependency and the TEa.G3 USBExtreme UL direct-boot patch are built in CI and embedded alongside Neutrino in the single <code>TEa.G3.ELF</code>.</li>
+        <li><b>USBExtreme UL direct boot.</b> TEa.G3 reads <code>ul.cfg</code>, validates records and verifies every required split part before handing a valid UL game to the embedded OPL route.</li>
+        <li><b>Explicit engine policy.</b> Auto keeps ISO/ZSO on Neutrino and routes USBExtreme UL to OPL. Setting <code>[juegos] motor = opl</code> selects the manual OPL direct-boot route for USB ISO/ZSO. Other OPL backends are not claimed as integrated until their own adapters are implemented and tested.</li>
+        <li><b>OPL Integration Lab.</b> The site now includes a browser-only route simulator, the routing matrix, and full-size technical diagrams for the embedded runtime, UL split-part validation and runtime installation.</li>
+        <li><b>Site checks.</b> GitHub Pages validates the simulator route matrix, local asset links and SVG diagrams before deployment.</li>
+      </ul>
+      <h3>Verification boundary</h3>
+      <ul>
+        <li>CI builds the pinned OPL runtime, Neutrino and the combined ELF; host-side ZSO, UL, engine-selection and other test suites run separately.</li>
+        <li>The browser simulator explains the current route logic only. It does not run an ELF, emulate a console, mount an image or start a game.</li>
+        <li>This remains a prerelease candidate until the USB ISO, ZSO, UL, controller, memory-card and in-game tests are recorded on physical PS2 hardware.</li>
+      </ul>
+    </div>
+  </section>
+
   <section class="chapter" id="v1.3">
     <header><b>1.3</b><h2 class="mono">2026-11-19 · <a href="https://github.com/TEaG3/newday/releases/tag/v1.3">download</a></h2></header>
     <div>
