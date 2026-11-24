@@ -1,6 +1,6 @@
-// NULD's home screen on a canvas, for the theme maker (themes.html): the twelve themes' scenes, selections, splashes and
-// launch screens as the prototype "Temas NULD en vivo" drew them (v1.3's design; the console's are themes.c and
-// torres.c), with real covers. themes.js drives it through window.NULDPreview.
+// TEa.G3 home screen on a canvas, for the theme maker (themes.html): the twelve themes' scenes, selections, splashes and
+// launch screens as the prototype "TEa.G3 live themes" drew them (v1.3's design; the console's are themes.c and
+// torres.c), with real covers. themes.js drives it through window.TEaG3Preview.
 (() => {
 const W = 1280, H = 720, TAU = Math.PI * 2;
 const cv = document.getElementById('preview'), g = cv.getContext('2d');
@@ -998,7 +998,7 @@ let overlay = null, tour = null, seen = true; // tour: the idle demo also change
 if ('IntersectionObserver' in window) new IntersectionObserver(e => { seen = e[e.length - 1].isIntersecting; }).observe(cv); // drawn over the home, last: the maker's setup panel
 const alphaOf = c => { const m = /rgba\([^)]*,\s*([\d.]+)\)/.exec(c || ''); return m ? +m[1] : 1; };
 const tone = (hex, like) => { const n = parseInt(hex, 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${alphaOf(like)})`; };
-window.NULDPreview = {
+window.TEaG3Preview = {
   // base: a built-in theme's key; pal / def: the maker's palette and the base's own (RRGGBB by theme.ini key). Only what
   // differs from the base is touched, so an untouched base looks as it does; picture: a canvas, or null
   set(base, pal, def, picture, coverAccent) {
@@ -1075,7 +1075,7 @@ function frame(ms) {
   const fi = (t - tFade) / .35; if (fi < 1) { g.fillStyle = `rgba(0,0,0,${1 - ease(fi)})`; g.fillRect(0, 0, W, H); }
   requestAnimationFrame(frame);
 }
-window.NULDPreview.set('nuld', {}, {}, null, false);
+window.TEaG3Preview.set('nuld', {}, {}, null, false);
 B.forEach((b, i) => Object.assign(b, place(i)));
 tView = -9;
 requestAnimationFrame(frame);
