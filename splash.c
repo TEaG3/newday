@@ -1,7 +1,7 @@
 // TEa.G3 loading screen for link.elf (2026-11-03): the TEa.G3 identity canvas drawn by the GS. A thread at a lower
 // priority than the main one draws it while the main thread sleeps in the IOP reset, DHCP, the HTTP connects and
 // the cover downloads: a perspective floor and a wire sphere (gfx_line, alpha fading with depth), the four logo
-// variants (A ring, B "$ TEa.G3", C NULD//, D label) 3 s each with a glitch cut (the logo redrawn in scissored bands,
+// variants (A ring, B "$ TEa.G3", C "TEa.G3//", D label) 3 s each with a glitch cut (the logo redrawn in scissored bands,
 // shifted), the status line with a blinking cursor, scanlines. The logo type is vector (logo_data.c, tools/logo.py):
 // the real Michroma / Archivo / IBM Plex Mono outlines, which no atlas has room for at these sizes.
 #include <stdio.h>
@@ -76,7 +76,7 @@ static void variant(int k, float dx, float s)
 		float cap = 96, ww = splash_vtext_w(&vfont_michroma, cap, 0.06f, "TEa.G3"), x = 640 - (132 + 40 + ww) / 2 + dx;
 		splash_mark(x + 66, 300, 66, FG, ACID);
 		splash_vtext(&vfont_michroma, x + 172, 300 + cap / 2, cap, 0.06f, "TEa.G3", FG);
-	} else if (k == 1) { // B: $ nulld in IBM Plex Mono 500 (132 px type) + a block cursor
+	} else if (k == 1) { // B: $ TEa.G3 in IBM Plex Mono 500 (132 px type) + a block cursor
 		float fs = 132, cap = fs * vfont_plex_medium.cap / vfont_plex_medium.upm, base = 300 + cap / 2;
 		float ww = splash_vtext_w(&vfont_plex_medium, cap, -0.02f, "$ TEa.G3"), x = 640 - (ww + 0.52f * fs) / 2 + dx;
 		splash_vtext(&vfont_plex_medium, x, base, cap, -0.02f, "$", ACID);
