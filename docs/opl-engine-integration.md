@@ -20,7 +20,7 @@ The engine selector keeps image format, storage backend and runtime engine as se
 | USBExtreme UL | USB | OPL | OPL-only |
 | ISO/ZSO | SMBv1 share | Neutrino | OPL ETH direct launch |
 | ISO/ZSO | MMCE, UDPBD/UDPFS | Neutrino | Neutrino fallback (OPL adapter not enabled) |
-| HDLoader/APA | internal HDD | Neutrino | Neutrino fallback (TEa.G3 does not yet pass the OPL partition configuration) |
+| HDLoader/APA | internal HDD | Neutrino | OPL HDD mini-launch (existing configured OPL partition required) |
 | OPL ELF apps | APPS/ | TEa.G3 app path | Not an OPL game hand-off |
 
 The config key is `[juegos] motor` in `tea_g3/config.ini` on the launcher's home
@@ -50,6 +50,29 @@ The BDM patch:
 - selects the requested BDM device rather than the first attached device;
 - sets `GAME_FORMAT_USBLD` and the UL part count for UL games;
 - uses a safe `"%s"` startup-ID format string.
+
+## APA / HD Loader mini-launch
+
+The APA scanner now retains the exact game start LBA using the same formula as
+upstream OPL: the main partition's `private_5 + (0x100000 + 4096) / 512`.
+It also aggregates the sizes of every APA sub-partition sharing the same
+`APA_IDMAX` prefix. The resulting `start_sector` and
+`total_size_in_kb` are passed to OPL's HDD mini-launch; the full size matters
+because OPL uses it to configure CDVDMAN's media-LSN bounds.
+
+OPL resolves its HDD configuration partition itself from the existing
+`hdd0:__common/OPL/conf_hdd.cfg`. In TEa.G3 mini-launch mode, OPL mounts
+`__common` read-only for this lookup, validates the configured partition name,
+and refuses the launch if the file, setting, partition, or existing OPL folder
+is missing. It does not fall back to `+OPL`, create `conf_hdd.cfg`, create an
+OPL folder, or create a missing PFS partition. Normal interactive OPL behavior
+is left unchanged.
+
+The global default remains `motor = auto` (Neutrino for APA/HDL). Selecting
+`motor = opl` opts into the OPL mini-launch. If the OPL runtime is absent, the
+existing Neutrino route remains the safe fallback. The APA/HDL adapter still
+requires physical-console validation before being advertised as hardware
+verified.
 
 ## USBExtreme catalogue reader
 
