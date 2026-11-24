@@ -178,6 +178,8 @@ int ethAutoLaunchGame(char *argv[])
     if (!configSet)
         return -1;
 
+    if (argv[13] && argv[13][0])
+        snprintf(gExitPath, sizeof(gExitPath), "%s", argv[13]);
     ethLaunchGame(&ethGameList, 0, configSet);
     /* ethLaunchGame deinitializes OPL before starting CDVDMAN; never deinit twice. */
     return 0;
@@ -209,7 +211,7 @@ new_main = """        if (!strcmp(argv[4], "ul") && argc >= 6) {
             autoLaunchBDMGame(argv);
             return 0;
         }
-        if (!strcmp(argv[4], "eth") && argc >= 13) {
+        if (!strcmp(argv[4], "eth") && argc >= 14) {
             init();
             list_support[ETH_MODE].support = ethGetObject(0);
             if (ethAutoLaunchGame(argv) == 0)
