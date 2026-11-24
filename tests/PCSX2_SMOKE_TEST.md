@@ -41,6 +41,25 @@ Use PCSX2 2.8.2 for this harness (not the old 2.4 setup). Configure USB1 as a ma
    `tea_g3/config.ini`, restart TEa.G3, and verify the manual OPL direct-boot
    route. Restore `motor = auto` or `motor = neutrino` afterwards.
 
+## Independent return-path checks
+
+The OPL auto-launch adapters now receive the installed memory-card return ELF
+as their IGR/Exit target. On a physical PS2, verify each supported OPL route
+separately (UL, BDM USB, SMB/ETH and APA/HDL):
+
+1. Confirm TEa.G3 installed `mcX:/BOOT/TEa.G3.ELF` on the memory card selected
+   by its startup log.
+2. Launch one known-good test game through the selected OPL adapter.
+3. Use OPL's documented in-game reset key sequence (L1+L2+R1+R2, then
+   Start+Select) and verify that the memory-card stub starts.
+4. Verify the stub reinitializes USB, finds `mass0:/TEa.G3.ELF`, and returns
+   to the TEa.G3 menu.
+5. Repeat after a cold boot and with the other memory-card slot when available.
+
+The IGR path is a manual return mechanism, not an automatic rescue from a
+hard-frozen game. A game-specific IGR incompatibility must be recorded as
+unsupported for that title. No physical-console acceptance is implied by CI.
+
 ## Real PS2 checks
 
 Repeat USB ISO, USB ZSO, UL and manual OPL tests on real hardware. Record the

@@ -179,7 +179,7 @@ jobs:
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py" src/opl.c src/ethsupport.c
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py" src/opl.c src/hddsupport.c include/hddsupport.h
-          grep -Fq 'if (!strcmp(argv[4], "eth") && argc >= 13)' src/opl.c
+          grep -Fq 'if (!strcmp(argv[4], "eth") && argc >= 14)' src/opl.c
           grep -Fq 'int ethAutoLaunchGame(char *argv[])' src/ethsupport.c
           grep -Fq 'if (ethDirectLaunch)' src/ethsupport.c
           grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
@@ -194,9 +194,14 @@ jobs:
           grep -Fq 'gAutoLaunchGame->total_size_in_kb = (u32)size_kb' src/opl.c
           grep -Fq 'gAutoLaunchGame->disctype = (u8)disc_type' src/opl.c
           grep -Fq 'argc >= 6 && !strcmp(argv[5], "mini")' src/opl.c
-          grep -Fq 'argv[5] = "mini"' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
-          grep -Fq 'argv[4] = disc_type' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
-          grep -Fq 'run_loader(6, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'argv[6] = "mini"' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'argv[5] = disc_type' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py"
+          grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[13]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py"
+          grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
+          grep -Fq 'if (!strcmp(argv[4], "ul") && argv[6] && argv[6][0])' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
+          grep -Fq 'else if (!strcmp(argv[4], "bdm") && argv[7] && argv[7][0])' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
           grep -Fq 'return 0;' src/opl.c
           python3 - <<'PY'
           from pathlib import Path

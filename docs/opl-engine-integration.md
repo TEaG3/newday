@@ -29,6 +29,37 @@ device:
 - `neutrino`: keep ISO/ZSO on Neutrino; UL remains OPL-only.
 - `opl`: prefer OPL for USB, MX4SIO, iLink, ATA-backed FAT/exFAT HDD, SMB ISO/ZSO and APA/HD Loader. MMCE and UDP-based sources remain on Neutrino. UL remains OPL-only.
 
+## Independent return path
+
+TEa.G3 installs its small boot/recovery ELF as `mcX:/BOOT/TEa.G3.ELF` on an
+available memory card. The stub is a separate executable stored on the card,
+not a resident copy of the launcher in EE RAM. It initializes the IOP/USB
+stack, waits for the TEa.G3 USB device, and starts `mass0:/TEa.G3.ELF`.
+
+For OPL direct-launch modes (USBExtreme UL, BDM, SMB/ETH and APA/HDL), TEa.G3
+passes the installed memory-card path as an extra launch argument. The pinned
+OPL build patch assigns that path to OPL's configured exit/IGR target
+(`gExitPath`). OPL documents that this target must be on a memory card; its
+in-game reset sequence reloads the target ELF after resetting the game
+environment. This is the independent return mechanism for OPL-launched games.
+Neutrino continues to use the existing `-igrexit` / `-igrmenu` path to the
+same memory-card stub.
+
+The launcher refuses OPL direct launch if it cannot confirm that the memory
+card stub was installed. If installation is still running, the UI asks the
+user to retry; if no card is available or writing failed, the OPL launch is
+blocked rather than silently launching without a return path.
+
+This mechanism is a user-invoked IGR return, not an automatic recovery from
+every game crash or power loss. A game that does not support IGR, has IGR
+disabled by compatibility settings, or hangs before processing the reset
+combination may not return. A successful OPL build does not prove that the
+memory-card path works on every console. Physical PS2 testing must verify the
+configured card slot, the IGR key sequence, USB reinitialization, and the
+return to the TEa.G3 menu. The second-stage loader's pre-handoff failure path
+also remains a separate validation item; the independent IGR stub is the
+post-launch return path, not proof that every failed `ExecPS2` can recover.
+
 ## OPL build and dependency pinning
 
 - Upstream source:
