@@ -325,7 +325,7 @@ typedef struct hdl_scan_record {
 	u32 start_sector, total_size_kb;
 } hdl_scan_record;
 
-int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb), void *ctx)
+int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, int is_cd), void *ctx)
 {
 	static u8 h[1024] __attribute__((aligned(64)));
 	iox_dirent_t de;
@@ -346,6 +346,7 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
 		snprintf(g->title, sizeof(g->title), "%s", (const char *)h + 8);
 		snprintf(g->startup, sizeof(g->startup), "%s", (const char *)h + 172);
 		g->start_sector = a.lba;
+		g->is_cd = ((u8)h[236] == 0x12 || (u8)h[236] == 0x13); // SCECdPS2CD / SCECdPS2CDDA
 		g->total_size_kb = de.stat.size / 2u; // OPL: (APA sectors / 4) * 2
 		*tail = g;
 		tail = &g->next;
@@ -381,7 +382,7 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
 	for (g = head; g; ) {
 		hdl_scan_record *next = g->next;
 		if (g->total_size_kb && cb) {
-			cb(ctx, g->part, g->title, g->startup, g->start_sector, g->total_size_kb);
+			cb(ctx, g->part, g->title, g->startup, g->start_sector, g->total_size_kb, g->is_cd);
 			n++;
 		}
 		free(g);
