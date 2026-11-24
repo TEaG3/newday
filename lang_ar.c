@@ -25,7 +25,7 @@ static const char *const ar[][2] = {
         {"Could not install the embedded Neutrino runtime", "تعذر تثبيت محرك Neutrino المضمن"},
         {"Could not install the embedded OPL runtime", "تعذر تثبيت محرك OPL المضمن"},
         {"This game format is not supported by this source", "تنسيق هذه اللعبة غير مدعوم من مصدر التخزين هذا"},
-        {"STARTING WITH OPL", "تشغيل OPL الآن"},
+        {"STARTING GAME", "جارٍ تشغيل اللعبة"},
         {"No network (%s): the server's game catalog was not read", "لا توجد شبكة (%s): لم تتم قراءة كتالوج ألعاب الخادم"},
         {"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
          "الكتالوج على %s:18290 لم يستجب (%s): هل nuld_catalog.py يعمل؟ (بدونه: خادم فارغ)"},
