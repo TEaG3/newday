@@ -24,7 +24,7 @@ static const char *const ar[][2] = {
         {"the adapter belongs to UDPBD", "المحول مخصص ل UDPBD"},
         {"Could not install the embedded Neutrino runtime", "تعذر تثبيت محرك Neutrino المضمن"},
         {"Could not install the embedded OPL runtime", "تعذر تثبيت محرك OPL المضمن"},
-        {"OPL direct boot currently supports USB games only", "الإقلاع المباشر عبر OPL يدعم ألعاب USB فقط"},
+        {"This game format is not supported by this source", "تنسيق هذه اللعبة غير مدعوم من مصدر التخزين هذا"},
         {"STARTING WITH OPL", "تشغيل OPL الآن"},
         {"No network (%s): the server's game catalog was not read", "لا توجد شبكة (%s): لم تتم قراءة كتالوج ألعاب الخادم"},
         {"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
