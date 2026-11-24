@@ -110,6 +110,7 @@ typedef struct {
 	char ul_name[UL_NAME_SIZE + 1];                   // exact fixed-width UL name used by OPL's CRC
 	char kind, cd, disc, src, engine, parts;
 	unsigned size;
+	u32 hdl_start_sector, hdl_size_kb;
 	void *big, *small, *half;
 } entry;
 static entry cv[MAXC];
@@ -738,15 +739,49 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 static ini cfg;               // tentative: defined with the config below
 static const char *src_why;
 
-static int engine_for(const entry *e) // source and image format are independent dimensions
+static int ipv4_text(const char *s)
+{
+	unsigned a, b, c, d;
+	char tail;
+	return s && sscanf(s, "%u.%u.%u.%u%c", &a, &b, &c, &d, &tail) == 4 &&
+	       a <= 255 && b <= 255 && c <= 255 && d <= 255;
+}
+
+static int engine_for(const entry *e) // global engine preference + actual source adapter
 {
 	if (e->kind != K_PS2) return ENGINE_NEUTRINO;
 	engine_format format = e->engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
 	                       has_ext(e->path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO;
 	int source_index = (unsigned char)e->src;
-	engine_source source_type = source_index < nsrc && src[source_index].type == SRC_USB ?
-	                            ENGINE_SOURCE_USB : ENGINE_SOURCE_OTHER;
-	return engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
+	engine_source source_type = ENGINE_SOURCE_OTHER;
+	if (source_index < nsrc) {
+		switch (src[source_index].type) {
+		case SRC_USB: source_type = ENGINE_SOURCE_USB; break;
+		case SRC_HDD:
+		case SRC_MX4SIO:
+		case SRC_ILINK: source_type = ENGINE_SOURCE_BDM; break;
+		case SRC_SMB: source_type = ENGINE_SOURCE_SMB; break;
+		case SRC_HDL: source_type = ENGINE_SOURCE_HDL; break;
+		default: break;
+		}
+	}
+	engine_id selected = engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
+	/* Keep the existing Neutrino path as a silent fallback if OPL is unavailable
+	   or the configured SMB share exceeds OPL's fixed field size. */
+	if ((selected == ENGINE_OPL_BDM || selected == ENGINE_OPL_ETH || selected == ENGINE_OPL_HDD) && !exists(OPL_PATH))
+		return ENGINE_NEUTRINO;
+	if (selected == ENGINE_OPL_ETH) {
+		const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
+		const char *server = ini_get(&cfg, "smb", "server", "");
+		const char *share = ini_get(&cfg, "smb", "share", "");
+		const char *user = ini_get(&cfg, "smb", "user", "guest");
+		const char *password = ini_get(&cfg, "smb", "password", "");
+		/* OPL's ETH auto-launch currently requires IPv4 literals, not DHCP or DNS names. */
+		if (!ipv4_text(ip) || !ipv4_text(server) || !*share ||
+		    strlen(share) >= 32 || strlen(user) >= 32 || strlen(password) >= 32)
+			return ENGINE_NEUTRINO;
+	}
+	return selected;
 }
 static int catalog_load(int s, int n)
 {
@@ -785,15 +820,16 @@ static int catalog_load(int s, int n)
 }
 
 typedef struct { int s, n; } hdl_ctx;
-static void hdl_add(void *p, const char *part, const char *title, const char *startup) // one HD Loader game
+static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, int is_cd) // one HD Loader game
 {
 	hdl_ctx *c = p;
-	if (c->n >= MAXC || strlen(startup) != 11) return; // "SLUS_213.76"
+	if (c->n >= MAXC || strlen(startup) != 11 || !start_sector || !total_size_kb) return; // "SLUS_213.76"
 	entry *e = &cv[c->n++];
 	snprintf(e->path, sizeof(e->path), "%s", part);
 	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
 	serial_dash(startup, e->serial);
-	e->kind = K_PS2, e->src = c->s;
+	snprintf(e->boot, sizeof(e->boot), "%s", startup);
+	e->kind = K_PS2, e->src = c->s, e->cd = is_cd, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb;
 	done_n++, total_n++; // as the catalog: not counted beforehand
 }
 
@@ -2607,14 +2643,15 @@ static int status_text(char *b, int max)
 	return k < max ? k : max - 1;
 }
 
-static const char *launch_problem(int i) // why X cannot start entry i, or NULL (shown as a toast)
+static const char *launch_problem(int i) // select a viable engine before handing control away
 {
 	int engine = engine_for(&cv[i]);
-	if (engine == ENGINE_UNSUPPORTED) return L("OPL directo solo admite juegos USB en esta versión", "OPL direct boot currently supports USB games only");
+	if (engine == ENGINE_UNSUPPORTED) return L("Formato de juego no compatible con esta fuente", "This game format is not supported by this source");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
-	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_USB)
+	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH)
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
-	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB) {
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
+	    src[(int)cv[i].src].type == SRC_SMB) {
 		char smb_module[192], smb_config[192];
 		snprintf(smb_module, sizeof(smb_module), "%s/modules/smb_fhi.irx", NDIR);
 		snprintf(smb_config, sizeof(smb_config), "%s/config/bsd-smb.toml", NDIR);
@@ -2746,26 +2783,83 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	if (engine == ENGINE_OPL_UL) {
 		static char part_count[8];
 		snprintf(part_count, sizeof(part_count), "%u", (unsigned char)cv[i].parts);
-		char *opl_argv[6] = {OPL_PATH, cv[i].ul_name, cv[i].boot, cv[i].cd ? "CD" : "DVD", "ul", part_count};
+		/* OPL's main() expects the launch mode in argv[4]. The loader removes argv[0],
+		   so reserve an empty OPL argv[0] before the UL record. */
+		char *opl_argv[7] = {OPL_PATH, "", cv[i].ul_name, cv[i].boot,
+		                     cv[i].cd ? "CD" : "DVD", "ul", part_count};
 		printf("launch OPL UL: %s parts=%s\\n", cv[i].boot, part_count);
 		gfx_shutdown();
-		run_loader(6, opl_argv);
-		printf("OPL UL launch failed\\n");
+		run_loader(7, opl_argv);
+		printf("OPL UL launch returned\\n");
 		return;
 	}
-	if (engine == ENGINE_OPL_USB) {
-		const char *filename = strrchr(cv[i].path, '/');
-		char *opl_argv[5];
-		filename = filename ? filename + 1 : cv[i].path;
+	if (engine == ENGINE_OPL_HDD) {
+		char sector[16], size_kb[16];
+		char *opl_argv[7];
+		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector || !cv[i].hdl_size_kb) {
+			launch_err = L("Metadatos de la partición HD Loader incompletos", "HD Loader partition metadata is incomplete");
+			return;
+		}
+		snprintf(sector, sizeof(sector), "%lu", (unsigned long)cv[i].hdl_start_sector);
+		snprintf(size_kb, sizeof(size_kb), "%lu", (unsigned long)cv[i].hdl_size_kb);
 		opl_argv[0] = OPL_PATH;
-		opl_argv[1] = (char *)filename;
+		opl_argv[1] = "";
 		opl_argv[2] = cv[i].boot;
-		opl_argv[3] = cv[i].cd ? "CD" : "DVD";
-		opl_argv[4] = "usb";
-		printf("launch OPL USB: %s (%s)\\n", cv[i].boot, filename);
+		opl_argv[3] = sector;
+		opl_argv[4] = size_kb;
+		opl_argv[5] = "mini";
+		opl_argv[6] = NULL;
+		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s (existing OPL config only)\n", cv[i].boot, sector, size_kb);
 		gfx_shutdown();
-		run_loader(5, opl_argv);
-		printf("OPL USB launch failed\\n");
+		run_loader(6, opl_argv);
+		printf("OPL HD Loader launch returned\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_ETH) {
+		char *opl_argv[14];
+		opl_argv[0] = OPL_PATH;
+		opl_argv[1] = "";
+		opl_argv[2] = cv[i].path;
+		opl_argv[3] = cv[i].boot;
+		opl_argv[4] = cv[i].cd ? "CD" : "DVD";
+		opl_argv[5] = "eth";
+		opl_argv[6] = (char *)ini_get(&cfg, "red", "ip", "dhcp");
+		opl_argv[7] = (char *)ini_get(&cfg, "red", "mascara", "255.255.255.0");
+		opl_argv[8] = (char *)ini_get(&cfg, "red", "puerta", "");
+		opl_argv[9] = (char *)ini_get(&cfg, "red", "dns", "");
+		opl_argv[10] = (char *)ini_get(&cfg, "smb", "server", "");
+		opl_argv[11] = (char *)ini_get(&cfg, "smb", "share", "");
+		opl_argv[12] = (char *)ini_get(&cfg, "smb", "user", "guest");
+		opl_argv[13] = (char *)ini_get(&cfg, "smb", "password", "");
+		printf("launch OPL SMB: %s\\n", cv[i].boot);
+		gfx_shutdown();
+		run_loader(14, opl_argv);
+		printf("OPL SMB launch returned\\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_BDM) {
+		const char *filename = strrchr(cv[i].path, '/');
+		const char *driver = "usb";
+		char unit[8];
+		char *opl_argv[8];
+		int source_type = src[(int)cv[i].src].type;
+		filename = filename ? filename + 1 : cv[i].path;
+		if (source_type == SRC_HDD) driver = "ata";
+		else if (source_type == SRC_MX4SIO) driver = "sdc";
+		else if (source_type == SRC_ILINK) driver = "sd";
+		snprintf(unit, sizeof(unit), "%u", (unsigned char)src[(int)cv[i].src].unit);
+		opl_argv[0] = OPL_PATH;
+		opl_argv[1] = "";
+		opl_argv[2] = (char *)filename;
+		opl_argv[3] = cv[i].boot;
+		opl_argv[4] = cv[i].cd ? "CD" : "DVD";
+		opl_argv[5] = "bdm";
+		opl_argv[6] = (char *)driver;
+		opl_argv[7] = unit;
+		printf("launch OPL BDM: %s driver=%s unit=%s\\n", cv[i].boot, driver, unit);
+		gfx_shutdown();
+		run_loader(8, opl_argv);
+		printf("OPL BDM launch returned\\n");
 		return;
 	}
 	if (cv[i].kind != K_PS2) { // loader argv: the file, then the program's argv

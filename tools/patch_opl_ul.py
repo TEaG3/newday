@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the pinned TEa.G3 USBExtreme direct-boot extension to upstream OPL."""
+"""Patch the pinned OPL auto-launch adapter for UL and source-specific BDM routes."""
 from pathlib import Path
 import sys
 
@@ -26,7 +26,18 @@ old = r'''    int nameLen;
     snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), argv[2]);
 '''
 new = r'''    int isUL = !strcmp(argv[4], "ul");
-    int isUSB = isUL || !strcmp(argv[4], "usb");
+    int isBDM = !strcmp(argv[4], "bdm");
+    const char *wantedDriver = isUL || !strcmp(argv[4], "usb") ? "usb" : isBDM ? argv[5] : "";
+    int wantedUnit = 0;
+    if (isBDM) {
+        char *end;
+        unsigned long unit = strtoul(argv[6], &end, 10);
+        if (*end || unit > 4 || (strcmp(wantedDriver, "usb") && strcmp(wantedDriver, "sd") &&
+            strcmp(wantedDriver, "sdc") && strcmp(wantedDriver, "ata")))
+            return;
+        wantedUnit = (int)unit;
+    }
+
     int format;
     if (isUL) {
         char *end;
@@ -42,6 +53,8 @@ new = r'''    int isUL = !strcmp(argv[4], "ul");
     } else {
         int nameLen;
         format = isValidIsoName(argv[1], &nameLen);
+        if (format == 0 || nameLen <= 0 || nameLen > ISO_GAME_NAME_MAX)
+            return;
         if (format == GAME_FORMAT_OLD_ISO) {
             strncpy(gAutoLaunchBDMGame->name, &argv[1][GAME_STARTUP_MAX], nameLen);
             gAutoLaunchBDMGame->name[nameLen] = '\0';
@@ -74,38 +87,79 @@ old = r'''            if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "ata") && st
                 break; // Exit the loop if "ata" device is found
             }
 '''
-new = r'''            if ((isUSB && !strcmp(gAutoLaunchDeviceData->bdmDriver, "usb") && strlen(gAutoLaunchDeviceData->bdmDriver) == 3) ||
-                (!isUSB && !strcmp(gAutoLaunchDeviceData->bdmDriver, "ata") && strlen(gAutoLaunchDeviceData->bdmDriver) == 3)) {
-                if (!isUSB)
-                    bdmResolveLBA_UDMA(gAutoLaunchDeviceData);
+new = r'''            int matches = !strcmp(gAutoLaunchDeviceData->bdmDriver, wantedDriver) &&
+                          (!isBDM || gAutoLaunchDeviceData->massDeviceIndex == wantedUnit);
+            if (matches && !strcmp(gAutoLaunchDeviceData->bdmDriver, "ata"))
+                bdmResolveLBA_UDMA(gAutoLaunchDeviceData);
+            if (matches) {
+                if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "usb"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_USB;
+                else if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "sd"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_ILINK;
+                else if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "sdc"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_SDC;
+                else if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "ata"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_ATA;
                 snprintf(apaDevicePrefix, sizeof(apaDevicePrefix), "mass%d:", i);
+                matchedDevice = 1;
                 fileXioDclose(dir);
-                break; // USB for UL; ATA for the existing HDD mini-launch path.
+                break;
             }
 '''
 if source.count(old) != 1:
     raise SystemExit(f"expected one BDM device-selection block, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
+old = r'''    char apaDevicePrefix[8] = {0};
+    delay(8);
+'''
+new = r'''    char apaDevicePrefix[8] = {0};
+    int matchedDevice = 0;
+    delay(8);
+'''
+if source.count(old) != 1:
+    raise SystemExit(f"expected one BDM target-scan initialization, found {source.count(old)}")
+source = source.replace(old, new, 1)
+
+old = r'''    if (gBDMPrefix[0] != '\0') {'''
+new = r'''    if (isBDM || isUL || !strcmp(argv[4], "usb"))
+        gBDMPrefix[0] = '\0'; // TEa.G3 passes paths relative to the selected device root.
+    if (!isUL && gBDMPrefix[0] != '\0') {'''
+if source.count(old) != 1:
+    raise SystemExit(f"expected one BDM prefix branch, found {source.count(old)}")
+source = source.replace(old, new, 1)
+
+old = r'''    if (!isUL && gBDMPrefix[0] != '\0') {'''
+new = r'''    if (!matchedDevice) {
+        LOG("TEa.G3 BDM auto-launch: requested device not found\n");
+        return;
+    }
+    if (!isUL && gBDMPrefix[0] != '\0') {'''
+if source.count(old) != 1:
+    raise SystemExit(f"expected one BDM scan end, found {source.count(old)}")
+source = source.replace(old, new, 1)
+
 old = r'''        if (!strcmp(argv[4], "bdm"))
             autoLaunchBDMGame(argv);
 '''
-new = r'''        if (!strcmp(argv[4], "bdm") || !strcmp(argv[4], "usb"))
+new = r'''        if (!strcmp(argv[4], "bdm") && argc >= 7) {
             autoLaunchBDMGame(argv);
+            return 0;
+        }
+        if (!strcmp(argv[4], "usb")) {
+            autoLaunchBDMGame(argv);
+            return 0;
+        }
         /* argv[0] boot path, argv[1] raw UL name, argv[2] startup ID,
            argv[3] "CD"/"DVD", argv[4] "ul", argv[5] split-part count. */
-        if (!strcmp(argv[4], "ul") && argc >= 6)
+        if (!strcmp(argv[4], "ul") && argc >= 6) {
             autoLaunchBDMGame(argv);
+            return 0;
+        }
 '''
 if source.count(old) != 1:
     raise SystemExit(f"expected one BDM main dispatch, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
-old = r'''    if (gBDMPrefix[0] != '\0') {'''
-new = r'''    if (!isUL && gBDMPrefix[0] != '\0') {'''
-if source.count(old) != 1:
-    raise SystemExit(f"expected one BDM prefix branch, found {source.count(old)}")
-source = source.replace(old, new, 1)
-
 path.write_text(source, encoding="utf-8")
-print("OPL USBExtreme direct-boot patch applied")
+print("OPL TEa.G3 direct-launch routes patched: UL + USB/BDM ISO/ZSO")

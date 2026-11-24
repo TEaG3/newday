@@ -1,4 +1,5 @@
 #pragma once
+#include <tamtypes.h>
 // Game sources (phase 14): where PS2 ISOs are looked for besides the launcher's USB.
 enum { SRC_USB, SRC_HDD, SRC_HDL, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS, SRC_SMB, SRC_N };
 #define SRC_MAX SRC_N
@@ -17,7 +18,7 @@ unsigned src_mask(const char *list); // "usb, hdd, mx4sio" -> 1 << SRC_*; hdd al
 // problem, in Spanish, for a toast.
 const char *src_init(unsigned mask, const char *ip, const char *ndir, int udpfs_mount); // udpfs_mount: no catalog (#10)
 // HD Loader partitions on hdd0: (APA): add(ctx, partition, title, startup "SLUS_213.76") per game
-int src_hdl_scan(void (*add)(void *ctx, const char *part, const char *title, const char *startup), void *ctx);
+int src_hdl_scan(void (*add)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, int is_cd), void *ctx);
 // SMB is a read-only Neutrino FHI source. Its share contains TEAG3.GAMES (path<TAB>title<TAB>serial).
 // Network settings must be static IPv4; the driver uses TCP 445. Returns NULL on success or a localized error.
 const char *src_smb_init(const char *ip, const char *mask, const char *gw, const char *server,

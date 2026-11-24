@@ -174,9 +174,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 -m py_compile "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py" "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py"
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
+          python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py" src/opl.c src/ethsupport.c
+          python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py" src/opl.c src/hddsupport.c include/hddsupport.h
+          grep -Fq 'if (!strcmp(argv[4], "eth") && argc >= 13)' src/opl.c
+          grep -Fq 'int ethAutoLaunchGame(char *argv[])' src/ethsupport.c
+          grep -Fq 'if (ethDirectLaunch)' src/ethsupport.c
           grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
+          grep -Fq 'int isBDM = !strcmp(argv[4], "bdm")' src/opl.c
+          grep -Fq 'gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_SDC' src/opl.c
+          grep -Fq 'gAutoLaunchDeviceData->massDeviceIndex == wantedUnit' src/opl.c
+          grep -Fq 'TEa.G3 BDM auto-launch: requested device not found' src/opl.c
           grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
+          grep -Fq 'gTEaG3HDDMiniReady = 1' src/hddsupport.c
+          grep -Fq 'FIO_MT_RDONLY' src/hddsupport.c
+          grep -Fq 'TEa.G3 HDL mini-launch refused' src/opl.c
+          grep -Fq 'gAutoLaunchGame->total_size_in_kb = (u32)size_kb' src/opl.c
+          grep -Fq 'return 0;' src/opl.c
           python3 - <<'PY'
           from pathlib import Path
           source = Path("src/opl.c").read_text(encoding="utf-8")

@@ -49,7 +49,16 @@ jobs:
         run: |
           set -euo pipefail
           python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
+          python3 -m py_compile "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py"
+          python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py" src/opl.c src/ethsupport.c
+          grep -Fq 'if (!strcmp(argv[4], "eth") && argc >= 13)' src/opl.c
+          grep -Fq 'int ethAutoLaunchGame(char *argv[])' src/ethsupport.c
+          grep -Fq 'if (ethDirectLaunch)' src/ethsupport.c
           grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
+          grep -Fq 'int isBDM = !strcmp(argv[4], "bdm")' src/opl.c
+          grep -Fq 'gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_SDC' src/opl.c
+          grep -Fq 'gAutoLaunchDeviceData->massDeviceIndex == wantedUnit' src/opl.c
+          grep -Fq 'TEa.G3 BDM auto-launch: requested device not found' src/opl.c
           grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
           python3 - <<'PY'
           from pathlib import Path

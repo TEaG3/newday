@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEa.G3 OPL Integration Lab</title>
-<meta name="description" content="Explore how TEa.G3 embeds OPL and Neutrino in one ELF, see the verified USBExtreme UL and USB ISO/ZSO routing rules, and try a browser-only launch-path simulation.">
+<meta name="description" content="Explore how TEa.G3 embeds OPL and Neutrino in one ELF, compare USB/BDM, SMB and APA/HD Loader launch adapters, and try a browser-only routing simulation.">
 <meta property="og:title" content="TEa.G3 — OPL Integration Lab">
 <meta property="og:description" content="An interactive, source-aligned explanation of the OPL runtime embedded in TEa.G3.">
 <meta name="theme-color" content="#06070A">
@@ -56,7 +56,7 @@
           <select name="format"><option value="iso" selected>ISO</option><option value="zso">ZSO</option><option value="ul">USBExtreme UL</option></select>
         </label>
         <label>Storage source
-          <select name="source"><option value="usb" selected>USB</option><option value="other">Other source (HDD / MX4SIO / iLink / MMCE / network)</option></select>
+          <select name="source"><option value="usb" selected>USB</option><option value="bdm">MX4SIO / iLink / FAT-exFAT HDD</option><option value="smb">SMB share</option><option value="hdl">APA / HD Loader HDD</option><option value="other">MMCE / UDPBD / UDPFS</option></select>
         </label>
         <label>Engine preference
           <select name="preference"><option value="auto" selected>auto</option><option value="neutrino">neutrino</option><option value="opl">opl</option></select>
@@ -92,9 +92,13 @@
           <tr><td>ISO / ZSO</td><td>USB</td><td><code>auto</code> / <code>neutrino</code></td><td><span class="route-neutrino">Neutrino</span></td></tr>
           <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td><span class="route-opl">OPL · UL direct boot</span></td></tr>
           <tr><td>ISO / ZSO</td><td>USB</td><td><code>opl</code></td><td><span class="route-opl">OPL · USB direct boot</span></td></tr>
-          <tr><td>ISO / ZSO</td><td>Other source</td><td><code>auto</code> / <code>neutrino</code></td><td><span class="route-neutrino">Existing Neutrino route</span></td></tr>
-          <tr><td>ISO / ZSO</td><td>Other source</td><td><code>opl</code></td><td><span class="route-blocked">Not wired to OPL</span></td></tr>
-          <tr><td>USBExtreme UL</td><td>Other source</td><td>Any preference</td><td><span class="route-blocked">Unsupported in current adapter</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>neutrino</code></td><td><span class="route-neutrino">Neutrino</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>MX4SIO / iLink / FAT-exFAT HDD</td><td><code>opl</code></td><td><span class="route-opl">OPL · BDM direct boot</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>SMB share</td><td><code>opl</code></td><td><span class="route-opl">OPL · ETH</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>APA / HD Loader</td><td><code>opl</code></td><td><span class="route-opl">OPL · HDD mini-launch</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>SMB / APA / MMCE / UDP</td><td><code>auto</code> / <code>neutrino</code></td><td><span class="route-neutrino">Neutrino</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>MMCE / UDPBD / UDPFS</td><td><code>opl</code></td><td><span class="route-neutrino">Neutrino fallback</span></td></tr>
+          <tr><td>USBExtreme UL</td><td>Non-USB source</td><td>Any preference</td><td><span class="route-blocked">Unsupported in current adapter</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -116,13 +120,15 @@
   <section class="opl-section">
     <div class="opl-section-head">
       <div><span class="opl-kicker mono">04 / SOURCE OF TRUTH</span><h2>Where to inspect the real implementation</h2></div>
-      <p>The interactive route above is tied to the following source files and automated checks.</p>
+      <p>The interactive route above mirrors the C selector for USB, BDM devices, SMB, APA/HD Loader and Neutrino fallback.</p>
     </div>
     <div class="opl-source-grid">
       <a href="https://github.com/TEaG3/newday/blob/master/engine.c"><strong>engine.c</strong><span>Format + source + preference selection matrix</span></a>
       <a href="https://github.com/TEaG3/newday/blob/master/launcher.c"><strong>launcher.c</strong><span>USB UL scanning, game metadata and launch hand-off</span></a>
       <a href="https://github.com/TEaG3/newday/blob/master/ul.c"><strong>ul.c</strong><span>UL record, CRC and split-part validation</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/tools/patch_opl_ul.py"><strong>patch_opl_ul.py</strong><span>TEa.G3's pinned OPL UL direct-boot patch</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/tools/patch_opl_ul.py"><strong>patch_opl_ul.py</strong><span>TEa.G3 pinned OPL UL and BDM direct-boot patch</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/tools/patch_opl_hdl.py"><strong>patch_opl_hdl.py</strong><span>Safe APA / HD Loader mini-launch and existing-config guard</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/sources.c"><strong>sources.c</strong><span>APA start-sector and sub-partition size discovery</span></a>
       <a href="https://github.com/TEaG3/newday/blob/master/runtime_install.c"><strong>runtime_install.c</strong><span>Runtime installation and CRC-32 checks</span></a>
       <a href="https://github.com/TEaG3/newday/blob/master/.github/workflows/build-ps2.yml"><strong>build-ps2.yml</strong><span>CI build of pinned OPL, Neutrino and the single ELF</span></a>
     </div>

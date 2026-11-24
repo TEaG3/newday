@@ -174,7 +174,7 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
   <section class="chapter" id="opl">
     <header><b>OPL</b><h2>Integrated OPL engine</h2></header>
     <div>
-      <p>TEa.G3 ships one user-facing executable: <code>TEa.G3.ELF</code>. The build pins the upstream OPL source, fetches its pinned <code>lwNBD</code> dependency, applies the TEa.G3 USBExtreme UL direct-boot patch, builds OPL, and embeds it beside Neutrino and the required runtime modules.</p>
+      <p>TEa.G3 ships one user-facing executable: <code>TEa.G3.ELF</code>. The build pins the upstream OPL source, fetches its pinned <code>lwNBD</code> dependency, applies the TEa.G3 UL, BDM, SMB/ETH and guarded APA/HD Loader direct-launch patches, builds OPL, and embeds it beside Neutrino and the required runtime modules.</p>
       <p>On first boot, TEa.G3 installs the embedded files under <code>tea_g3/runtime/</code>. Each file is written to a temporary path and checked with CRC-32 before it is renamed into place. A bundle identifier and per-file checks let later boots skip a complete, matching runtime or repair missing/corrupt assets.</p>
       <h3>What is routed today</h3>
       <div class="scroll"><table>
@@ -182,14 +182,18 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
         <tr><td>ISO / ZSO</td><td>USB</td><td><code>auto</code> / <code>neutrino</code></td><td>Neutrino</td></tr>
         <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td>OPL UL direct boot</td></tr>
         <tr><td>ISO / ZSO</td><td>USB</td><td><code>opl</code></td><td>OPL USB direct boot</td></tr>
-        <tr><td>ISO / ZSO</td><td>Other configured source</td><td><code>auto</code> / <code>neutrino</code></td><td>Existing Neutrino route</td></tr>
-        <tr><td>ISO / ZSO</td><td>Other configured source</td><td><code>opl</code></td><td>Not connected to OPL</td></tr>
+        <tr><td>ISO / ZSO</td><td>MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>neutrino</code></td><td>Neutrino</td></tr>
+        <tr><td>ISO / ZSO</td><td>MX4SIO / iLink / FAT-exFAT HDD</td><td><code>opl</code></td><td>OPL BDM direct boot</td></tr>
+        <tr><td>ISO / ZSO</td><td>SMB share</td><td><code>opl</code></td><td>OPL ETH direct launch</td></tr>
+        <tr><td>HD Loader / APA</td><td>Internal HDD</td><td><code>opl</code></td><td>OPL HDD mini-launch; existing OPL config required</td></tr>
+        <tr><td>SMB / APA / MMCE / UDP</td><td>Configured source</td><td><code>auto</code> / <code>neutrino</code></td><td>Neutrino</td></tr>
+        <tr><td>MMCE / UDPBD / UDPFS</td><td>Other configured source</td><td><code>opl</code></td><td>Neutrino fallback</td></tr>
         <tr><td>USBExtreme UL</td><td>Non-USB source</td><td>Any preference</td><td>Unsupported by current adapter</td></tr>
       </table></div>
       <h3>USBExtreme UL safety checks</h3>
       <p>The TEa.G3 scanner reads <code>ul.cfg</code>, validates the fixed-size records, and checks that every declared <code>ul.*</code> split part is present. A record with missing or invalid parts is skipped instead of being offered as a working game. A valid entry receives the OPL UL route with its title, startup ID, media type and part count.</p>
       <h3>Important limits</h3>
-      <p>Embedding upstream OPL does not mean every backend supported by standalone OPL is connected to TEa.G3. The current direct-boot adapters described above are USB-based. MX4SIO, iLink, SMBv1 and ATA/IDE HDD require their own OPL hand-offs and device testing before being described as OPL routes. The current Neutrino paths remain separate and available.</p>
+      <p>Embedding upstream OPL does not mean every standalone OPL feature is connected. TEa.G3 now has source-specific adapters for BDM devices, SMB/ETH and APA/HD Loader, in addition to USBExtreme UL. MMCE and UDPBD/UDPFS remain on Neutrino. These adapters have passed source/build checks but still require physical-PS2 game, sustained-read, VMC and return-to-launcher testing. The Neutrino paths remain separate and available.</p>
       <p><a class="btn ink" href="opl-lab.html">Open the interactive OPL Integration Lab</a> — its browser simulation mirrors the route selector; it does not execute an ELF, emulate a console or launch a game.</p>
     </div>
   </section>

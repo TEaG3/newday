@@ -318,22 +318,77 @@ void src_udpfs_ip(const char *ndir, const char *ip)
 	if (*ip) neutrino_ip(ndir, "bsd-udpfs.toml", ip);
 }
 
-// HD Loader header (hdlfs, as nhddl hdl.c): 1 KB at 4 KB + 1 MB into the partition, magic 0xDEADFEED
-int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, const char *startup), void *ctx)
+// HD Loader metadata, matching upstream OPL's hddGetHDLGamelist() calculation.
+typedef struct hdl_scan_record {
+	struct hdl_scan_record *next;
+	char part[APA_IDMAX + 1], title[161], startup[61];
+	u32 start_sector, total_size_kb;
+	int is_cd;
+} hdl_scan_record;
+
+int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, int is_cd), void *ctx)
 {
 	static u8 h[1024] __attribute__((aligned(64)));
 	iox_dirent_t de;
-	int fd = fileXioDopen("hdd0:"), n = 0;
+	hdl_scan_record *head = NULL, **tail = &head, *g;
+	int fd = fileXioDopen("hdd0:"), n = 0, failed = 0;
 	if (fd < 0) return 0;
 	while (fileXioDread(fd, &de) > 0) {
-		if (de.stat.mode != 0x1337 || de.stat.attr & APA_FLAG_SUB) continue; // HDL partitions, main ones only
-		hddAtaTransfer_t a = {de.stat.private_5 + (0x100000 + 4096) / 512, 2};
-		if (fileXioDevctl("hdd0:", HDIOC_READSECTOR, &a, sizeof(a), h, 1024) != 0 || *(u32 *)h != 0xDEADFEED) continue;
-		h[8 + 159] = 0, h[172 + 59] = 0; // gamename[160] at 8, startup[60] at 172
-		cb(ctx, de.name, (const char *)h + 8, (const char *)h + 172);
-		n++;
+		if (de.stat.mode != 0x1337 || (de.stat.attr & APA_FLAG_SUB)) continue;
+		if (de.stat.private_5 > 0xffffffffu - 2064u) continue;
+		hddAtaTransfer_t a = {de.stat.private_5 + 2064u, 2};
+		if (fileXioDevctl("hdd0:", HDIOC_READSECTOR, &a, sizeof(a), h, 1024) != 0 ||
+		    *(u32 *)h != 0xDEADFEED) continue;
+		h[8 + 159] = 0, h[172 + 59] = 0;
+		if (strlen((const char *)h + 172) != 11 || de.stat.size / 2u == 0) continue;
+		g = calloc(1, sizeof(*g));
+		if (!g) { failed = 1; break; }
+		snprintf(g->part, sizeof(g->part), "%s", de.name);
+		snprintf(g->title, sizeof(g->title), "%s", (const char *)h + 8);
+		snprintf(g->startup, sizeof(g->startup), "%s", (const char *)h + 172);
+		g->start_sector = a.lba;
+		g->is_cd = ((u8)h[236] == 0x12 || (u8)h[236] == 0x13); // SCECdPS2CD / SCECdPS2CDDA
+		g->total_size_kb = de.stat.size / 2u; // OPL: (APA sectors / 4) * 2
+		*tail = g;
+		tail = &g->next;
 	}
 	fileXioDclose(fd);
+	if (failed) {
+		while (head) { g = head->next; free(head); head = g; }
+		return 0;
+	}
+
+	/* OPL includes every APA sub-partition in total_size_in_kb; aggregate them by APA_IDMAX. */
+	fd = fileXioDopen("hdd0:");
+	if (fd < 0) {
+		while (head) { g = head->next; free(head); head = g; }
+		return 0;
+	}
+	{
+		while (fileXioDread(fd, &de) > 0) {
+			if (de.stat.mode != 0x1337 || !(de.stat.attr & APA_FLAG_SUB)) continue;
+			for (g = head; g; g = g->next) {
+				if (!strncmp(g->part, de.name, APA_IDMAX)) {
+					u32 add_kb = de.stat.size / 2u;
+					if (g->total_size_kb && g->total_size_kb <= 0xffffffffu - add_kb)
+						g->total_size_kb += add_kb;
+					else
+						g->total_size_kb = 0;
+					break;
+				}
+			}
+		}
+		fileXioDclose(fd);
+	}
+	for (g = head; g; ) {
+		hdl_scan_record *next = g->next;
+		if (g->total_size_kb && cb) {
+			cb(ctx, g->part, g->title, g->startup, g->start_sector, g->total_size_kb, g->is_cd);
+			n++;
+		}
+		free(g);
+		g = next;
+	}
 	return n;
 }
 

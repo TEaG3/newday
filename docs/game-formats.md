@@ -9,7 +9,7 @@ launch-compatibility claim.
 | Compressed PS2 image | `.zso` in `DVD/` or `CD/` | Bounded LZ4 decoding is integrated into the Neutrino FHI path on this branch; CI builds it; physical-PS2 game-launch verification remains pending |
 | USBExtreme split image | `ul.cfg` + `ul.*` parts | TEa.G3 now has a bounded 64-byte UL record parser, verifies every sequential split part, and routes entries to a patched OPL direct-boot path; parser, engine-selection and OPL build checks pass in CI, while physical-PS2 runtime tests remain pending |
 | SMB PS2 image | `DVD/*.iso`, `CD/*.iso`, `.zso` on a share | SMB source and Neutrino hand-off are wired. The generated `TEAG3.GAMES` index now lists ISO and ZSO. ZSO uses the common FHI decoder; end-to-end SMB game launch tests remain pending |
-| Internal HDD / HD Loader | APA partitions | Existing APA/HDL scanner and Neutrino `-bsd=ata -bsdfs=hdl` launch path are retained |
+| Internal HDD / HD Loader | APA partitions | TEa.G3 scans main APA headers, calculates the exact HDL start LBA, aggregates sub-partition sizes, and passes startup/LBA/size to OPL mini-launch when `motor = opl`; OPL reads the existing `conf_hdd.cfg` and refuses launch without a configured partition. Auto remains Neutrino. Physical-console validation remains pending |
 | PlayStation 1 image | `.vcd` in `POPS/` | Existing POPStarter path; separate from Neutrino's PS2 CDVD path |
 | Homebrew application | `.elf` in `APPS/` | Existing launcher path |
 | CSO / Deflate | `.cso` | Not supported by the current LZ4-based ZSO reader on local sources |
@@ -50,10 +50,9 @@ through the common FHI decoder, but still requires an end-to-end game launch tes
 - SMB and UDPBD/UDPFS are mutually exclusive in one TEa.G3 session because they
   share the PS2 network adapter.
 
-The integration branch now contains two runtime paths: Neutrino remains the
-default for ISO/ZSO and the existing storage sources, while a separately built
-and patched OPL ELF handles USB ISO/ZSO when manually selected and USBExtreme
-UL automatically. The UL catalogue parser, split-part checks and engine
+The integration branch now contains source-specific runtime paths: Neutrino
+remains the default for ISO/ZSO, while OPL handles manually selected BDM,
+SMB/ETH and APA/HD Loader paths, plus USBExtreme UL automatically. The UL catalogue parser, split-part checks and engine
 selection matrix are implemented and host-tested. Actual game boot and
 in-game-read verification on real PS2 hardware are still pending.
 
@@ -83,7 +82,8 @@ The successful CI run builds the pinned upstream OPL source with the TEa.G3
 direct-boot patch, compiles the launcher and Neutrino, and passes the UL parser,
 split-part and engine-selection host tests. The launcher passes the fixed-width
 UL name, startup ID, media type and split count to OPL; OPL selects the USB
-mass-storage driver and sets `GAME_FORMAT_USBLD` for UL. The remaining work is
+mass-storage driver and sets `GAME_FORMAT_USBLD` for UL. It also builds the
+BDM, SMB/ETH and guarded APA/HD Loader mini-launch adapters. The remaining work is
 runtime verification on a physical PS2: confirm the hand-off, actual game boot, sustained in-game reads and stability. An emulator may be used for diagnostics only and is not the acceptance reference. A green build is not a gameplay compatibility claim.
 
 Do not mark UL or OPL engine selection as supported until those steps and
@@ -105,8 +105,8 @@ instruction, not a release-ready installer or a claim of verified gameplay.
 In `mass0:/tea_g3/config.ini`, the `[juegos]` option `motor` accepts
 `auto`, `neutrino`, or `opl`. Automatic mode keeps ISO/ZSO on Neutrino and
 routes USBExtreme UL to OPL. Setting `motor = opl` manually routes USB ISO/ZSO
-games to OPL as well; other storage-source combinations are rejected until a
-direct OPL hand-off exists for them. UL remains OPL-only.
+games to OPL as well; SMB ISO/ZSO and APA/HD Loader games use their dedicated
+OPL adapters. MMCE and UDPBD/UDPFS continue on Neutrino. UL remains OPL-only.
 
 ## Full upstream OPL scope versus TEa.G3 adapters
 

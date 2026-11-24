@@ -2,21 +2,31 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
 #include <strings.h>
 
 engine_id engine_select(engine_format format, engine_source source, const char *preference)
 {
     int force_opl = preference && !strcasecmp(preference, "opl");
 
-    /* USBExtreme UL is an OPL-only container; never pretend Neutrino can read it. */
+    /* USBExtreme UL is an OPL-only container. Keep it on OPL even in Neutrino mode. */
     if (format == ENGINE_FORMAT_UL)
         return source == ENGINE_SOURCE_USB ? ENGINE_OPL_UL : ENGINE_UNSUPPORTED;
 
-    if (force_opl)
-        return source == ENGINE_SOURCE_USB ? ENGINE_OPL_USB : ENGINE_UNSUPPORTED;
+    /* Auto deliberately keeps the already established Neutrino route. */
+    if (!force_opl)
+        return ENGINE_NEUTRINO;
 
-    /* auto and neutrino intentionally keep ISO/ZSO on the existing Neutrino path. */
+    /* OPL's native BDM adapter handles USB, MX4SIO, iLink and ATA-backed FAT/exFAT. */
+    if (source == ENGINE_SOURCE_USB || source == ENGINE_SOURCE_BDM)
+        return ENGINE_OPL_BDM;
+
+    /* OPL has a dedicated network/ETH backend for SMB shares. */
+    if (source == ENGINE_SOURCE_SMB)
+        return ENGINE_OPL_ETH;
+
+    /* APA/HD Loader uses OPL's HDD mini-launch only when its existing OPL config is present. */
+    if (source == ENGINE_SOURCE_HDL)
+        return ENGINE_OPL_HDD;
     return ENGINE_NEUTRINO;
 }
 
@@ -27,11 +37,18 @@ int main(void)
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_USB, "auto") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_UL, ENGINE_SOURCE_USB, "auto") == ENGINE_OPL_UL);
     assert(engine_select(ENGINE_FORMAT_UL, ENGINE_SOURCE_USB, "neutrino") == ENGINE_OPL_UL);
-    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_USB, "opl") == ENGINE_OPL_USB);
-    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_USB, "opl") == ENGINE_OPL_USB);
-    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_UNSUPPORTED);
-    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_UNSUPPORTED);
-    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "neutrino") == ENGINE_NEUTRINO);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_USB, "opl") == ENGINE_OPL_BDM);
+    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_USB, "opl") == ENGINE_OPL_BDM);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_BDM, "opl") == ENGINE_OPL_BDM);
+    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_BDM, "opl") == ENGINE_OPL_BDM);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
+    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "opl") == ENGINE_OPL_HDD);
+    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_HDL, "opl") == ENGINE_OPL_HDD);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "auto") == ENGINE_NEUTRINO);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
+    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_BDM, "neutrino") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_UL, ENGINE_SOURCE_OTHER, "auto") == ENGINE_UNSUPPORTED);
     puts("engine selection selftest ok");
     return 0;
