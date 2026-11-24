@@ -77,6 +77,23 @@ The full guide is in [the TEa.G3 site](https://github.com/TEaG3/newday/tree/mast
 - A USB drive (FAT32; exFAT for ISOs over 4 GB).
 - Network (optional): built-in Ethernet on slim models, the network adapter on fat ones. Wired.
 
+## البناء من المصدر بالعربية
+
+للبناء على Linux أو WSL، جهّز PS2DEV/PS2SDK ومنافذ wolfSSL وlibjpeg وlibpng، ثم Python 3 والحزم Pillow وfonttools وmapbox-earcut.
+
+```sh
+./build.sh test
+bash tools/build_neutrino.sh
+# جهّز OPL.ELF وOPL-LICENSE.txt من بناء OPL المثبت في .github/workflows/build-ps2.yml
+mkdir -p runtime-input
+cp OPL.ELF OPL-LICENSE.txt runtime-input/
+cp -R dist/neutrino runtime-input/neutrino
+python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
+./build.sh APP=launcher
+```
+
+يجب بناء OPL من النسخة المثبتة وتطبيق `tools/patch_opl_ul.py` كما يفعل CI؛ لا تستبدلها بملف OPL عشوائي. الناتج هو `TEa.G3.ELF` مع `runtime-manifest.txt`. راجع [دليل البناء العربي](INSTALL-AR.txt) للتفاصيل. نجاح الاختبارات والبناء لا يغني عن اختبار التشغيل على جهاز PS2 حقيقي.
+
 ## Building
 
 Toolchain: [ps2dev](https://github.com/ps2dev/ps2dev) v2.0 (with the wolfSSL and libjpeg ports) on Linux or WSL. Python 3, Pillow, fonttools and mapbox-earcut are also required to generate the Arabic-aware font atlas and TEa.G3 vector logo.
