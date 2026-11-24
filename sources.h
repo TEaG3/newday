@@ -1,4 +1,5 @@
 #pragma once
+#include <tamtypes.h>
 // Game sources (phase 14): where PS2 ISOs are looked for besides the launcher's USB.
 enum { SRC_USB, SRC_HDD, SRC_HDL, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS, SRC_SMB, SRC_N };
 #define SRC_MAX SRC_N
