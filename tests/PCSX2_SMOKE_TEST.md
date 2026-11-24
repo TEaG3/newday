@@ -1,4 +1,4 @@
-# PCSX2 2.8.2 and real-PS2 runtime smoke test
+# TEa.G3 runtime acceptance — real PlayStation 2 is the reference
 
 This checklist is separate from host fixtures and cross-compilation. A green
 CI build does not prove that a game boots or that all split files are read.
@@ -12,21 +12,19 @@ Download all artifacts from one successful GitHub Actions run; do not mix runs:
 
 Verify that `TEa.G3.ELF` and `runtime-manifest.txt` are non-empty and that the manifest lists OPL, Neutrino, `ee_core`, `raagent`, `cdvdman_emu`, UDPFS and SMB assets.
 
-## PCSX2 2.8.2 checks
+## Optional console diagnostics (not an acceptance gate)
+
+An emulator may be used only as a secondary diagnostic harness for UI smoke checks, crash reproduction and repeatable host-side observations. Its timing, device emulation, USB stack and hardware model differ from a physical PS2. Emulator success or failure MUST NOT be used to approve or reject hardware compatibility, and no emulator result substitutes for the tests below.
+
+## Real PS2 acceptance tests (mandatory)
 
 Use PCSX2 2.8.2 for this harness (not the old 2.4 setup). Configure USB1 as a mass-storage device using `tools/pcsx2/PCSX2.ini.in`; rebuild `usb.img` with `tools/pcsx2/mkimg.sh` only while PCSX2 is closed. Before booting, verify that `usb.img` exists, is FAT32, and contains `TEa.G3.ELF` plus the test folders. The configuration and image checks prove that the virtual device is prepared; only the running emulator and the launcher's `mass0:` diagnostics prove that the PS2-side USB device was enumerated.
-
-Use a legally obtained BIOS and a configured virtual USB mass-storage device.
-If the PCSX2 setup does not expose a PS2 mass-storage device to the ELF, the
-launcher can still display its UI, but the game scanner will have no USB library
-to enumerate; a `0 games loaded` message is not by itself evidence of a broken
-launcher UI.
 
 1. Put only `TEa.G3.ELF` on a clean USB (plus the test game folder). Boot it. Verify that first boot creates `tea_g3/runtime/OPL.ELF` and `tea_g3/runtime/neutrino/neutrino.elf`, with all modules/config files, then record whether the first menu appears, Arabic text renders correctly, and controller navigation works.
 2. Place one known-good, legally owned ISO in `DVD/`; confirm it appears and
    launch it with `motor = auto` (Neutrino).
 3. Place a matching ZSO in `DVD/`; confirm title/serial discovery and launch
-   with `motor = auto`. Repeat after a cold emulator restart.
+   with `motor = auto`. Repeat after a cold console restart.
 4. For SMB, configure fixed PS2 IPv4 and the `[smb]` settings in
    `tea_g3/config.ini`, export `DVD/` and/or `CD/`, generate
    `TEAG3.GAMES` with `tools/smb_catalog.py`, then select SMB and test one
@@ -62,5 +60,8 @@ CI currently runs:
 - pinned upstream OPL checkout, pinned `lwNBD` retrieval, TEa.G3 OPL patch
   application, OPL compilation and artifact upload.
 
-The runtime tests above are still manual. Do not mark game compatibility as
-verified until PCSX2 and real-PS2 results are recorded.
+The runtime tests above are still manual. Do not mark game compatibility as verified until physical-PS2 results are recorded. Emulator-only results are diagnostic notes, never acceptance evidence.
+
+## Evidence record (complete for each tested path)
+
+Record console model and region, OPL/Neutrino build IDs, storage adapter and device, filesystem and partition layout, exact folder/file naming, game serial and media type, selected engine, startup result, sustained reads, gameplay duration, and any error log. Keep ISO, ZSO and UL results separate. Test cold boot and repeat launch after returning to the launcher.
