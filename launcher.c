@@ -2657,7 +2657,7 @@ static const char *launch_problem(int i) // select a viable engine before handin
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
-		if (stub_port < 0) return stub_install ? L("جار تجهيز مسار العودة المستقل، حاول مجدداً", "Preparing the independent return path; try again shortly") : L("يلزم تثبيت ملف العودة على بطاقة ذاكرة", "A memory-card return stub is required before this launch");
+		if (stub_port < 0) return stub_install ? L("جار تجهيز مسار العودة المستقل، حاول مرة أخرى", "Preparing the independent return path; try again shortly") : L("يلزم تثبيت ملف العودة على بطاقة ذاكرة", "A memory-card return stub is required before this launch");
 	}
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
 	    src[(int)cv[i].src].type == SRC_SMB) {
