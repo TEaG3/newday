@@ -216,16 +216,18 @@ opl = once(
 }''',
     '''static void autoLaunchHDDGame(char *argv[])
 {
-    char path[256], *end_sector, *end_size;
-    unsigned long sector, size_kb;
+    char path[256], *end_sector, *end_size, *end_disc_type;
+    unsigned long sector, size_kb, disc_type;
     config_set_t *configSet;
 
-    if (!argv[1] || strlen(argv[1]) != 11 || !argv[2] || !argv[3])
+    if (!argv[1] || strlen(argv[1]) != 11 || !argv[2] || !argv[3] ||
+        !argv[4] || !argv[5] || strcmp(argv[5], "mini"))
         return;
     sector = strtoul(argv[2], &end_sector, 0);
     size_kb = strtoul(argv[3], &end_size, 0);
-    if (*end_sector || *end_size || !sector || !size_kb ||
-        sector > 0xffffffffUL || size_kb > 0xffffffffUL)
+    disc_type = strtoul(argv[4], &end_disc_type, 0);
+    if (*end_sector || *end_size || *end_disc_type || !sector || !size_kb || !disc_type ||
+        sector > 0xffffffffUL || size_kb > 0xffffffffUL || disc_type > 0xffUL)
         return;
 
     gTEaG3HDDMiniMode = 1;
@@ -244,6 +246,7 @@ opl = once(
     snprintf(gAutoLaunchGame->startup, sizeof(gAutoLaunchGame->startup), "%s", argv[1]);
     gAutoLaunchGame->start_sector = (u32)sector;
     gAutoLaunchGame->total_size_in_kb = (u32)size_kb;
+    gAutoLaunchGame->disctype = (u8)disc_type;
 
     snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, gAutoLaunchGame->startup);
     configSet = configAlloc(0, NULL, path);
@@ -264,7 +267,7 @@ opl = once(
     '''        if (!strcmp(argv[4], "mini"))
             autoLaunchHDDGame(argv);
         /* argv[0] boot path''',
-    '''        if (!strcmp(argv[4], "mini")) {
+    '''        if (argc >= 6 && !strcmp(argv[5], "mini")) {
             autoLaunchHDDGame(argv);
             return 0;
         }

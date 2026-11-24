@@ -110,7 +110,7 @@ typedef struct {
 	char ul_name[UL_NAME_SIZE + 1];                   // exact fixed-width UL name used by OPL's CRC
 	char kind, cd, disc, src, engine, parts;
 	unsigned size;
-	u32 hdl_start_sector, hdl_size_kb;
+	u32 hdl_start_sector, hdl_size_kb, hdl_disc_type;
 	void *big, *small, *half;
 } entry;
 static entry cv[MAXC];
@@ -650,7 +650,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
 	if (fd < 0) return n;
 	s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
 	if (end <= 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
-		printf("UL: invalid ul.cfg size %lld\\n", end);
+		printf("UL: invalid ul.cfg size %lld\n", end);
 		fileXioClose(fd);
 		return n;
 	}
@@ -820,7 +820,7 @@ static int catalog_load(int s, int n)
 }
 
 typedef struct { int s, n; } hdl_ctx;
-static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, int is_cd) // one HD Loader game
+static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd) // one HD Loader game
 {
 	hdl_ctx *c = p;
 	if (c->n >= MAXC || strlen(startup) != 11 || !start_sector || !total_size_kb) return; // "SLUS_213.76"
@@ -829,7 +829,7 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
 	serial_dash(startup, e->serial);
 	snprintf(e->boot, sizeof(e->boot), "%s", startup);
-	e->kind = K_PS2, e->src = c->s, e->cd = is_cd, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb;
+	e->kind = K_PS2, e->src = c->s, e->cd = is_cd, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb, e->hdl_disc_type = disc_type;
 	done_n++, total_n++; // as the catalog: not counted beforehand
 }
 
@@ -2787,29 +2787,32 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		   so reserve an empty OPL argv[0] before the UL record. */
 		char *opl_argv[7] = {OPL_PATH, "", cv[i].ul_name, cv[i].boot,
 		                     cv[i].cd ? "CD" : "DVD", "ul", part_count};
-		printf("launch OPL UL: %s parts=%s\\n", cv[i].boot, part_count);
+		printf("launch OPL UL: %s parts=%s\n", cv[i].boot, part_count);
 		gfx_shutdown();
 		run_loader(7, opl_argv);
-		printf("OPL UL launch returned\\n");
+		printf("OPL UL launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_HDD) {
-		char sector[16], size_kb[16];
+		char sector[16], size_kb[16], disc_type[16];
 		char *opl_argv[7];
-		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector || !cv[i].hdl_size_kb) {
+		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector ||
+		    !cv[i].hdl_size_kb || !cv[i].hdl_disc_type) {
 			launch_err = L("Metadatos de la partición HD Loader incompletos", "HD Loader partition metadata is incomplete");
 			return;
 		}
 		snprintf(sector, sizeof(sector), "%lu", (unsigned long)cv[i].hdl_start_sector);
 		snprintf(size_kb, sizeof(size_kb), "%lu", (unsigned long)cv[i].hdl_size_kb);
+		snprintf(disc_type, sizeof(disc_type), "%lu", (unsigned long)cv[i].hdl_disc_type);
 		opl_argv[0] = OPL_PATH;
-		opl_argv[1] = "";
-		opl_argv[2] = cv[i].boot;
-		opl_argv[3] = sector;
-		opl_argv[4] = size_kb;
+		opl_argv[1] = cv[i].boot;
+		opl_argv[2] = sector;
+		opl_argv[3] = size_kb;
+		opl_argv[4] = disc_type;
 		opl_argv[5] = "mini";
 		opl_argv[6] = NULL;
-		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s (existing OPL config only)\n", cv[i].boot, sector, size_kb);
+		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s disc_type=%s (existing OPL config only)\n",
+		       cv[i].boot, sector, size_kb, disc_type);
 		gfx_shutdown();
 		run_loader(6, opl_argv);
 		printf("OPL HD Loader launch returned\n");
@@ -2831,10 +2834,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[11] = (char *)ini_get(&cfg, "smb", "share", "");
 		opl_argv[12] = (char *)ini_get(&cfg, "smb", "user", "guest");
 		opl_argv[13] = (char *)ini_get(&cfg, "smb", "password", "");
-		printf("launch OPL SMB: %s\\n", cv[i].boot);
+		printf("launch OPL SMB: %s\n", cv[i].boot);
 		gfx_shutdown();
 		run_loader(14, opl_argv);
-		printf("OPL SMB launch returned\\n");
+		printf("OPL SMB launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_BDM) {
@@ -2856,10 +2859,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[5] = "bdm";
 		opl_argv[6] = (char *)driver;
 		opl_argv[7] = unit;
-		printf("launch OPL BDM: %s driver=%s unit=%s\\n", cv[i].boot, driver, unit);
+		printf("launch OPL BDM: %s driver=%s unit=%s\n", cv[i].boot, driver, unit);
 		gfx_shutdown();
 		run_loader(8, opl_argv);
-		printf("OPL BDM launch returned\\n");
+		printf("OPL BDM launch returned\n");
 		return;
 	}
 	if (cv[i].kind != K_PS2) { // loader argv: the file, then the program's argv
