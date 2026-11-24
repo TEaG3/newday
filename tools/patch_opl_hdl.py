@@ -264,7 +264,7 @@ opl = once(
 
 opl = once(
     opl,
-    '''        if (argc >= 6 && !strcmp(argv[5], "mini"))
+    '''        if (!strcmp(argv[4], "mini"))
             autoLaunchHDDGame(argv);
         /* argv[0] boot path''',
     '''        if (argc >= 6 && !strcmp(argv[5], "mini")) {
