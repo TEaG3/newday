@@ -738,14 +738,24 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 static ini cfg;               // tentative: defined with the config below
 static const char *src_why;
 
-static int engine_for(const entry *e) // source and image format are independent dimensions
+static int engine_for(const entry *e) // global engine preference + actual source adapter
 {
 	if (e->kind != K_PS2) return ENGINE_NEUTRINO;
 	engine_format format = e->engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
 	                       has_ext(e->path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO;
 	int source_index = (unsigned char)e->src;
-	engine_source source_type = source_index < nsrc && src[source_index].type == SRC_USB ?
-	                            ENGINE_SOURCE_USB : ENGINE_SOURCE_OTHER;
+	engine_source source_type = ENGINE_SOURCE_OTHER;
+	if (source_index < nsrc) {
+		switch (src[source_index].type) {
+		case SRC_USB: source_type = ENGINE_SOURCE_USB; break;
+		case SRC_HDD:
+		case SRC_MX4SIO:
+		case SRC_ILINK: source_type = ENGINE_SOURCE_BDM; break;
+		case SRC_SMB: source_type = ENGINE_SOURCE_SMB; break;
+		case SRC_HDL: source_type = ENGINE_SOURCE_HDL; break;
+		default: break;
+		}
+	}
 	return engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
 }
 static int catalog_load(int s, int n)
@@ -2607,12 +2617,12 @@ static int status_text(char *b, int max)
 	return k < max ? k : max - 1;
 }
 
-static const char *launch_problem(int i) // why X cannot start entry i, or NULL (shown as a toast)
+static const char *launch_problem(int i) // select a viable engine before handing control away
 {
 	int engine = engine_for(&cv[i]);
-	if (engine == ENGINE_UNSUPPORTED) return L("OPL directo solo admite juegos USB en esta versión", "OPL direct boot currently supports USB games only");
+	if (engine == ENGINE_UNSUPPORTED) return L("Formato de juego no compatible con esta fuente", "This game format is not supported by this source");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
-	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_USB)
+	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM)
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
 	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB) {
 		char smb_module[192], smb_config[192];
@@ -2746,26 +2756,39 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	if (engine == ENGINE_OPL_UL) {
 		static char part_count[8];
 		snprintf(part_count, sizeof(part_count), "%u", (unsigned char)cv[i].parts);
-		char *opl_argv[6] = {OPL_PATH, cv[i].ul_name, cv[i].boot, cv[i].cd ? "CD" : "DVD", "ul", part_count};
+		/* OPL's main() expects the launch mode in argv[4]. The loader removes argv[0],
+		   so reserve an empty OPL argv[0] before the UL record. */
+		char *opl_argv[7] = {OPL_PATH, "", cv[i].ul_name, cv[i].boot,
+		                     cv[i].cd ? "CD" : "DVD", "ul", part_count};
 		printf("launch OPL UL: %s parts=%s\\n", cv[i].boot, part_count);
 		gfx_shutdown();
-		run_loader(6, opl_argv);
-		printf("OPL UL launch failed\\n");
+		run_loader(7, opl_argv);
+		printf("OPL UL launch returned\\n");
 		return;
 	}
-	if (engine == ENGINE_OPL_USB) {
+	if (engine == ENGINE_OPL_BDM) {
 		const char *filename = strrchr(cv[i].path, '/');
-		char *opl_argv[5];
+		const char *driver = "usb";
+		char unit[8];
+		char *opl_argv[8];
+		int source_type = src[(int)cv[i].src].type;
 		filename = filename ? filename + 1 : cv[i].path;
+		if (source_type == SRC_HDD) driver = "ata";
+		else if (source_type == SRC_MX4SIO) driver = "sdc";
+		else if (source_type == SRC_ILINK) driver = "sd";
+		snprintf(unit, sizeof(unit), "%u", (unsigned char)src[(int)cv[i].src].unit);
 		opl_argv[0] = OPL_PATH;
-		opl_argv[1] = (char *)filename;
-		opl_argv[2] = cv[i].boot;
-		opl_argv[3] = cv[i].cd ? "CD" : "DVD";
-		opl_argv[4] = "usb";
-		printf("launch OPL USB: %s (%s)\\n", cv[i].boot, filename);
+		opl_argv[1] = "";
+		opl_argv[2] = (char *)filename;
+		opl_argv[3] = cv[i].boot;
+		opl_argv[4] = cv[i].cd ? "CD" : "DVD";
+		opl_argv[5] = "bdm";
+		opl_argv[6] = (char *)driver;
+		opl_argv[7] = unit;
+		printf("launch OPL BDM: %s driver=%s unit=%s\\n", cv[i].boot, driver, unit);
 		gfx_shutdown();
-		run_loader(5, opl_argv);
-		printf("OPL USB launch failed\\n");
+		run_loader(8, opl_argv);
+		printf("OPL BDM launch returned\\n");
 		return;
 	}
 	if (cv[i].kind != K_PS2) { // loader argv: the file, then the program's argv
