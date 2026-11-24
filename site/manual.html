@@ -36,7 +36,7 @@
     </div>
     <p>Everything TEa.G3 can do, and how to turn it on. You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. <br><br><a class="btn ink" href="https://github.com/TEaG3/newday/releases/latest" data-zip data-version="Download v{v}">Download</a> <a class="btn" href="INSTALL-AR.txt" download>دليل التثبيت العربي</a></p>
     <figure class="fig">
-      <div class="frame"><canvas data-nuld-splash data-version="1.2" role="img" aria-label="TEa.G3's loading screen, animated: a wire sphere over a perspective floor and the four logo variants taking turns"></canvas></div>
+      <div class="frame"><canvas data-teag3-splash data-version="1.2" role="img" aria-label="TEa.G3's loading screen, animated: a wire sphere over a perspective floor and the four logo variants taking turns"></canvas></div>
       <figcaption>Fig. 1, the loading screen at every boot, while the console starts the USB, reads the memory cards and loads the covers.</figcaption>
     </figure>
   </header>
@@ -85,7 +85,7 @@
       <div class="scroll"><table>
         <tr><th>Section and key</th><th>Values</th><th>What it does</th></tr>
         <tr><td>[ui] idioma</td><td>ar, en, es, pt</td><td>Language of the menus and of the file's comments; Arabic is the default on a fresh install</td></tr>
-        <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes</td><td>The theme; change it live in the START setup panel (<a href="#themes">chapter 11</a>)</td></tr>
+        <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes</td><td>The theme; legacy NULD is retained as a compatibility theme name. Change it live in the START setup panel (<a href="#themes">chapter 11</a>)</td></tr>
         <tr><td>[juegos] origen</td><td>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</td><td>Where to look for games, comma-separated</td></tr>
         <tr><td>[juegos] servidor</td><td>an IP</td><td>The home game server (udpfs)</td></tr>
         <tr><td>[juegos] motor</td><td>auto, neutrino, opl</td><td>Engine policy: auto uses Neutrino for ordinary ISO/ZSO and OPL for USBExtreme UL; manual OPL currently has direct hand-off for USB ISO/ZSO only. Other OPL backends require their own tested adapters.</td></tr>
