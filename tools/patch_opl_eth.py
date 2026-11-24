@@ -182,7 +182,7 @@ eth = replace_once(
     "SMB direct-launch adapter insertion",
 )
 
-header_path = eth_path.parent / "include" / "ethsupport.h"
+header_path = eth_path.parent.parent / "include" / "ethsupport.h"
 header = header_path.read_text(encoding="utf-8")
 header = replace_once(
     header,
