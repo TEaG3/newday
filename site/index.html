@@ -7,7 +7,7 @@
 <meta name="description" content="TEa.G3 is a game launcher that runs on a real PlayStation 2: covers downloaded by the console, 3D save icons, virtual memory cards, an in-game menu, games from a home server and RetroAchievements on hardware.">
 <meta property="og:title" content="TEa.G3, a game launcher for the PlayStation 2">
 <meta property="og:description" content="Covers, 3D save icons, an in-game menu, a home game server and RetroAchievements, all running on the PS2.">
-<meta property="og:image" content="https://danielnuld.github.io/nuld/img/home-carousel.jpg">
+<meta property="og:image" content="https://teag3.github.io/newday/img/home-carousel.jpg">
 <meta name="theme-color" content="#06070A">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/noto-sans-arabic-variable.ttf" as="font" type="font/ttf" crossorigin>
@@ -42,7 +42,7 @@
       <div>
         <p>Covers, 3D save icons, achievements, an in-game menu and games from a server at home. The console fetches and builds all of it; there is nothing to prepare on a PC.</p>
         <div class="btns">
-          <a class="btn solid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.2/TEa.G3-PS2.zip" data-zip data-version="Download v{v}">Download</a>
+          <a class="btn solid" href="https://github.com/TEaG3/newday/releases/latest" data-zip data-version="Download v{v}">Download</a>
           <a class="btn" href="INSTALL-AR.txt" download>دليل التثبيت العربي</a>
           <a class="btn" href="manual.html">Read the manual</a>
         </div>
@@ -60,7 +60,7 @@
         <button type="button" data-launch>Launch a game</button>
       </div>
       <figcaption class="caption">
-        <span>The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.</span>
+        <span>TEa.G3 home screen in its twelve themes, drawn in your browser. Click its sides to change game.</span>
         <span><a href="themes.html">Make your own theme</a></span>
       </figcaption>
     </figure>
@@ -68,6 +68,7 @@
 
   <section id="features" class="wrap">
     <h2>What runs on the console</h2>
+    <p class="lead">The launcher is TEa.G3—not NULD. Its splash wordmark, menu identity and download entry point use the same TEa.G3 name. OPL is integrated as a separate engine; each storage backend and image format is exposed only when its hand-off is implemented and verified.</p>
     <p class="lead">Every row happens on the PS2 itself. The numbers were measured on a slim PS2 (SCPH-75001).</p>
     <div class="scroll">
       <table class="rules">
@@ -109,7 +110,8 @@
 
   <section id="download" class="wrap">
     <h2>Download</h2>
-    <p class="lead">One zip for the USB drive. Upgrading from an older build? TEa.G3 migrates your existing settings from nuld/ or orbit/ into tea_g3/ automatically.</p>
+    <p class="lead">The current CI build is a verified compile artifact, not yet a stable hardware-certified release. Use the Releases page for published packages; do not treat CI artifacts as a finished public release.</p>
+    <p class="lead">One zip for the USB drive. Upgrading from an older build? TEa.G3 migrates existing settings from earlier project folders into tea_g3/ automatically.</p>
     <div class="scroll">
       <table class="files">
         <tbody>
@@ -130,7 +132,7 @@
       <li>Start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF, or let the setup wizard make it FreeMcBoot's autoboot.</li>
       <li>Pick a game and press ✕. The first boot writes <code>tea_g3/config.ini</code>, every setting commented.</li>
     </ol>
-    <p class="dim" style="margin-top: 32px">Videos: the <a href="https://youtu.be/w4V8aKWTCJw">trailer</a> and the <a href="https://youtu.be/eqTNBGMIEXo">setup guide on a real PS2</a>, both recorded when the project was still ORBIT, before the NULD name.</p>
+    <p class="dim" style="margin-top: 32px">Videos: the <a href="https://youtu.be/w4V8aKWTCJw">trailer</a> and the <a href="https://youtu.be/eqTNBGMIEXo">setup guide on a real PS2</a>, both recorded when the project was still ORBIT, before the TEa.G3 name.</p>
   </section>
 </main>
 
