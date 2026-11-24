@@ -345,7 +345,9 @@ int main(void)
 	shaped_n = layout_line(&gfx_font_mono, &s, laid, &shaped_width, &used);
 	assert(shaped_n == 8 && laid[0].cp == 'U' && laid[1].cp == 'S' && laid[2].cp == 'B' &&
 	       laid[3].cp == ' ' && laid[4].cp == 'O' && laid[5].cp == 'K' && laid[6].cp == ' ' && laid[7].dir == 1);
-	assert(gfx_font_logo.g['N' - 32].w > 0 && gfx_font_logo.g['A' - 32].w == 0); // logo: "NULD" only
+	assert(gfx_font_logo.g['T' - 32].w > 0 && gfx_font_logo.g['E' - 32].w > 0 &&
+	       gfx_font_logo.g['a' - 32].w > 0 && gfx_font_logo.g['.' - 32].w > 0 &&
+	       gfx_font_logo.g['G' - 32].w > 0 && gfx_font_logo.g['3' - 32].w > 0); // TEa.G3 bitmap fallback
 	for (int c = 33; c < 127; c++) assert(gfx_font_title.g[c - 32].w > 0 && gfx_font_mono.g[c - 32].w > 0);
 	static unsigned short img[64 * 64], lin[300 * 140], tl[300 * 140];
 	gfx_fs_dither(img, 64, 64, flat, NULL);                // exact levels: no noise added
