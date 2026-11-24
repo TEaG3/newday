@@ -900,6 +900,95 @@
     "Inverse, hex":"اللون المعاكس، رمز اللون"
   });
 
+  // TEa.G3 embedded OPL integration lab and current release status.
+  Object.assign(dict, {
+    "OPL Integration Lab":"مختبر تكامل OPL",
+    "OPL / EMBEDDED ENGINE":"OPL / محرك مضمّن",
+    "OPL is built into the single TEa.G3.ELF.":"محرك OPL مدمج داخل ملف TEa.G3.ELF الوحيد.",
+    "TEa.G3 embeds OPL and Neutrino, then chooses the correct engine for the game's format, storage source and motor preference. The simulator below follows the current engine-selection code.":"يدمج TEa.G3 محركي OPL وNeutrino، ثم يختار المحرك وفق صيغة اللعبة ومصدر التخزين وتفضيل المحرك. المحاكاة أدناه تتبع منطق اختيار المحرك الموجود في الكود الحالي.",
+    "Explore embedded OPL":"استكشف محرك OPL المضمّن",
+    "One launcher. Two embedded engines.":"مشغّل واحد ومحركان مضمّنان.",
+    "USBExtreme UL selects OPL automatically. USB ISO/ZSO can use OPL when ":"تختار ألعاب USBExtreme UL محرك OPL تلقائياً. ويمكن تشغيل ألعاب USB ISO/ZSO عبر OPL عند ضبط ",
+    "The regular ISO/ZSO auto route remains Neutrino.":"يبقى مسار ISO/ZSO الاعتيادي في الوضع التلقائي مع Neutrino.",
+    "Open the full OPL Integration Lab and image gallery":"افتح مختبر تكامل OPL الكامل ومعرض الرسوم",
+    "Try the routing simulation":"جرّب محاكاة مسار التشغيل",
+    "Try the engine selector":"جرّب محدد محرك التشغيل",
+    "Choose the image format, storage source and ":"اختر صيغة ملف اللعبة ومصدر التخزين و",
+    " preference. The result follows ":" كتفضيل للمحرك. تتبع النتيجة دالة ",
+    " in the current C source.":" الموجودة في كود C الحالي.",
+    "Game format":"صيغة اللعبة",
+    "Storage source":"مصدر التخزين",
+    "Engine preference":"تفضيل المحرك",
+    "Other source (HDD / MX4SIO / iLink / MMCE / network)":"مصدر آخر (HDD / MX4SIO / iLink / MMCE / الشبكة)",
+    "Other source":"مصدر آخر",
+    "Simulate route":"حاكِ المسار",
+    "Simulate this route":"حاكِ هذا المسار",
+    "Reset":"إعادة ضبط",
+    "What the simulator does":"ما الذي تفعله المحاكاة",
+    "Shows the routing decision only. It does not mount a USB image, load OPL, emulate a PS2 or test a game.":"تعرض قرار توجيه اللعبة فقط. لا تقوم بتركيب صورة USB أو تحميل OPL أو محاكاة جهاز PS2 أو اختبار لعبة.",
+    "What CI does":"ما الذي يفحصه CI",
+    "Builds OPL from its pinned source, applies the UL direct-boot patch, compiles TEa.G3 and checks the routing matrix.":"يبني OPL من مصدره المثبّت، ويطبق تصحيح الإقلاع المباشر لـ UL، ثم يبني TEa.G3 ويفحص مصفوفة مسارات التشغيل.",
+    "What needs a console":"ما الذي يحتاج إلى جهاز حقيقي",
+    "Actual game start, sustained reads, memory-card behavior, controllers and stability must still be checked on physical PS2 hardware.":"ما زال يلزم اختبار بدء الألعاب والقراءة المستمرة وسلوك بطاقات الذاكرة ووحدات التحكم والاستقرار على جهاز PS2 حقيقي.",
+    "02 / ENGINE MAP":"02 / خريطة المحركات",
+    "Current OPL integration boundary":"حدود تكامل OPL الحالي",
+    "OPL is embedded, but the current TEa.G3 direct-boot adapter exposes specific routes. It does not expose every upstream OPL backend yet.":"محرك OPL مضمّن، لكن محوّل الإقلاع المباشر الحالي في TEa.G3 يوفّر مسارات محددة فقط. لم يتم ربط جميع مصادر OPL الأصلية بعد.",
+    "Format":"الصيغة",
+    "Source":"المصدر",
+    "Preference":"التفضيل",
+    "Current route":"المسار الحالي",
+    "OPL · UL direct boot":"OPL · إقلاع UL مباشر",
+    "OPL · USB direct boot":"OPL · إقلاع USB مباشر",
+    "Existing Neutrino route":"مسار Neutrino الحالي",
+    "Not wired to OPL":"غير موصول بـ OPL",
+    "Unsupported in current adapter":"غير مدعوم في المحوّل الحالي",
+    "PS1 ":"ألعاب PS1 ",
+    " files use the separate POPStarter path; they are not represented as OPL formats in this selector.":" تستخدم مسار POPStarter المستقل؛ لذلك لا تظهر كصيغ OPL في محدد المحرك.",
+    "03 / HOW IT WORKS":"03 / آلية العمل",
+    "Three parts of the new mechanism":"ثلاثة أجزاء من آلية التشغيل الجديدة",
+    "These are technical diagrams based on the current source and build design, not screenshots of a live PS2. Select any image to open it at full size.":"هذه مخططات تقنية مبنية على الكود الحالي وتصميم البناء، وليست لقطات شاشة من جهاز PS2 يعمل. اختر أي صورة لفتحها بالحجم الكامل.",
+    "One TEa.G3.ELF, two embedded engines and distinct launch routes.":"ملف TEa.G3.ELF واحد ومحركان مضمّنان ومسارات تشغيل مختلفة.",
+    "USBExtreme UL: parse ":"USBExtreme UL: تحليل ملف ",
+    ", verify every part, then hand off to OPL.":", والتحقق من جميع الأجزاء، ثم تمرير اللعبة إلى OPL.",
+    "Embedded runtime installation and integrity verification on startup.":"تثبيت المحركات المضمّنة والتحقق من سلامتها عند بدء التشغيل.",
+    "04 / SOURCE OF TRUTH":"04 / مصدر الحقيقة",
+    "Where to inspect the real implementation":"أين يمكن مراجعة التنفيذ الفعلي",
+    "The interactive route above is tied to the following source files and automated checks.":"ترتبط محاكاة المسارات أعلاه بملفات المصدر التالية والاختبارات الآلية.",
+    "Format + source + preference selection matrix":"مصفوفة اختيار الصيغة والمصدر وتفضيل المحرك",
+    "USB UL scanning, game metadata and launch hand-off":"فحص USB UL وبيانات اللعبة وتمريرها إلى محرك التشغيل",
+    "UL record, CRC and split-part validation":"التحقق من سجل UL وCRC وأجزاء اللعبة",
+    "TEa.G3's pinned OPL UL direct-boot patch":"تصحيح الإقلاع المباشر لـ OPL UL المثبّت في TEa.G3",
+    "Runtime installation and CRC-32 checks":"تثبيت موارد التشغيل وفحوص CRC-32",
+    "CI build of pinned OPL, Neutrino and the single ELF":"بناء OPL وNeutrino وملف ELF الواحد عبر CI",
+    "OPL and Neutrino are embedded runtime components; the routing boundary above is specific to this TEa.G3 integration.":"محركا OPL وNeutrino مكوّنان مضمّنان في موارد التشغيل؛ وحدود التوجيه أعلاه خاصة بطريقة تكاملهما في TEa.G3.",
+    "Browser simulation only; no PS2 game or ELF is executed.":"محاكاة داخل المتصفح فقط؛ لا يتم تشغيل لعبة PS2 أو ملف ELF.",
+    "Browser simulation only · no PS2 ELF, emulator or game is executed here.":"محاكاة داخل المتصفح فقط · لا يتم تشغيل ملف ELF أو محاكي أو لعبة هنا.",
+    "Verification boundary:":"حدود التحقق:",
+    "CI proves the pinned OPL build, the TEa.G3 patch, the embedded ELF and the host-side routing tests. It does not prove gameplay or storage compatibility on a physical PS2.":"يثبت CI نجاح بناء OPL من المصدر المثبّت، وتطبيق تصحيح TEa.G3، ودمج المحركات داخل ELF، واختبارات التوجيه على الحاسوب. لكنه لا يثبت تشغيل الألعاب أو توافق وحدات التخزين على جهاز PS2 حقيقي.",
+    "Download package":"تنزيل الحزمة",
+    "Stable release":"إصدار مستقر",
+    "Prerelease · physical-PS2 acceptance is still open":"إصدار تجريبي · اختبار القبول على جهاز PS2 الحقيقي ما زال مفتوحاً",
+    "Release information is temporarily unavailable; open all releases.":"تعذرت قراءة بيانات الإصدار مؤقتاً؛ افتح صفحة جميع الإصدارات."
+  });
+
+  Object.assign(attributeDict["aria-label"], {
+    "OPL integration diagrams, scroll sideways":"مخططات تكامل OPL؛ مرّر جانبياً لاستعراضها",
+    "OPL technical diagram viewer":"عارض المخططات التقنية لـ OPL",
+    "The route selector":"محدد مسار التشغيل"
+  });
+  Object.assign(attributeDict.alt, {
+    "TEa.G3 embeds OPL and Neutrino in one ELF and routes games according to format, source and engine preference":"يدمج TEa.G3 محركي OPL وNeutrino في ملف ELF واحد ويوجه الألعاب وفق الصيغة والمصدر وتفضيل المحرك.",
+    "USBExtreme UL scan, split-part validation and direct OPL launch flow":"مخطط فحص USBExtreme UL والتحقق من أجزاء اللعبة ومسار الإقلاع المباشر عبر OPL.",
+    "Embedded runtime build, CRC verification and installation under tea_g3/runtime":"مخطط بناء موارد التشغيل المضمّنة والتحقق من CRC وتثبيتها داخل tea_g3/runtime.",
+    "OPL integration diagrams, scroll sideways":"مخططات تكامل OPL القابلة للاستعراض"
+  });
+  Object.assign(pageTitles, {
+    "TEa.G3 OPL Integration Lab":"مختبر تكامل OPL في TEa.G3"
+  });
+  Object.assign(metaDict, {
+    "Explore how TEa.G3 embeds OPL and Neutrino in one ELF, see the verified USBExtreme UL and USB ISO/ZSO routing rules, and try a browser-only launch-path simulation.":"استكشف طريقة دمج OPL وNeutrino داخل ملف ELF واحد في TEa.G3، وراجع مسارات USBExtreme UL وUSB ISO/ZSO، وجرّب محاكاة لمسارات التشغيل داخل المتصفح."
+  });
+
   const originalTitle = document.title;
   let lang = localStorage.getItem("nuld-site-lang") || "ar";
 
