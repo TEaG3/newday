@@ -129,20 +129,12 @@ if source.count(old) != 1:
     raise SystemExit(f"expected one BDM prefix branch, found {source.count(old)}")
 source = source.replace(old, new, 1)
 
-old = r'''        delay(6);
-    }
-
-    if (!isUL && gBDMPrefix[0] != '\0') {
-'''
-new = r'''        delay(6);
-    }
-    if (!matchedDevice) {
+old = r'''    if (!isUL && gBDMPrefix[0] != '\0') {'''
+new = r'''    if (!matchedDevice) {
         LOG("TEa.G3 BDM auto-launch: requested device not found\n");
         return;
     }
-
-    if (gBDMPrefix[0] != '\0') {
-'''
+    if (!isUL && gBDMPrefix[0] != '\0') {'''
 if source.count(old) != 1:
     raise SystemExit(f"expected one BDM scan end, found {source.count(old)}")
 source = source.replace(old, new, 1)
