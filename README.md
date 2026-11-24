@@ -2,7 +2,7 @@
 
 TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts ISO/ZSO games through [Neutrino](https://github.com/rickgaiser/neutrino) by default and USBExtreme UL through OPL, and adds what a modern console menu has: covers downloaded by the
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
-RetroAchievements on real hardware. Arabic is the default interface language, with Spanish, English and Portuguese also available.
+RetroAchievements on real hardware. Arabic is the primary and default interface language; English is the only secondary language.
 
 **تعديل وتطوير المطور العراقي: TEa.G3** · [دليل التثبيت العربي](INSTALL-AR.txt)
 
@@ -36,7 +36,7 @@ Previously named ORBIT and then NULD. Upgrading preserves existing data: the fir
   its memory to the [xeRAbora](https://github.com/hacan359/xerabora) client on your home network, which unlocks the
   achievements on your profile.
 - **Discs, PS1 and apps**: boots the disc in the drive, PS1 games through POPStarter, and homebrew from `APPS/`.
-- **Arabic by default**, with Spanish, English and Portuguese (`config.ini [ui] idioma`); the launcher shapes Arabic letters, joins contextual forms, lays out right-to-left text, and keeps Latin runs and numbers readable. The in-game pause menu and achievement-unlocked heading also have Arabic labels.
+- **Arabic by default, with English as the only secondary language** (`config.ini [ui] idioma`); the launcher shapes Arabic letters, joins contextual forms, lays out right-to-left text, and keeps Latin runs and numbers readable. The in-game pause menu and achievement-unlocked heading also have Arabic labels.
 - Companion app: [ORBIT Jellyfin](https://github.com/danielnuld/orbit-jellyfin), your Jellyfin library on the PS2.
 
 ## Quick start
