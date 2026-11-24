@@ -25,7 +25,7 @@ static const char *const pt[][2] = {
 	{"the adapter belongs to UDPBD", "o adaptador é do UDPBD"},
 	{"Could not install the embedded Neutrino runtime", "Não foi possível instalar o Neutrino incorporado"},
 	{"Could not install the embedded OPL runtime", "Não foi possível instalar o OPL incorporado"},
-	{"OPL direct boot currently supports USB games only", "O boot direto do OPL atualmente aceita apenas jogos USB"},
+	{"This game format is not supported by this source", "Este formato de jogo não é compatível com esta origem"},
 	{"STARTING WITH OPL", "INICIANDO COM OPL"},
 	{"No network (%s): the server's game catalog was not read", "Sem rede (%s): o catálogo de jogos do servidor não foi lido"},
 	{"The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)",
