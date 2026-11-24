@@ -136,7 +136,7 @@ static int view;
 static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
-static char STATE_INI[32], NEUTRINO[160], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[128], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
+static char STATE_INI[32], NEUTRINO[160], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[160], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
 static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
@@ -2615,7 +2615,7 @@ static const char *launch_problem(int i) // why X cannot start entry i, or NULL 
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_USB)
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
 	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB) {
-		char smb_module[128], smb_config[128];
+		char smb_module[192], smb_config[192];
 		snprintf(smb_module, sizeof(smb_module), "%s/modules/smb_fhi.irx", NDIR);
 		snprintf(smb_config, sizeof(smb_config), "%s/config/bsd-smb.toml", NDIR);
 		if (!exists(smb_module) || !exists(smb_config))
