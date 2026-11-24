@@ -65,8 +65,11 @@ OPL resolves its HDD configuration partition itself from the existing
 `__common` read-only for this lookup, validates the configured partition name,
 and refuses the launch if the file, setting, partition, or existing OPL folder
 is missing. It does not fall back to `+OPL`, create `conf_hdd.cfg`, create an
-OPL folder, or create a missing PFS partition. Normal interactive OPL behavior
-is left unchanged.
+OPL folder, or create a missing PFS partition. The configured existing OPL PFS
+partition is then mounted as OPL normally expects; OPL features such as VMC or
+game configuration may write data inside that existing filesystem, but the
+mini-launch adapter does not create, format, resize or rewrite APA partitions.
+Normal interactive OPL behavior is left unchanged.
 
 The global default remains `motor = auto` (Neutrino for APA/HDL). Selecting
 `motor = opl` opts into the OPL mini-launch. If the OPL runtime is absent, the
