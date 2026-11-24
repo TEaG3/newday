@@ -747,9 +747,10 @@ static int ipv4_text(const char *s)
 	       a <= 255 && b <= 255 && c <= 255 && d <= 255;
 }
 
-static int engine_for(const entry *e) // global engine preference + actual source adapter
+static engine_decision engine_for(const entry *e) // silent policy decision plus reason for the private log
 {
-	if (e->kind != K_PS2) return ENGINE_NEUTRINO;
+	engine_decision none = {ENGINE_NEUTRINO, ENGINE_REASON_AUTO_NEUTRINO_BASELINE};
+	if (e->kind != K_PS2) return none;
 	engine_format format = e->engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
 	                       has_ext(e->path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO;
 	int source_index = (unsigned char)e->src;
@@ -765,23 +766,19 @@ static int engine_for(const entry *e) // global engine preference + actual sourc
 		default: break;
 		}
 	}
-	engine_id selected = engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
-	/* Keep the existing Neutrino path as a silent fallback if OPL is unavailable
-	   or the configured SMB share exceeds OPL's fixed field size. */
-	if ((selected == ENGINE_OPL_BDM || selected == ENGINE_OPL_ETH || selected == ENGINE_OPL_HDD) && !exists(OPL_PATH))
-		return ENGINE_NEUTRINO;
-	if (selected == ENGINE_OPL_ETH) {
+	int network_ready = 1;
+	if (source_type == ENGINE_SOURCE_SMB) {
 		const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
 		const char *server = ini_get(&cfg, "smb", "server", "");
 		const char *share = ini_get(&cfg, "smb", "share", "");
 		const char *user = ini_get(&cfg, "smb", "user", "guest");
 		const char *password = ini_get(&cfg, "smb", "password", "");
-		/* OPL's ETH auto-launch currently requires IPv4 literals, not DHCP or DNS names. */
-		if (!ipv4_text(ip) || !ipv4_text(server) || !*share ||
-		    strlen(share) >= 32 || strlen(user) >= 32 || strlen(password) >= 32)
-			return ENGINE_NEUTRINO;
+		/* OPL ETH accepts IPv4 literals and fixed-width credentials only. */
+		network_ready = ipv4_text(ip) && ipv4_text(server) && *share &&
+		                strlen(share) < 32 && strlen(user) < 32 && strlen(password) < 32;
 	}
-	return selected;
+	return engine_assess(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"),
+	                     exists(OPL_PATH), network_ready);
 }
 static int catalog_load(int s, int n)
 {
@@ -2645,10 +2642,11 @@ static int status_text(char *b, int max)
 
 static const char *launch_problem(int i) // select a viable engine before handing control away
 {
-	int engine = engine_for(&cv[i]);
+	engine_decision decision = engine_for(&cv[i]);
+	int engine = decision.engine;
 	if (engine == ENGINE_UNSUPPORTED) return L("Formato de juego no compatible con esta fuente", "This game format is not supported by this source");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
-	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH)
+	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD)
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
 	    src[(int)cv[i].src].type == SRC_SMB) {
@@ -2739,7 +2737,17 @@ static const char *app_fetch(int i, char *file, int n)
 static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an app ELF, or the BIOS for discs
 {
 	launch_err = NULL;
-	int engine = engine_for(&cv[i]);
+	engine_decision decision = engine_for(&cv[i]);
+	int engine = decision.engine;
+	FILE *diag = fopen(LOG_TXT, "a");
+	if (diag) {
+		fprintf(diag, "IEC game=%s source=%u format=%u engine=%u reason=%s\\n",
+		        cv[i].path, (unsigned char)cv[i].src,
+		        (unsigned)(cv[i].engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
+		                   has_ext(cv[i].path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO),
+		        (unsigned)engine, engine_reason_name(decision.reason));
+		fclose(diag);
+	}
 	const char *how[4] = {L("INICIANDO CON NEUTRINO", "STARTING WITH NEUTRINO"), L("INICIANDO CON POPSTARTER", "STARTING WITH POPSTARTER"), L("INICIANDO APLICACIÓN", "STARTING APPLICATION"),
 	                             L("INICIANDO DISCO", "STARTING DISC")};
 	for (int t = 0; t < (theme_id == TH_NULD ? 40 : 64); t++) { // let the confirm sound play while the screen fades to the entry's name
@@ -2749,7 +2757,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		if (T->flags & TF_MARK) splash_mark(640, 278, 28, TEXT, ACID); // the others put a light of their own there
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
-		text_c(&gfx_font_mono, 400, engine != ENGINE_NEUTRINO ? L("INICIANDO CON OPL", "STARTING WITH OPL") : how[(int)cv[i].kind], LABEL);
+		text_c(&gfx_font_mono, 400, cv[i].kind == K_PS2 ? L("INICIANDO JUEGO", "STARTING GAME") : how[(int)cv[i].kind], LABEL);
 		if (engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
 			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("CON LOGROS", "WITH ACHIEVEMENTS") : L("SIN LOGROS: AÚN NO HABÍA RESPUESTA", "NO ACHIEVEMENTS: NO ANSWER YET"),
 			       ra_state[i] == RA_SET ? ACID : LABEL);
