@@ -757,8 +757,13 @@ static int engine_for(const entry *e) // global engine preference + actual sourc
 		}
 	}
 	engine_id selected = engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
-	/* If the embedded OPL image is absent/corrupt, keep the established Neutrino route. */
-	if (selected == ENGINE_OPL_BDM && !exists(OPL_PATH)) return ENGINE_NEUTRINO;
+	/* Keep the existing Neutrino path as a silent fallback if OPL is unavailable
+	   or the configured SMB share exceeds OPL's fixed field size. */
+	if ((selected == ENGINE_OPL_BDM || selected == ENGINE_OPL_ETH) && !exists(OPL_PATH))
+		return ENGINE_NEUTRINO;
+	if (selected == ENGINE_OPL_ETH &&
+	    strlen(ini_get(&cfg, "smb", "share", "")) >= 32)
+		return ENGINE_NEUTRINO;
 	return selected;
 }
 static int catalog_load(int s, int n)
@@ -2625,7 +2630,7 @@ static const char *launch_problem(int i) // select a viable engine before handin
 	int engine = engine_for(&cv[i]);
 	if (engine == ENGINE_UNSUPPORTED) return L("Formato de juego no compatible con esta fuente", "This game format is not supported by this source");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
-	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM)
+	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH)
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
 	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB) {
 		char smb_module[192], smb_config[192];
@@ -2767,6 +2772,28 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		gfx_shutdown();
 		run_loader(7, opl_argv);
 		printf("OPL UL launch returned\\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_ETH) {
+		char *opl_argv[14];
+		opl_argv[0] = OPL_PATH;
+		opl_argv[1] = "";
+		opl_argv[2] = cv[i].path;
+		opl_argv[3] = cv[i].boot;
+		opl_argv[4] = cv[i].cd ? "CD" : "DVD";
+		opl_argv[5] = "eth";
+		opl_argv[6] = (char *)ini_get(&cfg, "red", "ip", "dhcp");
+		opl_argv[7] = (char *)ini_get(&cfg, "red", "mascara", "255.255.255.0");
+		opl_argv[8] = (char *)ini_get(&cfg, "red", "puerta", "");
+		opl_argv[9] = (char *)ini_get(&cfg, "red", "dns", "");
+		opl_argv[10] = (char *)ini_get(&cfg, "smb", "server", "");
+		opl_argv[11] = (char *)ini_get(&cfg, "smb", "share", "");
+		opl_argv[12] = (char *)ini_get(&cfg, "smb", "user", "guest");
+		opl_argv[13] = (char *)ini_get(&cfg, "smb", "password", "");
+		printf("launch OPL SMB: %s\\n", cv[i].boot);
+		gfx_shutdown();
+		run_loader(14, opl_argv);
+		printf("OPL SMB launch returned\\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_BDM) {
