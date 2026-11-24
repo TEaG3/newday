@@ -67,3 +67,37 @@ TEa.G3
 8) حالة تكامل OPL
 ------------------
 يدعم OPL الأصلي عدة مصادر تخزين وصيغ تختلف بحسب المصدر وإصدار OPL. تكامل TEa.G3 الحالي يمرر USB ISO/ZSO إلى OPL عند اختيار motor = opl، ويمرر USBExtreme UL إلى OPL تلقائياً. لا يعني وجود OPL داخل الحزمة أن كل مصادر OPL الأخرى أصبحت موصولة بعد؛ يجري استكمال محولات MX4SIO وiLink وSMBv1 وATA/IDE HDD كلٌّ على حدة مع الإبقاء على مسارات Neutrino الحالية. لا تُخفَ الخيارات ولا تُحذف لمعالجة النقص؛ يجب استكمال الربط واختباره على جهاز PS2 حقيقي.
+
+9) البناء من المصدر (للمطورين)
+-------------------------------
+بيئة البناء المعتمدة هي Linux أو WSL مع PS2DEV/PS2SDK، ويفضل استخدام صورة ps2dev/ps2dev نفسها التي يستخدمها CI لتجنب اختلاف إصدارات الأدوات.
+
+المتطلبات:
+- PS2DEV وPS2SDK مع مترجم EE وأدوات bin2c.
+- منافذ wolfSSL وlibjpeg وlibpng وzlib التي يحتاجها المشروع.
+- Python 3 مع Pillow وfonttools وmapbox-earcut.
+- Git وMake وC compiler لاختبارات المضيف.
+
+تسلسل بناء TEa.G3:
+1. شغّل اختبارات المضيف وتحقق من التعريب والخطوط:
+   ./build.sh test
+   (يشغّل توليد الخط والشعار، واختبارات اللغات وBidi ووحدات المشروع.)
+2. ابنِ Neutrino مع تعديلات قائمة الإيقاف العربية:
+   bash tools/build_neutrino.sh
+   الناتج: dist/neutrino/
+3. جهّز OPL.ELF من نسخة OPL المثبتة في .github/workflows/build-ps2.yml، مع تطبيق tools/patch_opl_ul.py قبل البناء. يوصى باستخدام ناتج مهمة CI المسماة Build upstream OPL runtime؛ لا تستخدم نسخة OPL عشوائية أو غير متوافقة.
+4. ضع OPL.ELF وملف OPL-LICENSE.txt بجانب مجلد dist/neutrino ضمن مجلد وسيط runtime-input/:
+   mkdir -p runtime-input
+   cp OPL.ELF OPL-LICENSE.txt runtime-input/
+   cp -R dist/neutrino runtime-input/neutrino
+5. ادمج المحركات والوحدات في موارد C:
+   python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
+6. ابنِ نقطة التشغيل الواحدة:
+   ./build.sh APP=launcher
+   الناتج: TEa.G3.ELF مع runtime-manifest.txt.
+
+ملاحظات مهمة:
+- يجب تنفيذ الخطوات بالترتيب؛ لا تشغّل embed_runtime.py قبل تجهيز OPL وNeutrino.
+- عند تغيير الخط أو الشعار، أعد تشغيل ./build.sh test؛ فهو يعيد توليد الموارد ويتحقق من مساحة أطلس الخط.
+- البناء الناجح يثبت سلامة التجميع والاختبارات الآلية، ولا يثبت وحده توافق الألعاب على جهاز PS2 حقيقي.
+- تفاصيل بناء OPL المثبت وتبعياته موجودة في .github/workflows/build-ps2.yml، وهو المرجع النهائي لإصدار المحرك المستخدم في TEa.G3.
