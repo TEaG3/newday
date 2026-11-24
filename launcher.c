@@ -2797,7 +2797,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		char sector[16], size_kb[16];
 		char *opl_argv[7];
 		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector || !cv[i].hdl_size_kb) {
-			launch_err = L("بيانات قسم HD Loader غير مكتملة", "HD Loader partition metadata is incomplete");
+			launch_err = L("Metadatos de la partición HD Loader incompletos", "HD Loader partition metadata is incomplete");
 			return;
 		}
 		snprintf(sector, sizeof(sector), "%lu", (unsigned long)cv[i].hdl_start_sector);
