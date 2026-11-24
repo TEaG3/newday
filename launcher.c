@@ -465,7 +465,7 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 	(void)arg;
 	for (;;) {
 		WaitSema(icon_sema);
-		if (stub_install) stub_install = 0, install_stub(); // phase 12, first job after boot
+		if (stub_install == 1) { stub_install = 2; install_stub(); stub_install = 0; } // install independent IGR return ELF
 		wiz_job();
 		if (state_dirty && usb) { // the chosen view, for the next boot (phase 10)
 			state_dirty = 0;
@@ -1233,7 +1233,7 @@ static void load_config(void) // loader thread, before the splash sound
 	igr_menu = combo_mask(ini_get(&cfg, "igr", "menu", "L1+L2+R1+R2+START+SELECT")); // phase 13; OPL's exit combo
 	igr_exit = combo_mask(ini_get(&cfg, "igr", "reiniciar", ""));                     // phase 12
 	igr_off = combo_mask(ini_get(&cfg, "igr", "apagar", "L1+L2+R1+R2+L3+R3"));
-	stub_install = (igr_exit || igr_menu || exists(OPL_PATH)) && (mcn[0] >= 0 || mcn[1] >= 0);
+	stub_install = (mcn[0] >= 0 || mcn[1] >= 0); // OPL direct-launch requires an independent memory-card return ELF
 	ra_on = !strcasecmp(ini_get(&cfg, "logros", "activos", "si"), "si"); // phase 16
 	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
 	// Auto-discover every supported source on first boot unless the user explicitly narrows [juegos] origen.
@@ -2657,7 +2657,7 @@ static const char *launch_problem(int i) // select a viable engine before handin
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
-		if (stub_port < 0) return L("يلزم تثبيت ملف العودة على بطاقة ذاكرة", "A memory-card return stub is required before this launch");
+		if (stub_port < 0) return stub_install ? L("جار تجهيز مسار العودة المستقل، حاول مجدداً", "Preparing the independent return path; try again shortly") : L("يلزم تثبيت ملف العودة على بطاقة ذاكرة", "A memory-card return stub is required before this launch");
 	}
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
 	    src[(int)cv[i].src].type == SRC_SMB) {
