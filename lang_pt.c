@@ -132,6 +132,7 @@ static const char *const pt[][2] = {
 	{"Achievements: no server", "Conquistas: sem servidor"},
 	{"Could not save the options to the USB", "Não foi possível salvar as opções na USB"},
 	{"Could not start", "Não foi possível iniciar"},
+	{"HD Loader partition metadata is incomplete", "Os metadados da partição HD Loader estão incompletos"},
 	{"  (SAVED TO USB)", "  (SALVO NA USB)"},
 	{"  (SAVE ERROR)", "  (ERRO AO SALVAR)"},
 	{"Could not load the hard disk driver", "Não foi possível carregar o driver do disco rígido"},
