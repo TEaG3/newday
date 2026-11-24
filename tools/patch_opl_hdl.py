@@ -39,6 +39,13 @@ opl = once(
     "HDD mini-launch state",
 )
 
+hdd = once(
+    hdd,
+    "    char name[64];\\n    int fd, ret = 0;",
+    "    char name[64] = {0};\\n    int fd, ret = 0;",
+    "initialize partition config buffer",
+)
+
 # Read the already existing __common/OPL/conf_hdd.cfg without creating or
 # rewriting anything when this is a TEa.G3 mini-launch.
 hdd = once(
