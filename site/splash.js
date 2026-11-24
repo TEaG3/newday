@@ -174,7 +174,7 @@
 
   function scan() {
     var list = document.querySelectorAll('canvas[data-teag3-splash]');
-    for (var i = 0; i < list.length; i++) if (!list[i].__nuld) { list[i].__nuld = 1; start(list[i]); }
+    for (var i = 0; i < list.length; i++) if (!list[i].__teag3) { list[i].__teag3 = 1; start(list[i]); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan); else scan();
   new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
@@ -318,7 +318,7 @@
 
   function scan() {
     var list = document.querySelectorAll('canvas[data-teag3-splash]');
-    for (var i = 0; i < list.length; i++) if (!list[i].__nuld) { list[i].__nuld = 1; start(list[i]); }
+    for (var i = 0; i < list.length; i++) if (!list[i].__teag3) { list[i].__teag3 = 1; start(list[i]); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan); else scan();
   new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
