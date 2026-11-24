@@ -330,7 +330,7 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
 	static u8 h[1024] __attribute__((aligned(64)));
 	iox_dirent_t de;
 	hdl_scan_record *head = NULL, **tail = &head, *g;
-	int fd = fileXioDopen("hdd0:"), n = 0;
+	int fd = fileXioDopen("hdd0:"), n = 0, failed = 0;
 	if (fd < 0) return 0;
 	while (fileXioDread(fd, &de) > 0) {
 		if (de.stat.mode != 0x1337 || (de.stat.attr & APA_FLAG_SUB)) continue;
@@ -341,7 +341,7 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
 		h[8 + 159] = 0, h[172 + 59] = 0;
 		if (strlen((const char *)h + 172) != 11 || de.stat.size / 2u == 0) continue;
 		g = calloc(1, sizeof(*g));
-		if (!g) break;
+		if (!g) { failed = 1; break; }
 		snprintf(g->part, sizeof(g->part), "%s", de.name);
 		snprintf(g->title, sizeof(g->title), "%s", (const char *)h + 8);
 		snprintf(g->startup, sizeof(g->startup), "%s", (const char *)h + 172);
@@ -351,16 +351,24 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
 		tail = &g->next;
 	}
 	fileXioDclose(fd);
+	if (failed) {
+		while (head) { g = head->next; free(head); head = g; }
+		return 0;
+	}
 
 	/* OPL includes every APA sub-partition in total_size_in_kb; aggregate them by APA_IDMAX. */
 	fd = fileXioDopen("hdd0:");
-	if (fd >= 0) {
+	if (fd < 0) {
+		while (head) { g = head->next; free(head); head = g; }
+		return 0;
+	}
+	{
 		while (fileXioDread(fd, &de) > 0) {
 			if (de.stat.mode != 0x1337 || !(de.stat.attr & APA_FLAG_SUB)) continue;
 			for (g = head; g; g = g->next) {
 				if (!strncmp(g->part, de.name, APA_IDMAX)) {
 					u32 add_kb = de.stat.size / 2u;
-					if (g->total_size_kb <= 0xffffffffu - add_kb)
+					if (g->total_size_kb && g->total_size_kb <= 0xffffffffu - add_kb)
 						g->total_size_kb += add_kb;
 					else
 						g->total_size_kb = 0;
