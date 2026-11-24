@@ -75,7 +75,7 @@ hdd = once(
             return;''',
     '''            configGetStrCopy(config, "hdd_partition", name, sizeof(name));
             if (gTEaG3HDDMiniMode) {
-                int valid = name[0] != '\\0' && strlen(name) < sizeof(name);
+                int valid = name[0] != '\\0' && strlen(name) <= APA_IDMAX;
                 for (const unsigned char *p = (const unsigned char *)name; valid && *p; p++)
                     if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') ||
                           (*p >= '0' && *p <= '9') || *p == '.' || *p == '_' ||
