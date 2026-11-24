@@ -41,8 +41,10 @@ opl = once(
 
 hdd = once(
     hdd,
-    "    char name[64];\\n    int fd, ret = 0;",
-    "    char name[64] = {0};\\n    int fd, ret = 0;",
+    '''    char name[64];
+    int fd, ret = 0;''',
+    '''    char name[64] = {0};
+    int fd, ret = 0;''',
     "initialize partition config buffer",
 )
 
