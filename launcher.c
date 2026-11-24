@@ -136,7 +136,7 @@ static int view;
 static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
-static char STATE_INI[32], NEUTRINO[128], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[96], RUNTIME_DIR[96], LOG_TXT[24], OPL_PATH[128];
+static char STATE_INI[32], NEUTRINO[160], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[128], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
 static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
@@ -1610,7 +1610,7 @@ static int ra_titles(int i, unsigned char *out)
 static int ra_prepare(int i, char *arg, int n)
 {
 	static unsigned char wl[RA_WATCH_MAX * 4 + 2048 + RA_TITLES * (4 + RA_TITLE) + 8];
-	char path[64], wlp[64];
+	char path[192], wlp[64];
 	int len = ra_watchlist(ini_get(&cfg, "logros", "servidor", ""), cv[i].hash, ra_id(i), wl, sizeof(wl) - RA_TITLES * (4 + RA_TITLE) - 8);
 	int wn = len > 0 ? ra_wl_check(wl, len) : 0;
 	if (wn > 0) len += ra_titles(i, wl + len);
