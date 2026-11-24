@@ -137,11 +137,11 @@ old = r'''        delay(6);
 new = r'''        delay(6);
     }
     if (!matchedDevice) {
-        LOG("TEa.G3 BDM auto-launch: requested device not found\\n");
+        LOG("TEa.G3 BDM auto-launch: requested device not found\n");
         return;
     }
 
-    if (gBDMPrefix[0] != '\\0') {
+    if (gBDMPrefix[0] != '\0') {
 '''
 if source.count(old) != 1:
     raise SystemExit(f"expected one BDM scan end, found {source.count(old)}")
