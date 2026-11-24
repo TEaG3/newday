@@ -6,6 +6,7 @@ on:
       - master
       - feature/tea-g3-rebrand
       - feature/single-entrypoint-runtime
+      - feature/opl-source-autolaunch
   pull_request:
     branches:
       - master
