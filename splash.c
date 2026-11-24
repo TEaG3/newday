@@ -1,4 +1,4 @@
-// TEa.G3 loading screen for link.elf (2026-11-03): the "NULD — identidad" canvas drawn by the GS. A thread at a lower
+// TEa.G3 loading screen for link.elf (2026-11-03): the TEa.G3 identity canvas drawn by the GS. A thread at a lower
 // priority than the main one draws it while the main thread sleeps in the IOP reset, DHCP, the HTTP connects and
 // the cover downloads: a perspective floor and a wire sphere (gfx_line, alpha fading with depth), the four logo
 // variants (A ring, B "$ TEa.G3", C NULD//, D label) 3 s each with a glitch cut (the logo redrawn in scissored bands,
@@ -72,7 +72,7 @@ void splash_mark(float cx, float cy, float r, unsigned ring, unsigned slash)
 static int blink(float s) { return (int)(s * 1.9f) & 1; }
 static void variant(int k, float dx, float s)
 {
-	if (k == 0) { // A: the ring + NULD in Michroma (128 px type: 96 px caps)
+	if (k == 0) { // A: the ring + TEa.G3 in Michroma (128 px type: 96 px caps)
 		float cap = 96, ww = splash_vtext_w(&vfont_michroma, cap, 0.06f, "TEa.G3"), x = 640 - (132 + 40 + ww) / 2 + dx;
 		splash_mark(x + 66, 300, 66, FG, ACID);
 		splash_vtext(&vfont_michroma, x + 172, 300 + cap / 2, cap, 0.06f, "TEa.G3", FG);
@@ -82,7 +82,7 @@ static void variant(int k, float dx, float s)
 		splash_vtext(&vfont_plex_medium, x, base, cap, -0.02f, "$", ACID);
 		splash_vtext(&vfont_plex_medium, x + splash_vtext_w(&vfont_plex_medium, cap, -0.02f, "$ ") - 0.02f * fs, base, cap, -0.02f, "TEa.G3", FG);
 		if (!blink(s)) gfx_rect((int)(x + ww + 0.08f * fs), (int)(base - cap), (int)(0.44f * fs), (int)(cap + 0.1f * fs), ACID);
-	} else if (k == 2) { // C: NULD// in Archivo 800 at 125 % (132 px type)
+	} else if (k == 2) { // C: TEa.G3// in Archivo 800 at 125 % (132 px type)
 		float cap = 132 * 0.686f, ww = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "TEa.G3//"), x = 640 - ww / 2 + dx;
 		float wn = splash_vtext_w(&vfont_archivo_heavy, cap, 0.02f, "TEa.G3") + 0.02f * 132;
 		splash_vtext(&vfont_archivo_heavy, x, 300 + cap / 2, cap, 0.02f, "TEa.G3", FG);
