@@ -8,6 +8,8 @@ on:
         required: true
         default: "arabic-v1.3.3"
   push:
+    branches:
+      - "arabic-v*"
     tags:
       - "arabic-v*"
 
