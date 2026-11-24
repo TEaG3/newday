@@ -395,6 +395,14 @@ extern unsigned char boot_elf[];
 extern unsigned int size_boot_elf;
 static unsigned igr_exit, igr_off, igr_menu; // libpad masks from config.ini [igr]; 0 = off
 static volatile int stub_install, stub_new;  // install wanted; just written (toast)
+static int stub_port = -1;
+static const char *igr_stub_path(void)
+{
+	static char path[32];
+	if (stub_port < 0) return "";
+	snprintf(path, sizeof(path), "mc%d:/BOOT/TEa.G3.ELF", stub_port);
+	return path;
+}
 static volatile int neutrino_igr, neutrino_menu, neutrino_ra, neutrino_lang; // the USB's neutrino.elf is the NULD fork (knows -igrexit / -igrmenu / -ra=)
 
 static int mc_write(int port, const char *path, const void *data, int n) // whole file; 1 if every byte went
@@ -443,7 +451,8 @@ static void install_stub(void)
 			if (mcdir[p][i].AttrFile & MC_ATTR_SUBDIR && !strcmp((const char *)mcdir[p][i].EntryName, "BOOT")) port = p;
 	for (int p = 0; p < 2 && port < 0; p++)
 		if (mcn[p] >= 0) port = p;
-	if (port >= 0) stub_write(port); // no memory card: no way back from a game (the launcher still works)
+	if (port >= 0 && stub_write(port)) stub_port = port;
+	else stub_port = -1;
 }
 
 static void wiz_job(void); // the setup wizard's memory card and config.ini work (#15), below
@@ -1224,7 +1233,7 @@ static void load_config(void) // loader thread, before the splash sound
 	igr_menu = combo_mask(ini_get(&cfg, "igr", "menu", "L1+L2+R1+R2+START+SELECT")); // phase 13; OPL's exit combo
 	igr_exit = combo_mask(ini_get(&cfg, "igr", "reiniciar", ""));                     // phase 12
 	igr_off = combo_mask(ini_get(&cfg, "igr", "apagar", "L1+L2+R1+R2+L3+R3"));
-	stub_install = igr_exit || igr_menu; // the reboot ends in FMCB, which autoboots the stub
+	stub_install = (igr_exit || igr_menu || exists(OPL_PATH)) && (mcn[0] >= 0 || mcn[1] >= 0);
 	ra_on = !strcasecmp(ini_get(&cfg, "logros", "activos", "si"), "si"); // phase 16
 	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
 	// Auto-discover every supported source on first boot unless the user explicitly narrows [juegos] origen.
@@ -2646,8 +2655,10 @@ static const char *launch_problem(int i) // select a viable engine before handin
 	int engine = decision.engine;
 	if (engine == ENGINE_UNSUPPORTED) return L("Formato de juego no compatible con esta fuente", "This game format is not supported by this source");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
-	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD)
+	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
+		if (stub_port < 0) return L("يلزم تثبيت ملف العودة على بطاقة ذاكرة", "A memory-card return stub is required before this launch");
+	}
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
 	    src[(int)cv[i].src].type == SRC_SMB) {
 		char smb_module[192], smb_config[192];
@@ -2793,17 +2804,17 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		snprintf(part_count, sizeof(part_count), "%u", (unsigned char)cv[i].parts);
 		/* OPL's main() expects the launch mode in argv[4]. The loader removes argv[0],
 		   so reserve an empty OPL argv[0] before the UL record. */
-		char *opl_argv[7] = {OPL_PATH, "", cv[i].ul_name, cv[i].boot,
-		                     cv[i].cd ? "CD" : "DVD", "ul", part_count};
+		char *opl_argv[8] = {OPL_PATH, "", cv[i].ul_name, cv[i].boot,
+		                     cv[i].cd ? "CD" : "DVD", "ul", part_count, (char *)igr_stub_path()};
 		printf("launch OPL UL: %s parts=%s\n", cv[i].boot, part_count);
 		gfx_shutdown();
-		run_loader(7, opl_argv);
+		run_loader(8, opl_argv);
 		printf("OPL UL launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_HDD) {
 		char sector[16], size_kb[16], disc_type[16];
-		char *opl_argv[7];
+		char *opl_argv[8];
 		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector ||
 		    !cv[i].hdl_size_kb || !cv[i].hdl_disc_type) {
 			launch_err = L("Metadatos de la partición HD Loader incompletos", "HD Loader partition metadata is incomplete");
@@ -2818,16 +2829,17 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[3] = size_kb;
 		opl_argv[4] = disc_type;
 		opl_argv[5] = "mini";
-		opl_argv[6] = NULL;
+		opl_argv[6] = (char *)igr_stub_path();
+		opl_argv[7] = NULL;
 		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s disc_type=%s (existing OPL config only)\n",
 		       cv[i].boot, sector, size_kb, disc_type);
 		gfx_shutdown();
-		run_loader(6, opl_argv);
+		run_loader(7, opl_argv);
 		printf("OPL HD Loader launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_ETH) {
-		char *opl_argv[14];
+		char *opl_argv[15];
 		opl_argv[0] = OPL_PATH;
 		opl_argv[1] = "";
 		opl_argv[2] = cv[i].path;
@@ -2842,9 +2854,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[11] = (char *)ini_get(&cfg, "smb", "share", "");
 		opl_argv[12] = (char *)ini_get(&cfg, "smb", "user", "guest");
 		opl_argv[13] = (char *)ini_get(&cfg, "smb", "password", "");
+		opl_argv[14] = (char *)igr_stub_path();
 		printf("launch OPL SMB: %s\n", cv[i].boot);
 		gfx_shutdown();
-		run_loader(14, opl_argv);
+		run_loader(15, opl_argv);
 		printf("OPL SMB launch returned\n");
 		return;
 	}
@@ -2852,7 +2865,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		const char *filename = strrchr(cv[i].path, '/');
 		const char *driver = "usb";
 		char unit[8];
-		char *opl_argv[8];
+		char *opl_argv[9];
 		int source_type = src[(int)cv[i].src].type;
 		filename = filename ? filename + 1 : cv[i].path;
 		if (source_type == SRC_HDD) driver = "ata";
@@ -2867,9 +2880,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[5] = "bdm";
 		opl_argv[6] = (char *)driver;
 		opl_argv[7] = unit;
+		opl_argv[8] = (char *)igr_stub_path();
 		printf("launch OPL BDM: %s driver=%s unit=%s\n", cv[i].boot, driver, unit);
 		gfx_shutdown();
-		run_loader(8, opl_argv);
+		run_loader(9, opl_argv);
 		printf("OPL BDM launch returned\n");
 		return;
 	}
