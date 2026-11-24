@@ -1,4 +1,4 @@
-# PCSX2 and real-PS2 runtime smoke test
+# PCSX2 2.8.2 and real-PS2 runtime smoke test
 
 This checklist is separate from host fixtures and cross-compilation. A green
 CI build does not prove that a game boots or that all split files are read.
@@ -12,7 +12,9 @@ Download all artifacts from one successful GitHub Actions run; do not mix runs:
 
 Verify that `TEa.G3.ELF` and `runtime-manifest.txt` are non-empty and that the manifest lists OPL, Neutrino, `ee_core`, `raagent`, `cdvdman_emu`, UDPFS and SMB assets.
 
-## PCSX2 checks
+## PCSX2 2.8.2 checks
+
+Use PCSX2 2.8.2 for this harness (not the old 2.4 setup). Configure USB1 as a mass-storage device using `tools/pcsx2/PCSX2.ini.in`; rebuild `usb.img` with `tools/pcsx2/mkimg.sh` only while PCSX2 is closed. Before booting, verify that `usb.img` exists, is FAT32, and contains `TEa.G3.ELF` plus the test folders. The configuration and image checks prove that the virtual device is prepared; only the running emulator and the launcher's `mass0:` diagnostics prove that the PS2-side USB device was enumerated.
 
 Use a legally obtained BIOS and a configured virtual USB mass-storage device.
 If the PCSX2 setup does not expose a PS2 mass-storage device to the ELF, the
