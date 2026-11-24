@@ -454,7 +454,7 @@
   "; restart it with": "؛ ثم أعد تشغيل الخدمة بالأمر",
   "In": "في ملف",
   "set": "اضبط القيمة",
-  "[ui] idioma = pt": "[ui] idioma = pt",
+  "[ui] idioma = ar": "[ui] idioma = ar",
   "; the setup wizard of a new drive offers it too. The in-game menu and achievement notices follow the selected interface language.": "؛ كما يتيح معالج إعداد وحدة تخزين جديدة اختيارها، وتستخدم القائمة داخل اللعبة وإشعارات الإنجازات لغة الواجهة المحددة.",
   "PlayStation 2 logo before the games.": "إظهار شعار PlayStation 2 قبل بدء الألعاب.",
   "and each game starts with the PlayStation 2 logo, as from a disc. Off by default. A game from another region than the console (PAL on an NTSC console or the reverse) may not start this way: leave it off for those. Not tested on a console yet.": "ويبدأ كل تشغيل بإظهار شعار PlayStation 2 كما يحدث عند تشغيل القرص. هذا الخيار معطّل افتراضياً. قد لا تعمل اللعبة إذا كانت منطقتها مختلفة عن منطقة الجهاز (PAL على جهاز NTSC أو العكس)، لذا اترك الخيار معطلاً لهذه الألعاب. لم يُختبر هذا الخيار على جهاز فعلي بعد.",
