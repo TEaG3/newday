@@ -2632,7 +2632,8 @@ static const char *launch_problem(int i) // select a viable engine before handin
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("No se pudo preparar el motor Neutrino integrado", "Could not install the embedded Neutrino runtime");
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH)
 		if (!exists(OPL_PATH)) return L("No se pudo preparar el motor OPL integrado", "Could not install the embedded OPL runtime");
-	if (cv[i].kind == K_PS2 && src[(int)cv[i].src].type == SRC_SMB) {
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
+	    src[(int)cv[i].src].type == SRC_SMB) {
 		char smb_module[192], smb_config[192];
 		snprintf(smb_module, sizeof(smb_module), "%s/modules/smb_fhi.irx", NDIR);
 		snprintf(smb_config, sizeof(smb_config), "%s/config/bsd-smb.toml", NDIR);
