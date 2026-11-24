@@ -136,7 +136,7 @@ static int view;
 static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
-static char STATE_INI[32], NEUTRINO[160], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[160], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
+static char STATE_INI[32], NEUTRINO[192], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[160], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
 static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
