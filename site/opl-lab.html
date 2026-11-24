@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEa.G3 OPL Integration Lab</title>
+<meta name="description" content="Explore how TEa.G3 embeds OPL and Neutrino in one ELF, see the verified USBExtreme UL and USB ISO/ZSO routing rules, and try a browser-only launch-path simulation.">
+<meta property="og:title" content="TEa.G3 — OPL Integration Lab">
+<meta property="og:description" content="An interactive, source-aligned explanation of the OPL runtime embedded in TEa.G3.">
+<meta name="theme-color" content="#06070A">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/noto-sans-arabic-variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="site.css">
+<script src="gallery.js" defer></script>
+<script src="opl-demo.js" defer></script>
+<script src="release.js" defer></script>
+<script src="i18n.js" defer></script>
+</head>
+<body>
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="./"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10.5" fill="none" stroke="#E6E8EC" stroke-width="3"/><line x1="2" y1="24" x2="24" y2="2" stroke="#C8FF2E" stroke-width="3"/></svg><span>TEa.G3</span></a>
+    <a href="./#features">Features</a>
+    <a href="./#screens">Screens</a>
+    <a href="opl-lab.html" aria-current="page">OPL Integration Lab</a>
+    <a href="manual.html">Manual</a>
+    <a href="themes.html">Theme maker</a>
+    <a href="changelog.html">Changelog</a>
+    <a href="https://github.com/TEaG3/newday">Source</a>
+    <a class="btn solid small" href="https://github.com/TEaG3/newday/releases" data-zip><span data-zip-name>Download package</span></a>
+  </div>
+</nav>
+
+<main class="wrap opl-page">
+  <header class="opl-hero">
+    <div class="opl-kicker"><span class="opl-pill">EMBEDDED RUNTIME</span><span class="mono">TEa.G3 / OPL</span></div>
+    <h1>OPL is inside the TEa.G3 launcher.</h1>
+    <p class="opl-intro">The user copies one file: <code>TEa.G3.ELF</code>. The build embeds a pinned OPL runtime and Neutrino, including the required modules. TEa.G3 installs and integrity-checks the runtime under <code>tea_g3/runtime/</code> on first boot.</p>
+    <div class="btns">
+      <a class="btn solid" href="#simulator">Try the routing simulation</a>
+      <a class="btn" href="manual.html#opl">Read the OPL guide</a>
+      <a class="btn" href="https://github.com/TEaG3/newday/actions/workflows/build-ps2.yml">Build workflow</a>
+    </div>
+    <p class="opl-caution"><strong>Verification boundary:</strong> CI proves the pinned OPL build, the TEa.G3 patch, the embedded ELF and the host-side routing tests. It does not prove gameplay or storage compatibility on a physical PS2.</p>
+  </header>
+
+  <section class="opl-section" id="simulator">
+    <div class="opl-section-head">
+      <div><span class="opl-kicker mono">01 / ROUTING</span><h2>Try the engine selector</h2></div>
+      <p>Choose the image format, storage source and <code>[juegos] motor</code> preference. The result follows <code>engine_select()</code> in the current C source.</p>
+    </div>
+    <div class="opl-widget" data-opl-widget>
+      <form class="opl-controls" data-opl-form>
+        <label>Game format
+          <select name="format"><option value="iso" selected>ISO</option><option value="zso">ZSO</option><option value="ul">USBExtreme UL</option></select>
+        </label>
+        <label>Storage source
+          <select name="source"><option value="usb" selected>USB</option><option value="other">Other source (HDD / MX4SIO / iLink / MMCE / network)</option></select>
+        </label>
+        <label>Engine preference
+          <select name="preference"><option value="auto" selected>auto</option><option value="neutrino">neutrino</option><option value="opl">opl</option></select>
+        </label>
+        <div class="opl-form-actions">
+          <button class="btn solid" type="submit">Simulate this route</button>
+          <button class="btn" type="button" data-opl-reset>Reset</button>
+        </div>
+      </form>
+      <div class="opl-result is-supported" data-opl-result role="status" aria-live="polite">
+        <div class="opl-result-head"><h3>Neutrino · existing launch path</h3><span class="opl-status">Current route</span></div>
+        <p class="opl-result-meta">ISO · USB · auto</p>
+        <ol class="opl-route-steps"><li><span class="step-number">01</span><span>Auto keeps ordinary ISO/ZSO games on Neutrino.</span></li></ol>
+        <p class="opl-sim-note">Browser simulation only; no PS2 game or ELF is executed.</p>
+      </div>
+    </div>
+    <div class="opl-boundary">
+      <div><strong>What the simulator does</strong><p>Shows the routing decision only. It does not mount a USB image, load OPL, emulate a PS2 or test a game.</p></div>
+      <div><strong>What CI does</strong><p>Builds OPL from its pinned source, applies the UL direct-boot patch, compiles TEa.G3 and checks the routing matrix.</p></div>
+      <div><strong>What needs a console</strong><p>Actual game start, sustained reads, memory-card behavior, controllers and stability must still be checked on physical PS2 hardware.</p></div>
+    </div>
+  </section>
+
+  <section class="opl-section">
+    <div class="opl-section-head">
+      <div><span class="opl-kicker mono">02 / ENGINE MAP</span><h2>Current OPL integration boundary</h2></div>
+      <p>OPL is embedded, but the current TEa.G3 direct-boot adapter exposes specific routes. It does not expose every upstream OPL backend yet.</p>
+    </div>
+    <div class="opl-table-wrap">
+      <table class="opl-matrix">
+        <thead><tr><th>Format</th><th>Source</th><th>Preference</th><th>Current route</th></tr></thead>
+        <tbody>
+          <tr><td>ISO / ZSO</td><td>USB</td><td><code>auto</code> / <code>neutrino</code></td><td><span class="route-neutrino">Neutrino</span></td></tr>
+          <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td><span class="route-opl">OPL · UL direct boot</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>USB</td><td><code>opl</code></td><td><span class="route-opl">OPL · USB direct boot</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>Other source</td><td><code>auto</code> / <code>neutrino</code></td><td><span class="route-neutrino">Existing Neutrino route</span></td></tr>
+          <tr><td>ISO / ZSO</td><td>Other source</td><td><code>opl</code></td><td><span class="route-blocked">Not wired to OPL</span></td></tr>
+          <tr><td>USBExtreme UL</td><td>Other source</td><td>Any preference</td><td><span class="route-blocked">Unsupported in current adapter</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="opl-note">PS1 <code>.VCD</code> files use the separate POPStarter path; they are not represented as OPL formats in this selector.</p>
+  </section>
+
+  <section class="opl-section">
+    <div class="opl-section-head">
+      <div><span class="opl-kicker mono">03 / HOW IT WORKS</span><h2>Three parts of the new mechanism</h2></div>
+      <p>These are technical diagrams based on the current source and build design, not screenshots of a live PS2. Select any image to open it at full size.</p>
+    </div>
+    <div class="strip opl-gallery" data-strip tabindex="0" aria-label="OPL integration diagrams, scroll sideways">
+      <figure><button type="button"><img src="img/opl-runtime-flow.svg" alt="TEa.G3 embeds OPL and Neutrino in one ELF and routes games according to format, source and engine preference" width="1440" height="900" loading="lazy"></button><figcaption><span class="mono">01</span>One TEa.G3.ELF, two embedded engines and distinct launch routes.</figcaption></figure>
+      <figure><button type="button"><img src="img/opl-ul-route.svg" alt="USBExtreme UL scan, split-part validation and direct OPL launch flow" width="1440" height="900" loading="lazy"></button><figcaption><span class="mono">02</span>USBExtreme UL: parse <code>ul.cfg</code>, verify every part, then hand off to OPL.</figcaption></figure>
+      <figure><button type="button"><img src="img/opl-runtime-install.svg" alt="Embedded runtime build, CRC verification and installation under tea_g3/runtime" width="1440" height="900" loading="lazy"></button><figcaption><span class="mono">03</span>Embedded runtime installation and integrity verification on startup.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="opl-section">
+    <div class="opl-section-head">
+      <div><span class="opl-kicker mono">04 / SOURCE OF TRUTH</span><h2>Where to inspect the real implementation</h2></div>
+      <p>The interactive route above is tied to the following source files and automated checks.</p>
+    </div>
+    <div class="opl-source-grid">
+      <a href="https://github.com/TEaG3/newday/blob/master/engine.c"><strong>engine.c</strong><span>Format + source + preference selection matrix</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/launcher.c"><strong>launcher.c</strong><span>USB UL scanning, game metadata and launch hand-off</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/ul.c"><strong>ul.c</strong><span>UL record, CRC and split-part validation</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/tools/patch_opl_ul.py"><strong>patch_opl_ul.py</strong><span>TEa.G3's pinned OPL UL direct-boot patch</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/runtime_install.c"><strong>runtime_install.c</strong><span>Runtime installation and CRC-32 checks</span></a>
+      <a href="https://github.com/TEaG3/newday/blob/master/.github/workflows/build-ps2.yml"><strong>build-ps2.yml</strong><span>CI build of pinned OPL, Neutrino and the single ELF</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap site">
+  <span class="credit" lang="ar" dir="rtl"><strong>تعديل وتطوير المطور العراقي</strong> — <a href="https://github.com/TEaG3" rel="noopener"><strong>TEa.G3</strong></a></span>
+  <span>OPL and Neutrino are embedded runtime components; the routing boundary above is specific to this TEa.G3 integration.</span>
+  <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
+</footer>
+
+<dialog class="viewer" data-viewer aria-label="OPL technical diagram viewer">
+  <header><span class="count" data-count></span><button class="btn small" type="button" data-close>Close</button></header>
+  <div class="stage"><img alt=""></div>
+  <footer><p data-cap></p><button class="btn small" type="button" data-go="-1">Previous</button><button class="btn small" type="button" data-go="1">Next</button></footer>
+</dialog>
+</body>
+</html>
