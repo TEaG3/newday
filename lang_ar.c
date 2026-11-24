@@ -75,7 +75,7 @@ static const char *const ar[][2] = {
         {"X: restart TEa.G3", "X: إعادة تشغيل TEa.G3"},
         {"That button now runs: %s", "هذا الزر الآن يشغل: %s"},
         {"Could not read the list: the xeRAbora client must be reachable on the local network",
-         "تعذرت قراءة القائمة: يجب أن يكون عميل xeRAbora متاحاً على الشبكة المحلية"},
+         "تعذرت قراءة القائمة: لا يمكن الوصول إلى عميل xeRAbora عبر الشبكة المحلية"},
         {"Loading achievements...", "جاري تحميل الإنجازات..."},
         {"READING...", "جاري القراءة..."},
         {"DRIVE", "محرك"},
