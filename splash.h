@@ -8,7 +8,7 @@ void splash_stop(void);               // waits for the last frame
 void splash_draw(float s);
 extern const char *splash_ver; // "1.0": the corner label and the hardware label
 void splash_mark(float cx, float cy, float r, unsigned ring, unsigned slash); // the ∅ mark (ring + slash), for other screens too
-// the NULD look for the other screens (the canvas "NULD — identidad"): palette, backdrop, wordmark, HUD corners
+// the NULD theme look for the other screens (the canvas "NULD — identidad"): palette, backdrop, wordmark, HUD corners
 #define NULD_BG 0x06070A
 #define NULD_STEEL 0x1A1D23
 #define NULD_MUTED 0x8A919C
@@ -16,8 +16,8 @@ void splash_mark(float cx, float cy, float r, unsigned ring, unsigned slash); //
 #define NULD_ACID 0xC8FF2E
 void splash_floor(float s, unsigned rgb, int a); // clears to NULD_BG, then the perspective floor (lines at alpha a)
 void splash_scan(void);                          // CRT scanlines over everything: draw it last
-// vector text in the logo fonts (logo_data.c: vfont_michroma "NULD", vfont_archivo_heavy "NULD/", vfont_plex_medium
-// "$nuld"): cap px tall, track in em after each letter, from x on the baseline
+// vector text in the logo fonts (logo_data.c: vfont_michroma "TEa.G3", vfont_archivo_heavy "TEa.G3/", vfont_plex_medium
+// "$ TEa.G3"): cap px tall, track in em after each letter, from x on the baseline
 float splash_vtext_w(const vfont *f, float cap, float track, const char *s);
 void splash_vtext(const vfont *f, float x, float base, float cap, float track, const char *s, unsigned rgb);
 void splash_hud(int x, int y, int w, int h, int len, unsigned c); // corner brackets around a box, at the current alpha
