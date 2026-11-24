@@ -4,7 +4,9 @@
 typedef enum {
     ENGINE_NEUTRINO = 0,
     ENGINE_OPL_UL,
-    ENGINE_OPL_USB,
+    ENGINE_OPL_BDM,
+    ENGINE_OPL_ETH,
+    ENGINE_OPL_HDD,
     ENGINE_UNSUPPORTED
 } engine_id;
 
@@ -16,7 +18,10 @@ typedef enum {
 
 typedef enum {
     ENGINE_SOURCE_OTHER = 0,
-    ENGINE_SOURCE_USB
+    ENGINE_SOURCE_USB,
+    ENGINE_SOURCE_BDM,
+    ENGINE_SOURCE_SMB,
+    ENGINE_SOURCE_HDL
 } engine_source;
 
 /* preference: auto, neutrino, or opl. Source and image format stay independent. */
