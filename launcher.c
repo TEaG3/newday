@@ -820,7 +820,7 @@ static int catalog_load(int s, int n)
 }
 
 typedef struct { int s, n; } hdl_ctx;
-static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb) // one HD Loader game
+static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, int is_cd) // one HD Loader game
 {
 	hdl_ctx *c = p;
 	if (c->n >= MAXC || strlen(startup) != 11 || !start_sector || !total_size_kb) return; // "SLUS_213.76"
@@ -829,7 +829,7 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
 	serial_dash(startup, e->serial);
 	snprintf(e->boot, sizeof(e->boot), "%s", startup);
-	e->kind = K_PS2, e->src = c->s, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb;
+	e->kind = K_PS2, e->src = c->s, e->cd = is_cd, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb;
 	done_n++, total_n++; // as the catalog: not counted beforehand
 }
 
