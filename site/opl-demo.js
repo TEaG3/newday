@@ -13,7 +13,8 @@
   "use strict";
   function resolveRoute(input) {
     const format = input && input.format, source = input && input.source, preference = input && input.preference;
-    if (!["iso", "zso", "ul"].includes(format) || !["usb", "other"].includes(source) ||
+    if (!["iso", "zso", "ul"].includes(format) ||
+        !["usb", "bdm", "smb", "hdl", "other"].includes(source) ||
         !["auto", "neutrino", "opl"].includes(preference)) {
       return { id: "unsupported", engine: "none", ok: false, reason: "invalid" };
     }
@@ -21,86 +22,117 @@
       return source === "usb" ? { id: "opl-ul", engine: "OPL", ok: true, reason: "ul-usb" } :
         { id: "unsupported", engine: "none", ok: false, reason: "ul-needs-usb" };
     }
-    if (preference === "opl") {
-      return source === "usb" ? { id: "opl-usb", engine: "OPL", ok: true, reason: "manual-opl-usb" } :
-        { id: "unsupported", engine: "none", ok: false, reason: "opl-needs-usb" };
-    }
-    return { id: "neutrino", engine: "Neutrino", ok: true, reason: "default-neutrino" };
+    if (preference !== "opl") return { id: "neutrino", engine: "Neutrino", ok: true, reason: "default-neutrino" };
+    if (source === "usb" || source === "bdm")
+      return { id: "opl-bdm", engine: "OPL", ok: true, reason: "manual-opl-bdm" };
+    if (source === "smb")
+      return { id: "opl-eth", engine: "OPL", ok: true, reason: "manual-opl-eth" };
+    if (source === "hdl")
+      return { id: "opl-hdd", engine: "OPL", ok: true, reason: "manual-opl-hdd" };
+    return { id: "neutrino", engine: "Neutrino", ok: true, reason: "opl-fallback-neutrino" };
   }
 
   const COPY = {
     en: {
-      result: "Selected launch route", unsupported: "No OPL hand-off is wired for this selection",
-      oplUlTitle: "Embedded OPL · USBExtreme UL", oplUsbTitle: "Embedded OPL · USB ISO/ZSO direct boot",
-      neutrinoTitle: "Neutrino · existing launch path",
-      ulUsb: [
-        "TEa.G3 scans ul.cfg on the USB device.",
-        "Each record is parsed and the game is listed only when every declared ul.* split part is present.",
-        "TEa.G3 passes the selected UL title, startup ID, media type and part count to the embedded OPL UL launch path.",
-        "OPL performs the USBExtreme split-part reads."
-      ],
-      oplUsb: [
-        "TEa.G3 selects the USB ISO/ZSO game entry.",
-        "The [juegos] motor = opl preference selects the USB OPL direct-boot route.",
-        "The embedded OPL receives the selected image and its game metadata.",
-        "This is a manual OPL route; auto keeps ISO/ZSO on Neutrino."
-      ],
-      neutrino: [
-        "TEa.G3 keeps the selected ISO/ZSO on its existing Neutrino path.",
-        "The auto and neutrino preferences both resolve to Neutrino for ISO/ZSO.",
-        "TEa.G3 passes the selected source, image path and supported game options to Neutrino."
-      ],
-      ulNeedsUsb: [
-        "The UL scanner and direct-boot adapter currently accept USB only.",
-        "A UL game on the selected non-USB source is not routed to OPL or Neutrino by this integration.",
-        "Move the UL set to USB before using the integrated OPL UL path."
-      ],
-      oplNeedsUsb: [
-        "The manual OPL direct-boot adapter in TEa.G3 currently accepts USB ISO/ZSO only.",
-        "No OPL hand-off is implemented here for the selected non-USB source.",
-        "Choose auto or neutrino to keep the existing Neutrino route for this source."
-      ],
-      invalid: ["Choose a supported format, source and engine preference."],
+      result: "Selected launch route",
+      titles: {
+        "opl-ul": "Embedded OPL · USBExtreme UL",
+        "opl-bdm": "Embedded OPL · BDM direct boot",
+        "opl-eth": "Embedded OPL · SMB / ETH",
+        "opl-hdd": "Embedded OPL · APA / HD Loader",
+        neutrino: "Neutrino · existing launch path",
+        unsupported: "No launch route for this selection"
+      },
+      sources: {
+        usb: "USB", bdm: "MX4SIO / iLink / FAT-HDD", smb: "SMB share",
+        hdl: "APA / HD Loader", other: "MMCE / UDPBD / UDPFS"
+      },
+      details: {
+        "opl-ul": [
+          "TEa.G3 scans ul.cfg on the USB device and validates each record.",
+          "A game is listed only when every declared ul.* split part is present.",
+          "TEa.G3 passes the fixed-width title, startup ID, media type and part count to OPL.",
+          "OPL performs the USBExtreme split-part reads."
+        ],
+        "opl-bdm": [
+          "TEa.G3 selects the game from USB, MX4SIO, iLink or an ATA-backed FAT/exFAT HDD.",
+          "The manual [juegos] motor = opl preference selects OPL's BDM direct-boot adapter.",
+          "The hand-off identifies the requested BDM driver and device unit; OPL does not substitute another device.",
+          "Auto and neutrino keep ordinary ISO/ZSO games on Neutrino."
+        ],
+        "opl-eth": [
+          "TEa.G3 selects the ISO/ZSO entry from the configured SMB share.",
+          "The OPL ETH hand-off passes the PS2 IPv4 settings, server IPv4, share and credentials.",
+          "The adapter validates IPv4 values and OPL field lengths before starting; invalid settings fall back to Neutrino.",
+          "SMB gameplay and sustained reads still require physical-console verification."
+        ],
+        "opl-hdd": [
+          "TEa.G3 reads the main APA partition's exact HDL start LBA and aggregates all matching sub-partition sizes.",
+          "It passes the startup ID, start sector and total_size_in_kb to OPL's HDD mini-launch.",
+          "OPL reads the existing hdd_partition setting from hdd0:__common/OPL/conf_hdd.cfg using a read-only config mount.",
+          "If the configured OPL partition or its existing OPL folder is missing, OPL refuses launch; it does not create or format partitions."
+        ],
+        neutrino: [
+          "TEa.G3 keeps the selected ISO/ZSO on its existing Neutrino path.",
+          "Auto and neutrino always select Neutrino for ISO/ZSO; unsupported OPL source combinations also retain Neutrino.",
+          "The source-specific Neutrino hand-off remains available as the compatibility path."
+        ],
+        unsupported: ["Choose a supported format, source and engine preference."]
+      },
       hardware: "Browser simulation only · no PS2 ELF, emulator or game is executed here.",
-      supported: "Supported by the current TEa.G3 routing code", blocked: "Not routed by the current OPL adapter",
-      sourceUsb: "USB", sourceOther: "Other source", auto: "Auto", neutrino: "Neutrino", opl: "OPL (manual)",
+      supported: "Routed by current TEa.G3 code", blocked: "Unsupported selection",
+      auto: "Auto", neutrino: "Neutrino", opl: "OPL (manual)",
       iso: "ISO", zso: "ZSO", ul: "USBExtreme UL"
     },
     ar: {
-      result: "مسار التشغيل المختار", unsupported: "لا يوجد ربط OPL لهذا الاختيار حالياً",
-      oplUlTitle: "محرك OPL المضمّن · USBExtreme UL", oplUsbTitle: "محرك OPL المضمّن · تشغيل USB ISO/ZSO مباشرة",
-      neutrinoTitle: "Neutrino · مسار التشغيل الحالي",
-      ulUsb: [
-        "يفحص TEa.G3 ملف ul.cfg الموجود على وحدة USB.",
-        "يحلّل كل سجل، ولا يعرض اللعبة إلا عند وجود جميع أجزاء ul.* المعلنة.",
-        "يمرّر TEa.G3 اسم لعبة UL ورقم بدء التشغيل ونوع الوسيط وعدد الأجزاء إلى مسار UL في OPL المضمّن.",
-        "يتولى OPL قراءة أجزاء USBExtreme."
-      ],
-      oplUsb: [
-        "يحدد TEa.G3 لعبة USB بصيغة ISO أو ZSO.",
-        "يؤدي اختيار [juegos] motor = opl إلى تحديد مسار الإقلاع المباشر عبر OPL لوحدة USB.",
-        "يستقبل OPL المضمّن ملف اللعبة وبياناته.",
-        "هذا مسار OPL يدوي؛ أما auto فيُبقي ISO/ZSO على Neutrino."
-      ],
-      neutrino: [
-        "يبقي TEa.G3 لعبة ISO/ZSO على مسار Neutrino الحالي.",
-        "كل من auto وneutrino يختاران Neutrino لألعاب ISO/ZSO.",
-        "يمرّر TEa.G3 مصدر اللعبة ومسار الصورة وخيارات اللعبة المدعومة إلى Neutrino."
-      ],
-      ulNeedsUsb: [
-        "ماسح UL ومحوّل الإقلاع المباشر الحالي يقبلان USB فقط.",
-        "لعبة UL الموجودة على مصدر آخر لا يوجّهها هذا التكامل إلى OPL أو Neutrino.",
-        "انقل مجموعة UL إلى USB لاستخدام مسار OPL المضمّن."
-      ],
-      oplNeedsUsb: [
-        "محوّل الإقلاع المباشر اليدوي إلى OPL في TEa.G3 يقبل حالياً USB ISO/ZSO فقط.",
-        "لا يوجد في هذا التكامل تمرير OPL لمصدر التخزين الآخر المحدد.",
-        "اختر auto أو neutrino للإبقاء على مسار Neutrino الحالي لهذا المصدر."
-      ],
-      invalid: ["اختر صيغة ومصدراً وتفضيل محرك مدعوماً."],
+      result: "مسار التشغيل المختار",
+      titles: {
+        "opl-ul": "OPL المضمّن · USBExtreme UL",
+        "opl-bdm": "OPL المضمّن · تشغيل BDM مباشر",
+        "opl-eth": "OPL المضمّن · SMB / ETH",
+        "opl-hdd": "OPL المضمّن · APA / HD Loader",
+        neutrino: "Neutrino · مسار التشغيل الحالي",
+        unsupported: "لا يوجد مسار تشغيل لهذا الاختيار"
+      },
+      sources: {
+        usb: "USB", bdm: "MX4SIO / iLink / HDD FAT",
+        smb: "مشاركة SMB", hdl: "APA / HD Loader", other: "MMCE / UDPBD / UDPFS"
+      },
+      details: {
+        "opl-ul": [
+          "يفحص TEa.G3 ملف ul.cfg على USB ويتحقق من سجلاته.",
+          "لا يعرض اللعبة إلا عند وجود جميع أجزاء ul.* المعلنة.",
+          "يمرّر الاسم الثابت ورقم بدء التشغيل ونوع الوسيط وعدد الأجزاء إلى OPL.",
+          "يتولى OPL قراءة أجزاء USBExtreme."
+        ],
+        "opl-bdm": [
+          "يحدد TEa.G3 اللعبة من USB أو MX4SIO أو iLink أو قرص HDD بنظام FAT/exFAT.",
+          "اختيار [juegos] motor = opl يحدد محوّل الإقلاع المباشر BDM في OPL.",
+          "يمرّر نوع محرك BDM ورقم الجهاز المطلوب، ولا يستبدل OPL الجهاز بآخر.",
+          "يبقي الوضعان auto وneutrino ألعاب ISO/ZSO على Neutrino."
+        ],
+        "opl-eth": [
+          "يحدد TEa.G3 لعبة ISO/ZSO من مشاركة SMB المهيأة.",
+          "يمرّر إلى OPL إعدادات IPv4 الخاصة بـ PS2 وعنوان الخادم والمشاركة وبيانات الدخول.",
+          "يتحقق المحوّل من عناوين IPv4 وحدود الحقول؛ وإذا كانت الإعدادات غير صالحة يعود إلى Neutrino.",
+          "يبقى اختبار الألعاب والقراءة المستمرة عبر SMB بحاجة إلى جهاز PS2 فعلي."
+        ],
+        "opl-hdd": [
+          "يستخرج TEa.G3 قطاع بداية لعبة HDL الدقيق من قسم APA الرئيسي ويجمع أحجام الأقسام الفرعية التابعة لها.",
+          "يمرّر Startup ID وقطاع البداية والحجم الكلي total_size_in_kb إلى وضع HDD mini في OPL.",
+          "يقرأ OPL إعداد hdd_partition الموجود في hdd0:__common/OPL/conf_hdd.cfg عبر تركيب قراءة فقط.",
+          "إذا لم يجد قسم OPL المهيأ أو مجلد OPL الموجود مسبقاً يرفض الإقلاع ولا ينشئ الأقسام أو يهيئها."
+        ],
+        neutrino: [
+          "يبقي TEa.G3 لعبة ISO/ZSO على مسار Neutrino الحالي.",
+          "يختار auto وneutrino محرك Neutrino دائماً؛ كما تبقى المصادر التي لا تملك محوّل OPL على مسار Neutrino.",
+          "يبقى تمرير Neutrino الخاص بكل مصدر متاحاً كمسار توافق."
+        ],
+        unsupported: ["اختر صيغة ومصدراً وتفضيل محرك مدعوماً."]
+      },
       hardware: "محاكاة داخل المتصفح فقط · لا يتم تشغيل ELF أو محاكي أو لعبة PS2 هنا.",
-      supported: "مدعوم في منطق التوجيه الحالي لـ TEa.G3", blocked: "غير موصول عبر محوّل OPL الحالي",
-      sourceUsb: "USB", sourceOther: "مصدر آخر", auto: "تلقائي", neutrino: "Neutrino", opl: "OPL (يدوي)",
+      supported: "موصول في كود التوجيه الحالي لـ TEa.G3", blocked: "اختيار غير مدعوم",
+      auto: "تلقائي", neutrino: "Neutrino", opl: "OPL (يدوي)",
       iso: "ISO", zso: "ZSO", ul: "USBExtreme UL"
     }
   };
@@ -110,13 +142,10 @@
     const ar = form.ownerDocument.documentElement.lang === "ar", c = ar ? COPY.ar : COPY.en;
     const input = { format: form.elements.format.value, source: form.elements.source.value, preference: form.elements.preference.value };
     const route = resolveRoute(input);
-    const details = route.id === "opl-ul" ? c.ulUsb : route.id === "opl-usb" ? c.oplUsb :
-      route.id === "neutrino" ? c.neutrino : route.reason === "ul-needs-usb" ? c.ulNeedsUsb :
-      route.reason === "opl-needs-usb" ? c.oplNeedsUsb : c.invalid;
-    const title = route.id === "opl-ul" ? c.oplUlTitle : route.id === "opl-usb" ? c.oplUsbTitle :
-      route.id === "neutrino" ? c.neutrinoTitle : c.unsupported;
+    const details = c.details[route.id] || c.details.unsupported;
+    const title = c.titles[route.id] || c.titles.unsupported;
     const formatLabel = c[input.format] || input.format;
-    const sourceLabel = input.source === "usb" ? c.sourceUsb : c.sourceOther;
+    const sourceLabel = c.sources[input.source] || input.source;
     const preferenceLabel = c[input.preference] || input.preference;
     output.textContent = "";
     output.className = "opl-result " + (route.ok ? "is-supported" : "is-blocked");
