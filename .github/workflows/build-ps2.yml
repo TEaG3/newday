@@ -57,6 +57,13 @@ jobs:
           name: tea-g3-opl-${{ github.sha }}
           path: runtime-input
 
+      - name: Validate TEa.G3 splash wordmark
+        run: |
+          set -euo pipefail
+          grep -Fq 'splash_vtext_w(&vfont_michroma, cap, 0.06f, "TEa.G3")' torres.c
+          grep -Fq 'splash_vtext(&vfont_michroma, x + 2 * r + gap, 300 + cap / 2, cap, 0.06f, "TEa.G3", INK)' torres.c
+          ! grep -Fq '"NULD"' torres.c
+
       - name: Validate languages and compile the embedded runtime with PS2SDK
         shell: bash
         run: |
