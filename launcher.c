@@ -756,7 +756,10 @@ static int engine_for(const entry *e) // global engine preference + actual sourc
 		default: break;
 		}
 	}
-	return engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
+	engine_id selected = engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
+	/* If the embedded OPL image is absent/corrupt, keep the established Neutrino route. */
+	if (selected == ENGINE_OPL_BDM && !exists(OPL_PATH)) return ENGINE_NEUTRINO;
+	return selected;
 }
 static int catalog_load(int s, int n)
 {
