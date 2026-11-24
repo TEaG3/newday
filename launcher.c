@@ -650,7 +650,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
 	if (fd < 0) return n;
 	s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
 	if (end <= 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
-		printf("UL: invalid ul.cfg size %lld\\n", end);
+		printf("UL: invalid ul.cfg size %lld\n", end);
 		fileXioClose(fd);
 		return n;
 	}
@@ -2787,10 +2787,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		   so reserve an empty OPL argv[0] before the UL record. */
 		char *opl_argv[7] = {OPL_PATH, "", cv[i].ul_name, cv[i].boot,
 		                     cv[i].cd ? "CD" : "DVD", "ul", part_count};
-		printf("launch OPL UL: %s parts=%s\\n", cv[i].boot, part_count);
+		printf("launch OPL UL: %s parts=%s\n", cv[i].boot, part_count);
 		gfx_shutdown();
 		run_loader(7, opl_argv);
-		printf("OPL UL launch returned\\n");
+		printf("OPL UL launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_HDD) {
@@ -2811,11 +2811,11 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[4] = disc_type;
 		opl_argv[5] = "mini";
 		opl_argv[6] = NULL;
-		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s disc_type=%s (existing OPL config only)\\n",
+		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s disc_type=%s (existing OPL config only)\n",
 		       cv[i].boot, sector, size_kb, disc_type);
 		gfx_shutdown();
 		run_loader(6, opl_argv);
-		printf("OPL HD Loader launch returned\\n");
+		printf("OPL HD Loader launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_ETH) {
@@ -2834,10 +2834,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[11] = (char *)ini_get(&cfg, "smb", "share", "");
 		opl_argv[12] = (char *)ini_get(&cfg, "smb", "user", "guest");
 		opl_argv[13] = (char *)ini_get(&cfg, "smb", "password", "");
-		printf("launch OPL SMB: %s\\n", cv[i].boot);
+		printf("launch OPL SMB: %s\n", cv[i].boot);
 		gfx_shutdown();
 		run_loader(14, opl_argv);
-		printf("OPL SMB launch returned\\n");
+		printf("OPL SMB launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_BDM) {
@@ -2859,10 +2859,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[5] = "bdm";
 		opl_argv[6] = (char *)driver;
 		opl_argv[7] = unit;
-		printf("launch OPL BDM: %s driver=%s unit=%s\\n", cv[i].boot, driver, unit);
+		printf("launch OPL BDM: %s driver=%s unit=%s\n", cv[i].boot, driver, unit);
 		gfx_shutdown();
 		run_loader(8, opl_argv);
-		printf("OPL BDM launch returned\\n");
+		printf("OPL BDM launch returned\n");
 		return;
 	}
 	if (cv[i].kind != K_PS2) { // loader argv: the file, then the program's argv
