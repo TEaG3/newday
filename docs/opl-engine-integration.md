@@ -116,7 +116,7 @@ CI success is not proof of game compatibility. Still required:
 2. Confirm UL entries are discovered and the selected game is passed to OPL.
 3. Confirm gameplay and sustained reads across every UL split part.
 4. Test manual `motor = opl` for USB ISO/ZSO, MX4SIO, iLink and internal FAT/exFAT HDD.
-5. Finish the OPL APA/HD Loader mini-launch hand-off by reading the existing OPL HDD partition setting and passing the APA start sector; fail closed if the configured partition is absent.
+5. Validate the OPL APA/HD Loader mini-launch on physical hardware, including games with multiple APA sub-partitions; confirm missing configuration refuses launch without creating partitions.
 6. Verify read-only SMB share compatibility, VMC/compatibility settings, sustained reads and return behaviour on physical hardware.
 
 The unified test bundle is available from [CI run #45247633906](https://github.com/TEaG3/newday/actions/runs/45337162329) as `tea-g3-integration-test-bundle-cbce23482d2ac918d723be0f5c9ab767afaf0c74`.
