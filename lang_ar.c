@@ -1,4 +1,4 @@
-// Arabic for [ui] idioma = ar: each English text of L("es", "en") and its translation
+// Arabic translations for the English source strings used by L("English text").
 #include <string.h>
 #include "lang.h"
 
