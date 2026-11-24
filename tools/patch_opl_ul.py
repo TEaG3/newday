@@ -27,7 +27,6 @@ old = r'''    int nameLen;
 '''
 new = r'''    int isUL = !strcmp(argv[4], "ul");
     int isBDM = !strcmp(argv[4], "bdm");
-    int isUSB = isUL || (!strcmp(argv[4], "usb")) || (isBDM && !strcmp(argv[5], "usb"));
     const char *wantedDriver = isUL || !strcmp(argv[4], "usb") ? "usb" : isBDM ? argv[5] : "";
     int wantedUnit = 0;
     if (isBDM) {
@@ -93,7 +92,16 @@ new = r'''            int matches = !strcmp(gAutoLaunchDeviceData->bdmDriver, wa
             if (matches && !strcmp(gAutoLaunchDeviceData->bdmDriver, "ata"))
                 bdmResolveLBA_UDMA(gAutoLaunchDeviceData);
             if (matches) {
+                if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "usb"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_USB;
+                else if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "sd"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_ILINK;
+                else if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "sdc"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_SDC;
+                else if (!strcmp(gAutoLaunchDeviceData->bdmDriver, "ata"))
+                    gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_ATA;
                 snprintf(apaDevicePrefix, sizeof(apaDevicePrefix), "mass%d:", i);
+                matchedDevice = 1;
                 fileXioDclose(dir);
                 break;
             }
