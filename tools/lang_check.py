@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate translated strings, language rows and the Arabic-first launcher configuration."""
+"""Validate Arabic translations, the two-language interface and the Arabic-first launcher configuration."""
 import re
 import sys
 from pathlib import Path
@@ -21,7 +21,7 @@ def join(lits):
 def english():
     out = set()
     for file in sorted(ROOT.glob("*.c")):
-        if file.name in ("lang_pt.c", "lang_ar.c"):
+        if file.name == "lang_ar.c":
             continue
         source = file.read_text(encoding="utf-8")
         out |= {join(match.group(2)) for match in CALL.finditer(source)}
@@ -77,7 +77,7 @@ def initializer_rows(source, symbol):
 def main():
     failed = False
     en = english()
-    for code, filename in (("pt", "lang_pt.c"), ("ar", "lang_ar.c")):
+    for code, filename in (("ar", "lang_ar.c"),):
         translations = table(filename)
         missing = sorted(en - translations.keys())
         extra = sorted(translations.keys() - en)
@@ -101,7 +101,7 @@ def main():
             'return !strcasecmp(s, "en") ? LANG_EN' in launcher and
             ': LANG_AR; }' in launcher,
         "Arabic language key must be registered":
-            'lang_key[LANG_N] = {"es", "en", "pt", "ar"}' in launcher,
+            'lang_key[LANG_N] = {"en", "ar"}' in launcher,
         "fresh config must use Arabic": 'ini_parse(&cfg, config_template[LANG_AR]);' in launcher,
         "Arabic config template marker must exist": '"; TEa.G3 - إعدادات عربية\\n"' in launcher,
         "Arabic config template must set idioma=ar": "idioma = ar\\n" in launcher,
@@ -119,8 +119,8 @@ def main():
     for symbol in ("view_names[LANG_N]", "vid_labels[LANG_N]", "gc_name_l[LANG_N]",
                    "mc_labels[LANG_N]", "filter_names[LANG_N]", "lab[LANG_N]"):
         rows, body = initializer_rows(launcher, symbol)
-        passed = rows == 4 and any("\u0600" <= ch <= "\u06FF" for ch in body)
-        print(("ok: " if passed else "FAIL: ") + f"{symbol}: {rows}/4 language rows, Arabic row present={passed}")
+        passed = rows == 2 and any("\u0600" <= ch <= "\u06FF" for ch in body)
+        print(("ok: " if passed else "FAIL: ") + f"{symbol}: {rows}/2 language rows, Arabic row present={passed}")
         failed |= not passed
 
     gfx_source = (ROOT / "gfx.c").read_text(encoding="utf-8")
