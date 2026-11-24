@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEa.G3 — مشغّل ألعاب PlayStation 2 بتطوير المطور العراقي</title>
-<meta name="description" content="TEa.G3 is a game launcher that runs on a real PlayStation 2: covers downloaded by the console, 3D save icons, virtual memory cards, an in-game menu, games from a home server and RetroAchievements on hardware.">
+<meta name="description" content="TEa.G3 is a PlayStation 2 launcher with embedded OPL and Neutrino runtimes, USBExtreme UL direct boot, Arabic UI, themes and an interactive OPL routing lab.">
 <meta property="og:title" content="TEa.G3, a game launcher for the PlayStation 2">
 <meta property="og:description" content="Covers, 3D save icons, an in-game menu, a home game server and RetroAchievements, all running on the PS2.">
 <meta property="og:image" content="https://teag3.github.io/newday/img/home-carousel.jpg">
@@ -12,8 +12,10 @@
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/noto-sans-arabic-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="opl-lab.css">
 <script src="preview.js" defer></script>
 <script src="demo.js" defer></script>
+<script src="opl-demo.js" defer></script>
 <script src="gallery.js" defer></script>
 <script src="release.js" defer></script>
  <script src="i18n.js" defer></script>
@@ -27,6 +29,7 @@
     </a>
     <a href="#features">Features</a>
     <a href="#screens">Screens</a>
+    <a href="opl-lab.html">OPL Integration Lab</a>
     <a href="manual.html">Manual</a>
     <a href="themes.html">Theme maker</a>
     <a href="changelog.html">Changelog</a>
@@ -45,6 +48,7 @@
           <a class="btn solid" href="https://github.com/TEaG3/newday/releases/latest" data-zip data-version="Download v{v}">Download</a>
           <a class="btn" href="INSTALL-AR.txt" download>دليل التثبيت العربي</a>
           <a class="btn" href="manual.html">Read the manual</a>
+          <a class="btn" href="opl-lab.html">Explore embedded OPL</a>
         </div>
       </div>
     </div>
@@ -68,7 +72,7 @@
 
   <section id="features" class="wrap">
     <h2>What runs on the console</h2>
-    <p class="lead">The launcher is TEa.G3—not NULD. Its splash wordmark, menu identity and download entry point use the same TEa.G3 name. OPL is integrated as a separate engine; each storage backend and image format is exposed only when its hand-off is implemented and verified.</p>
+    <p class="lead">TEa.G3 is a single-file PS2 launcher with embedded OPL and Neutrino runtimes. Its OPL hand-off is deliberately limited to the routes shown in the <a href="opl-lab.html">OPL Integration Lab</a>; other source adapters are not advertised as OPL-compatible until implemented and tested.</p>
     <p class="lead">Every row happens on the PS2 itself. The numbers were measured on a slim PS2 (SCPH-75001).</p>
     <div class="scroll">
       <table class="rules">
@@ -87,6 +91,40 @@
           <tr><td class="n">12</td><td class="name">Twelve themes, and yours</td><td class="text">Each theme has its own colours, animated background, loading screen and launch screen. A folder with eleven colours and a picture is a new one: the <a href="themes.html">theme maker</a> builds it in the browser.</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+
+  <section id="opl-engine" class="wrap opl-home">
+    <div class="opl-section-head">
+      <div><span class="opl-kicker mono">OPL / EMBEDDED ENGINE</span><h2>OPL is built into the single TEa.G3.ELF.</h2></div>
+      <p>TEa.G3 embeds OPL and Neutrino, then chooses the correct engine for the game's format, storage source and motor preference. The simulator below follows the current engine-selection code.</p>
+    </div>
+    <div class="opl-widget" data-opl-widget>
+      <form class="opl-controls opl-home-controls" data-opl-form>
+        <label>Game format
+          <select name="format"><option value="iso" selected>ISO</option><option value="zso">ZSO</option><option value="ul">USBExtreme UL</option></select>
+        </label>
+        <label>Storage source
+          <select name="source"><option value="usb" selected>USB</option><option value="other">Other source</option></select>
+        </label>
+        <label>Engine preference
+          <select name="preference"><option value="auto" selected>auto</option><option value="neutrino">neutrino</option><option value="opl">opl</option></select>
+        </label>
+        <div class="opl-form-actions">
+          <button class="btn solid" type="submit">Simulate route</button>
+          <button class="btn" type="button" data-opl-reset>Reset</button>
+        </div>
+      </form>
+      <div class="opl-result is-supported" data-opl-result role="status" aria-live="polite">
+        <div class="opl-result-head"><h3>Neutrino · existing launch path</h3><span class="opl-status">Current route</span></div>
+        <p class="opl-result-meta">ISO · USB · auto</p>
+        <ol class="opl-route-steps"><li><span class="step-number">01</span><span>Auto keeps ordinary ISO/ZSO games on Neutrino.</span></li></ol>
+        <p class="opl-sim-note">Browser simulation only; no PS2 game or ELF is executed.</p>
+      </div>
+    </div>
+    <div class="opl-home-visual">
+      <img src="img/opl-runtime-flow.svg" alt="TEa.G3 embeds OPL and Neutrino in one ELF and routes games according to format, source and engine preference" width="1440" height="900" loading="lazy">
+      <div><strong>One launcher. Two embedded engines.</strong><p>USBExtreme UL selects OPL automatically. USB ISO/ZSO can use OPL when <code>motor = opl</code>. The regular ISO/ZSO auto route remains Neutrino.</p><a href="opl-lab.html">Open the full OPL Integration Lab and image gallery</a></div>
     </div>
   </section>
 
@@ -110,7 +148,8 @@
 
   <section id="download" class="wrap">
     <h2>Download</h2>
-    <p class="lead">The current CI build is a verified compile artifact, not yet a stable hardware-certified release. Use the Releases page for published packages; do not treat CI artifacts as a finished public release.</p>
+    <p class="lead">The latest package is published as a prerelease while physical-PS2 acceptance remains open. CI verifies the pinned OPL build, runtime embedding and automated routing tests; it does not certify every game or storage adapter on hardware.</p>
+    <p class="release-status" data-release-status>Checking the latest published TEa.G3 package…</p>
     <p class="lead">One zip for the USB drive. Upgrading from an older build? TEa.G3 migrates existing settings from earlier project folders into tea_g3/ automatically.</p>
     <div class="scroll">
       <table class="files">

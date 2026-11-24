@@ -9,6 +9,7 @@
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/noto-sans-arabic-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="opl-lab.css">
 <script src="splash.js" defer></script>
 <script src="release.js" defer></script>
  <script src="i18n.js" defer></script>
@@ -20,6 +21,8 @@
     <a href="#usb">1 The USB drive</a>
     <a href="#buttons">2 Buttons</a>
     <a href="#config">3 config.ini</a>
+    <a href="#opl">OPL integration</a>
+    <a href="opl-lab.html">OPL Integration Lab</a>
     <a href="#server">8 Home server</a>
     <a href="#themes">11 Themes</a>
     <a href="themes.html">Theme maker</a>
@@ -165,6 +168,29 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
       <p>At startup TEa.G3 automatically probes the configured sources and scans the game folders; the default configuration enables <code>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</code>. Games are listed as each source scan completes; no separate Discover or Show Games action is required. Automatic probing is controlled by <code>[juegos] auto = si</code> (default); set it to <code>no</code> to use only the comma-separated devices in <code>[juegos] origen</code>. <code>hdd</code> covers the internal exFAT disk or HD Loader partitions; <code>mmce</code> and <code>mx4sio</code> share the SIO2 path and cannot be used together. <code>udpbd</code> and catalog-less <code>udpfs</code> need a fixed IP in <code>[red]</code>. TEa.G3 can also run from an MMCE's SD card with no USB drive at all.</p>
       <p>A MemCard PRO 2 or SD2PSX switches to the game's own card when a game starts, whatever its source. To save there instead of a virtual card, set the game's memory card to <code>fisica</code> with △.</p>
       <p><b>OPL compatibility boundary:</b> upstream OPL supports multiple backends and layouts, but TEa.G3 currently routes USB ISO/ZSO (manual OPL) and USBExtreme UL (automatic OPL) through its direct-boot adapter. MX4SIO, iLink, SMBv1 and ATA/IDE HDD need source-specific OPL hand-offs before they can be claimed as OPL routes. The existing Neutrino routes remain enabled; options are not hidden to conceal missing support.</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="opl">
+    <header><b>OPL</b><h2>Integrated OPL engine</h2></header>
+    <div>
+      <p>TEa.G3 ships one user-facing executable: <code>TEa.G3.ELF</code>. The build pins the upstream OPL source, fetches its pinned <code>lwNBD</code> dependency, applies the TEa.G3 USBExtreme UL direct-boot patch, builds OPL, and embeds it beside Neutrino and the required runtime modules.</p>
+      <p>On first boot, TEa.G3 installs the embedded files under <code>tea_g3/runtime/</code>. Each file is written to a temporary path and checked with CRC-32 before it is renamed into place. A bundle identifier and per-file checks let later boots skip a complete, matching runtime or repair missing/corrupt assets.</p>
+      <h3>What is routed today</h3>
+      <div class="scroll"><table>
+        <tr><th>Game format</th><th>Source</th><th>Setting</th><th>Engine</th></tr>
+        <tr><td>ISO / ZSO</td><td>USB</td><td><code>auto</code> / <code>neutrino</code></td><td>Neutrino</td></tr>
+        <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td>OPL UL direct boot</td></tr>
+        <tr><td>ISO / ZSO</td><td>USB</td><td><code>opl</code></td><td>OPL USB direct boot</td></tr>
+        <tr><td>ISO / ZSO</td><td>Other configured source</td><td><code>auto</code> / <code>neutrino</code></td><td>Existing Neutrino route</td></tr>
+        <tr><td>ISO / ZSO</td><td>Other configured source</td><td><code>opl</code></td><td>Not connected to OPL</td></tr>
+        <tr><td>USBExtreme UL</td><td>Non-USB source</td><td>Any preference</td><td>Unsupported by current adapter</td></tr>
+      </table></div>
+      <h3>USBExtreme UL safety checks</h3>
+      <p>The TEa.G3 scanner reads <code>ul.cfg</code>, validates the fixed-size records, and checks that every declared <code>ul.*</code> split part is present. A record with missing or invalid parts is skipped instead of being offered as a working game. A valid entry receives the OPL UL route with its title, startup ID, media type and part count.</p>
+      <h3>Important limits</h3>
+      <p>Embedding upstream OPL does not mean every backend supported by standalone OPL is connected to TEa.G3. The current direct-boot adapters described above are USB-based. MX4SIO, iLink, SMBv1 and ATA/IDE HDD require their own OPL hand-offs and device testing before being described as OPL routes. The current Neutrino paths remain separate and available.</p>
+      <p><a class="btn ink" href="opl-lab.html">Open the interactive OPL Integration Lab</a> — its browser simulation mirrors the route selector; it does not execute an ELF, emulate a console or launch a game.</p>
     </div>
   </section>
 

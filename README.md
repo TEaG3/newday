@@ -6,7 +6,7 @@ RetroAchievements on real hardware. Arabic is the default interface language, wi
 
 **تعديل وتطوير المطور العراقي: TEa.G3** · [دليل التثبيت العربي](INSTALL-AR.txt)
 
-**Website, screenshots and videos:** https://github.com/TEaG3/newday/tree/master/site
+**Website:** https://teag3.github.io/newday/ · [OPL Integration Lab](https://teag3.github.io/newday/opl-lab.html) · [Manual](https://teag3.github.io/newday/manual.html) · screenshots and videos in `site/`
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
 **Download:** [latest TEa.G3 release](https://github.com/TEaG3/newday/releases/latest)
 

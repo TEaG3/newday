@@ -1,4 +1,4 @@
-// NULD theme maker: a theme folder (theme.ini + fondo.jpg, docs/themes.md) made in the page. No libraries, nothing
+// TEa.G3 theme maker: a theme folder (theme.ini + fondo.jpg, docs/themes.md) made in the page. No libraries, nothing
 // leaves the browser. The preview is preview.js: the home, the splash and the launch screen of the base, animated.
 (() => {
   // the palettes of themes.c's table, in theme.ini's key order
@@ -17,7 +17,7 @@
   ];
   const BASES = {
     torres: ['Torres', '01030F 050C2E 16296B 4962A5 3A4A80 E8EEFF C3D0F5 A6B8EA 8FD8FF 13235A 031236'],
-    nuld: ['NULD', '06070A 0C0E12 161A21 2A303A 4A515C E6E8EC A9B0BA 8A919C C8FF2E 1A1D23 06070A'],
+    nuld: ['Classic', '06070A 0C0E12 161A21 2A303A 4A515C E6E8EC A9B0BA 8A919C C8FF2E 1A1D23 06070A'],
     cristal: ['Cristal', '0B0A14 15122A 2E2A48 6A6880 4A4860 FFFFFF EFECF6 DAD5E8 FFB454 26233A 15101F'],
     aurora: ['Aurora', '03050F 080C1A 18233F 3A4058 39405C EEF2FF CBD2EC AEB7D6 7CF5D6 121A30 070A14'],
     liquid: ['Liquid', '050E24 1A1440 3A3470 9A94C0 6A6590 FFFFFF F0EDFA D6D6F0 7FF0E0 3A3560 0B1F45'],
@@ -87,7 +87,7 @@
   }
   function ini() {
     const name = $('name').value.replace(/[;#\[\]=\r\n]/g, '').trim() || folder(); // ; and # would start a comment
-    const note = document.documentElement.lang === 'ar' ? `; ${name}: سمة لمشغّل NULD (الإصدار 1.3 أو أحدث). انسخ هذا المجلد إلى nuld/themes/ في وحدة USB.\n` : `; ${name}: a theme for NULD (v1.3 or newer). Copy this folder to nuld/themes/ on the USB drive.\n`;
+    const note = document.documentElement.lang === 'ar' ? `; ${name}: سمة لمشغّل TEa.G3 (الإصدار 1.3 أو أحدث). انسخ هذا المجلد إلى tea_g3/themes/ في وحدة USB.\n` : `; ${name}: a theme for TEa.G3 (v1.3 or newer). Copy this folder to tea_g3/themes/ on the USB drive.\n`;
     let t = note +
       `nombre = ${name}\nbase = ${state.base}\n\n[colores]\n`;
     for (const [key] of KEYS) t += `${key} = ${key === 'acento' && state.coverAccent ? 'portada' : state.pal[key]}\n`;
@@ -183,7 +183,7 @@
     g.setTransform(1, 0, 0, 1, 0, 0);
     rect(0, 0, 1280, 720, '000000', 0.25); // on the theme's row the home stays in sight
     rect(270, 98, 740, 524, P.panel), frame(270, 98, 740, 524, P.borde);
-    text(UI, 320, 118, ar ? 'إعدادات NULD' : 'NULD setup', P.texto), rect(294, 156, 692, 1, P.borde);
+    text(UI, 320, 118, ar ? 'إعدادات TEa.G3' : 'TEa.G3 setup', P.texto), rect(294, 156, 692, 1, P.borde);
     const value = (y, s, cur) => {
       const w = width(s) + 56, x = 986 - w;
       if (cur) rect(x, y + 5, w, 30, ACC); else rect(x, y + 5, w, 30, P.panel), frame(x, y + 5, w, 30, P.borde);
@@ -228,7 +228,7 @@
   }
   setPal(OCASO);
   const from = new URLSearchParams(location.search).get('base'); // themes.html?base=torres starts from that theme
-  if (BASES[from]) state.base = baseSel.value = from, $('name').value = document.documentElement.lang === 'ar' ? 'سمتي ' + ({torres:'الأبراج',nuld:'NULD',cristal:'كريستال',aurora:'الشفق القطبي',liquid:'السائل',onda:'الموجة',orbit:'المدار',techstep:'تيك ستيب',wireframe:'الإطار السلكي',neuro:'نيورو',fosforo:'الفوسفور',papel:'الورق'}[from] || BASES[from][0]) : 'My ' + BASES[from][0], setPal(BASES[from][1]);
+  if (BASES[from]) state.base = baseSel.value = from, $('name').value = document.documentElement.lang === 'ar' ? 'سمتي ' + ({torres:'الأبراج',nuld:'الكلاسيكية',cristal:'كريستال',aurora:'الشفق القطبي',liquid:'السائل',onda:'الموجة',orbit:'المدار',techstep:'تيك ستيب',wireframe:'الإطار السلكي',neuro:'نيورو',fosforo:'الفوسفور',papel:'الورق'}[from] || BASES[from][0]) : 'My ' + BASES[from][0], setPal(BASES[from][1]);
   const first = document.querySelector(`.tabs [data-view="${location.hash.slice(1)}"]`); // themes.html#list opens on that screen
   if (first) first.click();
   sync();
