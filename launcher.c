@@ -2741,7 +2741,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	int engine = decision.engine;
 	FILE *diag = fopen(LOG_TXT, "a");
 	if (diag) {
-		fprintf(diag, "IEC game=%s source=%u format=%u engine=%u reason=%s\\n",
+		fprintf(diag, "IEC game=%s source=%u format=%u engine=%u reason=%s\n",
 		        cv[i].path, (unsigned char)cv[i].src,
 		        (unsigned)(cv[i].engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
 		                   has_ext(cv[i].path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO),
