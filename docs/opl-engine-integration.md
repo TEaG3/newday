@@ -5,8 +5,8 @@
 TEa.G3 remains the front end. Neutrino remains the default engine for ordinary
 ISO/ZSO games. When the global preference is explicitly set to OPL, the launcher
 uses source-specific direct-boot adapters for BDM devices (USB, MX4SIO, iLink
-and ATA-backed FAT/exFAT HDD). Other storage backends remain on Neutrino until
-their own OPL launch protocols are implemented.
+and ATA-backed FAT/exFAT HDD), SMB/ETH, and APA/HD Loader HDD mini-launch.
+MMCE and UDP-based sources remain on Neutrino until their OPL hand-offs exist.
 
 The engine selector keeps image format, storage backend and runtime engine as separate inputs. The current launcher-to-OPL direct-boot adapter is narrower than upstream OPL's full feature set. Upstream OPL supports USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, and ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts (availability depends on OPL build and backend). The launcher must not claim that every upstream OPL capability is already exposed through TEa.G3. The current adapter matrix is:
 
@@ -27,7 +27,7 @@ The config key is `[juegos] motor` in `tea_g3/config.ini` on the launcher's home
 device:
 - `auto`: Neutrino for ISO/ZSO; OPL for UL.
 - `neutrino`: keep ISO/ZSO on Neutrino; UL remains OPL-only.
-- `opl`: prefer OPL for USB, MX4SIO, iLink, ATA-backed FAT/exFAT HDD and SMB ISO/ZSO. APA/HDL, MMCE and UDP-based sources remain on Neutrino. UL remains OPL-only.
+- `opl`: prefer OPL for USB, MX4SIO, iLink, ATA-backed FAT/exFAT HDD, SMB ISO/ZSO and APA/HD Loader. MMCE and UDP-based sources remain on Neutrino. UL remains OPL-only.
 
 ## OPL build and dependency pinning
 
@@ -41,9 +41,9 @@ device:
   direct-boot patch, runs `make clean` and `make NOT_PACKED=1`, then uploads
   the standalone `OPL.ELF` artifact.
 
-The direct-boot patches are maintained in `tools/patch_opl_ul.py` and
-`tools/patch_opl_eth.py` and are applied to the pinned upstream source during CI.
-The BDM patch:
+The direct-boot patches are maintained in `tools/patch_opl_ul.py`,
+`tools/patch_opl_eth.py` and `tools/patch_opl_hdl.py`, and are applied to the
+pinned upstream source during CI. The BDM patch:
 - accepts a `bdm` startup mode with an explicit OPL driver name and device unit;
 - maps USB to `usb`, MX4SIO to `sdc`, iLink to `sd`, and ATA-backed HDD to `ata`;
 - accepts a `ul` startup mode plus split-part count for USBExtreme;
@@ -96,7 +96,7 @@ that device's root as well.
 
 ## Upstream OPL capability coverage and remaining adapter work
 
-The OPL build is included, but a successful compile does not mean TEa.G3 can yet invoke every OPL backend. The remaining integration work is to implement and test the APA/HD Loader mini-launch path, plus SMB read-only-share compatibility, VMC handling and return-to-launcher behaviour for all direct OPL adapters. Some formats are backend-specific: UL is a USB/BDM split layout; HDLoader is an APA/PFS HDD layout; ELF files are applications rather than PS2 disc images. Neutrino paths must remain intact while each OPL adapter is added. Do not solve a missing adapter by hiding the source or deleting the option.
+The OPL build is included and TEa.G3 now has explicit direct-launch adapters for BDM, SMB/ETH and APA/HD Loader, in addition to USBExtreme UL. A successful compile does not mean every backend is hardware-verified. Remaining work is physical-console validation of sustained reads, SMB read-only behavior, VMC/compatibility settings and return-to-launcher behavior. Some formats are backend-specific: UL is a USB/BDM split layout; HDLoader is an APA/PFS HDD layout; ELF files are applications rather than PS2 disc images. Neutrino paths remain intact as the default and fallback for sources without an OPL adapter.
 
 A feature is complete only after discovery, argument translation, runtime startup, sustained reads, return-to-launcher behavior and physical-console acceptance are all verified.
 
