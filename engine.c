@@ -44,6 +44,8 @@ int main(void)
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "opl") == ENGINE_OPL_ETH);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "opl") == ENGINE_OPL_HDD);
+    assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_HDL, "opl") == ENGINE_OPL_HDD);
+    assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "auto") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_OTHER, "opl") == ENGINE_NEUTRINO);
     assert(engine_select(ENGINE_FORMAT_ISO, ENGINE_SOURCE_BDM, "neutrino") == ENGINE_NEUTRINO);
