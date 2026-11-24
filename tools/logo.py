@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bake the NULD logo glyphs as vector meshes into logo_data.c: real Michroma / Archivo / IBM Plex Mono outlines,
+"""Bake the TEa.G3 logo glyphs as vector meshes into logo_data.c: real Michroma / Archivo / IBM Plex Mono outlines,
 flattened and triangulated (earcut), so the PS2 draws them sharp at any size without atlas room (the 1280x720
 framebuffers leave the GS none). Each glyph: points in font units (y up), triangle indices, contour starts (the
 contours are drawn again as anti-aliased lines for smooth edges), advance.
