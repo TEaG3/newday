@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+<title id="title">TEa.G3 embedded runtime installation</title>
+<desc id="desc">OPL and Neutrino assets are embedded into the TEa.G3 ELF. On first boot, TEa.G3 writes temporary files, verifies each asset with CRC-32, renames them into tea_g3/runtime and writes a bundle identifier. Later boots verify the marker and files and skip reinstalling a complete matching bundle.</desc>
+<defs>
+ <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#151c2a"/><stop offset="1" stop-color="#05070a"/></linearGradient>
+ <marker id="arr" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0L12 6L0 12Z" fill="#c8ff2e"/></marker>
+ <style>.t{font-family:Arial,sans-serif;fill:#e8edf4}.m{font-family:Arial,sans-serif;fill:#9ba8b8}.g{font-family:monospace;fill:#c8ff2e}.card{fill:#111b29;stroke:#465368;stroke-width:2}.ok{fill:#111e12;stroke:#c8ff2e;stroke-width:2}.a{fill:none;stroke:#c8ff2e;stroke-width:4;marker-end:url(#arr)}</style>
+</defs>
+<rect width="1440" height="900" fill="url(#bg)"/>
+<text x="72" y="78" class="g" font-size="22">RUNTIME INSTALL / INTEGRITY</text>
+<text x="72" y="136" class="t" font-size="48" font-weight="700">One ELF carries the runtime bundle.</text>
+<text x="72" y="178" class="m" font-size="22">No separate OPL.ELF or neutrino/ folder is required at the USB root.</text>
+<rect x="72" y="255" width="360" height="240" rx="18" class="card"/>
+<text x="112" y="310" class="g" font-size="21">BUILD OUTPUT</text>
+<text x="112" y="364" class="t" font-size="31" font-weight="700">TEa.G3.ELF</text>
+<text x="112" y="414" class="m" font-size="20">OPL.ELF + Neutrino</text>
+<text x="112" y="450" class="m" font-size="20">Modules + runtime manifest</text>
+<path d="M432 375H540" class="a"/>
+<rect x="540" y="255" width="360" height="240" rx="18" class="card"/>
+<text x="580" y="310" class="g" font-size="21">FIRST BOOT</text>
+<text x="580" y="364" class="t" font-size="30" font-weight="700">Install + CRC-32</text>
+<text x="580" y="414" class="m" font-size="20">Write temporary file</text>
+<text x="580" y="450" class="m" font-size="20">Verify bytes, then rename</text>
+<path d="M900 375H1008" class="a"/>
+<rect x="1008" y="255" width="360" height="240" rx="18" class="ok"/>
+<text x="1048" y="310" class="g" font-size="21">RUNTIME HOME</text>
+<text x="1048" y="364" class="t" font-size="29" font-weight="700">tea_g3/runtime/</text>
+<text x="1048" y="414" class="m" font-family="monospace" font-size="18">OPL.ELF</text>
+<text x="1048" y="448" class="m" font-family="monospace" font-size="18">neutrino/ + modules/</text>
+<rect x="230" y="580" width="980" height="190" rx="18" class="card"/>
+<text x="280" y="636" class="g" font-size="22">SUBSEQUENT BOOTS</text>
+<text x="280" y="690" class="t" font-size="31" font-weight="700">Check .bundle-id + each asset CRC</text>
+<text x="280" y="734" class="m" font-size="20">If the bundle matches and every file is valid, skip reinstalling; otherwise repair the runtime files.</text>
+<text x="72" y="846" class="m" font-size="18">This is the runtime installation design from runtime_install.c and embed_runtime.py.</text>
+</svg>
