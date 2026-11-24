@@ -1,4 +1,4 @@
-// TEa.G3 loading screen for the web: splash.c (the launcher's and link.elf's) redrawn on a <canvas data-nuld-splash>.
+// TEa.G3 loading screen for the web: splash.c redrawn on a <canvas data-teag3-splash>.
 // Same 1280x720 coordinates, floor, wire sphere, the four logo variants 3 s each with a glitch cut, status line,
 // HUD corners and scanlines. Reduced motion: one still frame of variant A.
 (function () {
@@ -173,7 +173,7 @@
   }
 
   function scan() {
-    var list = document.querySelectorAll('canvas[data-nuld-splash]');
+    var list = document.querySelectorAll('canvas[data-teag3-splash]');
     for (var i = 0; i < list.length; i++) if (!list[i].__nuld) { list[i].__nuld = 1; start(list[i]); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan); else scan();
@@ -317,7 +317,7 @@
   }
 
   function scan() {
-    var list = document.querySelectorAll('canvas[data-nuld-splash]');
+    var list = document.querySelectorAll('canvas[data-teag3-splash]');
     for (var i = 0; i < list.length; i++) if (!list[i].__nuld) { list[i].__nuld = 1; start(list[i]); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan); else scan();
