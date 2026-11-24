@@ -1,14 +1,13 @@
 # Game image format support
 
-This table separates formats that the TEa.G3 front-end can identify from formats
-that have a complete and verified runtime path. A scanner match alone is not a
+This table separates upstream OPL capabilities, TEa.G3 discovery, and TEa.G3 launch adapters. An upstream OPL feature is not automatically a TEa.G3 feature. A scanner match alone is not a
 launch-compatibility claim.
 
 | Content | Extension / path | State on this branch |
 |---|---|---|
 | PlayStation 2 disc image | `.iso` in `DVD/` or `CD/` | Existing Neutrino path; baseline regression test |
-| Compressed PS2 image | `.zso` in `DVD/` or `CD/` | Bounded LZ4 decoding is integrated into the Neutrino FHI path on this branch; CI builds it, but PCSX2/PS2 game-launch verification remains pending |
-| USBExtreme split image | `ul.cfg` + `ul.*` parts | TEa.G3 now has a bounded 64-byte UL record parser, verifies every sequential split part, and routes entries to a patched OPL direct-boot path; parser, engine-selection and OPL build checks pass in CI, while PCSX2/PS2 runtime tests remain pending |
+| Compressed PS2 image | `.zso` in `DVD/` or `CD/` | Bounded LZ4 decoding is integrated into the Neutrino FHI path on this branch; CI builds it; physical-PS2 game-launch verification remains pending |
+| USBExtreme split image | `ul.cfg` + `ul.*` parts | TEa.G3 now has a bounded 64-byte UL record parser, verifies every sequential split part, and routes entries to a patched OPL direct-boot path; parser, engine-selection and OPL build checks pass in CI, while physical-PS2 runtime tests remain pending |
 | SMB PS2 image | `DVD/*.iso`, `CD/*.iso`, `.zso` on a share | SMB source and Neutrino hand-off are wired. The generated `TEAG3.GAMES` index now lists ISO and ZSO. ZSO uses the common FHI decoder; end-to-end SMB game launch tests remain pending |
 | Internal HDD / HD Loader | APA partitions | Existing APA/HDL scanner and Neutrino `-bsd=ata -bsdfs=hdl` launch path are retained |
 | PlayStation 1 image | `.vcd` in `POPS/` | Existing POPStarter path; separate from Neutrino's PS2 CDVD path |
@@ -28,8 +27,7 @@ supported only when all of these work together:
 2. The storage backend provides bounded random reads and seeks.
 3. The Neutrino CDVD path converts logical disc-sector reads correctly.
 4. CI checks valid, malformed, truncated and out-of-range images.
-5. A game is launched from the actual TEa.G3 menu in PCSX2; a real-console
-   check is still needed before a release claim.
+5. A game is launched from the actual TEa.G3 menu on a physical PS2 and sustains reads during gameplay.
 
 ZSO decoding is placed at the common FHI sector layer. This is a code-level
 integration point, not proof that every backend can run every ZSO. Each source
@@ -57,7 +55,7 @@ default for ISO/ZSO and the existing storage sources, while a separately built
 and patched OPL ELF handles USB ISO/ZSO when manually selected and USBExtreme
 UL automatically. The UL catalogue parser, split-part checks and engine
 selection matrix are implemented and host-tested. Actual game boot and
-in-game-read verification in PCSX2 and on real PS2 hardware are still pending.
+in-game-read verification on real PS2 hardware are still pending.
 
 ## Themes are independent of image formats
 
@@ -86,9 +84,7 @@ direct-boot patch, compiles the launcher and Neutrino, and passes the UL parser,
 split-part and engine-selection host tests. The launcher passes the fixed-width
 UL name, startup ID, media type and split count to OPL; OPL selects the USB
 mass-storage driver and sets `GAME_FORMAT_USBLD` for UL. The remaining work is
-runtime verification: confirm the hand-off and actual game boot in PCSX2 with a
-configured mass-storage device, then verify in-game reads and stability on a
-real PS2. A green build is not a gameplay compatibility claim.
+runtime verification on a physical PS2: confirm the hand-off, actual game boot, sustained in-game reads and stability. An emulator may be used for diagnostics only and is not the acceptance reference. A green build is not a gameplay compatibility claim.
 
 Do not mark UL or OPL engine selection as supported until those steps and
 runtime tests pass.
@@ -111,3 +107,7 @@ In `mass0:/tea_g3/config.ini`, the `[juegos]` option `motor` accepts
 routes USBExtreme UL to OPL. Setting `motor = opl` manually routes USB ISO/ZSO
 games to OPL as well; other storage-source combinations are rejected until a
 direct OPL hand-off exists for them. UL remains OPL-only.
+
+## Full upstream OPL scope versus TEa.G3 adapters
+
+The upstream OPL codebase advertises USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, with ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts according to backend/build. TEa.G3 currently has a direct OPL adapter for USB ISO/ZSO (manual selection) and USBExtreme UL (automatic). Other storage backends and their format-specific hand-offs remain integration work; they must be implemented rather than removed or hidden. HDLoader is an HDD partition format, UL is a split USB layout, and ELF homebrew is an application category—not interchangeable disc-image formats. See [OPL runtime integration](opl-engine-integration.md) for the explicit adapter matrix.
