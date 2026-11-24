@@ -110,6 +110,7 @@ typedef struct {
 	char ul_name[UL_NAME_SIZE + 1];                   // exact fixed-width UL name used by OPL's CRC
 	char kind, cd, disc, src, engine, parts;
 	unsigned size;
+	u32 hdl_start_sector, hdl_size_kb;
 	void *big, *small, *half;
 } entry;
 static entry cv[MAXC];
@@ -767,7 +768,7 @@ static int engine_for(const entry *e) // global engine preference + actual sourc
 	engine_id selected = engine_select(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"));
 	/* Keep the existing Neutrino path as a silent fallback if OPL is unavailable
 	   or the configured SMB share exceeds OPL's fixed field size. */
-	if ((selected == ENGINE_OPL_BDM || selected == ENGINE_OPL_ETH) && !exists(OPL_PATH))
+	if ((selected == ENGINE_OPL_BDM || selected == ENGINE_OPL_ETH || selected == ENGINE_OPL_HDD) && !exists(OPL_PATH))
 		return ENGINE_NEUTRINO;
 	if (selected == ENGINE_OPL_ETH) {
 		const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
@@ -819,15 +820,15 @@ static int catalog_load(int s, int n)
 }
 
 typedef struct { int s, n; } hdl_ctx;
-static void hdl_add(void *p, const char *part, const char *title, const char *startup) // one HD Loader game
+static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb) // one HD Loader game
 {
 	hdl_ctx *c = p;
-	if (c->n >= MAXC || strlen(startup) != 11) return; // "SLUS_213.76"
+	if (c->n >= MAXC || strlen(startup) != 11 || !start_sector || !total_size_kb) return; // "SLUS_213.76"
 	entry *e = &cv[c->n++];
 	snprintf(e->path, sizeof(e->path), "%s", part);
 	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
 	serial_dash(startup, e->serial);
-	e->kind = K_PS2, e->src = c->s;
+	e->kind = K_PS2, e->src = c->s, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb;
 	done_n++, total_n++; // as the catalog: not counted beforehand
 }
 
@@ -2789,6 +2790,28 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		gfx_shutdown();
 		run_loader(7, opl_argv);
 		printf("OPL UL launch returned\\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_HDD) {
+		char sector[16], size_kb[16];
+		char *opl_argv[7];
+		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector || !cv[i].hdl_size_kb) {
+			launch_err = L("بيانات قسم HD Loader غير مكتملة", "HD Loader partition metadata is incomplete");
+			return;
+		}
+		snprintf(sector, sizeof(sector), "%lu", (unsigned long)cv[i].hdl_start_sector);
+		snprintf(size_kb, sizeof(size_kb), "%lu", (unsigned long)cv[i].hdl_size_kb);
+		opl_argv[0] = OPL_PATH;
+		opl_argv[1] = "";
+		opl_argv[2] = cv[i].boot;
+		opl_argv[3] = sector;
+		opl_argv[4] = size_kb;
+		opl_argv[5] = "mini";
+		opl_argv[6] = NULL;
+		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s (existing OPL config only)\\n", cv[i].boot, sector, size_kb);
+		gfx_shutdown();
+		run_loader(6, opl_argv);
+		printf("OPL HD Loader launch returned\\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_ETH) {
