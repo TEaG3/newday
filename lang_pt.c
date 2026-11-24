@@ -156,6 +156,8 @@ static const char *const pt[][2] = {
 	{"Physical (SMB: read-only)", "Físico (SMB: somente leitura)"},
 	{"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "SMB e UDPBD/UDPFS compartilham o adaptador: prioridade para SMB"},
 	{"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "REDE Neutrino (UDPBD / UDPFS / SMB), IP %s\n"},
+    {"A memory-card return stub is required before this launch", "É necessário instalar o arquivo de retorno no memory card antes de iniciar o jogo"},
+    {"Preparing the independent return path; try again shortly", "Preparando o caminho de retorno independente; tente novamente em instantes"},
     {"Modified and developed by Iraqi developer TEa.G3", "Modificado e desenvolvido pelo desenvolvedor iraquiano TEa.G3"},
 };
 
