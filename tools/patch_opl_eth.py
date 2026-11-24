@@ -103,10 +103,19 @@ int ethAutoLaunchGame(char *argv[])
         return -1;
 
     if (!ethParseIPv4(argv[5], ps2_ip) || !ethParseIPv4(argv[6], ps2_netmask) ||
-        !ethParseIPv4(argv[7], ps2_gateway) || !ethParseIPv4(argv[8], ps2_dns) ||
         !ethParseIPv4(argv[9], pc_ip) || strlen(argv[10]) == 0 || strlen(argv[10]) >= sizeof(gPCShareName) ||
         strlen(argv[11]) >= sizeof(gPCUserName) || strlen(argv[12]) >= sizeof(gPCPassword))
         return -1;
+    if (argv[7][0]) {
+        if (!ethParseIPv4(argv[7], ps2_gateway)) return -1;
+    } else {
+        memset(ps2_gateway, 0, sizeof(ps2_gateway));
+    }
+    if (argv[8][0]) {
+        if (!ethParseIPv4(argv[8], ps2_dns)) return -1;
+    } else {
+        memset(ps2_dns, 0, sizeof(ps2_dns));
+    }
 
     if (!strcmp(argv[3], "CD") && !strncmp(argv[1], "CD/", 3))
         filename = argv[1] + 3;
@@ -170,8 +179,8 @@ int ethAutoLaunchGame(char *argv[])
         return -1;
 
     ethLaunchGame(&ethGameList, 0, configSet);
-    /* ethLaunchGame should transfer control to the game. Returning means the hand-off failed. */
-    return -1;
+    /* ethLaunchGame deinitializes OPL before starting CDVDMAN; never deinit twice. */
+    return 0;
 }
 
 '''
