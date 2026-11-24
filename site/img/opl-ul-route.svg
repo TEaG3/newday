@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+<title id="title">USBExtreme UL direct boot into embedded OPL</title>
+<desc id="desc">TEa.G3 reads ul.cfg, validates each 64-byte record and checks that all required ul split parts exist. Only then it passes the selected game and part count to the embedded OPL direct-boot mode.</desc>
+<defs>
+ <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#121a27"/><stop offset="1" stop-color="#05070b"/></linearGradient>
+ <marker id="arr" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0L12 6L0 12Z" fill="#c8ff2e"/></marker>
+ <style>.t{font-family:Arial,sans-serif;fill:#e8edf4}.m{font-family:Arial,sans-serif;fill:#9ba8b8}.g{font-family:monospace;fill:#c8ff2e}.card{fill:#111b29;stroke:#435267;stroke-width:2}.ok{fill:#101e12;stroke:#c8ff2e;stroke-width:2}.a{fill:none;stroke:#c8ff2e;stroke-width:4;marker-end:url(#arr)}</style>
+</defs>
+<rect width="1440" height="900" fill="url(#bg)"/>
+<text x="72" y="78" class="g" font-size="22">USBEXTREME / UL PATH</text>
+<text x="72" y="136" class="t" font-size="48" font-weight="700">UL is detected by TEa.G3, then launched by OPL.</text>
+<text x="72" y="178" class="m" font-size="22">The scanner refuses incomplete split sets before the game is offered for launch.</text>
+<rect x="72" y="250" width="330" height="240" rx="18" class="card"/>
+<text x="112" y="304" class="g" font-size="21">USB ROOT</text>
+<text x="112" y="364" class="t" font-family="monospace" font-size="29">ul.cfg</text>
+<text x="112" y="414" class="m" font-family="monospace" font-size="20">ul.A1B2C3D4...</text>
+<text x="112" y="448" class="m" font-family="monospace" font-size="20">ul.A1B2C3D4...00</text>
+<text x="112" y="476" class="m" font-family="monospace" font-size="20">ul.A1B2C3D4...01</text>
+<path d="M402 370H510" class="a"/>
+<rect x="510" y="250" width="360" height="240" rx="18" class="card"/>
+<text x="552" y="304" class="g" font-size="21">TEa.G3 SCANNER</text>
+<text x="552" y="358" class="t" font-size="27" font-weight="700">Parse each record</text>
+<text x="552" y="402" class="m" font-size="19">Validate 64-byte layout</text>
+<text x="552" y="438" class="m" font-size="19">Check serial + part count</text>
+<text x="552" y="474" class="m" font-size="19">Verify every declared part</text>
+<path d="M870 370H978" class="a"/>
+<rect x="978" y="250" width="390" height="240" rx="18" class="ok"/>
+<text x="1020" y="304" class="g" font-size="21">DIRECT OPL HAND-OFF</text>
+<text x="1020" y="358" class="t" font-size="31" font-weight="700">OPL UL mode</text>
+<text x="1020" y="402" class="m" font-size="19">Game title + startup ID</text>
+<text x="1020" y="438" class="m" font-size="19">Media type + split count</text>
+<text x="1020" y="474" class="m" font-size="19">OPL reads the parts</text>
+<rect x="72" y="572" width="610" height="210" rx="18" class="ok"/>
+<text x="116" y="630" class="g" font-size="22">ALL PARTS PRESENT</text>
+<text x="116" y="684" class="t" font-size="30" font-weight="700">Game can be listed</text>
+<text x="116" y="730" class="m" font-size="20">The selected record receives ENGINE_OPL_UL.</text>
+<rect x="758" y="572" width="610" height="210" rx="18" class="card"/>
+<text x="802" y="630" fill="#ffbd69" font-size="22" font-family="monospace">MISSING / INVALID PART</text>
+<text x="802" y="684" class="t" font-size="30" font-weight="700">Game is skipped</text>
+<text x="802" y="730" class="m" font-size="20">TEa.G3 does not offer a broken split set.</text>
+<text x="72" y="846" class="m" font-size="18">The browser preview is a technical diagram; it does not mount a USB drive or launch OPL.</text>
+</svg>
