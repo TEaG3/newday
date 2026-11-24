@@ -6,6 +6,7 @@ on:
       - "site/**"
       - "tools/check_site.py"
       - "tests/site-opl-demo.test.cjs"
+      - ".github/workflows/pages.yml"
   pull_request:
     paths:
       - "site/**"
