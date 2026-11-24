@@ -5,10 +5,10 @@
     .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function (releases) {
       var rel = (releases || []).find(function (item) {
-        return /^arabic-/i.test(item.tag_name || "") && (item.assets || []).some(function (asset) { return /\.zip$/i.test(asset.name || ""); });
+        return !item.draft && !item.prerelease && (item.assets || []).some(function (asset) { return /\.zip$/i.test(asset.name || ""); });
       });
       if (!rel) return Promise.reject("No TEa.G3 PS2 release found");
-      var v = String(rel.tag_name || "").replace(/^arabic-/i, "").replace(/^v/i, ""), assets = rel.assets || [], zip = null;
+      var v = String(rel.tag_name || "").replace(/^(arabic-)?v?/i, ""), assets = rel.assets || [], zip = null;
       for (var i = 0; i < assets.length; i++) if (/^TEa\.G3-PS2\.zip$/i.test(assets[i].name)) zip = assets[i];
       if (!zip) for (var j = 0; j < assets.length; j++) if (/\.zip$/i.test(assets[j].name)) zip = assets[j];
       document.querySelectorAll("[data-version]").forEach(function (el) { if (v) el.textContent = el.getAttribute("data-version").replace("{v}", v); });
