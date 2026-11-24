@@ -106,18 +106,12 @@ static const u8 glyph[][8] = {
     {0}, // space
 };
 enum { M_REBOOT, M_OFF, M_CANCEL, M_ITEMS };
-static const u8 labels[3][M_ITEMS][10] = { // eec.IgrLang: the launcher's [ui] idioma (phase 18): es, en, pt
-    {{G_R, G_E, G_I, G_N, G_I, G_C, G_I, G_A, G_R, G_END}, // REINICIAR
-     {G_A, G_P, G_A, G_G, G_A, G_R, G_END},                // APAGAR
-     {G_C, G_A, G_N, G_C, G_E, G_L, G_A, G_R, G_END}},     // CANCELAR
-    {{G_R, G_E, G_S, G_T, G_A, G_R, G_T, G_END},           // RESTART
-     {G_P, G_O, G_W, G_E, G_R, G_SP, G_O, G_F, G_F, G_END}, // POWER OFF
-     {G_C, G_A, G_N, G_C, G_E, G_L, G_END}},               // CANCEL
-    {{G_R, G_E, G_I, G_N, G_I, G_C, G_I, G_A, G_R, G_END}, // REINICIAR
-     {G_D, G_E, G_S, G_L, G_I, G_G, G_A, G_R, G_END},      // DESLIGAR
-     {G_C, G_A, G_N, G_C, G_E, G_L, G_A, G_R, G_END}},     // CANCELAR
+static const u8 labels[1][M_ITEMS][10] = { // English labels; Arabic is drawn from generated RTL bitmaps
+    {{G_R, G_E, G_S, G_T, G_A, G_R, G_T, G_END},             // RESTART
+     {G_P, G_O, G_W, G_E, G_R, G_SP, G_O, G_F, G_F, G_END},  // POWER OFF
+     {G_C, G_A, G_N, G_C, G_E, G_L, G_END}},                // CANCEL
 };
-#define label labels[eec.IgrLang < 3 ? eec.IgrLang : 0]
+#define label labels[0]
 
 // NULD colours (R, G, B): panel, border (the acid accent), item, selected item
 static const u8 rgb[4][3] = {{12, 14, 18}, {200, 255, 46}, {138, 145, 156}, {230, 232, 236}};
@@ -203,7 +197,7 @@ static int notice_colour(u32 x, u32 y)
         u32 ty = y - ROW_Y(i);
         if (x >= 10 && ascii_pixel(note_text[i], x - 10, ty))
             return i ? C_SEL : C_BORDER;
-        if (eec.IgrLang == 3 && i == 0 && ty < IGR_AR_HEIGHT) {
+        if (eec.IgrLang == 1 && i == 0 && ty < IGR_AR_HEIGHT) {
             u32 left = box_w - 10 - IGR_AR_NOTICE_WIDTH;
             if (x >= left && x - left < IGR_AR_NOTICE_WIDTH &&
                 (igr_ar_notice_pixels[ty][(x - left) >> 3] & (0x80 >> ((x - left) & 7))))
@@ -226,7 +220,7 @@ static int menu_colour(u32 x, u32 y)
         static const u8 mark[2] = {G_MARK, G_END};
         if (i == sel && x >= MARK_X && text_pixel(mark, x - MARK_X, ty))
             return C_SEL;
-        if (eec.IgrLang == 3) {
+        if (eec.IgrLang == 1) {
             u32 width = igr_ar_label_width[i];
             u32 left = box_w - 12 - width; // Arabic labels are pre-shaped and stored in visual LTR pixel order
             if (x >= left && x - left < width &&
@@ -324,7 +318,7 @@ static void box_close(void)
 // The game is paused by the caller. Returns MENU_CANCEL, MENU_REBOOT or MENU_OFF
 int Menu_Run(void)
 {
-    box_w = eec.IgrLang == 3 ? BOX_W_AR : BOX_W, box_h = BOX_H;
+    box_w = eec.IgrLang == 1 ? BOX_W_AR : BOX_W, box_h = BOX_H;
     if (!box_open(0))
         return MENU_CANCEL;
 
@@ -373,9 +367,8 @@ void Notice_Run(u32 id, u32 points)
     do
         *--q = '0' + points % 10;
     while ((points /= 10) && q > num);
-    u32 n = eec.IgrLang == 3 ? put(note_text[0], 0, q) :
-            put(note_text[0], 0, eec.IgrLang == 1 ? "ACHIEVEMENT UNLOCKED  " :
-                eec.IgrLang == 2 ? "CONQUISTA DESBLOQUEADA  " : "LOGRO DESBLOQUEADO  ");
+    u32 n = eec.IgrLang == 1 ? put(note_text[0], 0, q) :
+            put(note_text[0], 0, "ACHIEVEMENT UNLOCKED  ");
     n = put(note_text[0], n, " PTS");
     u32 m = 0;
     note_text[1][0] = 0;
@@ -383,7 +376,7 @@ void Notice_Run(u32 id, u32 points)
         if (*(u32 *)(eec.RaTitles + i * EEC_RA_TITLE) == id)
             m = put(note_text[1], 0, (const char *)eec.RaTitles + i * EEC_RA_TITLE + 4);
     box_w = (20 + 12 * (n > m ? n : m) + 7) & ~7; // whole qwords per two lines at 2, 3 and 4 bytes a pixel
-    if (eec.IgrLang == 3 && box_w < IGR_AR_NOTICE_WIDTH + 24)
+    if (eec.IgrLang == 1 && box_w < IGR_AR_NOTICE_WIDTH + 24)
         box_w = (IGR_AR_NOTICE_WIDTH + 31) & ~7;
     box_h = m ? 40 : 22;                         // two rows, or the first only
     notice = 1;
