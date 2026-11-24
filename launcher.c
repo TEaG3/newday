@@ -738,6 +738,14 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 static ini cfg;               // tentative: defined with the config below
 static const char *src_why;
 
+static int ipv4_text(const char *s)
+{
+	unsigned a, b, c, d;
+	char tail;
+	return s && sscanf(s, "%u.%u.%u.%u%c", &a, &b, &c, &d, &tail) == 4 &&
+	       a <= 255 && b <= 255 && c <= 255 && d <= 255;
+}
+
 static int engine_for(const entry *e) // global engine preference + actual source adapter
 {
 	if (e->kind != K_PS2) return ENGINE_NEUTRINO;
@@ -761,9 +769,17 @@ static int engine_for(const entry *e) // global engine preference + actual sourc
 	   or the configured SMB share exceeds OPL's fixed field size. */
 	if ((selected == ENGINE_OPL_BDM || selected == ENGINE_OPL_ETH) && !exists(OPL_PATH))
 		return ENGINE_NEUTRINO;
-	if (selected == ENGINE_OPL_ETH &&
-	    strlen(ini_get(&cfg, "smb", "share", "")) >= 32)
-		return ENGINE_NEUTRINO;
+	if (selected == ENGINE_OPL_ETH) {
+		const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
+		const char *server = ini_get(&cfg, "smb", "server", "");
+		const char *share = ini_get(&cfg, "smb", "share", "");
+		const char *user = ini_get(&cfg, "smb", "user", "guest");
+		const char *password = ini_get(&cfg, "smb", "password", "");
+		/* OPL's ETH auto-launch currently requires IPv4 literals, not DHCP or DNS names. */
+		if (!ipv4_text(ip) || !ipv4_text(server) || !*share ||
+		    strlen(share) >= 32 || strlen(user) >= 32 || strlen(password) >= 32)
+			return ENGINE_NEUTRINO;
+	}
 	return selected;
 }
 static int catalog_load(int s, int n)
