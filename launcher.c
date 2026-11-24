@@ -828,6 +828,7 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 	snprintf(e->path, sizeof(e->path), "%s", part);
 	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
 	serial_dash(startup, e->serial);
+	snprintf(e->boot, sizeof(e->boot), "%s", startup);
 	e->kind = K_PS2, e->src = c->s, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb;
 	done_n++, total_n++; // as the catalog: not counted beforehand
 }
@@ -2808,10 +2809,10 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[4] = size_kb;
 		opl_argv[5] = "mini";
 		opl_argv[6] = NULL;
-		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s (existing OPL config only)\\n", cv[i].boot, sector, size_kb);
+		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s (existing OPL config only)\n", cv[i].boot, sector, size_kb);
 		gfx_shutdown();
 		run_loader(6, opl_argv);
-		printf("OPL HD Loader launch returned\\n");
+		printf("OPL HD Loader launch returned\n");
 		return;
 	}
 	if (engine == ENGINE_OPL_ETH) {
