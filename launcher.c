@@ -2361,8 +2361,8 @@ static void ach_panel(int i, int row)
 	panel(x, y, w, h, UI_TROPHY_18, a);
 	gfx_text(&gfx_font_mono, x + w - 24 - gfx_text_width(&gfx_font_mono, b), y + 24, b, ACID);
 	if (!ready) {
-		const char *m = ra_list_for == i && ra_list_st < 0 ? L("No se pudo leer la lista: la página del cliente en nuld debe estar abierta a la red",
-		                  "Could not read the list: the client's page on nuld must be open to the network") : L("Cargando logros...", "Loading achievements...");
+		const char *m = ra_list_for == i && ra_list_st < 0 ? L("No se pudo leer la lista: el cliente xeRAbora debe estar disponible en la red local",
+		                  "Could not read the list: the xeRAbora client must be reachable on the local network") : L("Cargando logros...", "Loading achievements...");
 		gfx_text(&gfx_font_ui, x + (w - gfx_text_width(&gfx_font_ui, m)) / 2, y + h / 2 - 10, m, TEXT2);
 		return;
 	}
