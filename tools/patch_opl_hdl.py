@@ -250,6 +250,19 @@ opl = once(
     "safe HDL mini-launch arguments",
 )
 
+opl = once(
+    opl,
+    '''        if (!strcmp(argv[4], "mini"))
+            autoLaunchHDDGame(argv);
+        /* argv[0] boot path''',
+    '''        if (!strcmp(argv[4], "mini")) {
+            autoLaunchHDDGame(argv);
+            return 0;
+        }
+        /* argv[0] boot path''',
+    "exit after TEa.G3 HDL mini-launch",
+)
+
 opl_path.write_text(opl, encoding="utf-8")
 hdd_path.write_text(hdd, encoding="utf-8")
 header_path.write_text(header, encoding="utf-8")
