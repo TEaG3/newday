@@ -200,6 +200,8 @@ jobs:
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py"
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[13]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py"
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
+          grep -Fq 'if (!strcmp(argv[4], "ul") && argv[6] && argv[6][0])' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
+          grep -Fq 'else if (!strcmp(argv[4], "bdm") && argv[7] && argv[7][0])' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
           grep -Fq 'return 0;' src/opl.c
           python3 - <<'PY'
           from pathlib import Path
