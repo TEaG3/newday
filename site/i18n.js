@@ -1040,7 +1040,11 @@
   });
 
   const originalTitle = document.title;
-  let lang = localStorage.getItem("nuld-site-lang") || "ar";
+  const languageKey = "tea-g3-site-lang", legacyLanguageKey = "nuld-site-lang";
+  const savedLanguage = localStorage.getItem(languageKey), legacyLanguage = localStorage.getItem(legacyLanguageKey);
+  let lang = savedLanguage || legacyLanguage || "ar";
+  if (!savedLanguage && legacyLanguage) localStorage.setItem(languageKey, lang);
+  if (legacyLanguage !== null) localStorage.removeItem(legacyLanguageKey);
 
   function translateText(root, ar) {
     const nodes = [];
@@ -1106,7 +1110,7 @@
       const b = document.createElement("button");
       b.type = "button"; b.className = "lang-switch"; b.dataset.teag3Lang = "1";
       b.setAttribute("aria-label", "Switch language");
-      b.addEventListener("click", () => { lang = lang === "ar" ? "en" : "ar"; localStorage.setItem("nuld-site-lang", lang); apply(); });
+      b.addEventListener("click", () => { lang = lang === "ar" ? "en" : "ar"; localStorage.setItem(languageKey, lang); apply(); });
       nav.append(b);
     }
     apply();
