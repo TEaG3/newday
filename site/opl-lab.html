@@ -52,6 +52,12 @@
         <label>Engine preference
           <select name="preference"><option value="auto" selected>auto</option><option value="neutrino">neutrino</option><option value="opl">opl</option></select>
         </label>
+        <label>Embedded OPL runtime
+          <select name="oplRuntime"><option value="ready" selected>Available</option><option value="missing">Missing / not verified</option></select>
+        </label>
+        <label data-smb-config hidden>SMB network configuration
+          <select name="network"><option value="ready" selected>Valid</option><option value="missing">Incomplete</option></select>
+        </label>
         <div class="opl-form-actions">
           <button class="btn solid" type="submit">Check route</button>
           <button class="btn" type="button" data-opl-reset>Reset</button>
