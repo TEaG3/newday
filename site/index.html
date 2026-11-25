@@ -59,7 +59,7 @@
         <span data-views aria-label="View"></span>
         <span class="gap"></span>
         <button type="button" data-splash>Loading screen</button>
-        <button type="button" data-launch>Preview launch screen</button>
+        <button type="button" data-launch>Launch game</button>
       </div>
       <figcaption class="caption">
         <span>TEa.G3 home screen in its twelve themes, drawn in your browser. Click its sides to change game.</span>
@@ -68,34 +68,10 @@
     </figure>
   </header>
 
-  <section id="features" class="wrap">
-    <h2>What runs on the console</h2>
-    <p class="lead">TEa.G3 is a single-file PS2 launcher with embedded OPL and Neutrino runtimes. Its OPL hand-off is deliberately limited to the routes shown in the <a href="opl-lab.html">OPL Integration Lab</a>; other source adapters are not advertised as OPL-compatible until implemented and tested.</p>
-    <p class="lead">Every row happens on the PS2 itself. The numbers were measured on a slim PS2 (SCPH-75001).</p>
-    <div class="scroll">
-      <table class="rules">
-        <tbody>
-          <tr><td class="n">01</td><td class="name">Covers by the console</td><td class="text">Missing covers download over HTTPS from xlenore/ps2-covers, are decoded and dithered on the Emotion Engine, and saved to the USB. Later boots work offline.</td></tr>
-          <tr><td class="n">02</td><td class="name">Three views at 60 fps</td><td class="text">Carousel, grid or list, filtered by PS2, PS1 or apps. A median frame takes under 5 ms of its 16.7 ms budget.</td></tr>
-          <tr><td class="n">03</td><td class="name">3D save icons</td><td class="text">The newest save of each game is read from its memory card, and the game's own 3D icon turns beside the title.</td></tr>
-          <tr><td class="n">04</td><td class="name">Virtual memory cards</td><td class="text">One card per game or one shared, created on first play on the game's own device. Or the physical card, chosen per game.</td></tr>
-          <tr><td class="n">05</td><td class="name">In-game menu</td><td class="text">L1+L2+R1+R2+START+SELECT pauses any game and offers restart or power off. Restart lands back in TEa.G3.</td></tr>
-          <tr><td class="n">06</td><td class="name">Achievements on hardware</td><td class="text">Each game is identified with the rcheevos hash. While you play, an agent inside the game sends its memory to the xeRAbora client, which unlocks them on your profile.</td></tr>
-          <tr><td class="n">07</td><td class="name">Games from a home server</td><td class="text">ISOs on a Linux box list instantly and load over the cable, with the same covers, cards and achievements as the USB.</td></tr>
-          <tr><td class="n">08</td><td class="name">Every source Neutrino reads</td><td class="text">USB, internal HDD (exFAT or HD Loader), MX4SIO, i.Link, MMCE, UDPBD and udpfs, mixed in one list. Discs, PS1 games through POPStarter, and homebrew from APPS/ too.</td></tr>
-          <tr><td class="n">09</td><td class="name">Per-game options</td><td class="text">Force 480p or 1080i, Neutrino's compatibility modes, which memory card. Remembered per game.</td></tr>
-          <tr><td class="n">10</td><td class="name">Setup and updates on the PS2</td><td class="text">A wizard writes config.ini and FreeMcBoot's autoboot. With the cable in, TEa.G3 installs a new release only after every file matches a signed manifest.</td></tr>
-          <tr><td class="n">11</td><td class="name">Spanish, English or Portuguese</td><td class="text">One setting changes the menus, the in-game menu and the comments in the config file.</td></tr>
-          <tr><td class="n">12</td><td class="name">Twelve themes, and yours</td><td class="text">Each theme has its own colours, animated background, loading screen and launch screen. A folder with eleven colours and a picture is a new one: the <a href="themes.html">theme maker</a> builds it in the browser.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
   <section id="opl-engine" class="wrap opl-home">
     <div class="opl-section-head">
       <div><span class="opl-kicker mono">OPL / EMBEDDED ENGINE</span><h2>OPL is built into the single TEa.G3.ELF.</h2></div>
-      <p>TEa.G3 embeds OPL and Neutrino, then chooses the correct engine for the game's format, storage source and motor preference. The browser-only route preview below mirrors the current engine-selection code; it does not execute a PS2 game or emulate the console.</p>
+      <p>Choose a game format, source and engine to preview the launch route.</p>
     </div>
     <div class="opl-widget" data-opl-widget>
       <form class="opl-controls opl-home-controls" data-opl-form>
@@ -119,10 +95,6 @@
         <ol class="opl-route-steps"><li><span class="step-number">01</span><span>Auto keeps ordinary ISO/ZSO games on Neutrino.</span></li></ol>
         <p class="opl-sim-note">Browser simulation only; no PS2 game or ELF is executed.</p>
       </div>
-    </div>
-    <div class="opl-home-visual">
-      <img src="img/opl-runtime-flow.svg" alt="TEa.G3 embeds OPL and Neutrino in one ELF and routes games according to format, source and engine preference" width="1440" height="900" loading="lazy">
-      <div><strong>One launcher. Two embedded engines.</strong><p>USBExtreme UL selects OPL automatically. USB ISO/ZSO can use OPL when <code>motor = opl</code>. The regular ISO/ZSO auto route remains Neutrino.</p><a href="opl-lab.html">Open the full OPL Integration Lab and image gallery</a></div>
     </div>
   </section>
 
@@ -161,16 +133,6 @@
     </div>
   </section>
 
-  <section id="start" class="wrap">
-    <h2>Three steps</h2>
-    <p class="lead">You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. The <a href="manual.html">manual</a> has the rest.</p>
-    <ol class="steps">
-      <li>Copy the zip's contents to the root of a FAT32 or exFAT drive. Put PS2 ISOs in <code>DVD/</code>.</li>
-      <li>Start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF, or let the setup wizard make it FreeMcBoot's autoboot.</li>
-      <li>Pick a game and press ✕. The first boot writes <code>tea_g3/config.ini</code>, every setting commented.</li>
-    </ol>
-    <p class="dim" style="margin-top: 32px">Videos: the <a href="https://youtu.be/w4V8aKWTCJw">trailer</a> and the <a href="https://youtu.be/eqTNBGMIEXo">setup guide on a real PS2</a>, both recorded when the project was still ORBIT, before the TEa.G3 name.</p>
-  </section>
 </main>
 
 <footer class="wrap site">
