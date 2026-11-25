@@ -670,12 +670,12 @@
 
   delete dict.to;
   Object.assign(dict, {
-    "USB root ├── launcher.elf ├── neutrino/ the TEa.G3 launcher with its in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── nuld/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
+    "USB root ├── launcher.elf ├── neutrino/ the TEa.G3 launcher with its in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
   });
 
   Object.assign(dict, {
   "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0). Called ORBIT until v1.1.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0. كان اسم المشروع ORBIT حتى الإصدار v1.1.",
-  "mass0:/tea_g3/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)": "mass0:/nuld/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
+  "mass0:/tea_g3/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)": "mass0:/tea_g3/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
   "nombre = Ocaso ; the name in the setup panel base = nuld ; legacy key, displayed as Classic [colores] ; RRGGBB; what you leave out keeps the base's fondo = 0E0714 panel = 1A0F22 fila = 3A2140 borde = 6A4A66 tenue = 5A4458 texto = FFF4E8 texto2 = E8D2C4 etiqueta = C9A9A0 acento = FF8A3C acero = 2A1830 inverso = 0E0714": "nombre = Ocaso       ; اسم السمة في لوحة الإعداد\\nbase = nuld          ; المفتاح القديم ويظهر باسم Classic\\n\\n[colores]            ; قيم الألوان بصيغة RRGGBB\\n                     ; أي لون لا تحدده يحتفظ بلون السمة الأساسية\\nfondo = 0E0714\\npanel = 1A0F22\\nfila = 3A2140\\nborde = 6A4A66\\ntenue = 5A4458\\ntexto = FFF4E8\\ntexto2 = E8D2C4\\netiqueta = C9A9A0\\nacento = FF8A3C\\nacero = 2A1830\\ninverso = 0E0714",
   ", and keeps using": "، ويواصل استخدام",
   "from this zip's": "الموجود في هذه الحزمة داخل",
@@ -1030,7 +1030,7 @@
   Object.assign(dict, {
     "Classic":"الكلاسيكية",
     "TEa.G3 theme maker":"مصمم سمات TEa.G3",
-    "torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes":"أسماء السمات المدمجة أو مجلد سمة داخل tea_g3/themes",
+    "torres, nuld (legacy key shown as Classic), cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes":"أسماء السمات المدمجة أو مجلد سمة داخل tea_g3/themes",
     "mass0:/tea_g3/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)":"mass0:/tea_g3/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
     "Make a theme for TEa.G3, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.":"أنشئ سمة لمشغّل TEa.G3 في المتصفح: اختر الألوان وأضف صورة خلفية، ثم عاينها على الشاشة الرئيسية ونزّل المجلد إلى وحدة USB."
   });
