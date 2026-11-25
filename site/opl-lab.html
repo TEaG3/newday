@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEa.G3 OPL Integration Lab</title>
-<meta name="description" content="Explore how TEa.G3 embeds OPL and Neutrino in one ELF, compare USB/BDM, SMB and APA/HD Loader launch adapters, and try a browser-only routing simulation.">
+<meta name="description" content="Explore how TEa.G3 embeds OPL as its only PS2 game engine, compare USB/BDM, SMB/ETH and APA/HD Loader adapters, and try a browser-only routing simulation.">
 <meta property="og:title" content="TEa.G3 — OPL Integration Lab">
 <meta property="og:description" content="An interactive, source-aligned explanation of the OPL runtime embedded in TEa.G3.">
 <meta name="theme-color" content="#06070A">
@@ -52,10 +52,10 @@
           <select name="format"><option value="iso" selected>ISO</option><option value="zso">ZSO</option><option value="ul">USBExtreme UL</option></select>
         </label>
         <label>Storage source
-          <select name="source"><option value="usb" selected>USB</option><option value="bdm">MX4SIO / iLink / FAT-exFAT HDD</option><option value="smb">SMB share</option><option value="hdl">APA / HD Loader HDD</option><option value="other">MMCE / UDPBD / UDPFS</option></select>
+          <select name="source"><option value="usb" selected>USB</option><option value="bdm">MX4SIO / iLink / FAT-exFAT HDD</option><option value="smb">SMB share</option><option value="hdl">APA / HD Loader HDD</option><option value="other">MMCE / UDPBD / UDPFS (disabled)</option></select>
         </label>
         <label>Engine preference
-          <select name="preference"><option value="auto">auto</option><option value="opl" selected>opl</option><option value="neutrino">neutrino</option></select>
+          <select name="preference"><option value="auto">auto (OPL only)</option><option value="opl" selected>opl</option></select>
         </label>
         <label>Embedded OPL runtime
           <select name="oplRuntime"><option value="ready" selected>Available</option><option value="missing">Missing / not verified</option></select>
