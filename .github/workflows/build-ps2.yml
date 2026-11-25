@@ -45,6 +45,7 @@ jobs:
           /tmp/catalog_stage_test
           cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST engine.c -o /tmp/engine_selftest
           /tmp/engine_selftest
+          node tests/site-opl-demo.test.cjs
 
   launcher:
     name: Embed OPL and Neutrino into the single launcher ELF

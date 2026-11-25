@@ -44,7 +44,17 @@ for (const format of formats) {
       let expected;
       if (format === "ul") {
         expected = source === "usb" ? "opl-ul" : "unsupported";
-      } else if (preference !== "opl") {
+      } else if (format === "zso" && source === "hdl") {
+        expected = "zso-hdl-unsupported";
+      } else if (format === "zso" && preference === "neutrino") {
+        expected = "zso-requires-opl";
+      } else if (format === "zso" && (source === "usb" || source === "bdm")) {
+        expected = "opl-bdm";
+      } else if (format === "zso" && source === "smb") {
+        expected = "opl-eth";
+      } else if (format === "zso") {
+        expected = "zso-requires-opl";
+      } else if (preference === "neutrino") {
         expected = "neutrino";
       } else if (source === "usb" || source === "bdm") {
         expected = "opl-bdm";
@@ -58,16 +68,35 @@ for (const format of formats) {
       const input = { format, source, preference };
       const actual = resolveRoute(input);
       assert.equal(actual.id, expected, JSON.stringify(input));
-      assert.equal(actual.ok, expected !== "unsupported", JSON.stringify(input));
+      const blocked = expected === "unsupported" || expected.startsWith("zso-");
+      assert.equal(actual.ok, !blocked, JSON.stringify(input));
       tested += 1;
     }
   }
 }
-
 assert.equal(resolveRoute({ format: "vcd", source: "usb", preference: "auto" }).ok, false);
 assert.equal(resolveRoute({ format: "iso", source: "ata", preference: "opl" }).ok, false);
-assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "opl", network: "missing" }).id, "neutrino-smb-fallback");
+assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "auto", network: "missing" }).id, "neutrino-smb-fallback");
+assert.equal(resolveRoute({ format: "zso", source: "smb", preference: "auto", network: "missing" }).id, "zso-smb-config-invalid");
+assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "auto", oplRuntime: "missing" }).id, "zso-opl-missing");
+assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "neutrino" }).id, "zso-requires-opl");
+assert.equal(resolveRoute({ format: "zso", source: "hdl", preference: "opl" }).id, "zso-hdl-unsupported");
+assert.equal(resolveRoute({ format: "zso", source: "other", preference: "auto" }).id, "zso-requires-opl");
 assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "neutrino-opl-missing");
 assert.equal(resolveRoute({ format: "ul", source: "usb", preference: "auto", oplRuntime: "missing" }).ok, false);
 assert.equal(resolveRoute({ format: "iso", source: "other", preference: "opl" }).fallback, true);
-console.log("site OPL route matrix ok: " + tested + " format/source/preference combinations + 6 invalid, runtime and fallback checks");
+const readme = fs.readFileSync(path.join(__dirname, "../README.md"), "utf8");
+assert.match(readme, /ZSO is routed only through ready OPL BDM\/ETH adapters/);
+const engineDocs = fs.readFileSync(path.join(__dirname, "../docs/opl-engine-integration.md"), "utf8");
+assert.match(engineDocs, /ZSO is OPL-only in this build/);
+assert.doesNotMatch(engineDocs, /keep ordinary ISO\/ZSO on Neutrino/);
+const manual = fs.readFileSync(path.join(__dirname, "../site/manual.html"), "utf8");
+assert.match(manual, /ZSO is OPL-only/);
+assert.doesNotMatch(manual, /auto uses Neutrino for ordinary ISO\/ZSO/);
+for (const page of ["index.html", "opl-lab.html"]) {
+  const html = fs.readFileSync(path.join(__dirname, "../site", page), "utf8");
+  assert.match(html, /Embedded OPL · BDM direct boot/);
+  assert.doesNotMatch(html, /Auto keeps ordinary ISO\/ZSO games on Neutrino/);
+}
+assert.doesNotMatch(i18nSource, /The regular ISO\/ZSO auto route remains Neutrino/);
+console.log("site OPL route matrix ok: " + tested + " format/source/preference combinations + ZSO fail-closed, ISO fallback and documentation checks");

@@ -25,19 +25,39 @@
       return oplReady ? { id: "opl-ul", engine: "OPL", ok: true, reason: "ul-usb" } :
         { id: "unsupported", engine: "none", ok: false, reason: "opl-runtime-missing" };
     }
-    if (preference !== "opl") return { id: "neutrino", engine: "Neutrino", ok: true, reason: "default-neutrino" };
-    if (source === "usb" || source === "bdm")
-      return oplReady ? { id: "opl-bdm", engine: "OPL", ok: true, reason: "manual-opl-bdm" } :
+    if (format === "zso" && source === "hdl")
+      return { id: "zso-hdl-unsupported", engine: "none", ok: false, reason: "unsupported-format-source" };
+    if (format === "zso" && preference === "neutrino")
+      return { id: "zso-requires-opl", engine: "none", ok: false, reason: "zso-requires-opl" };
+    if (preference === "neutrino")
+      return { id: "neutrino", engine: "Neutrino", ok: true, reason: "preference-neutrino" };
+
+    if (source === "usb" || source === "bdm") {
+      if (!oplReady) return format === "zso" ?
+        { id: "zso-opl-missing", engine: "none", ok: false, reason: "opl-runtime-missing" } :
         { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
-    if (source === "smb" && !networkReady)
-      return { id: "neutrino-smb-fallback", engine: "Neutrino", ok: true, fallback: true, reason: "opl-network-config-invalid" };
-    if (source === "smb")
-      return oplReady ? { id: "opl-eth", engine: "OPL", ok: true, reason: "manual-opl-eth" } :
+      return { id: "opl-bdm", engine: "OPL", ok: true, reason: preference === "opl" ? "manual-opl-bdm" : "auto-opl-bdm" };
+    }
+    if (source === "smb") {
+      if (!networkReady) return format === "zso" ?
+        { id: "zso-smb-config-invalid", engine: "none", ok: false, reason: "opl-network-config-invalid" } :
+        { id: "neutrino-smb-fallback", engine: "Neutrino", ok: true, fallback: true, reason: "opl-network-config-invalid" };
+      if (!oplReady) return format === "zso" ?
+        { id: "zso-opl-missing", engine: "none", ok: false, reason: "opl-runtime-missing" } :
         { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
-    if (source === "hdl")
-      return oplReady ? { id: "opl-hdd", engine: "OPL", ok: true, reason: "manual-opl-hdd" } :
-        { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
-    return { id: "neutrino", engine: "Neutrino", ok: true, fallback: true, reason: "opl-source-unavailable" };
+      return { id: "opl-eth", engine: "OPL", ok: true, reason: preference === "opl" ? "manual-opl-eth" : "auto-opl-eth" };
+    }
+    if (source === "hdl") {
+      if (!oplReady) return { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
+      return { id: "opl-hdd", engine: "OPL", ok: true, reason: preference === "opl" ? "manual-opl-hdd" : "auto-opl-hdd" };
+    }
+    if (format === "zso")
+      return { id: "zso-requires-opl", engine: "none", ok: false, reason: "zso-requires-opl" };
+    return {
+      id: "neutrino", engine: "Neutrino", ok: true,
+      fallback: preference === "opl",
+      reason: preference === "opl" ? "opl-source-unavailable" : "auto-neutrino-baseline"
+    };
   }
 
   const COPY = {
@@ -51,7 +71,11 @@
         neutrino: "Neutrino · existing launch path",
         "neutrino-smb-fallback": "Neutrino · SMB configuration fallback",
         "neutrino-opl-missing": "Neutrino · OPL runtime unavailable",
-        unsupported: "No launch route for this selection"
+        unsupported: "No launch route for this selection",
+        "zso-requires-opl": "ZSO requires an available OPL BDM/ETH decoder",
+        "zso-opl-missing": "ZSO blocked · OPL runtime unavailable",
+        "zso-smb-config-invalid": "ZSO blocked · SMB/ETH configuration invalid",
+        "zso-hdl-unsupported": "ZSO unsupported · APA / HD Loader"
       },
       sources: {
         usb: "USB", bdm: "MX4SIO / iLink / FAT-HDD", smb: "SMB share",
@@ -68,12 +92,12 @@
           "TEa.G3 selects the game from USB, MX4SIO, iLink or an ATA-backed FAT/exFAT HDD.",
           "The manual [juegos] motor = opl preference selects OPL's BDM direct-boot adapter.",
           "The hand-off identifies the requested BDM driver and device unit; OPL does not substitute another device.",
-          "Auto and neutrino keep ordinary ISO/ZSO games on Neutrino."
+          "Auto and manual OPL use this adapter for supported ISO/ZSO; explicit Neutrino keeps ISO on Neutrino and rejects ZSO."
         ],
         "opl-eth": [
           "TEa.G3 selects the ISO/ZSO entry from the configured SMB share.",
           "The OPL ETH hand-off passes the PS2 IPv4 settings, server IPv4, share and credentials.",
-          "The adapter validates IPv4 values and OPL field lengths before starting; invalid settings fall back to Neutrino.",
+          "The adapter validates IPv4 values and OPL field lengths. Invalid settings let ISO fall back to Neutrino, but block ZSO instead of sending it to Neutrino.",
           "SMB gameplay and sustained reads still require physical-console verification."
         ],
         "opl-hdd": [
@@ -84,17 +108,21 @@
         ],
         "neutrino-smb-fallback": [
           "The SMB network configuration is incomplete, so the C engine controller does not select OPL ETH.",
-          "The existing Neutrino route remains the fallback; fix the PS2 IPv4, server, share and credentials before retrying OPL."
+          "This fallback is for ISO only; ZSO is blocked because the SMB/ETH route cannot use its required OPL decoder. Fix the PS2 IPv4, server, share and credentials before retrying OPL."
         ],
         "neutrino-opl-missing": [
           "The embedded OPL.ELF is missing or has not passed runtime installation checks.",
-          "TEa.G3 retains the Neutrino route for ISO/ZSO instead of attempting an OPL hand-off."
+          "ISO can use the Neutrino fallback; ZSO is blocked because this build has no verified Neutrino ZSO decoder."
         ],
         neutrino: [
-          "TEa.G3 keeps the selected ISO/ZSO on its existing Neutrino path.",
-          "Auto and neutrino always select Neutrino for ISO/ZSO; unsupported OPL source combinations also retain Neutrino.",
-          "The source-specific Neutrino hand-off remains available as the compatibility path."
+          "TEa.G3 keeps supported ISO images on Neutrino when that engine is selected or the source has no OPL adapter.",
+          "ZSO is never sent to Neutrino; it requires a ready OPL BDM/ETH adapter and valid SMB configuration where applicable.",
+          "If that OPL route is unavailable, the launch is blocked instead of silently falling back."
         ],
+        "zso-requires-opl": ["ZSO cannot be sent to Neutrino in this build. It requires a ready OPL BDM/ETH route; otherwise the launch is blocked."],
+        "zso-opl-missing": ["The embedded OPL runtime is missing or failed integrity checks. ISO can use a Neutrino fallback, but ZSO is blocked."],
+        "zso-smb-config-invalid": ["SMB/ETH network settings are incomplete or invalid. ISO can use Neutrino, but ZSO is blocked because it requires the OPL ETH decoder."],
+        "zso-hdl-unsupported": ["ZSO cannot use the APA/HDL mini-launch path. Use a supported ISO for this HDD route."],
         unsupported: ["Choose a supported format, source and engine preference."]
       },
       hardware: "Browser simulation only · no PS2 ELF, emulator or game is executed here.",
@@ -112,7 +140,11 @@
         neutrino: "Neutrino · مسار التشغيل الحالي",
         "neutrino-smb-fallback": "Neutrino · رجوع آمن بسبب إعداد SMB",
         "neutrino-opl-missing": "Neutrino · محرك OPL غير جاهز",
-        unsupported: "لا يوجد مسار تشغيل لهذا الاختيار"
+        unsupported: "لا يوجد مسار تشغيل لهذا الاختيار",
+        "zso-requires-opl": "ZSO يتطلب مسار OPL BDM/ETH جاهزاً",
+        "zso-opl-missing": "تم حظر ZSO · محرك OPL غير جاهز",
+        "zso-smb-config-invalid": "تم حظر ZSO · إعداد SMB/ETH غير صالح",
+        "zso-hdl-unsupported": "ZSO غير مدعوم · مسار APA / HD Loader"
       },
       sources: {
         usb: "USB", bdm: "MX4SIO / iLink / HDD FAT",
@@ -129,12 +161,12 @@
           "يحدد TEa.G3 اللعبة من USB أو MX4SIO أو iLink أو قرص HDD بنظام FAT/exFAT.",
           "اختيار [juegos] motor = opl يحدد محوّل الإقلاع المباشر BDM في OPL.",
           "يمرّر نوع محرك BDM ورقم الجهاز المطلوب، ولا يستبدل OPL الجهاز بآخر.",
-          "يبقي الوضعان auto وneutrino ألعاب ISO/ZSO على Neutrino."
+          "يستخدم auto وopl هذا المحوّل لصيغ ISO/ZSO المدعومة؛ أما اختيار neutrino فيُبقي ISO على Neutrino ويرفض ZSO."
         ],
         "opl-eth": [
           "يحدد TEa.G3 لعبة ISO/ZSO من مشاركة SMB المهيأة.",
           "يمرّر إلى OPL إعدادات IPv4 الخاصة بـ PS2 وعنوان الخادم والمشاركة وبيانات الدخول.",
-          "يتحقق المحوّل من عناوين IPv4 وحدود الحقول؛ وإذا كانت الإعدادات غير صالحة يعود إلى Neutrino.",
+          "يتحقق المحوّل من عناوين IPv4 وحدود الحقول. إذا كانت الإعدادات غير صالحة يمكن تحويل ISO إلى Neutrino، لكن يُحظر ZSO بدلاً من تمريره إلى Neutrino.",
           "يبقى اختبار الألعاب والقراءة المستمرة عبر SMB بحاجة إلى جهاز PS2 فعلي."
         ],
         "opl-hdd": [
@@ -145,17 +177,21 @@
         ],
         "neutrino-smb-fallback": [
           "إعداد شبكة SMB غير مكتمل؛ لذلك لا يختار متحكم المحركات في TEa.G3 محول OPL ETH.",
-          "يبقى مسار Neutrino متاحاً كبديل آمن. أكمل IP الخاص بـ PS2 والخادم والمشاركة وبيانات الدخول قبل إعادة المحاولة."
+          "هذا التحويل مخصص لـ ISO فقط؛ يُحظر ZSO لأن مسار SMB/ETH لا يستطيع استخدام مفكك OPL المطلوب. أكمل IP الخاص بـ PS2 والخادم والمشاركة وبيانات الدخول قبل إعادة المحاولة."
         ],
         "neutrino-opl-missing": [
           "ملف OPL.ELF المضمّن غير موجود أو لم يجتز التحقق من التثبيت.",
-          "يبقي TEa.G3 ألعاب ISO/ZSO على Neutrino بدلاً من تنفيذ تسليم OPL."
+          "يمكن تحويل ISO إلى Neutrino؛ أما ZSO فيُحظر لأن هذا البناء لا يتضمن مفكك ZSO موثوقاً في Neutrino."
         ],
         neutrino: [
-          "يبقي TEa.G3 لعبة ISO/ZSO على مسار Neutrino الحالي.",
-          "يختار auto وneutrino محرك Neutrino دائماً؛ كما تبقى المصادر التي لا تملك محوّل OPL على مسار Neutrino.",
-          "يبقى تمرير Neutrino الخاص بكل مصدر متاحاً كمسار توافق."
+          "يبقي TEa.G3 صور ISO المدعومة على Neutrino عند اختيار هذا المحرك أو عند عدم توفر محوّل OPL للمصدر.",
+          "لا يمرر ZSO إلى Neutrino مطلقاً؛ بل يحتاج إلى محوّل OPL BDM/ETH جاهز وإعداد SMB صالح عند استخدام الشبكة.",
+          "إذا تعذر مسار OPL المطلوب، يُحظر التشغيل بدلاً من التحويل الصامت."
         ],
+        "zso-requires-opl": ["لا يمكن تمرير ZSO إلى Neutrino في هذا البناء. يحتاج إلى مسار OPL BDM/ETH جاهز؛ وإلا يُحظر التشغيل."],
+        "zso-opl-missing": ["محرك OPL المضمّن غير موجود أو لم يجتز فحص السلامة. يمكن تحويل ISO إلى Neutrino، أما ZSO فيُحظر."],
+        "zso-smb-config-invalid": ["إعدادات شبكة SMB/ETH ناقصة أو غير صالحة. يمكن تشغيل ISO عبر Neutrino، أما ZSO فيُحظر لأنه يحتاج إلى مفكك OPL ETH."],
+        "zso-hdl-unsupported": ["لا يمكن تشغيل ZSO عبر مسار APA/HDL mini. استخدم ISO مدعوماً لهذا المسار على القرص."],
         unsupported: ["اختر صيغة ومصدراً وتفضيل محرك مدعوماً."]
       },
       hardware: "محاكاة داخل المتصفح فقط · لا يتم تشغيل ELF أو محاكي أو لعبة PS2 هنا.",
