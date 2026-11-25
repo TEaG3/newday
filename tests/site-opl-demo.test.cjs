@@ -106,7 +106,7 @@ assert.match(readme, /ZSO is OPL-only in this build/);
 const engineDocs = fs.readFileSync(path.join(__dirname, "../docs/opl-engine-integration.md"), "utf8");
 assert.match(engineDocs, /ZSO is OPL-only in this build/);
 assert.match(engineDocs, /TEaG3\/OPL/);
-assert.match(engineDocs, /46bad5a4a469c51e45eb1ed879fe43c100b8cb7b/);
+assert.match(engineDocs, /395022e266eaea723e3c58dd16b240887b5b0a37/);
 assert.match(engineDocs, /RTL=1/);
 const formatsDocs = fs.readFileSync(path.join(__dirname, "../docs/game-formats.md"), "utf8");
 assert.match(formatsDocs, /TEaG3\/OPL/);
