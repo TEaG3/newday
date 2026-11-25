@@ -204,18 +204,18 @@ static int cat_path_valid(const char *path)
     size_t len;
     int app;
     if (!path || !(len = strlen(path)) || len >= 160 || path[0] == '/' ||
-        path[len - 1] == '/' || strstr(path, "\\\\") || strchr(path, ':')) return 0;
+        path[len - 1] == '/' || strchr(path, '\\') || strchr(path, ':')) return 0;
     app = !strncmp(path, "APPS/", 5);
     if (!app && strncmp(path, "DVD/", 4) && strncmp(path, "CD/", 3)) return 0;
     for (const unsigned char *p = (const unsigned char *)path; *p; p++) {
         if (*p < 0x20 || *p > 0x7e || *p == '?' || *p == '#') return 0;
         if (*p == '%') {
             int h1, h2;
-            if (!isxdigit(p[1]) || !isxdigit(p[2])) return 0;
+            if (!p[1] || !p[2] || !isxdigit(p[1]) || !isxdigit(p[2])) return 0;
             h1 = isdigit(p[1]) ? p[1] - '0' : tolower(p[1]) - 'a' + 10;
             h2 = isdigit(p[2]) ? p[2] - '0' : tolower(p[2]) - 'a' + 10;
             int decoded = (h1 << 4) | h2;
-            if (decoded == '/' || decoded == '\\\\' || decoded == '.' ||
+            if (decoded == '/' || decoded == '\\' || decoded == '.' ||
                 decoded == ':' || decoded < 0x20 || decoded == 0x7f) return 0;
             p += 2;
         }
