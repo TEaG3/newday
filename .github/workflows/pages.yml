@@ -16,6 +16,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -69,6 +70,22 @@ jobs:
           path: ${{ runner.temp }}/artifact.tar
           retention-days: 1
           overwrite: true
+      - name: Wait for GitHub Pages artifact metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "github-pages" and .expired == false and .size_in_bytes > 0) | .id' | head -n 1)"
+            if [ -n "$artifact_id" ]; then
+              echo "GitHub Pages artifact metadata is visible (id=$artifact_id)."
+              exit 0
+            fi
+            echo "GitHub Pages artifact not visible yet (attempt ${attempt}/12); retrying in 5 seconds."
+            sleep 5
+          done
+          echo "::error::GitHub Pages artifact was uploaded but did not become visible in the Actions API within 60 seconds."
+          exit 1
       - id: deploy
         uses: actions/deploy-pages@v4
         with:
