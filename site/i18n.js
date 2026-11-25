@@ -5,7 +5,7 @@
     "Covers, 3D save icons, achievements, an in-game menu and games from a server at home. The console fetches and builds all of it; there is nothing to prepare on a PC.":"أغلفة الألعاب وأيقونات الحفظ ثلاثية الأبعاد والإنجازات وقائمة داخل اللعبة وتشغيل الألعاب من خادم منزلي. ينفّذ الجهاز هذه الوظائف مباشرة دون الحاجة إلى تجهيزها على الحاسوب.",
     "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.":"واجهة المشغّل بسماتها الاثنتي عشرة، معروضة داخل المتصفح. اضغط جانبي الغلاف لتغيير اللعبة.",
     "Make your own theme":"أنشئ سمة خاصة بك","What runs on the console":"ما الذي يعمل على الجهاز","Every row happens on the PS2 itself. The numbers were measured on a slim PS2 (SCPH-75001).":"تُنفّذ جميع الوظائف التالية على جهاز PS2 نفسه. القياسات أُخذت على جهاز PS2 Slim طراز SCPH-75001.",
-    "Covers by the console":"الأغلفة بواسطة الجهاز","Three views at 60 fps":"ثلاثة أنماط عرض بمعدل 60 إطاراً/ثانية","3D save icons":"أيقونات حفظ ثلاثية الأبعاد","OPL-managed VMC":"بطاقات VMC يديرها OPL","OPL IGR controls":"اختصارات IGR الخاصة بـ OPL","Achievements in the library":"الإنجازات داخل المكتبة","SMB / ETH game source":"مصدر ألعاب SMB / ETH","Every source Neutrino reads":"مصادر الألعاب التي يدعمها Neutrino","OPL game settings":"إعدادات الألعاب داخل OPL","Setup and updates on the PS2":"الإعداد والتحديث على PS2","Arabic and English":"العربية والإنجليزية","Twelve themes, and yours":"اثنتا عشرة سمة، وسِمتك الخاصة",
+    "Covers by the console":"الأغلفة بواسطة الجهاز","Three views at 60 fps":"ثلاثة أنماط عرض بمعدل 60 إطاراً/ثانية","3D save icons":"أيقونات حفظ ثلاثية الأبعاد","OPL-managed VMC":"بطاقات VMC يديرها OPL","OPL IGR controls":"اختصارات IGR الخاصة بـ OPL","Achievements in the library":"الإنجازات داخل المكتبة","SMB / ETH game source":"مصدر ألعاب SMB / ETH","OPL-supported game sources":"مصادر الألعاب المدعومة من OPL","OPL game settings":"إعدادات الألعاب داخل OPL","Setup and updates on the PS2":"الإعداد والتحديث على PS2","Arabic and English":"العربية والإنجليزية","Twelve themes, and yours":"اثنتا عشرة سمة، وسِمتك الخاصة",
     "More screens":"المزيد من لقطات الشاشة","Captured from the launcher at 1280×720, in the Classic theme. Select one to see it full size.":"لقطات من المشغّل بدقة 1280×720 باستخدام السمة الكلاسيكية. اختر صورة لعرضها بالحجم الكامل.",
     "Previous screens":"اللقطات السابقة","Next screens":"اللقطات التالية","Download":"تنزيل","One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.":"ملف ZIP واحد لنسخه إلى USB. إذا كنت تستخدم ORBIT أو NULD القديم، فسينقل التشغيل الأول إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
     "all releases":"كل الإصدارات","Three steps":"ثلاث خطوات","You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. The":"تحتاج إلى جهاز PS2 يشغّل برامج Homebrew (مثل FreeMcBoot) ووحدة USB. يحتوي",
@@ -143,7 +143,7 @@
   "The setup wizard writes config.ini and FreeMcBoot autoboot settings.": "ينشئ معالج الإعداد ملف config.ini ويضبط إعدادات التشغيل التلقائي عبر FreeMcBoot.",
   "One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.": "ملف ZIP واحد لنسخه إلى وحدة USB. هل تنتقل من ORBIT أو NULD القديم؟ عند التشغيل الأول ينقل TEa.G3 إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
   "TEa.G3 complete package": "حزمة TEa.G3 الشاملة",
-  "TEa.G3.ELF, embedded OPL and SMB support modules, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحركي OPL وNeutrino المدمجين، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
+  "TEa.G3.ELF, embedded OPL and SMB support modules, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحرك OPL ووحدات SMB المساعدة المضمّنة، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
   "all releases": "جميع الإصدارات",
   "Release notes and SHA-256 checksums. What changed in each: the": "ملاحظات الإصدارات وبصمات التحقق SHA-256. لمعرفة التغييرات في كل إصدار، راجع",
   "jfplay.elf": "ملف jfplay.elf",
@@ -689,7 +689,7 @@
   ", needs numpy and Pillow).": "، ويتطلب مكتبتي numpy وPillow).",
   "RetroAchievements on real hardware": "خدمة RetroAchievements على جهاز حقيقي",
   "manual": "الدليل",
-  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0."
+  "TEa.G3 is GPL-3.0 software; Neutrino-derived IGR UI source and SMB IOP support modules are retained under AFL-3.0. OPL is the only PS2 game engine.": "TEa.G3 برنامج GPL-3.0؛ ويحتفظ بمصدر واجهة IGR ووحدات SMB IOP المساعدة المشتقة من Neutrino بترخيص AFL-3.0. OPL هو محرك ألعاب PS2 الوحيد."
 });
 
   Object.assign(dict, {
@@ -745,7 +745,7 @@
   });
   Object.assign(dict, {
     "changelog":"سجل التغييرات",
-    "Per-game options panel: video mode, video compatibility, memory card and Neutrino":"لوحة إعدادات اللعبة: نمط الفيديو وتوافق الفيديو وبطاقة الذاكرة وخيارات التوافق في Neutrino.",
+    "Per-game options panel: legacy settings retained for compatibility; OPL manages its own game settings":"لوحة إعدادات اللعبة: إعدادات قديمة محفوظة للتوافق؛ يدير OPL إعدادات الألعاب الخاصة به.",
     "Preview of TEa.G3":"معاينة TEa.G3",
     "Achievements panel for Black: 0 of 56, 0 of 600 points":"لوحة إنجازات لعبة Black: ٠ من ٥٦ إنجازاً و٠ من ٦٠٠ نقطة.",
     "Carousel with the example theme Ocaso: a dusk sky behind the covers, orange accent":"العرض الدائري باستخدام السمة التجريبية Ocaso: سماء الغسق خلف الأغلفة مع لون تمييز برتقالي.",
@@ -831,7 +831,7 @@
       "God of War selected: the saves card shows 1 save on memory card 1 with its 3D icon":"لعبة God of War محددة؛ تعرض بطاقة الحفظ عملية حفظ واحدة على بطاقة الذاكرة 1 مع أيقونتها ثلاثية الأبعاد.",
       "Black selected, with an Achievements 56 tag next to its serial, media, source and video tags":"لعبة Black محددة، وتظهر بجانب رقمها التسلسلي ووسوم الوسيط والمصدر والفيديو علامة الإنجازات 56.",
       "Achievements panel for Black: 0 of 56, 0 of 600 points, each achievement with its points":"لوحة إنجازات لعبة Black: تم فتح 0 من أصل 56 إنجازاً، و0 من أصل 600 نقطة، مع عرض نقاط كل إنجاز.",
-      "Per-game options panel: video mode, video compatibility, memory card and Neutrino's compatibility modes":"لوحة إعدادات اللعبة: نمط الفيديو وتوافقه وبطاقة الذاكرة وأنماط التوافق في Neutrino.",
+      "Per-game options panel: legacy settings retained for compatibility; OPL manages video, compatibility and VMC":"لوحة إعدادات اللعبة: إعدادات قديمة محفوظة للتوافق؛ يدير OPL الفيديو والتوافق وبطاقات VMC.",
       "Arabic-first setup wizard: language, game sources, memory card, video, network, boot stub and FreeMcBoot":"معالج الإعداد باللغة العربية: اللغة ومصادر الألعاب وبطاقة الذاكرة والفيديو والشبكة وإعدادات الإقلاع وFreeMcBoot.",
       "Carousel view: Beyond Good and Evil selected, its tags at the top and the button hints at the bottom":"العرض الدائري مع تحديد لعبة Beyond Good and Evil؛ تظهر وسومها في الأعلى وتلميحات الأزرار في الأسفل."
     },
@@ -967,7 +967,7 @@
     "UL record, CRC and split-part validation":"التحقق من سجل UL وCRC وأجزاء اللعبة",
     "TEa.G3's pinned OPL UL direct-boot patch":"تصحيح الإقلاع المباشر لـ OPL UL المثبّت في TEa.G3",
     "Runtime installation and CRC-32 checks":"تثبيت موارد التشغيل وفحوص CRC-32",
-    "CI build of pinned OPL, Neutrino and the single ELF":"بناء OPL وNeutrino وملف ELF الواحد عبر CI",
+    "CI build of pinned OPL, SMB support modules and the single ELF":"بناء OPL ووحدات SMB المساعدة وملف ELF الواحد عبر CI",
     "OPL and SMB IOP support modules are embedded runtime components; OPL is the only PS2 game engine.":"محرك OPL ووحدات SMB IOP المساعدة مكونات مضمّنة في موارد التشغيل؛ وOPL هو محرك ألعاب PS2 الوحيد.",
     "Browser simulation only; no PS2 game or ELF is executed.":"محاكاة داخل المتصفح فقط؛ لا يتم تشغيل لعبة PS2 أو ملف ELF.",
     "Browser simulation only · no PS2 ELF, emulator or game is executed here.":"محاكاة داخل المتصفح فقط · لا يتم تشغيل ملف ELF أو محاكي أو لعبة هنا.",
