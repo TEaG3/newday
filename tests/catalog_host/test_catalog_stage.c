@@ -212,6 +212,14 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_read_end(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
 
+    /* An I/O-only busy interval must also reject apply requests without closing readers. */
+    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(!catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_try_apply(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
     /* If gameplay starts after a request, cancel the pending apply and reopen readers. */
     assert(catalog_guard_request_apply(&guard));
     assert(catalog_guard_set_activity(&guard, 1, 0));
@@ -219,6 +227,15 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_read_begin(&guard));
     assert(catalog_guard_read_end(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    /* Storage I/O starting after a request must cancel it for the same reason. */
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(!catalog_guard_try_apply(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
     assert(catalog_guard_request_apply(&guard));
     assert(catalog_guard_try_apply(&guard));
     assert(catalog_guard_finish_apply(&guard));
