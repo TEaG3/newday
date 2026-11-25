@@ -1,71 +1,113 @@
-# TEa.G3 runtime acceptance — real PlayStation 2 is the reference
+# TEa.G3 runtime acceptance — physical PlayStation 2 is the reference
 
 This checklist is separate from host fixtures and cross-compilation. A green
 CI build does not prove that a game boots or that all split files are read.
+Keep ISO, ZSO, UL, SMB and HDD results separate.
 
 ## Automated artifact checks
 
-Download all artifacts from one successful GitHub Actions run; do not mix runs:
+Download every artifact from one successful GitHub Actions run; do not mix
+files from different runs.
 
-1. User artifact: `TEa.G3.ELF` (contains OPL, Neutrino and their runtime modules).
-2. Diagnostic CI artifacts: standalone `OPL.ELF` and `neutrino/` may be downloaded separately for inspection; they are not copied to the user's USB.
+1. User installation artifact: `TEa.G3.ELF`. It embeds OPL, Neutrino and
+   their runtime modules.
+2. Diagnostic artifacts: standalone `OPL.ELF` and `neutrino/` are for
+   inspection only; they are not copied to the user's USB.
+3. Verify each ZIP with `unzip -t`. Confirm `TEa.G3.ELF` and
+   `runtime-manifest.txt` are non-empty.
+4. Verify every manifest entry by path, byte size and CRC-32. The manifest
+   must include OPL, Neutrino, `ee_core`, `raagent`, `cdvdman_emu`,
+   UDPFS and SMB assets.
 
-Verify that `TEa.G3.ELF` and `runtime-manifest.txt` are non-empty and that the manifest lists OPL, Neutrino, `ee_core`, `raagent`, `cdvdman_emu`, UDPFS and SMB assets.
+## Optional PCSX2 diagnostics (not an acceptance gate)
 
-## Optional console diagnostics (not an acceptance gate)
+Use PCSX2 2.8.2 only as a secondary diagnostic harness for UI smoke checks,
+crash reproduction and repeatable observations. Emulator success or failure
+MUST NOT approve or reject physical-console compatibility.
 
-An emulator may be used only as a secondary diagnostic harness for UI smoke checks, crash reproduction and repeatable host-side observations. Its timing, device emulation, USB stack and hardware model differ from a physical PS2. Emulator success or failure MUST NOT be used to approve or reject hardware compatibility, and no emulator result substitutes for the tests below.
+For this diagnostic harness, configure USB1 as a mass-storage device using
+`tools/pcsx2/PCSX2.ini.in`; rebuild `usb.img` with
+`tools/pcsx2/mkimg.sh` only while PCSX2 is closed. Before starting PCSX2,
+verify that `usb.img` exists, is FAT32 and contains `TEa.G3.ELF` plus the
+test folders. The configuration and image checks prove that the virtual
+device is prepared; only the running emulator and its `mass0:` diagnostics
+prove that PCSX2 enumerated the virtual USB device. Controller navigation,
+USB timing and game behavior in PCSX2 remain diagnostic observations only.
 
 ## Real PS2 acceptance tests (mandatory)
 
-Use PCSX2 2.8.2 for this harness (not the old 2.4 setup). Configure USB1 as a mass-storage device using `tools/pcsx2/PCSX2.ini.in`; rebuild `usb.img` with `tools/pcsx2/mkimg.sh` only while PCSX2 is closed. Before booting, verify that `usb.img` exists, is FAT32, and contains `TEa.G3.ELF` plus the test folders. The configuration and image checks prove that the virtual device is prepared; only the running emulator and the launcher's `mass0:` diagnostics prove that the PS2-side USB device was enumerated.
+Perform these tests on a physical PS2 with a known-good, legally owned test
+image. Record the console model, storage adapter, filesystem, game serial,
+engine preference, startup result, sustained reads and gameplay duration.
 
-1. Put only `TEa.G3.ELF` on a clean USB (plus the test game folder). Boot it. Verify that first boot creates `tea_g3/runtime/OPL.ELF` and `tea_g3/runtime/neutrino/neutrino.elf`, with all modules/config files, then record whether the first menu appears, Arabic text renders correctly, and controller navigation works.
-2. Place one known-good, legally owned ISO in `DVD/`; confirm it appears and
-   launch it with `motor = auto` (Neutrino).
-3. Place a matching ZSO in `DVD/`; confirm title/serial discovery and launch
-   with `motor = auto`. Repeat after a cold console restart.
-4. For SMB, configure fixed PS2 IPv4 and the `[smb]` settings in
-   `tea_g3/config.ini`, export `DVD/` and/or `CD/`, generate
-   `TEAG3.GAMES` with `tools/smb_catalog.py`, then select SMB and test one
-   plain ISO and one ZSO.
-5. Test APA/HDLoader on an emulated or real internal HDD separately.
-6. Confirm no root-level `OPL.ELF` or `neutrino/` folder is needed; TEa.G3 must install its embedded runtime under `tea_g3/runtime/` automatically.
-7. Put a valid USBExtreme `ul.cfg` and all of its declared `ul.*` split parts
-   in the same USB root. Confirm TEa.G3 lists the game only when every part is
-   present, with the correct title and serial.
-8. Select the UL game with `motor = auto`. Verify that TEa.G3 invokes OPL
-   directly, that the selected game starts, and that reads continue across all
-   split parts.
-9. For an ordinary USB ISO/ZSO, set `[juegos] motor = opl` in
-   `tea_g3/config.ini`, restart TEa.G3, and verify the manual OPL direct-boot
-   route. Restore `motor = auto` or `motor = neutrino` afterwards.
+1. Put only `TEa.G3.ELF` on a clean USB, plus the test game folders. Boot it.
+   Verify that first boot creates `tea_g3/runtime/OPL.ELF` and
+   `tea_g3/runtime/neutrino/neutrino.elf`, with all modules/config files.
+   Record first-menu startup, Arabic rendering and controller navigation.
+2. Place one known-good ISO in `DVD/`. With `[juegos] motor = auto`,
+   verify the USB source selects OPL BDM and that the game starts with
+   sustained reads. Repeat with `motor = neutrino`; ISO should use the
+   Neutrino path when explicitly selected.
+3. Place a matching ZSO in `DVD/`. With `motor = auto`, verify the USB
+   source selects OPL BDM, the title/serial is discovered and the game starts.
+   Repeat after a cold restart. Set `motor = neutrino` once and verify that
+   ZSO is rejected; it must never silently fall back to Neutrino.
+4. For SMB, configure a fixed PS2 IPv4 address and the `[smb]` settings in
+   `tea_g3/config.ini`, export `DVD/` and/or `CD/`, and generate
+   `TEAG3.GAMES` with `tools/smb_catalog.py`. With valid network settings,
+   verify OPL ETH for both ISO and ZSO under `motor = auto` or `opl`.
+   With invalid SMB/ETH settings, ISO may use its Neutrino fallback but ZSO
+   must be rejected. Explicit `motor = neutrino` is an ISO-only path.
+5. Test APA/HDLoader separately using an internal HDD. Verify an ISO through
+   OPL HDD mini-launch, the exact start LBA, aggregate size and the existing
+   `hdd_partition` in `conf_hdd.cfg`. ZSO is unsupported on APA/HDL and
+   must be rejected.
+6. Confirm no root-level `OPL.ELF` or `neutrino/` folder is needed;
+   TEa.G3 must install its embedded runtime under `tea_g3/runtime/`
+   automatically.
+7. Put a valid USBExtreme `ul.cfg` and every declared `ul.*` split part
+   in the same USB root. Confirm TEa.G3 lists the game only when every part
+   is present, with the correct title and serial.
+8. Select the UL game with `motor = auto`. Verify TEa.G3 invokes OPL
+   directly, the selected game starts and reads continue across every split
+   part. UL remains OPL-only regardless of engine preference.
+9. For supported USB ISO/ZSO, set `[juegos] motor = opl` in
+   `tea_g3/config.ini`, restart TEa.G3 and verify the OPL direct-boot route.
+   Restore `motor = auto` afterwards. Do not use `motor = neutrino` for
+   ZSO; that selection must be rejected.
 
-## Independent return-path checks
+## Independent OPL return-path checks
 
-The OPL auto-launch adapters now receive the installed memory-card return ELF
-as their IGR/Exit target. On a physical PS2, verify each supported OPL route
-separately (UL, BDM USB, SMB/ETH and APA/HDL):
+The OPL auto-launch adapters receive the installed memory-card return ELF as
+their IGR/Exit target. On a physical PS2, verify each supported OPL route
+separately (UL, BDM USB, SMB/ETH and APA/HDL ISO):
 
-1. Confirm TEa.G3 installed `mcX:/BOOT/TEa.G3.ELF` on the memory card selected
-   by its startup log.
+1. Confirm TEa.G3 installed `mcX:/BOOT/TEa.G3.ELF` on the memory card
+   selected by its startup log.
 2. Launch one known-good test game through the selected OPL adapter.
 3. Use OPL's documented in-game reset key sequence (L1+L2+R1+R2, then
    Start+Select) and verify that the memory-card stub starts.
-4. Verify the stub reinitializes USB, finds `mass0:/TEa.G3.ELF`, and returns
+4. Verify the stub reinitializes USB, finds `mass0:/TEa.G3.ELF` and returns
    to the TEa.G3 menu.
 5. Repeat after a cold boot and with the other memory-card slot when available.
 
 The IGR path is a manual return mechanism, not an automatic rescue from a
-hard-frozen game. A game-specific IGR incompatibility must be recorded as
-unsupported for that title. No physical-console acceptance is implied by CI.
+hard-frozen game. Record a game-specific IGR incompatibility as unsupported
+for that title. CI and emulator results do not imply physical-console
+acceptance.
 
-## Real PS2 checks
+## Final route matrix to verify on hardware
 
-Repeat USB ISO, USB ZSO, UL and manual OPL tests on real hardware. Record the
-console model, storage device, filesystem, game serial, engine selection and
-result. Verify in-game reads and stability, not just the first screen. Also
-verify that Neutrino ISO/ZSO, SMB, and APA/HDLoader paths remain intact.
+- ISO: OPL BDM for USB/BDM, OPL ETH for configured SMB, OPL HDD for APA/HDL;
+  Neutrino remains available for explicitly selected or supported fallback
+  ISO paths.
+- ZSO: OPL BDM/ETH only. Reject it for Neutrino preference, missing OPL
+  runtime, invalid SMB/ETH configuration, APA/HDL and sources without a
+  verified OPL decoder.
+- USBExtreme UL: OPL-only; all split parts must be present.
+- SMB and HDD: verify sustained reads and return behavior separately.
+- Arabic: verify RTL layout, connected letter forms, punctuation, numbers,
+  menus and in-game return screens.
 
 ## Current automated coverage
 
@@ -75,12 +117,19 @@ CI currently runs:
 - engine-selection capability-matrix tests;
 - SMB catalog generator tests;
 - Arabic/Portuguese localization checks;
+- site OPL route simulator matrix and documentation consistency tests;
 - TEa.G3 launcher and Neutrino PS2SDK builds;
 - pinned upstream OPL checkout, pinned `lwNBD` retrieval, TEa.G3 OPL patch
   application, OPL compilation and artifact upload.
 
-The runtime tests above are still manual. Do not mark game compatibility as verified until physical-PS2 results are recorded. Emulator-only results are diagnostic notes, never acceptance evidence.
+The runtime tests above are still manual. Do not mark game compatibility as
+verified until physical-PS2 results are recorded. Emulator-only results are
+diagnostic notes, never acceptance evidence.
 
-## Evidence record (complete for each tested path)
+## Evidence record
 
-Record console model and region, OPL/Neutrino build IDs, storage adapter and device, filesystem and partition layout, exact folder/file naming, game serial and media type, selected engine, startup result, sustained reads, gameplay duration, and any error log. Keep ISO, ZSO and UL results separate. Test cold boot and repeat launch after returning to the launcher.
+For each tested path, record console model/region, build IDs, storage adapter
+and device, filesystem and partition layout, exact folder/file naming, game
+serial and media type, selected engine, startup result, sustained reads,
+gameplay duration and error log. Test cold boot and repeat launch after
+returning to the launcher.
