@@ -49,7 +49,8 @@ engine_decision engine_assess(engine_format format, engine_source source,
         } else if (source == ENGINE_SOURCE_HDL)
             d.engine = ENGINE_OPL_HDD;
         else
-            d.reason = ENGINE_REASON_OPL_SOURCE_UNAVAILABLE;
+            d.reason = force_opl ? ENGINE_REASON_OPL_SOURCE_UNAVAILABLE
+                                 : ENGINE_REASON_AUTO_NEUTRINO_BASELINE;
     }
 
     /* Never hand off to an OPL adapter that is not present in the embedded runtime. */
