@@ -17,67 +17,129 @@ static unsigned le32(const unsigned char *p) { return p[0] | p[1] << 8 | p[2] <<
 // supplies a 64-bit-capable reader (fileXioLseek64 on the PS2, stdio on the host)
 int iso_find(iso_read_fn read_at, void *f, const char *path, unsigned *lba_out, unsigned *size_out)
 {
-	static unsigned char buf[SECTOR] __attribute__((aligned(64)));
-	if (!read_at(f, 16, buf, SECTOR) || buf[0] != 1 || memcmp(buf + 1, "CD001", 5)) return 0;
-	unsigned lba = le32(buf + 156 + 2), size = le32(buf + 156 + 10);
-	while (*path == '\\') path++;
-	for (;;) { // one path component per directory, from the root
-		unsigned n = strcspn(path, "\\"), found = 0;
-		for (unsigned off = 0; off < size && !found; off += SECTOR) { // the directory, one sector at a time
-			if (!read_at(f, lba + off / SECTOR, buf, SECTOR)) return 0;
-			for (unsigned p = 0; p + 33 < SECTOR && buf[p] && !found; p += buf[p]) { // "NAME;1" or "DIR"
-				unsigned nl = buf[p + 32];
-				if ((nl == n || (nl > n && buf[p + 33 + n] == ';')) && !strncasecmp((char *)buf + p + 33, path, n))
-					lba = le32(buf + p + 2), size = le32(buf + p + 10), found = 1;
-			}
-		}
-		if (!found) return 0;
-		if (!path[n]) break;
-		path += n + 1;
-	}
-	*lba_out = lba, *size_out = size;
-	return 1;
+    static unsigned char buf[SECTOR] __attribute__((aligned(64)));
+    unsigned lba, size;
+    const char *component;
+    if (!read_at || !path || !lba_out || !size_out) return 0;
+    if (!read_at(f, 16, buf, SECTOR) || buf[0] != 1 ||
+        memcmp(buf + 1, "CD001", 5) || buf[6] != 1) return 0;
+    /* Primary volume descriptor's root record must fit and describe a directory. */
+    if (buf[156] < 34 || buf[156] > SECTOR - 156 ||
+        buf[156 + 32] != 1 || buf[156 + 33] != 0 ||
+        !(buf[156 + 25] & 0x02)) return 0;
+    lba = le32(buf + 156 + 2), size = le32(buf + 156 + 10);
+    if (!size || (u64)lba + ((u64)size - 1) / SECTOR > 0xffffffffu) return 0;
+
+    while (*path == '\\' || *path == '/') path++;
+    if (!*path) return 0;
+    component = path;
+    for (;;) {
+        unsigned n = (unsigned)strcspn(component, "\\\\/");
+        unsigned off = 0, found_lba = 0, found_size = 0;
+        int found = 0, found_dir = 0;
+        int more;
+        if (!n || n > 255) return 0;
+        more = component[n] != 0;
+        while (off < size && !found) {
+            unsigned read_size = size - off;
+            unsigned p = 0;
+            if (read_size > SECTOR) read_size = SECTOR;
+            memset(buf, 0, sizeof(buf));
+            if ((u64)lba + off / SECTOR > 0xffffffffu ||
+                !read_at(f, lba + off / SECTOR, buf, read_size)) return 0;
+            while (p < read_size && buf[p]) {
+                unsigned record_size = buf[p];
+                unsigned name_size;
+                const unsigned char *name;
+                int match;
+                if (record_size < 34 || record_size > read_size - p) return 0;
+                name_size = buf[p + 32];
+                if (name_size > record_size - 33) return 0;
+                name = buf + p + 33;
+                match = name_size == n && !strncasecmp((const char *)name, component, n);
+                if (!match && name_size > n && name[n] == ';' &&
+                    !strncasecmp((const char *)name, component, n)) match = 1;
+                if (match) {
+                    found_lba = le32(buf + p + 2);
+                    found_size = le32(buf + p + 10);
+                    found_dir = (buf[p + 25] & 0x02) != 0;
+                    if (!found_size ||
+                        (u64)found_lba + ((u64)found_size - 1) / SECTOR > 0xffffffffu) return 0;
+                    found = 1;
+                    break;
+                }
+                p += record_size;
+            }
+            off += read_size;
+        }
+        if (!found || (more && !found_dir)) return 0;
+        if (!more) {
+            *lba_out = found_lba, *size_out = found_size;
+            return 1;
+        }
+        lba = found_lba, size = found_size;
+        component += n + 1;
+        if (!*component) return 0;
+    }
 }
 
 int iso_cnf(iso_read_fn read_at, void *f, char *out, unsigned max)
 {
-	static unsigned char buf[SECTOR * 2] __attribute__((aligned(64)));
-	unsigned lba, size;
-	if (!iso_find(read_at, f, "SYSTEM.CNF", &lba, &size)) return 0;
-	if (size > max - 1) size = max - 1;
-	if (size > sizeof(buf)) size = sizeof(buf);
-	if (!read_at(f, lba, buf, size)) return 0;
-	memcpy(out, buf, size);
-	out[size] = 0;
-	return 1;
+    static unsigned char buf[SECTOR * 2] __attribute__((aligned(64)));
+    unsigned lba, size;
+    if (!read_at || !out || !max || !iso_find(read_at, f, "SYSTEM.CNF", &lba, &size) || !size) return 0;
+    if (size > max - 1) size = max - 1;
+    if (size > sizeof(buf)) size = sizeof(buf);
+    if (!size || !read_at(f, lba, buf, size)) return 0;
+    memcpy(out, buf, size);
+    out[size] = 0;
+    return 1;
 }
 
 int iso_serial(iso_read_fn read_at, void *f, int ps1, char *out) // out: >= 16 bytes, "SLUS_209.46"; 1 if found
 {
-	static char cnf[SECTOR * 2];
-	return iso_cnf(read_at, f, cnf, sizeof(cnf)) && cnf_boot(cnf, ps1, out, NULL, 0);
+    static char cnf[SECTOR * 2];
+    return out && iso_cnf(read_at, f, cnf, sizeof(cnf)) && cnf_boot(cnf, ps1, out, NULL, 0);
 }
 
 int cnf_boot(const char *cnf, int ps1, char *file, char *raw, int raw_n)
 {
-	const char *b = cnf;
-	for (;; b += 4) { // the key at a line start: BOOT2 (PS2) or BOOT followed by spaces or '=' (PS1)
-		if (!(b = strstr(b, "BOOT"))) return 0;
-		if ((b == cnf || b[-1] == '\n') && (ps1 ? b[4] != '2' : b[4] == '2')) break;
-	}
-	if (!(b = strchr(b, '='))) return 0;
-	for (b++; *b == ' ' || *b == '\t'; b++) {}
-	int n = strcspn(b, "\r\n");
-	while (n && isspace((unsigned char)b[n - 1])) n--;
-	if (raw) snprintf(raw, raw_n, "%.*s", n, b);
-	const char *f = b;
-	for (int i = 0; i < n; i++)
-		if (b[i] == '\\' || b[i] == ':' || b[i] == '/') f = b + i + 1;
-	int m = 0;
-	while (f + m < b + n && f[m] != ';' && m < 15) m++;
-	memcpy(file, f, m);
-	file[m] = 0;
-	return m > 0;
+    const char *b;
+    if (!cnf || !file || (raw && raw_n <= 0)) return 0;
+    b = cnf;
+    for (;;) {
+        const char *line_end;
+        int key_len = ps1 ? 4 : 5;
+        if (!(b = strstr(b, "BOOT"))) return 0;
+        if (b != cnf && b[-1] != '\\n') { b += 4; continue; }
+        if (ps1) {
+            if (!(b[4] == '=' || b[4] == ' ' || b[4] == '\\t')) { b += 4; continue; }
+        } else {
+            if (b[4] != '2' || !(b[5] == '=' || b[5] == ' ' || b[5] == '\\t')) { b += 4; continue; }
+        }
+        line_end = strpbrk(b, "\\r\\n");
+        if (!line_end) line_end = b + strlen(b);
+        const char *eq = memchr(b + key_len, '=', (size_t)(line_end - (b + key_len)));
+        if (!eq) { b = *line_end ? line_end + 1 : line_end; continue; }
+        const char *value = eq + 1;
+        while (value < line_end && (*value == ' ' || *value == '\\t')) value++;
+        while (line_end > value && isspace((unsigned char)line_end[-1])) line_end--;
+        if (value >= line_end) return 0;
+        if (raw) {
+            size_t raw_len = (size_t)(line_end - value);
+            if ((size_t)raw_n <= raw_len) return 0;
+            memcpy(raw, value, raw_len), raw[raw_len] = 0;
+        }
+        const char *name = value;
+        for (const char *p = value; p < line_end; p++)
+            if (*p == '\\\\' || *p == '/' || *p == ':') name = p + 1;
+        size_t name_len = 0;
+        while (name + name_len < line_end && name[name_len] != ';') name_len++;
+        if (!name_len || name_len > 15) return 0;
+        memcpy(file, name, name_len);
+        file[name_len] = 0;
+        return 1;
+    }
 }
 
 void serial_dash(const char *in, char *out) // "SLUS_209.46" -> "SLUS-20946" (cover and save names)
@@ -143,7 +205,8 @@ int main(void)
 	static unsigned char iso[SECTOR * 21];
 	unsigned char *pvd = iso + 16 * SECTOR, *root = iso + 18 * SECTOR, *rec;
 	pvd[0] = 1; memcpy(pvd + 1, "CD001", 5);
-	pvd[156 + 2] = 18; pvd[156 + 10] = SECTOR & 255; pvd[156 + 11] = SECTOR >> 8;
+	pvd[156] = 34; pvd[156 + 2] = 18; pvd[156 + 10] = SECTOR & 255; pvd[156 + 11] = SECTOR >> 8;
+    pvd[156 + 25] = 2; pvd[156 + 32] = 1; pvd[156 + 33] = 0;
 	rec = root; rec[0] = 34; rec[32] = 1;                      // "." entry
 	rec = root + 34; rec[0] = 46; rec[2] = 20; rec[10] = 40; rec[32] = 12; memcpy(rec + 33, "SYSTEM.CNF;1", 12);
 	memcpy(iso + 20 * SECTOR, "BOOT2 = cdrom0:\\SLUS_209.46;1\r\nVER = 1.00\r\n", 40);
