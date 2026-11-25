@@ -149,8 +149,10 @@ static int open_card(card *v, const char *path)
     v->csize = CSIZE, v->alloc = get32(s + 0x34);
     for (int i = 0; i < 32; i++) {
         v->ifc[i] = get32(s + 0x50 + 4 * i);
-        if (v->ifc[i] != 0xffffffffu &&
-            (v->ifc[i] < FAT0 || v->ifc[i] >= FAT0 + FATN)) {
+        /* The IFC list points to IFC blocks (cluster 8 on an 8 MB card), not to FAT clusters.
+           This format needs exactly one IFC block for its 32 FAT clusters. */
+        if ((i == 0 && v->ifc[i] != IFC) ||
+            (i != 0 && v->ifc[i] != 0xffffffffu)) {
             fclose(v->f), v->f = NULL;
             return 0;
         }
@@ -373,8 +375,18 @@ int main(int argc, char **argv)
     }
     {
         FILE *bad = fopen(p, "r+b");
-        unsigned char word[4] = {0xff, 0xff, 0xff, 0x7f};
+        unsigned char word[4];
+        put32(word, 0x7fffffffu);
         assert(bad && fseek(bad, 0x34, SEEK_SET) == 0 && fwrite(word, 1, 4, bad) == 4 && fclose(bad) == 0);
+        assert(vmc_list(p, e, 8) == -1);
+    }
+    {
+        FILE *bad = fopen(p, "r+b");
+        unsigned char word[4];
+        put32(word, ALLOC); /* restore the allocation offset, then corrupt the IFC pointer */
+        assert(bad && fseek(bad, 0x34, SEEK_SET) == 0 && fwrite(word, 1, 4, bad) == 4);
+        put32(word, FAT0); /* an IFC pointer must not point into the FAT */
+        assert(fseek(bad, 0x50, SEEK_SET) == 0 && fwrite(word, 1, 4, bad) == 4 && fclose(bad) == 0);
         assert(vmc_list(p, e, 8) == -1);
     }
 	assert(!vmc_read(p, "BASLUS-21376/icon.sys", &argc));
