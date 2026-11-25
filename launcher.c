@@ -787,7 +787,7 @@ static engine_decision engine_for(const entry *e) // silent policy decision plus
 		network_ready = ipv4_text(ip) && ipv4_text(server) && *share &&
 		                strlen(share) < 32 && strlen(user) < 32 && strlen(password) < 32;
 	}
-	return engine_assess(format, source_type, ini_get(&cfg, "juegos", "motor", "auto"),
+	return engine_assess(format, source_type, ini_get(&cfg, "juegos", "motor", "opl"),
 	                     exists(OPL_PATH), network_ready);
 }
 static int catalog_load(int s, int n)
@@ -1031,7 +1031,7 @@ static const char *const config_template[LANG_N] = {
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs, smb. hdd = internal exFAT disk, or APA with HD Loader partitions. smb is read-only and needs a TEAG3.GAMES index;\n"
 	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
-	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL wherever an OPL adapter is available; Neutrino fallback)\nmotor = auto\n"
+	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL wherever an OPL adapter is available; Neutrino fallback)\nmotor = opl\nauto = si\n"
 	"; udpfs: IP of the game server running nuld_catalog (lists the games; covers and achievements keep working).\n"
 	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
@@ -1062,13 +1062,13 @@ static const char *const config_template[LANG_N] = {
 	"; its autoboot points to mc?:/BOOT/TEa.G3.ELF (the launcher installs it).\n"
 	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
 	"; (up down left right triangle circle x square), joined with +; empty = off\n"
-	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n",
+	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar = L1+L2+R1+R2+TRIANGLE+CIRCLE\napagar = L1+L2+R1+R2+L3+R3\n",
 "; TEa.G3 - إعدادات عربية\n"
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، en = الإنجليزية\nidioma = ar\n"
 	"; المظهر: torres أو nuld أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
-	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = auto\n"
+	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = opl\nauto = si\n"
 	"; عنوان خادم الألعاب الذي يشغل nuld_catalog. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
 	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
@@ -1087,7 +1087,7 @@ static const char *const config_template[LANG_N] = {
 	"\n[smb]\n; SMB read-only source: static IPv4 in [red], then set the server, share and login below.\nserver =\nshare =\nuser = guest\npassword =\n\n[igr]\n; اختصارات القائمة داخل اللعبة: menu لفتح القائمة، reiniciar لإعادة التشغيل، apagar لإيقاف الجهاز\n"
 	"; استخدم أزرار L1 وL2 وR1 وR2 وL3 وR3 وSTART وSELECT والاتجاهات وأزرار المثلث والدائرة والإكس والمربع\n"
 	"; اربط أكثر من زر بعلامة +، واترك القيمة فارغة لتعطيل الاختصار\n"
-	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar =\napagar = L1+L2+R1+R2+L3+R3\n"
+	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar = L1+L2+R1+R2+TRIANGLE+CIRCLE\napagar = L1+L2+R1+R2+L3+R3\n"
 };
 static ini cfg, games;
 static volatile int cfg_volume = 100;
@@ -1152,7 +1152,7 @@ static void load_config(void) // loader thread, before the splash sound
 	int v = atoi(ini_get(&cfg, "sonido", "volumen", "100"));
 	cfg_volume = v < 0 ? 0 : v > 100 ? 100 : v;
 	igr_menu = combo_mask(ini_get(&cfg, "igr", "menu", "L1+L2+R1+R2+START+SELECT")); // phase 13; OPL's exit combo
-	igr_exit = combo_mask(ini_get(&cfg, "igr", "reiniciar", ""));                     // phase 12
+	igr_exit = combo_mask(ini_get(&cfg, "igr", "reiniciar", "L1+L2+R1+R2+TRIANGLE+CIRCLE"));                     // phase 12
 	igr_off = combo_mask(ini_get(&cfg, "igr", "apagar", "L1+L2+R1+R2+L3+R3"));
 	stub_install = (mcn[0] >= 0 || mcn[1] >= 0); // OPL direct-launch requires an independent memory-card return ELF
 	ra_on = !strcasecmp(ini_get(&cfg, "logros", "activos", "si"), "si"); // phase 16
@@ -2075,7 +2075,7 @@ static int w_fmcb_card(void) // the FREEMCB.CNF to edit: the chosen card's, else
 static void wiz_open(void)
 {
 	const char *o = ini_get(&cfg, "juegos", "origen", "usb"), *ip = ini_get(&cfg, "red", "ip", "dhcp");
-	const char *motor = ini_get(&cfg, "juegos", "motor", "auto");
+	const char *motor = ini_get(&cfg, "juegos", "motor", "opl");
 	memset(w_val, 0, sizeof(w_val));
 	w_val[W_LANG] = lang, w_val[W_THEME] = theme_id, w_val[W_SRC] = src_mask(o), w_val[W_VIDEO] = 1, w_val[W_CARD] = mcn[0] >= 0 ? 0 : mcn[1] >= 0 ? 1 : -1;
 	w_val[W_ENGINE] = !strcasecmp(motor, "opl") ? 2 : !strcasecmp(motor, "neutrino") ? 1 : 0;
