@@ -15,11 +15,11 @@ class LauncherHandoffTests(unittest.TestCase):
 
     def test_low_level_loader_is_called_only_by_recovery_wrapper(self):
         # Every caller must pass through the VBlank recovery path.
-        self.assertEqual(len(re.findall(r"\\brun_loader\\s*\\(", self.launcher)), 1)
+        self.assertEqual(len(re.findall(r"\brun_loader\s*\(", self.launcher)), 1)
         self.assertIn("static void run_loader_recover(int argc, char **argv)", self.launcher)
 
     def test_every_launcher_handoff_uses_recovery_wrapper(self):
-        calls = re.findall(r"\\brun_loader_recover\\s*\\(", self.launcher)
+        calls = re.findall(r"\brun_loader_recover\s*\(", self.launcher)
         # Seven hand-off sites plus the wrapper definition.
         self.assertEqual(len(calls), 8)
         self.assertIn("if (gfx_resume())", self.launcher)
