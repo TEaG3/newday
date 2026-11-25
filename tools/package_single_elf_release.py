@@ -14,22 +14,29 @@ ZIP_PATH = DIST / f"{NAME}.zip"
 VERSION = sys.argv[1] if len(sys.argv) > 1 else "development"
 
 REQUIRED = (
-    "OPL.ELF", "neutrino/neutrino.elf", "neutrino/modules/ee_core.elf",
-    "neutrino/modules/raagent.irx", "neutrino/modules/cdvdman_emu.irx",
-    "neutrino/modules/udpfs_fhi.irx", "neutrino/modules/smap.irx",
-    "neutrino/modules/ministack.irx", "neutrino/modules/smb_ioman.irx",
-    "neutrino/modules/smb_fhi.irx", "neutrino/modules/mmcefhi.irx",
+    "OPL.ELF",
+    "network/modules/smap.irx",
+    "network/modules/ministack.irx",
+    "network/modules/smb_ioman.irx",
 )
-
 OPL_LICENSE_ARCHIVE_PATH = "licenses/OPL-AFL-3.0.txt"
+SMB_LICENSE_ARCHIVE_PATH = "licenses/SMB-support-AFL-3.0.txt"
+AFL_NOTICE = 'Academic Free License ("AFL") v. 3.0'
 
 
 def validate_opl_license(license_text: str) -> str:
     """Keep the release archive label aligned with OPL's upstream license notice."""
-    expected_notice = 'Academic Free License ("AFL") v. 3.0'
-    if expected_notice not in license_text[:512]:
+    if AFL_NOTICE not in license_text[:512]:
         raise ValueError("OPL-LICENSE.txt does not declare the expected AFL-3.0 license")
     return OPL_LICENSE_ARCHIVE_PATH
+
+
+def validate_smb_license(license_text: str) -> str:
+    """Retain the upstream license for the SMB IOP support modules."""
+    if AFL_NOTICE not in license_text[:512]:
+        raise ValueError("SMB-LICENSE.txt does not declare the expected AFL-3.0 license")
+    return SMB_LICENSE_ARCHIVE_PATH
+
 
 def validate_release_version(version: str, launcher_source: str) -> str:
     """Require release metadata and the in-app updater version to identify the same build."""
@@ -54,32 +61,38 @@ def sha256(path: Path) -> str:
             h.update(chunk)
     return h.hexdigest().upper()
 
+
 def main() -> None:
     try:
         validate_release_version(VERSION, (ROOT / "launcher.c").read_text(encoding="utf-8"))
     except ValueError as exc:
         raise SystemExit(str(exc))
+
     elf = ROOT / "TEa.G3.ELF"
     manifest = ROOT / "runtime-manifest.txt"
-    opl_license = ROOT / "OPL-LICENSE.txt"
+    opl_license = ROOT / "runtime-input/OPL-LICENSE.txt"
+    smb_license = ROOT / "runtime-input/network/SMB-LICENSE.txt"
     opl_diagnostic = ROOT / "runtime-input/OPL.ELF"
-    neutrino_tree = DIST / "neutrino"
-    neutrino_license = ROOT / "third_party/neutrino-igr/LICENSE"
     required_files = (
         elf, manifest, ROOT / "INSTALL-AR.txt", ROOT / "INSTALL-EN.txt",
-        ROOT / "README.md", ROOT / "LICENSE", opl_license, neutrino_license,
+        ROOT / "README.md", ROOT / "LICENSE", opl_license, smb_license,
     )
     missing = [str(p.relative_to(ROOT)) for p in required_files if not p.is_file() or p.stat().st_size == 0]
     if missing:
         raise SystemExit("release inputs missing or empty: " + ", ".join(missing))
+
     try:
         opl_license_archive_path = validate_opl_license(opl_license.read_text(encoding="utf-8"))
+        smb_license_archive_path = validate_smb_license(smb_license.read_text(encoding="utf-8"))
     except ValueError as exc:
         raise SystemExit(str(exc))
+
     embedded = manifest.read_text(encoding="utf-8")
     for item in REQUIRED:
         if item not in embedded:
             raise SystemExit("embedded runtime manifest is incomplete: " + item)
+    if "neutrino/neutrino.elf" in embedded.lower():
+        raise SystemExit("Neutrino game runtime must not be embedded in the OPL-only package")
 
     DIST.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
@@ -89,14 +102,10 @@ def main() -> None:
         z.write(ROOT / "README.md", "README.md")
         z.write(ROOT / "LICENSE", "LICENSE")
         z.write(opl_license, opl_license_archive_path)
-        z.write(neutrino_license, "licenses/Neutrino-AFL-3.0.txt")
-        # Optional diagnostics are bundled for completeness; normal installation uses the single embedded ELF.
+        z.write(smb_license, smb_license_archive_path)
+        # The standalone OPL ELF is diagnostic only; normal installation uses TEa.G3.ELF.
         if opl_diagnostic.is_file():
             z.write(opl_diagnostic, "diagnostics/OPL-standalone.ELF")
-        if neutrino_tree.is_dir():
-            for item in sorted(neutrino_tree.rglob("*")):
-                if item.is_file():
-                    z.write(item, "diagnostics/neutrino/" + item.relative_to(neutrino_tree).as_posix())
         z.writestr("README-AR.txt", "حزمة TEa.G3 الشاملة. انسخ TEa.G3.ELF ومجلدات الألعاب إلى جذر USB. راجع INSTALL-AR.txt.\n")
         z.writestr("QUICKSTART.txt", (ROOT / "INSTALL-AR.txt").read_text(encoding="utf-8"))
         z.writestr("DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب PS2 DVD هنا.\n")
@@ -105,12 +114,13 @@ def main() -> None:
         z.writestr("APPS/ضع تطبيقات ELF هنا.txt", "ضع تطبيقات Homebrew بصيغة ELF هنا.\n")
         z.writestr("USB-Template/README-AR.txt", "قالب مجلدات USB؛ ملفات UL تبقى في الجذر.\n")
         z.writestr("USB-Template/README-EN.txt", "USB folder template; UL files remain in the root.\n")
-        z.writestr("docs/runtime-manifest.txt", manifest.read_text(encoding="utf-8"))
+        z.writestr("docs/runtime-manifest.txt", embedded)
         z.writestr("PACKAGE-MANIFEST.txt",
             f"TEa.G3 complete package\nVersion: {VERSION}\n"
             "Single user entry point: TEa.G3.ELF\n"
-            "OPL and Neutrino runtimes are embedded in the ELF.\n"
-            "Standalone OPL/Neutrino diagnostic copies, if present, are optional and not required for installation.\n"
+            "OPL is the only PS2 game engine.\n"
+            "SMB IOP modules are embedded for catalog access; OPL ETH handles SMB game data.\n"
+            "No Neutrino game ELF or Neutrino launch fallback is included.\n"
             "No game images are included.\n"
             "CI success does not replace physical PS2 acceptance testing.\n")
 
@@ -118,8 +128,11 @@ def main() -> None:
     sums.write_text(f"{sha256(ZIP_PATH)}  {ZIP_PATH.name}\n{sha256(elf)}  {elf.name}\n", encoding="utf-8")
     with zipfile.ZipFile(ZIP_PATH) as z:
         bad = z.testzip()
-        required = {"TEa.G3.ELF", "INSTALL-AR.txt", "INSTALL-EN.txt", "DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt",
-                    "CD/ضع ألعاب CD هنا.txt", "POPS/ضع ألعاب PS1 المتوافقة هنا.txt", "APPS/ضع تطبيقات ELF هنا.txt"}
+        required = {"TEa.G3.ELF", "INSTALL-AR.txt", "INSTALL-EN.txt",
+                    "licenses/OPL-AFL-3.0.txt", "licenses/SMB-support-AFL-3.0.txt",
+                    "DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt",
+                    "CD/ضع ألعاب CD هنا.txt", "POPS/ضع ألعاب PS1 المتوافقة هنا.txt",
+                    "APPS/ضع تطبيقات ELF هنا.txt"}
         missing_entries = required.difference(z.namelist())
         if bad or missing_entries:
             raise SystemExit(f"package validation failed: CRC={bad}, missing={sorted(missing_entries)}")
@@ -128,6 +141,7 @@ def main() -> None:
     print(f"elf_sha256={sha256(elf)}")
     print(f"zip_sha256={sha256(ZIP_PATH)}")
     print("package_crc=PASS")
+
 
 if __name__ == "__main__":
     main()
