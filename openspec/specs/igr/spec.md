@@ -9,7 +9,7 @@ TBD - created by archiving change phase-12-igr. Update Purpose after archive.
 - Spanish or English names: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA/UP ABAJO/DOWN IZQUIERDA/LEFT DERECHA/RIGHT
   TRIANGULO/TRIANGLE CIRCULO/CIRCLE X/CROSS CUADRADO/SQUARE, in any case.
 
-An empty value or an unknown name SHALL disable that combo. The defaults SHALL be empty for the reboot (phase 13
+An empty value or an unknown name SHALL disable that combo. The default reboot combo SHALL be `L1+L2+R1+R2+TRIANGLE+CIRCLE`; an empty value explicitly disables IGR reboot (phase 13
 gives L1+L2+R1+R2+START+SELECT to its menu, which has Reiniciar) and L1+L2+R1+R2+L3+R3 for power off.
 
 #### Scenario: Parsing
