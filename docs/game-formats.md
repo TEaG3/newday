@@ -5,11 +5,11 @@ launch-compatibility claim.
 
 | Content | Extension / path | State on this branch |
 |---|---|---|
-| PlayStation 2 disc image | `.iso` in `DVD/` or `CD/` | Existing Neutrino path; baseline regression test |
-| Compressed PS2 image | `.zso` in `DVD/` or `CD/` | Bounded LZ4 decoding is integrated into the Neutrino FHI path on this branch; CI builds it; physical-PS2 game-launch verification remains pending |
+| PlayStation 2 disc image | `.iso` in `DVD/` or `CD/` | Source- and preference-dependent: USB/BDM defaults to the OPL BDM adapter; SMB can use OPL ETH when configured; `motor = neutrino` selects Neutrino. HDD/HDL uses the OPL HDD adapter. Physical-PS2 validation remains pending |
+| Compressed PS2 image | `.zso` in `DVD/` or `CD/` | The pinned OPL IOP ISOFS build includes `zso.c` and `lz4.c`; USB/BDM uses OPL BDM and SMB uses OPL ETH when configured. The EE-side `zso_ee.c` is for metadata scanning only. Neutrino is not a verified ZSO launch backend; physical-PS2 verification remains pending |
 | USBExtreme split image | `ul.cfg` + `ul.*` parts | TEa.G3 now has a bounded 64-byte UL record parser, verifies every sequential split part, and routes entries to a patched OPL direct-boot path; parser, engine-selection and OPL build checks pass in CI, while physical-PS2 runtime tests remain pending |
-| SMB PS2 image | `DVD/*.iso`, `CD/*.iso`, `.zso` on a share | SMB source and Neutrino hand-off are wired. The generated `TEAG3.GAMES` index now lists ISO and ZSO. ZSO uses the common FHI decoder; end-to-end SMB game launch tests remain pending |
-| Internal HDD / HD Loader | APA partitions | TEa.G3 scans main APA headers, calculates the exact HDL start LBA, aggregates sub-partition sizes, and passes startup/LBA/size to OPL mini-launch when `motor = opl`; OPL reads the existing `conf_hdd.cfg` and refuses launch without a configured partition. Auto remains Neutrino. Physical-console validation remains pending |
+| SMB PS2 image | `DVD/*.iso`, `CD/*.iso`, `.zso` on a share | TEa.G3 reads the generated `TEAG3.GAMES` index and prepares the SMB source. Automatic OPL selection uses the SMB/ETH adapter when its network configuration is valid; Neutrino hand-off is a separate selectable path. ZSO requires the OPL decoder. End-to-end SMB game launch tests remain pending |
+| Internal HDD / HD Loader | APA partitions | TEa.G3 scans main APA headers, calculates the HDL start LBA, aggregates sub-partition sizes, and passes startup/LBA/size to the OPL mini-launch adapter. The engine policy selects OPL HDD for automatic or explicit OPL mode; OPL reads the existing `conf_hdd.cfg` and refuses launch without a configured partition. Physical-console validation remains pending |
 | PlayStation 1 image | `.vcd` in `POPS/` | Existing POPStarter path; separate from Neutrino's PS2 CDVD path |
 | Homebrew application | `.elf` in `APPS/` | Existing launcher path |
 | CSO / Deflate | `.cso` | Not supported by the current LZ4-based ZSO reader on local sources |
@@ -25,14 +25,11 @@ supported only when all of these work together:
 1. The front-end discovers the file and obtains its title/serial without corrupting
    the normal ISO path.
 2. The storage backend provides bounded random reads and seeks.
-3. The Neutrino CDVD path converts logical disc-sector reads correctly.
+3. The selected runtime's CDVD path (OPL or Neutrino) converts logical disc-sector reads correctly.
 4. CI checks valid, malformed, truncated and out-of-range images.
 5. A game is launched from the actual TEa.G3 menu on a physical PS2 and sustains reads during gameplay.
 
-ZSO decoding is placed at the common FHI sector layer. This is a code-level
-integration point, not proof that every backend can run every ZSO. Each source
-must pass its own read/seek and real-game tests. SMB now admits ISO and ZSO entries in its catalogue. Its ZSO hand-off is code-integrated
-through the common FHI decoder, but still requires an end-to-end game launch test.
+The OPL IOP ISOFS build includes the ZSO/LZ4 decoder, and the TEa.G3 engine policy routes ZSO to OPL adapters where they are available. The EE-side `zso_ee.c` reader is used to inspect metadata while scanning; it is not the game-sector decoder. Do not select Neutrino for ZSO: this build has no verified Neutrino ZSO decoder. SMB catalogue discovery and OPL ETH hand-off are code-integrated, but each backend still requires end-to-end launch and sustained-read tests.
 
 ## SMB source requirements
 
@@ -43,18 +40,14 @@ through the common FHI decoder, but still requires an end-to-end game launch tes
 - The share must contain `DVD/`, `CD/` and a generated `TEAG3.GAMES` file.
   Run `python tools/smb_catalog.py <local-share-root>` on the computer hosting
   the share. The index format is `relative-path<TAB>title<TAB>serial`.
-- Paths are ASCII and images are ISO or ZSO files. Neutrino SMB is read-only:
+- Paths are ASCII and images are ISO or ZSO files. The SMB source is read-only:
   TEa.G3 uses the physical memory card and does not create a VMC on the share.
 - Keep the generated `neutrino/config/bsd-smb.toml` private: the SMB password is
   written there in plain text by the runtime configuration hand-off.
 - SMB and UDPBD/UDPFS are mutually exclusive in one TEa.G3 session because they
   share the PS2 network adapter.
 
-The integration branch now contains source-specific runtime paths: Neutrino
-remains the default for ISO/ZSO, while OPL handles manually selected BDM,
-SMB/ETH and APA/HD Loader paths, plus USBExtreme UL automatically. The UL catalogue parser, split-part checks and engine
-selection matrix are implemented and host-tested. Actual game boot and
-in-game-read verification on real PS2 hardware are still pending.
+The current master contains source-specific runtime paths: automatic/explicit OPL selection routes USB and BDM to OPL BDM, SMB to OPL ETH when configured, and APA/HD Loader to OPL HDD; USBExtreme UL is OPL-only. Neutrino remains selectable for supported ISO paths and for other sources whose adapter policy permits it. ZSO is OPL-only in this build. The UL catalogue parser, split-part checks and engine-selection matrix are implemented and host-tested. Actual game boot and sustained-read verification on real PS2 hardware are still pending.
 
 ## Themes are independent of image formats
 
@@ -103,11 +96,13 @@ instruction, not a release-ready installer or a claim of verified gameplay.
 ### Selecting the runtime engine
 
 In `mass0:/tea_g3/config.ini`, the `[juegos]` option `motor` accepts
-`auto`, `neutrino`, or `opl`. Automatic mode keeps ISO/ZSO on Neutrino and
-routes USBExtreme UL to OPL. Setting `motor = opl` manually routes USB ISO/ZSO
-games to OPL as well; SMB ISO/ZSO and APA/HD Loader games use their dedicated
-OPL adapters. MMCE and UDPBD/UDPFS continue on Neutrino. UL remains OPL-only.
+`auto`, `neutrino`, or `opl`. Automatic mode selects OPL BDM for USB/BDM ISO
+and ZSO, OPL ETH for configured SMB sources, and OPL HDD for APA/HD Loader;
+USBExtreme UL is always OPL-only. `motor = neutrino` is valid for supported
+ISO paths, but ZSO is rejected because this build has no verified Neutrino ZSO
+decoder. `motor = opl` requests the corresponding OPL adapter. MMCE and
+UDPBD/UDPFS retain their Neutrino path for supported ISO images.
 
 ## Full upstream OPL scope versus TEa.G3 adapters
 
-The upstream OPL codebase advertises USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, with ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts according to backend/build. TEa.G3 currently has a direct OPL adapter for USB ISO/ZSO (manual selection) and USBExtreme UL (automatic). Other storage backends and their format-specific hand-offs remain integration work; they must be implemented rather than removed or hidden. HDLoader is an HDD partition format, UL is a split USB layout, and ELF homebrew is an application category—not interchangeable disc-image formats. See [OPL runtime integration](opl-engine-integration.md) for the explicit adapter matrix.
+The upstream OPL codebase advertises USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, with ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts according to backend/build. TEa.G3 currently has direct OPL adapters for USB/BDM ISO and ZSO, SMB/ETH ISO and ZSO, APA/HD Loader partitions, and USBExtreme UL. Automatic engine selection uses the available source-specific adapter; the Neutrino fallback is not a ZSO path. Each adapter still requires real-console launch and sustained-read verification. HDLoader is an HDD partition format, UL is a split USB layout, and ELF homebrew is an application category—not interchangeable disc-image formats. See [OPL runtime integration](opl-engine-integration.md) for the explicit adapter matrix.
