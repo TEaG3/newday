@@ -302,7 +302,7 @@ int main(void)
 	assert(iso_find(read_file, f, "SYSTEM.CNF", &lba, &size) && lba == 20 && size == 40);
 	assert(!iso_find(read_file, f, "DATA\\MAIN.EL", &lba, &size) && !iso_find(read_file, f, "MAIN.ELF", &lba, &size));
     /* Malformed directory-record length and root-record length must fail closed. */
-    root[34] = 255; rewind(f); fwrite(iso, 1, sizeof(iso), f);
+    root[34] = 33; rewind(f); fwrite(iso, 1, sizeof(iso), f);
     assert(!iso_find(read_file, f, "SYSTEM.CNF", &lba, &size));
     root[34] = 46; pvd[156] = 0; rewind(f); fwrite(iso, 1, sizeof(iso), f);
     assert(!iso_find(read_file, f, "SYSTEM.CNF", &lba, &size));
