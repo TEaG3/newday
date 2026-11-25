@@ -58,10 +58,20 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertNotIn("run_loader(8, opl_argv)", self.release_workflow)
         self.assertIn("USBExtreme UL يستخدم OPL فقط", self.release_workflow)
 
-    def test_release_workflow_uses_the_ci_pinned_teag3_opl_source(self):
+    def test_release_workflow_uses_the_gitlink_pinned_teag3_opl_source(self):
         self.assertIn("repository: TEaG3/OPL", self.release_workflow)
-        self.assertIn("ref: 46bad5a4a469c51e45eb1ed879fe43c100b8cb7b", self.release_workflow)
+        self.assertIn("git ls-tree HEAD engine/opl", self.release_workflow)
+        self.assertIn("ref: ${{ steps.opl-ref.outputs.sha }}", self.release_workflow)
+        self.assertIn("submodules: recursive", self.build_workflow)
         self.assertNotIn("repository: ps2homebrew/Open-PS2-Loader", self.release_workflow)
+
+    def test_both_opl_builds_generate_and_verify_complete_arabic(self):
+        for workflow in (self.build_workflow, self.release_workflow):
+            self.assertIn("check_arabic_translation.py", workflow)
+            self.assertIn("make languages", workflow)
+            self.assertIn("test -s lng/lang_Arabic.lng", workflow)
+            self.assertIn("grep -Fq 'العودة' lng/lang_Arabic.lng", workflow)
+            self.assertIn("test -s lng_src/thirdparty/font_Arabic.ttf", workflow)
 
     def test_release_opl_build_flags_match_ci(self):
         flags = "make NOT_PACKED=1 RTL=1 PADEMU=1"
