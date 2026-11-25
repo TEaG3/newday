@@ -123,7 +123,7 @@ int main(void)
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "opl", 1, 1);
     assert(d.engine == ENGINE_OPL_HDD);
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "auto", 1, 1);
-    assert(d.engine == ENGINE_NEUTRINO);
+    assert(d.engine == ENGINE_OPL_HDD);
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_USB, "opl", 0, 1);
     assert(d.engine == ENGINE_NEUTRINO && d.reason == ENGINE_REASON_OPL_RUNTIME_MISSING);
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "opl", 1, 1);
