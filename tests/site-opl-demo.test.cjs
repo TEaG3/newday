@@ -9,8 +9,8 @@ const runtimeSources = ["i18n.js", "opl-demo.js", "release.js", "themes.js"]
 assert.match(runtimeSources, /tea-g3:languagechange/);
 assert.doesNotMatch(runtimeSources, /nuld:languagechange/);
 const i18nSource = fs.readFileSync(path.join(__dirname, "../site/i18n.js"), "utf8");
-assert.match(i18nSource, /\\[data-teag3-lang\\]/);
-assert.match(i18nSource, /dataset\\.teag3Lang/);
+assert.ok(i18nSource.includes('"[data-teag3-lang]"'));
+assert.ok(i18nSource.includes("b.dataset.teag3Lang"));
 const siteCss = fs.readFileSync(path.join(__dirname, "../site/site.css"), "utf8");
 assert.match(siteCss, /[.]tea-g3-rtl/);
 assert.doesNotMatch(siteCss, /[.]nuld-rtl/);
