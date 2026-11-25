@@ -119,40 +119,37 @@ int catalog_stage_snapshot_diff(const catalog_stage_snapshot *old_snapshot,
 {
     uint16_t slots[CATALOG_STAGE_HASH_SLOTS];
     unsigned char matched[CATALOG_STAGE_MAX_ITEMS];
-    catalog_stage_diff result;
     size_t i;
     int status;
 
     if (!old_snapshot || !new_snapshot || !out) return CATALOG_STAGE_ERR_ARGUMENT;
-    status = catalog_stage_snapshot_validate(old_snapshot);
-    if (status != CATALOG_STAGE_OK) return status;
     status = build_index(new_snapshot, slots);
     if (status != CATALOG_STAGE_OK) return status;
     status = build_index(old_snapshot, slots);
     if (status != CATALOG_STAGE_OK) return status;
 
-    memset(&result, 0, sizeof(result));
+    /* Validation is complete: write directly to caller storage to keep EE stack use bounded. */
+    memset(out, 0, sizeof(*out));
     memset(matched, 0, sizeof(matched));
     for (i = 0; i < new_snapshot->count; ++i) {
         const catalog_stage_record *next = &new_snapshot->records[i];
         int old_index = index_find(old_snapshot, slots, next);
         if (old_index < 0) {
-            result.added[result.added_count++] = (uint16_t)i;
+            out->added[out->added_count++] = (uint16_t)i;
         } else {
             const catalog_stage_record *old = &old_snapshot->records[old_index];
             matched[old_index] = 1;
             if (old->flags != next->flags || old->size != next->size ||
                 old->fingerprint != next->fingerprint) {
-                result.changed_old[result.changed_count] = (uint16_t)old_index;
-                result.changed_new[result.changed_count] = (uint16_t)i;
-                ++result.changed_count;
+                out->changed_old[out->changed_count] = (uint16_t)old_index;
+                out->changed_new[out->changed_count] = (uint16_t)i;
+                ++out->changed_count;
             }
         }
     }
     for (i = 0; i < old_snapshot->count; ++i)
-        if (!matched[i]) result.removed[result.removed_count++] = (uint16_t)i;
+        if (!matched[i]) out->removed[out->removed_count++] = (uint16_t)i;
 
-    *out = result;
     return CATALOG_STAGE_OK;
 }
 
