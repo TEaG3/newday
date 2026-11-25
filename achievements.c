@@ -302,9 +302,10 @@ int main(int argc, char **argv)
 	// minimal ISO (as iso.c's selftest): SYSTEM.CNF at 20 boots SLUS_209.46 at 19, "\x7f" "ELF!" (5 bytes)
 	static unsigned char iso[2048 * 21];
 	unsigned char *pvd = iso + 16 * 2048, *root = iso + 18 * 2048, *rec;
-	pvd[0] = 1; memcpy(pvd + 1, "CD001", 5);
-	pvd[156 + 2] = 18; pvd[156 + 11] = 2048 >> 8;
-	rec = root; rec[0] = 34; rec[32] = 1;
+	pvd[0] = 1; memcpy(pvd + 1, "CD001", 5); pvd[6] = 1;
+	pvd[156] = 34; pvd[156 + 2] = 18; pvd[156 + 11] = 2048 >> 8;
+	pvd[156 + 25] = 2; pvd[156 + 32] = 1; pvd[156 + 33] = 0;
+	rec = root; rec[0] = 34; rec[2] = 18; rec[11] = 2048 >> 8; rec[25] = 2; rec[32] = 1; rec[33] = 0;
 	rec = root + 34; rec[0] = 46; rec[2] = 20; rec[10] = 40; rec[32] = 12; memcpy(rec + 33, "SYSTEM.CNF;1", 12);
 	rec = root + 80; rec[0] = 46; rec[2] = 19; rec[10] = 5; rec[32] = 13; memcpy(rec + 33, "SLUS_209.46;1", 13);
 	memcpy(iso + 20 * 2048, "BOOT2 = cdrom0:\\SLUS_209.46;1\r\nVER = 1.00\r\n", 40);

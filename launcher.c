@@ -641,91 +641,123 @@ static unsigned src_want; // config [juegos] origen (phase 14)
 
 static int ul_part_exists(void *context, const char *filename)
 {
-	const char *root = (const char *)context;
-	char path[320];
-	snprintf(path, sizeof(path), "%s/%s", root, filename);
-	int fd = fileXioOpen(path, FIO_O_RDONLY);
-	if (fd < 0) return 0;
-	s64 size = fileXioLseek64(fd, 0, FIO_SEEK_END);
-	fileXioClose(fd);
-	return size > 0;
+    const char *root = (const char *)context;
+    char path[320];
+    int n;
+    if (!root || !filename || !*filename) return 0;
+    n = snprintf(path, sizeof(path), "%s/%s", root, filename);
+    if (n < 0 || n >= (int)sizeof(path)) return 0;
+    int fd = fileXioOpen(path, FIO_O_RDONLY);
+    if (fd < 0) return 0;
+    s64 size = fileXioLseek64(fd, 0, FIO_SEEK_END);
+    int closed = fileXioClose(fd);
+    return size > 0 && closed >= 0;
 }
 
 static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
 {
-	if (src[s].type != SRC_USB || n >= MAXC) return n;
-	char cfg_path[300];
-	snprintf(cfg_path, sizeof(cfg_path), "%s/ul.cfg", src[s].root);
-	int fd = fileXioOpen(cfg_path, FIO_O_RDONLY);
-	if (fd < 0) return n;
-	s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
-	if (end <= 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
-		printf("UL: invalid ul.cfg size %lld\n", end);
-		fileXioClose(fd);
-		return n;
-	}
-	if (fileXioLseek64(fd, 0, FIO_SEEK_SET) < 0) {
-		fileXioClose(fd);
-		return n;
-	}
-	int records = (int)(end / UL_CFG_RECORD_SIZE);
-	for (int r = 0; r < records && n < MAXC; r++) {
-		unsigned char raw[UL_CFG_RECORD_SIZE];
-		ul_game game;
-		if (fileXioRead(fd, raw, sizeof(raw)) != sizeof(raw)) break;
-		if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
-		entry *e = &cv[n++];
-		memset(e, 0, sizeof(*e));
-		snprintf(e->title, sizeof(e->title), "%s", game.name);
-		serial_dash(game.startup, e->serial);
-		snprintf(e->path, sizeof(e->path), "ul.cfg#%d", r);
-		snprintf(e->boot, sizeof(e->boot), "%s", game.startup);
-		memcpy(e->ul_name, game.raw_name, sizeof(e->ul_name));
-		e->kind = K_PS2;
-		e->cd = game.media == 0x12;
-		e->src = s;
-		e->engine = ENGINE_OPL_UL;
-		e->parts = game.parts;
-		done_n++, total_n++;
-	}
-	fileXioClose(fd);
-	return n;
+    if (s < 0 || s >= nsrc || src[s].type != SRC_USB || n < 1 || n >= MAXC) return n;
+    char cfg_path[300];
+    int path_len = snprintf(cfg_path, sizeof(cfg_path), "%s/ul.cfg", src[s].root);
+    if (path_len < 0 || path_len >= (int)sizeof(cfg_path)) return n;
+    int fd = fileXioOpen(cfg_path, FIO_O_RDONLY);
+    if (fd < 0) return n;
+    s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
+    if (end <= 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
+        printf("UL: invalid ul.cfg size %lld\n", end);
+        fileXioClose(fd);
+        return n;
+    }
+    if (fileXioLseek64(fd, 0, FIO_SEEK_SET) < 0) {
+        fileXioClose(fd);
+        return n;
+    }
+    int records = (int)(end / UL_CFG_RECORD_SIZE);
+    for (int r = 0; r < records && n < MAXC; r++) {
+        unsigned char raw[UL_CFG_RECORD_SIZE];
+        ul_game game;
+        int got = fileXioRead(fd, raw, sizeof(raw));
+        if (got != (int)sizeof(raw)) {
+            printf("UL: short read at record %d (%d/%u)\n", r, got, (unsigned)sizeof(raw));
+            break;
+        }
+        if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
+        entry *e = &cv[n];
+        memset(e, 0, sizeof(*e));
+        if (snprintf(e->title, sizeof(e->title), "%s", game.name) >= (int)sizeof(e->title) ||
+            snprintf(e->path, sizeof(e->path), "ul.cfg#%d", r) >= (int)sizeof(e->path)) continue;
+        serial_dash(game.startup, e->serial);
+        snprintf(e->boot, sizeof(e->boot), "%s", game.startup);
+        memcpy(e->ul_name, game.raw_name, sizeof(e->ul_name));
+        e->kind = K_PS2;
+        e->cd = game.media == 0x12;
+        e->src = s;
+        e->engine = ENGINE_OPL_UL;
+        e->parts = game.parts;
+        n++, done_n++, total_n++;
+    }
+    if (fileXioClose(fd) < 0) printf("UL: close failed for %s\n", cfg_path);
+    return n;
 }
 
-static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (2 POPS, the USB only) of source s from cv[n]
+static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS, the USB only) of source s
 {
-	static const char *dirs[3] = {"DVD", "CD", "POPS"};
-	struct dirent *e;
-	char path[300], raw[16];
-	snprintf(path, sizeof(path), "%s/%s", src[s].root, dirs[k]);
-	DIR *d = opendir(path);
-	while (d && (e = readdir(d)) && n < MAXC) {
-		int ps1 = k == 2;
-		if (!has_ext(e->d_name, ps1 ? ".vcd" : ".iso") && (ps1 || !has_ext(e->d_name, ".zso"))) continue;
-		snprintf(cv[n].path, sizeof(cv[n].path), "%s/%s", dirs[k], e->d_name);
-		snprintf(path, sizeof(path), "%s/%s", src[s].root, cv[n].path);
-		int fd = fileXioOpen(path, FIO_O_RDONLY);
-		int zso_file = !ps1 && has_ext(e->d_name, ".zso");
-		int ok = 0;
-		if (fd >= 0) {
-			if (zso_file) {
-				if (zso_ee_open(fd) == 1) ok = iso_serial(zso_fx_read, &fd, 0, raw);
-				zso_ee_close();
-			} else ok = iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw);
-			fileXioClose(fd);
-		} // SYSTEM.CNF; compressed files use the same decoder as the runtime
-		if (!ok && !zso_file) ok = name_serial(e->d_name, raw);
-		done_n++;
-		if (!ok && !ps1) { printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\n", path); continue; }
-		memset(cv[n].serial, 0, sizeof(cv[n].serial));
-		if (ok) serial_dash(raw, cv[n].serial); // a PS1 game without one is still listed, without covers
-		if (ok && !ps1) snprintf(cv[n].boot, sizeof(cv[n].boot), "%s", raw); // OPL direct-boot startup ID
-		iso_title(e->d_name, cv[n].title, sizeof(cv[n].title));
-		cv[n].kind = ps1 ? K_PS1 : K_PS2, cv[n].cd = k == 1, cv[n].src = s;
-		n++;
-	}
-	if (d) closedir(d);
-	return n;
+    static const char *dirs[3] = {"DVD", "CD", "POPS"};
+    struct dirent *e;
+    char path[300], raw[16];
+    if (s < 0 || s >= nsrc || k < 0 || k >= 3 || n < 1 || n >= MAXC) return n;
+    int path_len = snprintf(path, sizeof(path), "%s/%s", src[s].root, dirs[k]);
+    if (path_len < 0 || path_len >= (int)sizeof(path)) return n;
+    DIR *d = opendir(path);
+    if (!d) return n;
+    while ((e = readdir(d)) != NULL && n < MAXC) {
+        int ps1 = k == 2;
+        if (!has_ext(e->d_name, ps1 ? ".vcd" : ".iso") &&
+            (ps1 || !has_ext(e->d_name, ".zso"))) continue;
+        entry *item = &cv[n];
+        memset(item, 0, sizeof(*item));
+        int rel_len = snprintf(item->path, sizeof(item->path), "%s/%s", dirs[k], e->d_name);
+        if (rel_len < 0 || rel_len >= (int)sizeof(item->path)) continue;
+        path_len = snprintf(path, sizeof(path), "%s/%s", src[s].root, item->path);
+        if (path_len < 0 || path_len >= (int)sizeof(path)) continue;
+        int fd = fileXioOpen(path, FIO_O_RDONLY);
+        int zso_file = !ps1 && has_ext(e->d_name, ".zso");
+        int ok = 0;
+        s64 bytes = -1;
+        if (fd >= 0) {
+            bytes = fileXioLseek64(fd, 0, FIO_SEEK_END);
+            if (bytes > 0) {
+                if (zso_file) {
+                    if (zso_ee_open(fd) == 1) ok = iso_serial(zso_fx_read, &fd, 0, raw);
+                    zso_ee_close();
+                } else {
+                    ok = iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw);
+                }
+            }
+            if (fileXioClose(fd) < 0) printf("scan: close failed: %s\n", path);
+        }
+        /* OPL's canonical filename can supply a serial when SYSTEM.CNF is absent,
+           but a missing, empty, or unreadable file is never listed. */
+        done_n++;
+        if (bytes <= 0) {
+            printf("scan: unreadable or empty game image: %s\n", path);
+            continue;
+        }
+        if (!ok && !zso_file) ok = name_serial(e->d_name, raw);
+        if (!ok && !ps1) {
+            printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\n", path);
+            continue;
+        }
+        if (ok) serial_dash(raw, item->serial);
+        if (ok && !ps1) snprintf(item->boot, sizeof(item->boot), "%s", raw);
+        iso_title(e->d_name, item->title, sizeof(item->title));
+        item->kind = ps1 ? K_PS1 : K_PS2;
+        item->cd = k == 1;
+        item->src = s;
+        n++;
+    }
+    closedir(d);
+    return n;
 }
 
 // phase 17: the games of the server's catalog (tools/nuld_catalog.py on [juegos] servidor, HTTP 18290), read with
@@ -2566,14 +2598,66 @@ static int status_text(char *b, int max)
 	return k < max ? k : max - 1;
 }
 
+static int launch_source_ready(int i)
+{
+    unsigned s;
+    char path[320];
+    int fd, n;
+    s64 size;
+    if (i < 0 || i >= ncv || i >= MAXC) return 0;
+    if (cv[i].kind == K_DISC) return 1;
+    s = (unsigned char)cv[i].src;
+    if (s >= (unsigned)nsrc) return 0;
+
+    if ((cv[i].kind == K_PS2 || cv[i].kind == K_APP) && on_catalog(i))
+        return net_ready() >= 0; /* Server-backed entries have no local file path. */
+
+    if (cv[i].kind == K_PS2 && src[s].type == SRC_HDL) {
+        DIR *d = opendir("hdd0:");
+        if (!d) return 0;
+        closedir(d);
+        return cv[i].hdl_start_sector && cv[i].hdl_size_kb && cv[i].hdl_disc_type;
+    }
+
+    if (cv[i].kind == K_PS2 && cv[i].engine == ENGINE_OPL_UL) {
+        unsigned int crc = ul_name_crc32(cv[i].ul_name);
+        char part[40];
+        if (src[s].type != SRC_USB || !cv[i].parts || !*cv[i].boot) return 0;
+        for (unsigned int k = 0; k < (unsigned char)cv[i].parts; k++) {
+            n = snprintf(part, sizeof(part), "ul.%08X.%s.%02x", crc, cv[i].boot, k);
+            if (n < 0 || n >= (int)sizeof(part) || !ul_part_exists(src[s].root, part)) return 0;
+        }
+        return 1;
+    }
+
+    n = snprintf(path, sizeof(path), "%s/%s", src[s].root, cv[i].path);
+    if (n < 0 || n >= (int)sizeof(path)) return 0;
+    fd = fileXioOpen(path, FIO_O_RDONLY);
+    if (fd < 0) return 0;
+    size = fileXioLseek64(fd, 0, FIO_SEEK_END);
+    int closed = fileXioClose(fd);
+    return size > 0 && closed >= 0;
+}
+
 static const char *launch_problem(int i) // select a viable engine before handing control away
 {
+	if (i < 0 || i >= MAXC || i >= ncv) return L("Invalid game selection");
+	if (cv[i].kind < K_PS2 || cv[i].kind > K_DISC) return L("Invalid game record");
+	if (cv[i].kind != K_DISC && (unsigned char)cv[i].src >= nsrc)
+		return L("Game source is no longer available");
+	if (!launch_source_ready(i))
+		return L("The game image is no longer readable from its source");
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
 	if (engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this source");
-	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("Could not install the embedded Neutrino runtime");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO) {
+		if (!neutrino) return L("Could not install the embedded Neutrino runtime");
+		if (!runtime_asset_valid(RUNTIME_DIR, "neutrino/neutrino.elf"))
+			return L("Neutrino runtime failed its integrity check");
+	}
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
-		if (!exists(OPL_PATH)) return L("Could not install the embedded OPL runtime");
+		if (!runtime_asset_valid(RUNTIME_DIR, "OPL.ELF"))
+			return L("OPL runtime failed its integrity check");
 		if (stub_port < 0) return stub_install ? L("Preparing the independent return path; try again shortly") : L("A memory-card return stub is required before this launch");
 	}
 	if (engine == ENGINE_OPL_HDD &&
@@ -2599,6 +2683,7 @@ static const char *launch_err; // why the last launch() came back (toast)
 
 static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is created now (a few seconds, 8 MB)
 {
+	static vmc_ent existing_entries[MAXDIR];
 	char path[64], dir[24];
 	if (on_catalog(i)) { // phase 17: the card lives on the server, its catalog service makes it
 		char name[40], buf[512];
@@ -2611,7 +2696,12 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 		return st == 200 || st == 201;
 	}
 	vmc_file(i, path, sizeof(path));
-	if (exists(path)) return 1;
+	int entries = vmc_list(path, existing_entries, MAXDIR);
+	if (entries >= 0) return 1;
+	if (exists(path)) {
+		launch_err = L("Virtual memory card is corrupt or unreadable");
+		return 0;
+	}
 	gfx_begin();
 	T->bg(0);
 	gfx_alpha(0x80);
@@ -2626,7 +2716,9 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 	mkdir(dir, 0777);
 	clock_t c0 = clock();
 	int ok = vmc_create(path);
-	printf("vmc %s: %s in %d ms\n", path, ok ? "created" : "FAILED", (int)((long long)(clock() - c0) * 1000 / CLOCKS_PER_SEC));
+	if (ok && vmc_list(path, existing_entries, MAXDIR) < 0) ok = 0;
+	printf("vmc %s: %s in %d ms\n", path, ok ? "created and verified" : "FAILED", (int)((long long)(clock() - c0) * 1000 / CLOCKS_PER_SEC));
+	if (!ok) launch_err = L("Virtual memory card is corrupt or unreadable");
 	return ok;
 }
 
@@ -2668,6 +2760,8 @@ static const char *app_fetch(int i, char *file, int n)
 
 static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an app ELF, or the BIOS for discs
 {
+	launch_err = launch_problem(i);
+	if (launch_err) return;
 	launch_err = NULL;
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
