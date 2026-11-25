@@ -1,74 +1,53 @@
 # TEa.G3 engineering and release quality gates
 
-This document records lessons that must remain active during the NULD/ORBIT to TEa.G3 transition.
-Historical release notes and phase reports are evidence of what happened at the time; do not rewrite them
-to make old builds appear to have carried current fixes.
+This document records lessons from the NULD/ORBIT to TEa.G3 transition and the current OPL-only runtime. Historical release notes and phase reports are evidence of what happened at the time; do not rewrite old builds to make them appear to have carried current fixes.
 
 ## Regression chain: v1.2.1 to v1.2.4
 
-The historical notes record a sequence in which a fix appeared plausible but broke or failed to restore a
-feature: achievements caused freezes at scene loads, the next build stopped reporting unlocks, a later build
-identified the wrong file/argument passed by the launcher, and the in-game menu exposed a controller-read
-freeze. Treat this as a regression case study, not proof that the current code has the same defect.
+The historical notes record a sequence in which a fix appeared plausible but broke or failed to restore a feature: achievements caused freezes at scene loads, the next build stopped reporting unlocks, a later build identified the wrong file/argument passed by the launcher, and the in-game menu exposed a controller-read freeze. Treat this as a regression case study, not proof that the current OPL-only code has the same defect.
 
-For every change touching launch hand-off, DMA/SIF, pad interrupts, IGR, memory cards, runtime loading or
-storage reads:
+For every change touching launch hand-off, DMA/SIF, pad interrupts, IGR, memory cards, runtime loading or storage reads:
 
 1. Add a focused host fixture or structural regression test for the failure mode before changing the code.
-2. Couple the test to the actual contract (argument layout, address bounds, channel bit, return path), not
-   merely to a function name or a successful compile.
-3. Run the full PS2 build and preserve its logs and artifacts; do not skip or weaken a failing check to get
-   a green workflow.
-4. Keep a separate physical-console acceptance item for behavior that host CI cannot reproduce. Record the
-   console model/revision, TEa.G3 commit, OPL/Neutrino build IDs, game serial, source, engine, observed result,
-   launcher/debug log and a photo or video when a visual symptom matters.
+2. Couple the test to the actual contract (argument layout, address bounds, channel bit, return path), not merely to a function name or a successful compile.
+3. Run the full PS2 build and preserve its logs and artifacts; do not skip or weaken a failing check to get a green workflow.
+4. Keep a separate physical-console acceptance item for behavior that host CI cannot reproduce. Record console model/revision, TEa.G3 commit, OPL build ID, SMB support-module build ID, game serial, source, OPL adapter, observed result, launcher/debug log and a photo or video when a visual symptom matters.
 
-A host fixture proves the tested logic under its fixture assumptions. It does not prove an actual game boot,
-sustained reads, stable IGR, controller behavior or memory-card compatibility on hardware.
+A host fixture proves the tested logic under its fixture assumptions. It does not prove an actual game boot, sustained reads, stable IGR, controller behavior or memory-card compatibility on hardware.
 
 ## PCSX2 is diagnostic, not a performance reference
 
-PCSX2 is useful for repeatable correctness checks, menu navigation, crash reproduction and log collection.
-The historical phase-0 measurements show that its modeled GS draw timing does not track the real PS2 GS:
-resolution-dependent clear costs that differ materially on the console were nearly constant in the emulator.
-Therefore:
-
+PCSX2 is useful for repeatable correctness checks, menu navigation, crash reproduction and log collection. Historical phase-0 measurements show that its modeled GS draw timing does not track the real PS2 GS:
 - Never publish FPS, frame-time, no-stutter or GS-performance claims derived from PCSX2.
-- Performance claims in a release note require COP0/GS timing captured on a physical PS2, with console model,
-  video mode, commit and raw measurement log attached.
-- The previous baseline uses SCPH-75001; another model may be used only when clearly recorded and never
-  represented as a SCPH-75001 result.
-- Preserve docs/phase0-results.md and docs/image-quality.md as historical engineering evidence; do not change
-  their measured values during a branding cleanup.
+- Performance claims in a release note require COP0/GS timing captured on a physical PS2, with console model, video mode, commit and raw measurement log attached.
+- Preserve docs/phase0-results.md and docs/image-quality.md as historical engineering evidence; do not change their measured values during a branding cleanup.
 
 ## Features whose status must stay explicit
 
-- Virtual memory cards: phase 14 recorded a PCSX2 hang at the first mcGetInfo call with -mc0, while console
-  creation/list/read checks were a different test. Do not claim in-game VMC works until physical-PS2 game
-  save/load acceptance is recorded.
-- RetroAchievements agent: phase 16b recorded end-to-end PCSX2 telemetry and explicitly left the console
-  pending. Host and emulator checks do not close the hardware gate.
-- IGR and menu: phase 13 had one successful SCPH-75001 Black/480p test, but changes to Neutrino, GSM, stack
-  layout, kernel patching or menu code require rechecking the affected path on hardware.
-- Themes/image quality: only report measured performance for themes and modes with raw console data.
-  'Ran without visible stutter' is an observation, not a measured frame-rate result.
+- **Virtual memory cards:** TEa.G3's old VMC preferences are retained for migration but are not passed by the OPL hand-off. Configure VMC inside OPL and test actual game save/load on hardware.
+- **RetroAchievements:** Library metadata remains visible; the former Neutrino in-game achievement agent is not part of the OPL-only runtime. Do not claim in-game unlock telemetry.
+- **IGR:** The old Neutrino in-game menu is not included. Use OPL's own IGR controls and verify the TEa.G3 recovery-stub return path on hardware.
+- **Video and compatibility:** The old TEa.G3 per-game values are not applied by OPL. Configure them in OPL itself.
+- **Themes/image quality:** Only report measured performance for themes and modes with raw console data. 'Ran without visible stutter' is an observation, not a measured frame-rate result.
+
+## OPL-only routing boundary
+
+- USB/BDM, MX4SIO, iLink and supported ATA-backed BDM storage route to OPL BDM.
+- Configured SMB ISO/ZSO routes to OPL ETH. The embedded SMB IOP modules are catalog support only; OPL ETH opens game data.
+- APA/HD Loader ISO routes to OPL HDD mini-launch. ZSO is rejected on this path.
+- USBExtreme UL routes to OPL UL and remains USB-only.
+- MMCE, UDPBD and UDPFS are not active OPL game adapters and must fail closed.
+- Legacy `motor = neutrino` is rejected. No Neutrino EE game ELF is built, embedded or launched.
 
 ## Compatibility and history policy
 
-- Keep historical release notes v1.0 through v1.2.14 unchanged. They describe ORBIT/NULD-era assets and URLs
-  as they existed then.
-- Current TEa.G3 pages, manuals, download controls and current release notes must use the TEa.G3 identity
-  and current package. Link the historical GitHub Releases archive separately where appropriate.
-- Keep internal names, migration sources, theme keys and deployed server paths when code depends on them.
-  A compatibility identifier such as nuld/, orbit/, nuld_catalog.py or the Classic theme key is not by
-  itself a user-visible product-brand failure.
+- Keep historical release notes v1.0 through v1.2.14 unchanged. They describe ORBIT/NULD-era assets and URLs as they existed then.
+- Current TEa.G3 pages, manuals, download controls and current release notes must use the TEa.G3 identity and current package.
+- Keep internal names, migration sources, theme keys and deployed server paths when code depends on them. A compatibility identifier such as `nuld/`, `orbit/`, `nuld_catalog.py` or the Classic theme key is not by itself a user-visible product-brand failure.
 - Do not delete old user data or rewrite historical Git tags/releases as part of a rebrand.
 
 ## Current status boundary
 
-The CI map guard checks the actual ee_core.map after each Neutrino build and requires at least 1024 bytes
-between _end and the fixed IGR stack base 0x94000. This protects future changes; it does not prove that
-a build with adequate headroom will boot on a physical console.
+CI validates the OPL source pin, adapter patches, OPL BDM/ETH/HDD/UL hand-offs, SMB catalog support modules, runtime manifest, ELF packaging and host-side parsers. The runtime manifest must include OPL and the three SMB catalog modules and must not include a Neutrino game ELF. There is no longer a Neutrino EE map/headroom build because that game runtime is not part of this product.
 
-The final acceptance source remains docs/acceptance-tea-g3.md. A release remains prerelease until its
-physical-PS2 checks and evidence record are complete.
+The final acceptance source remains [docs/acceptance-tea-g3.md](acceptance-tea-g3.md). A release remains prerelease until its physical-PS2 checks and evidence record are complete.
