@@ -125,6 +125,15 @@ static void test_download_gate(void)
 
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+
+    /* Storage I/O must block new scans and downloads before either can start. */
+    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(!catalog_guard_can_scan(&guard));
+    assert(!catalog_guard_scan_begin(&guard));
+    assert(!catalog_guard_can_download(&guard));
+    assert(!catalog_guard_download_begin(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
     assert(catalog_guard_can_download(&guard));
     assert(catalog_guard_download_begin(&guard));
     assert(!catalog_guard_can_download(&guard));
@@ -148,6 +157,14 @@ static void test_download_gate(void)
     assert(catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_download_begin(&guard));
     assert(catalog_guard_scan_end(&guard));
+
+    /* Storage I/O cancels an active staged scan without leaving the guard busy. */
+    assert(catalog_guard_scan_begin(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(catalog_guard_scan_cancelled(&guard));
+    assert(!catalog_guard_scan_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
     assert(catalog_guard_read_begin(&guard));
     assert(!catalog_guard_download_begin(&guard));
     assert(catalog_guard_read_end(&guard));
