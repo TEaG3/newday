@@ -35,6 +35,7 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn("nuld", config.lower())
         self.assertIn("TEa.G3 catalog service", config)
         self.assertIn("Classic", config)
+        self.assertIn('if (!strcasecmp(key, "classic")) return TH_NULD;', self.launcher)
 
     def test_network_identifies_the_current_product(self):
         self.assertIn("User-Agent: TEa.G3", self.net)
