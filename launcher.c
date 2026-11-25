@@ -821,65 +821,6 @@ static engine_decision engine_for(const entry *e) // silent policy decision plus
 	return engine_assess(format, source_type, ini_get(&cfg, "juegos", "motor", "opl"),
 	                     exists(OPL_PATH), network_ready);
 }
-static int catalog_load(int s, int n)
-{
-	const char *host = ini_get(&cfg, "juegos", "servidor", ""), *why = NULL;
-	static char detail[192];
-	int body, len, max = 256 << 10, got = 0, r = 0;
-	char *buf = malloc(max);
-	if (!buf || (r = net_ready()) < 0)
-		snprintf(detail, sizeof(detail), L("No network (%s): the server's game catalog was not read"), net_err(r)), why = detail;
-	else if ((r = http_get(host, 18290, "/catalog", buf, max - 1, &body, &len)) != 200)
-		snprintf(detail, sizeof(detail), L("The catalog at %s:18290 did not answer (%s): is the TEa.G3 catalog service running? (none: empty servidor)"),
-		         host, net_err(r)), why = detail;
-	else {
-		char *p = buf + body;
-		cat_ent e;
-		
-		buf[body + len] = 0;
-		while (n < MAXC && catalog_next(&p, &e)) {
-			int app = !strncmp(e.path, "APPS/", 5); // the server's apps: path URL-quoted, size for the download
-			if (!app && (!strcmp(e.serial, "-") || strlen(e.serial) != 11)) continue; // as scan_dir: no serial, not listed
-			entry *c = &cv[n++];
-			memset(c, 0, sizeof(*c));
-			snprintf(c->path, sizeof(c->path), "%s", e.path);
-			snprintf(c->title, sizeof(c->title), "%s", e.title);
-			if (!app) serial_dash(e.serial, c->serial);
-			if (strlen(e.hash) == 32) snprintf(c->hash, sizeof(c->hash), "%s", e.hash);
-			c->kind = app ? K_APP : K_PS2, c->cd = !strncmp(e.path, "CD/", 3), c->src = s, c->size = e.size;
-			done_n++, total_n++, got++; // the server's games are known only now: the splash's total grows with them
-		}
-	}
-	free(buf);
-	printf("catalog %s: %d games%s%s\n", host, got, why ? ", " : "", why ? why : "");
-	if (why && !src_why) src_why = why;
-	if (why) src_err[SRC_UDPFS] = why;
-	return n;
-}
-
-typedef struct { int s, n; } hdl_ctx;
-static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd) // one HD Loader game
-{
-	hdl_ctx *c = p;
-	if (c->n >= MAXC || strlen(startup) != 11 || !start_sector || !total_size_kb) return; // "SLUS_213.76"
-	entry *e = &cv[c->n++];
-	snprintf(e->path, sizeof(e->path), "%s", part);
-	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
-	serial_dash(startup, e->serial);
-	snprintf(e->boot, sizeof(e->boot), "%s", startup);
-	e->kind = K_PS2, e->src = c->s, e->cd = is_cd, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb, e->hdl_disc_type = disc_type;
-	done_n++, total_n++; // as the catalog: not counted beforehand
-}
-
-static int smb_game_path(const char *path)
-{
-	if (strncmp(path, "DVD/", 4) && strncmp(path, "CD/", 3)) return 0;
-	if ((!has_ext(path, ".iso") && !has_ext(path, ".zso")) || strstr(path, "..")) return 0;
-	for (const unsigned char *p = (const unsigned char *)path; *p; p++)
-		if (*p < 0x20 || *p > 0x7e || *p == '\\' || *p == ':') return 0;
-	return strlen(path) < sizeof(cv[0].path);
-}
-
 static int smb_catalog_load(int s, int n)
 {
 	FILE *f = fopen("smb:/TEAG3.GAMES", "rb");
