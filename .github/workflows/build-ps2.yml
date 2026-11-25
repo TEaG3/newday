@@ -5,7 +5,6 @@ on:
     branches:
       - master
       - feature/tea-g3-rebrand
-      - feature/launcher-recovery
       - feature/single-entrypoint-runtime
       - feature/opl-source-autolaunch
   pull_request:
