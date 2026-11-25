@@ -82,5 +82,34 @@ class CatalogAppPathTests(unittest.TestCase):
         self.assertEqual(self.catalog.app_get("/app/Escape/game.elf"), (404, b""))
 
 
+    def test_iso_scan_rejects_symlink_escape(self) -> None:
+        (self.root / "DVD").mkdir()
+        outside = Path(self.temp.name) / "outside.iso"
+        outside.write_bytes(b"outside-share")
+        link = self.root / "DVD" / "Escape.iso"
+        try:
+            link.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable on this runner")
+        self.assertEqual(list(self.catalog.isos()), [])
+
+    def test_art_endpoint_rejects_symlink_escape(self) -> None:
+        (self.root / "ART").mkdir()
+        outside = Path(self.temp.name) / "secret.bin"
+        outside.write_bytes(b"outside-share")
+        link = self.root / "ART" / "cover.jpg"
+        try:
+            link.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable on this runner")
+        self.assertEqual(self.catalog.art_get("/art/cover.jpg"), (404, b""))
+
+    def test_art_endpoint_serves_regular_in_share_file(self) -> None:
+        art = self.root / "ART"
+        art.mkdir()
+        (art / "cover.jpg").write_bytes(b"cover")
+        self.assertEqual(self.catalog.art_get("/art/cover.jpg"), (200, b"cover"))
+
+
 if __name__ == "__main__":
     unittest.main()
