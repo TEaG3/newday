@@ -162,7 +162,7 @@ int catalog_stage_snapshot_find(const catalog_stage_snapshot *snapshot,
 {
     size_t i;
     if (!snapshot || !path || !catalog_stage_path_is_safe(path) ||
-        snapshot->count > CATALOG_STAGE_MAX_ITEMS) return -1;
+        catalog_stage_snapshot_validate(snapshot) != CATALOG_STAGE_OK) return -1;
     for (i = 0; i < snapshot->count; ++i) {
         const catalog_stage_record *record = &snapshot->records[i];
         if (record->source_type == source_type && record->source_unit == source_unit &&
