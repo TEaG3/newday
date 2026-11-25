@@ -51,7 +51,7 @@ The old TEa.G3 video, compatibility and virtual-memory-card values are retained 
 
 ## Source pin and CI
 
-The full `TEaG3/OPL` source is pinned as the `engine/opl` submodule at `46bad5a4a469c51e45eb1ed879fe43c100b8cb7b`. The CI and release workflows use the same OPL source and build flags, apply the TEa.G3 UL, ETH, BDM and guarded HDD patches, and build the SMB IOP support modules separately without building the Neutrino game ELF.
+The full `TEaG3/OPL` source is pinned as the `engine/opl` submodule at `46bad5a4a469c51e45eb1ed879fe43c100b8cb7b`. The CI and release workflows use the same OPL source and build flags (`make NOT_PACKED=1 RTL=1 PADEMU=1`), apply the TEa.G3 UL, ETH, BDM and guarded HDD patches, and build the SMB IOP support modules separately without building the Neutrino game ELF.
 
 The embedded runtime manifest must contain `OPL.ELF`, `network/modules/smap.irx`, `network/modules/ministack.irx` and `network/modules/smb_ioman.irx`, and must not contain `neutrino/neutrino.elf`. The release package includes the OPL and SMB support-module licenses separately.
 
