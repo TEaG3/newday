@@ -82,7 +82,7 @@
           <select name="source"><option value="usb" selected>USB</option><option value="other">Other source</option></select>
         </label>
         <label>Engine preference
-          <select name="preference"><option value="auto" selected>auto</option><option value="neutrino">neutrino</option><option value="opl">opl</option></select>
+          <select name="preference"><option value="auto">auto</option><option value="opl" selected>opl</option><option value="neutrino">neutrino</option><option value="opl">opl</option></select>
         </label>
         <div class="opl-form-actions">
           <button class="btn solid" type="submit">Simulate route</button>
@@ -90,9 +90,9 @@
         </div>
       </form>
       <div class="opl-result is-supported" data-opl-result role="status" aria-live="polite">
-        <div class="opl-result-head"><h3>Neutrino · existing launch path</h3><span class="opl-status">Current route</span></div>
-        <p class="opl-result-meta">ISO · USB · auto</p>
-        <ol class="opl-route-steps"><li><span class="step-number">01</span><span>Auto keeps ordinary ISO/ZSO games on Neutrino.</span></li></ol>
+        <div class="opl-result-head"><h3>Embedded OPL · BDM direct boot</h3<span class="opl-status">Current route</span></div>
+        <p class="opl-result-meta">ISO · USB · opl</p>
+        <ol class="opl-route-steps"><li><span class="step-number">01</span><span>Default motor=opl selects OPL BDM for USB ISO; physical-PS2 game testing is still pending.</span></li></ol>
         <p class="opl-sim-note">Browser simulation only; no PS2 game or ELF is executed.</p>
       </div>
     </div>
