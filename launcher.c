@@ -2576,6 +2576,10 @@ static const char *launch_problem(int i) // select a viable engine before handin
 		if (!exists(OPL_PATH)) return L("Could not install the embedded OPL runtime");
 		if (stub_port < 0) return stub_install ? L("Preparing the independent return path; try again shortly") : L("A memory-card return stub is required before this launch");
 	}
+	if (engine == ENGINE_OPL_HDD &&
+	    (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector ||
+	     !cv[i].hdl_size_kb || !cv[i].hdl_disc_type))
+		return L("HD Loader partition metadata is incomplete");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
 	    src[(int)cv[i].src].type == SRC_SMB) {
 		char smb_module[192], smb_config[192];
