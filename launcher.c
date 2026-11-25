@@ -139,7 +139,7 @@ static int view;
 static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
-static char STATE_INI[32], NEUTRINO[192], CONFIG[32], GAMES_INI[32], RA_DIR[24], NDIR[160], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
+static char STATE_INI[32], CONFIG[32], GAMES_INI[32], RA_DIR[24], NETDIR[160], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
 static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
@@ -148,8 +148,7 @@ static void home_paths(void)
 	snprintf(GAMES_INI, sizeof(GAMES_INI), "%s/%s/juegos.ini", homedev, home_dir);
 	snprintf(RA_DIR, sizeof(RA_DIR), "%s/%s/ra", homedev, home_dir);
 	snprintf(RUNTIME_DIR, sizeof(RUNTIME_DIR), "%s/%s/runtime", homedev, home_dir);
-	snprintf(NDIR, sizeof(NDIR), "%s/neutrino", RUNTIME_DIR);
-	snprintf(NEUTRINO, sizeof(NEUTRINO), "%s/neutrino.elf", NDIR);
+	snprintf(NETDIR, sizeof(NETDIR), "%s/network", RUNTIME_DIR);
 	snprintf(OPL_PATH, sizeof(OPL_PATH), "%s/OPL.ELF", RUNTIME_DIR);
 	snprintf(LOG_TXT, sizeof(LOG_TXT), "%s/launcher.txt", homedev);
 }
@@ -161,7 +160,7 @@ static void *make_half(const void *big, int sq) // 128x184 (128x128) grid tile f
 	if (h) cover_half(big, h, sq), SyncDCache(h, h + n);
 	return h; // NULL: the grid draws the small cover scaled instead
 }
-static volatile int ncv, stage, done_n, total_n, usb, load_ms, neutrino; // written by the loader thread
+static volatile int ncv, stage, done_n, total_n, usb, load_ms; // written by the loader thread
 #define POPSTARTER "mass0:/POPS/POPSTARTER.ELF" // PS1 games only with TEa.G3 on the USB (POPStarter reads mass:)
 
 // ---- saves: root dirs of both cards, read once by the loader (design: phase-3-ui). mcn[p] < 0: no card ----
@@ -405,7 +404,7 @@ static const char *igr_stub_path(void)
 	snprintf(path, sizeof(path), "mc%d:/BOOT/TEa.G3.ELF", stub_port);
 	return path;
 }
-static volatile int neutrino_igr, neutrino_menu, neutrino_ra, neutrino_lang; // the USB's neutrino.elf is the TEa.G3 Neutrino fork (knows -igrexit / -igrmenu / -ra=)
+
 
 static int mc_write(int port, const char *path, const void *data, int n) // whole file; 1 if every byte went
 {
@@ -792,7 +791,7 @@ static int ipv4_text(const char *s)
 
 static engine_decision engine_for(const entry *e) // silent policy decision plus reason for the private log
 {
-	engine_decision none = {ENGINE_NEUTRINO, ENGINE_REASON_AUTO_NEUTRINO_BASELINE};
+	engine_decision none = {ENGINE_UNSUPPORTED, ENGINE_REASON_OPL_SOURCE_UNAVAILABLE};
 	if (e->kind != K_PS2) return none;
 	engine_format format = e->engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
 	                       has_ext(e->path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO;
@@ -837,7 +836,7 @@ static int catalog_load(int s, int n)
 	else {
 		char *p = buf + body;
 		cat_ent e;
-		src_udpfs_ip(NDIR, net_ip()); // the game's ministack: our address now (fixed or the lease)
+		
 		buf[body + len] = 0;
 		while (n < MAXC && catalog_next(&p, &e)) {
 			int app = !strncmp(e.path, "APPS/", 5); // the server's apps: path URL-quoted, size for the download
@@ -1566,7 +1565,7 @@ static void ra_load_list(int i) // worker: game id from RetroAchievements (HTTPS
 }
 
 // phase 16b, at launch (render thread, worker stopped, network still up): the game's watch list to
-// RA_DIR/<serial>.wl and Neutrino's extra config NDIR/config/ra.toml, which loads smap,
+// RA_DIR/<serial>.wl and Neutrino's extra config NETDIR/config/ra.toml, which loads smap,
 // ministack (no DHCP: the IP the launcher has now) and the agent into the game; arg gets "-ra=<list>". 0: none
 // phase 19: the titles of the achievements still to earn, for the in-game unlock notice: appended to the watch list
 // as RA_TITLES entries of {id, title}, then {count, "RATL"}; Neutrino's loader copies them next to the snapshot buffer
@@ -1613,7 +1612,7 @@ static int ra_prepare(int i, char *arg, int n)
 	FILE *f = len > 0 ? fopen(wlp, "wb") : NULL;
 	int ok = f && fwrite(wl, 1, len, f) == (size_t)len;
 	if (f) ok &= fclose(f) == 0;
-	snprintf(path, sizeof(path), "%s/config/ra.toml", NDIR);
+	snprintf(path, sizeof(path), "%s/config/ra.toml", NETDIR);
 	if (ok && (f = fopen(path, "w"))) {
 		ok = fputs("# written by TEa.G3 at each launch (phase 16b): RetroAchievements agent in the game\n"
 		           "name = \"TEa.G3 RetroAchievements\"\n", f) >= 0;
@@ -1686,26 +1685,10 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	stage = 2;
 	clock_t c0 = clock();
 	if (usb) {
-		FILE *f = fopen(NEUTRINO, "rb");
-		neutrino = f != NULL;
-		if (f) { // the TEa.G3 fork's usage text names -igrexit; the official build would reject the option
-			fseek(f, 0, SEEK_END);
-			long n = ftell(f);
-			char *b = n > 0 && n < (4 << 20) ? malloc(n) : NULL;
-			fseek(f, 0, SEEK_SET);
-			if (b && fread(b, 1, n, f) == (size_t)n)
-				for (long i = 0; i + 8 <= n; i++) {
-					neutrino_igr |= !memcmp(b + i, "-igrexit", 8);
-					neutrino_menu |= !memcmp(b + i, "-igrmenu", 8); // phase 13 fork
-					neutrino_ra |= !memcmp(b + i, "-ra=<file>", 10); // phase 16b fork (its usage text)
-					neutrino_lang |= !memcmp(b + i, "-igrlang=", 9); // phase 18 fork
-				}
-			free(b);
-			fclose(f);
-		}
+		/* OPL-only runtime: no Neutrino ELF is probed, installed or launched. */
 		nsrc = 1, src[0].type = strcmp(homedev, "mass0:") ? SRC_MMCE : SRC_USB, strcpy(src[0].root, homedev); // the home
 		udpfs_cat = *ini_get(&cfg, "juegos", "servidor", "") != 0;
-		const char *why = src_init(src_want & ~(1u << src[0].type) & ~(1u << SRC_SMB), ini_get(&cfg, "red", "ip", "dhcp"), NDIR, !udpfs_cat);
+		const char *why = src_init(src_want & ~(1u << src[0].type) & ~(1u << SRC_SMB) & ~(1u << SRC_UDPBD) & ~(1u << SRC_UDPFS), ini_get(&cfg, "red", "ip", "dhcp"), NETDIR, 0);
 		if (why && !src_why) src_why = why;
 		if (src_want & 1u << SRC_SMB) {
 			const char *smb_why = src_smb_init(ini_get(&cfg, "red", "ip", "dhcp"),
@@ -1714,13 +1697,13 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 			                                  ini_get(&cfg, "smb", "server", ""),
 			                                  ini_get(&cfg, "smb", "user", "guest"),
 			                                  ini_get(&cfg, "smb", "password", ""),
-			                                  ini_get(&cfg, "smb", "share", ""), NDIR);
+			                                  ini_get(&cfg, "smb", "share", ""), NETDIR);
 			if (smb_why && !src_why) src_why = smb_why;
 		}
 		load_games();
 	}
 	load_ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
-	printf("%d games loaded in %d ms, neutrino %d (TEa.G3 igr %d)\n", ncv, load_ms, neutrino, neutrino_igr);
+	printf("%d games loaded in %d ms (OPL-only runtime)\n", ncv, load_ms);
 	FILE *lf = usb ? fopen(LOG_TXT, "a") : NULL; // the toast is gone after a few seconds
 	if (lf) fprintf(lf, "TEa.G3 games: %d in %d ms, sources %d%s%s (me %s, net %d %s)\n", ncv, load_ms, nsrc,
 	                src_why ? ": " : "", src_why ? src_why : "", net_ip(), net_res, net_why), fclose(lf);
@@ -2084,7 +2067,7 @@ static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE,
 #define W_NCHIP (int)sizeof(w_chip)
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
 static const char *const w_mcm[3] = {"juego", "compartida", "fisica"}, *const w_vid[3] = {"nativo", "480p", "1080i"};
-static const char *const w_engine_key[3] = {"auto", "neutrino", "opl"};
+static const char *const w_engine_key[2] = {"auto", "opl"};
 static const char *const w_lk[] = {"Auto", "R1", "L1", "R2", "L2", "Triangle", "Circle", "Square", "Cross", "Start", "Select"};
 static const char *const w_lk_ar[] = {"تلقائي", "R1", "L1", "R2", "L2", "مثلث", "دائرة", "مربع", "إكس", "Start", "Select"};
 #define W_NLK 11 // w_val[W_FMCB]: 0 no change, 1 autoboot, 2..W_NLK a button, W_NLK + 1 an item in FMCB's menu
@@ -2111,7 +2094,7 @@ static void wiz_open(void)
 	const char *motor = ini_get(&cfg, "juegos", "motor", "opl");
 	memset(w_val, 0, sizeof(w_val));
 	w_val[W_LANG] = lang, w_val[W_THEME] = theme_id, w_val[W_SRC] = src_mask(o), w_val[W_VIDEO] = 1, w_val[W_CARD] = mcn[0] >= 0 ? 0 : mcn[1] >= 0 ? 1 : -1;
-	w_val[W_ENGINE] = !strcasecmp(motor, "opl") ? 2 : !strcasecmp(motor, "neutrino") ? 1 : 0;
+	w_val[W_ENGINE] = !strcasecmp(motor, "opl") ? 1 : 0;
 	if (!w_val[W_SRC]) w_val[W_SRC] = 1u << SRC_USB;
 	w_cur = 0;
 	for (int k = 0; k < 3; k++) {
@@ -2231,7 +2214,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 	switch (r) {
 	case W_LANG: snprintf(a, n, "%s", v == LANG_EN ? "English" : "العربية"); break;
 	case W_THEME: snprintf(a, n, "%s", themes[v].name); break;
-	case W_ENGINE: snprintf(a, n, "%s", v == 1 ? "Neutrino" : v == 2 ? "OPL" : L("Automatic")); break;
+	case W_ENGINE: snprintf(a, n, "%s", v == 1 ? "OPL" : L("Automatic")); break;
 	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Per-game virtual") : v == 1 ? L("Shared virtual") : L("Physical")); break;
 	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Native") : w_vid[v]); break;
 	case W_NET: snprintf(a, n, "%s", v ? w_ip : "DHCP"); break;
@@ -2254,7 +2237,7 @@ static void wiz_change(int d) // left / right on the selected row
 	int r = wiz, *v = &w_val[r];
 	if (r == W_LANG) *v = (*v + d + LANG_N) % LANG_N, lang = *v; // the panel itself switches language at once
 	else if (r == W_THEME) *v = (*v + d + themes_n) % themes_n, theme_set(*v); // shown at once behind the panel, as the language
-	else if (r == W_ENGINE) *v = (*v + d + 3) % 3;
+	else if (r == W_ENGINE) *v = (*v + d + 2) % 2;
 	else if (r == W_SRC) w_cur = w_cur + d < 0 ? 0 : w_cur + d >= W_NCHIP ? W_NCHIP - 1 : w_cur + d; // the cursor
 	else if (r == W_MC || r == W_VIDEO) *v = (*v + d + 3) % 3;
 	else if (r == W_NET) *v = *w_ip ? !*v : 0;
@@ -2650,12 +2633,9 @@ static const char *launch_problem(int i) // select a viable engine before handin
 		return L("The game image is no longer readable from its source");
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
-	if (engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this source");
-	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO) {
-		if (!neutrino) return L("Could not install the embedded Neutrino runtime");
-		if (!runtime_asset_valid(RUNTIME_DIR, "neutrino/neutrino.elf"))
-			return L("Neutrino runtime failed its integrity check");
-	}
+	if (cv[i].kind == K_PS2 && engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this OPL source adapter");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO)
+		return L("Neutrino is retired; this game has no OPL route");
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
 		if (!runtime_asset_valid(RUNTIME_DIR, "OPL.ELF"))
 			return L("OPL runtime failed its integrity check");
@@ -2665,14 +2645,11 @@ static const char *launch_problem(int i) // select a viable engine before handin
 	    (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector ||
 	     !cv[i].hdl_size_kb || !cv[i].hdl_disc_type))
 		return L("HD Loader partition metadata is incomplete");
-	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
-	    src[(int)cv[i].src].type == SRC_SMB) {
-		char smb_module[192], smb_config[192];
-		snprintf(smb_module, sizeof(smb_module), "%s/modules/smb_fhi.irx", NDIR);
-		snprintf(smb_config, sizeof(smb_config), "%s/config/bsd-smb.toml", NDIR);
-		if (!exists(smb_module) || !exists(smb_config))
-			return L("Install a Neutrino build with the SMB modules first");
-	}
+	if (cv[i].kind == K_PS2 && engine == ENGINE_OPL_ETH &&
+	    (!runtime_asset_valid(RUNTIME_DIR, "network/modules/smap.irx") ||
+	     !runtime_asset_valid(RUNTIME_DIR, "network/modules/ministack.irx") ||
+	     !runtime_asset_valid(RUNTIME_DIR, "network/modules/smb_ioman.irx")))
+		return L("SMB network support modules failed their integrity check");
 	if (cv[i].kind == K_PS1 && (!exists(POPSTARTER) || !exists("mass0:/POPS/POPS_IOX.PAK")))
 		return L("POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/");
 	if (cv[i].kind == K_DISC && (cv[i].disc == D_NONE || cv[i].disc == D_READING)) return L("No disc ready");
@@ -2794,7 +2771,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		        (unsigned)engine, engine_reason_name(decision.reason));
 		fclose(diag);
 	}
-	const char *how[4] = {L("STARTING WITH NEUTRINO"), L("STARTING WITH POPSTARTER"), L("STARTING APPLICATION"),
+	const char *how[4] = {L("STARTING WITH OPL"), L("STARTING WITH POPSTARTER"), L("STARTING APPLICATION"),
 	                             L("STARTING DISC")};
 	for (int t = 0; t < (theme_id == TH_NULD ? 40 : 64); t++) { // let the confirm sound play while the screen fades to the entry's name
 		gfx_begin();
@@ -2811,7 +2788,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		gfx_end();
 		gfx_flip();
 	}
-	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("Could not create the virtual memory card"); return; }
+	
 	// no ISO read nor socket call of the achievements worker left half-way under the IOP reset (phase 16: the game
 	// hung when launched while its hash was being computed); the render thread sleeps so the worker can stop
 	ra_launching = 1, ra_abort = 1;
@@ -2819,13 +2796,12 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	// phase 16b: the watch list and the agent's config, while the network is still up (the worker takes no new work)
 	static char ra_arg[72];
 	int ra = 0;
-	if (!ra_busy && engine == ENGINE_NEUTRINO && neutrino_ra && ra_game_ok(i) && ra_state[i] == RA_SET && ra_on)
-		ra_abort = 0, ra = ra_prepare(i, ra_arg, sizeof(ra_arg)), ra_abort = 1;
+	/* RetroAchievements remains visible in the catalog; Neutrino's in-game agent is not part of this runtime. */
 	static char file[200], arg0[200];
 	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
 	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down(); // ponytail: a cover download in flight keeps it up
 	// no libcdvd call of the disc thread left half-way under the next program (Neutrino's branch: after its checks)
-	if ((cv[i].kind != K_PS2 || engine != ENGINE_NEUTRINO) && disc_tid >= 0) TerminateThread(disc_tid);
+	if (disc_tid >= 0) TerminateThread(disc_tid);
 	if (cv[i].kind == K_DISC) { // the BIOS: PS2LOGO checks and runs the BOOT2 path; PS1DRV takes file name + version
 		char *a[2] = {cv[i].boot, "???"}; // ponytail: version "???", as the OSD libraries fall back to
 		printf("launch: %s %s\n", cv[i].disc == D_PS2 ? "rom0:PS2LOGO" : "rom0:PS1DRV", cv[i].boot);
@@ -2942,82 +2918,9 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		printf("launch failed\n");
 		return;
 	}
-	static char dvd[200], gsm[24], gc[12] = "-gc=", mc0[64], root[16];
-	static char igr[3][48];
-	char *argv[16];
-	int argc = 0, v = game_video(i), c = game_compat(i), n = 4, st = src[(int)cv[i].src].type;
-	// the source as Neutrino names it (phase 14): the BDM driver's name ("usb:" as phase 6, "ata0:", "mx4sio0:",
-	// ...; Neutrino takes -bsd from it), the MMCE / UDPFS device as nhddl passes it ("mmce0:/")
-	if (st == SRC_USB) strcpy(root, "usb:");
-	else snprintf(root, sizeof(root), st == SRC_MMCE ? "%s/" : "%s", src[(int)cv[i].src].root); // "udpfs:" (phase 17)
-	argv[argc++] = NEUTRINO; // the file to load
-	argv[argc++] = "";       // Neutrino's argv[0]: "" = the same as the file (loader.c), 28 bytes less of arguments
-	if (st == SRC_HDL) { // HD Loader partition (Neutrino README: -bsd=ata -bsdfs=hdl -dvd=hdl:<part>)
-		argv[argc++] = "-bsd=ata";
-		argv[argc++] = "-bsdfs=hdl";
-		snprintf(dvd, sizeof(dvd), "-dvd=hdl:%s", cv[i].path);
-	} else snprintf(dvd, sizeof(dvd), "-dvd=%s%s", root, cv[i].path);
-	if (st == SRC_UDPFS) argv[argc++] = "-bsd=udpfs"; // phase 17: Neutrino loads its own smap / ministack / udpfs
-	if (st == SRC_SMB) argv[argc++] = "-bsd=smb"; // read-only share; Neutrino loads its own SMB FHI
-	argv[argc++] = dvd;
-	if (uses_vmc(i)) { // virtual memory card in slot 1, on the game's own source (Neutrino -mc0=<file>)
-		char name[40];
-		vmc_name(i, name, sizeof(name));
-		snprintf(mc0, sizeof(mc0), "-mc0=%s%s", root, name);
-		argv[argc++] = mc0;
-	}
-	if (v > 1) { // 480p / 1080i forced by Neutrino's GS mode selector; native: no -gsm
-		snprintf(gsm, sizeof(gsm), "-gsm=%s", v == 2 ? "fp2" : "1080ix2");
-		if (c) snprintf(gsm + strlen(gsm), sizeof(gsm) - strlen(gsm), ":%d", c);
-		argv[argc++] = gsm;
-	}
-	for (int k = 0; k < 5; k++)
-		if (game_gc(i, k)) gc[n++] = gc_modes[k];
-	gc[n] = 0;
-	if (n > 4) argv[argc++] = gc;
-	if (neutrino_igr && igr_exit) // In Game Reset (phase 12): only the TEa.G3 fork knows these
-		snprintf(igr[0], sizeof(igr[0]), "-igr=0x%04x", igr_exit), argv[argc++] = igr[0];
-	if (neutrino_menu && igr_menu) // in-game menu (phase 13)
-		snprintf(igr[2], sizeof(igr[2]), "-igrmenu=0x%04x", igr_menu), argv[argc++] = igr[2];
-	if (neutrino_igr && (igr_exit || (neutrino_menu && igr_menu)))
-		argv[argc++] = "-igrexit=rom0:OSDSYS"; // the reboot: FMCB comes up from the card and autoboots TEa.G3
-	if (neutrino_igr && igr_off) snprintf(igr[1], sizeof(igr[1]), "-igroff=0x%04x", igr_off), argv[argc++] = igr[1];
-	if (neutrino_lang && neutrino_menu && igr_menu) {
-		if (lang == LANG_EN) argv[argc++] = "-igrlang=en";
-		else if (lang == LANG_AR) argv[argc++] = "-igrlang=ar"; // Arabic IGR menu uses its generated RTL labels.
-	}
-	if (ra) argv[argc++] = "-cfg=ra", argv[argc++] = ra_arg; // phase 16b: the achievements agent and its watch list
-	if (!strcasecmp(ini_get(&cfg, "juegos", "logo", "no"), "si")) argv[argc++] = "-logo"; // Neutrino runs the game through rom0:PS2LOGO
-	// HD Loader needs Neutrino's own load stage (hdlfs; nhddl neutrino.c); so do games
-	// whose selected source relies on Neutrino's network stack (the launcher's lwIP is shut down, phase 17)
-	if (st != SRC_HDL && st != SRC_UDPFS && st != SRC_SMB) argv[argc++] = "-qb";
-	int len = 0;
-	for (int k = 0; k < argc; k++) len += strlen(argv[k]) + 1;
-	if (len > 255) { // the documented limit for Neutrino's arguments (nhddl README "Argument files")
-		printf("launch: %d bytes of arguments\n", len);
-		launch_err = L("ISO name too long for Neutrino: shorten it");
-		return;
-	}
-	// any MMCE (MemCard PRO 2, SD2PSX) switches to the game's card, as nhddl mmceMountVMC (#2); a game from the MMCE
-	// itself keeps the current card when asked for a shared or the physical one
-	if (st != SRC_MMCE || game_mc(i) == MC_GAME) {
-		char id[16];
-		snprintf(id, sizeof(id), "%.4s_%.3s.%.2s", cv[i].serial, cv[i].serial + 5, cv[i].serial + 8); // SLUS_213.76
-		src_mmce_game(id);
-	}
-	if (disc_tid >= 0) TerminateThread(disc_tid);
-	FILE *fp = fopen(LOG_TXT, "a"); // what Neutrino got, for console checks
-	printf("launch:");
-	if (fp) fprintf(fp, "TEa.G3 launch:");
-	for (int k = 0; k < argc; k++) {
-		printf(" %s", argv[k]);
-		if (fp) fprintf(fp, " %s", argv[k]);
-	}
-	printf("\n");
-	if (fp) fprintf(fp, "\n"), fclose(fp);
-	gfx_shutdown(); // our vsync handler must not outlive this ELF
-	run_loader_recover(argc, argv);
-	printf("launch failed\n"); // only reached if the ELF could not be loaded
+	launch_err = L("No OPL adapter is available for this PS2 source and format");
+	printf("launch blocked: no OPL adapter\n");
+	return;
 }
 
 int main(int argc, char *argv[])
