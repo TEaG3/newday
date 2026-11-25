@@ -172,13 +172,8 @@ jobs:
           apk add --no-cache curl py3-yaml
           curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/download_lwNBD.sh -o download_lwNBD.sh
           bash ./download_lwNBD.sh
-          curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/lang_compiler.py -o lang_compiler.py
-          python3 -m py_compile lang_compiler.py
+          python3 -m py_compile lang_compiler.py check_arabic_translation.py
           python3 -c "import yaml"
-          python3 lang_compiler.py --make_header --base lng_tmpl/_base.yml include/lang_autogen.h
-          python3 lang_compiler.py --make_source --base lng_tmpl/_base.yml src/lang_internal.c
-          test -s include/lang_autogen.h
-          test -s src/lang_internal.c
           test -f modules/network/lwNBD/Makefile
           test "$(git -C modules/network/lwNBD rev-parse HEAD)" = "15f1c14536d662e2e00d38d0aa91ef24149e8b96"
 
@@ -242,6 +237,12 @@ jobs:
         run: |
           set -euo pipefail
           make clean
+          test -s lng_src/Arabic.yml
+          test -s lng_src/thirdparty/font_Arabic.ttf
+          python3 check_arabic_translation.py
+          make languages
+          test -s lng/lang_Arabic.lng
+          grep -Fq 'العودة' lng/lang_Arabic.lng
           test -s include/lang_autogen.h
           test -s src/lang_internal.c
           make NOT_PACKED=1 RTL=1 PADEMU=1

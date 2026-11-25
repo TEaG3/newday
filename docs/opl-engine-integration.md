@@ -62,19 +62,22 @@ post-launch return path, not proof that every failed `ExecPS2` can recover.
 
 ## OPL build and dependency pinning
 
-- Complete source: `TEaG3/OPL` at
-  `46bad5a4a469c51e45eb1ed879fe43c100b8cb7b`, pinned as the `engine/opl`
-  submodule.
-- Build helpers: `download_lwNBD.sh` and `lang_compiler.py` are fetched from
-  `ps2homebrew/Open-PS2-Loader@b3a2199795fe89ba7e2dd7b843354472dff2c3eb`.
-- `lwNBD` is checked out at
+- Complete source: `TEaG3/OPL`, pinned by the `engine/opl` Git submodule
+  entry. The release workflow resolves that exact gitlink SHA rather than
+  maintaining a second hard-coded revision.
+- `download_lwNBD.sh` is fetched from
+  `ps2homebrew/Open-PS2-Loader@b3a2199795fe89ba7e2dd7b843354472dff2c3eb`;
+  `lwNBD` is checked out at
   `15f1c14536d662e2e00d38d0aa91ef24149e8b96`.
 - The TEaG3/OPL fork does not declare `lwNBD` as a Git submodule. CI runs the
   pinned downloader and verifies the exact dependency revision before
   `make clean`.
-- The fork omits generated language header/source files. CI uses the pinned
-  compiler with the fork's `lng_tmpl/_base.yml` to generate them, then builds
-  with `make NOT_PACKED=1 RTL=1 PADEMU=1`.
+- The fork carries its own `lang_compiler.py`, complete Arabic translation
+  source and bundled Arabic font. CI verifies all 326 base strings are
+  translated, checks placeholder parity, preserves the tracked language
+  assets during `make clean`, generates `lng/lang_Arabic.lng`, and checks
+  that the compiled pack contains Arabic text.
+- Both CI and release builds use `make NOT_PACKED=1 RTL=1 PADEMU=1`.
 
 The direct-boot patches are maintained in `tools/patch_opl_ul.py`,
 `tools/patch_opl_eth.py` and `tools/patch_opl_hdl.py`, and are applied to the
