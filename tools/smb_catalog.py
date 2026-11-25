@@ -75,9 +75,9 @@ def build_rows(root: Path) -> list[str]:
             relative = image.relative_to(root).as_posix()
             if not safe_relative_path(relative):
                 continue
-            title = display_title(image.stem).replace("\\t", " ")
+            title = display_title(image.stem).replace("\t", " ")
             serial = serial_from_name(image.name)
-            rows.append(f"{relative}\\t{title}\\t{serial}")
+            rows.append(f"{relative}\t{title}\t{serial}")
     return rows
 
 
