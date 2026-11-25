@@ -22,24 +22,24 @@ Use PCSX2 2.8.2 for this harness (not the old 2.4 setup). Configure USB1 as a ma
 
 1. Put only `TEa.G3.ELF` on a clean USB (plus the test game folder). Boot it. Verify that first boot creates `tea_g3/runtime/OPL.ELF` and `tea_g3/runtime/neutrino/neutrino.elf`, with all modules/config files, then record whether the first menu appears, Arabic text renders correctly, and controller navigation works.
 2. Place one known-good, legally owned ISO in `DVD/`; confirm it appears and
-   launch it with `motor = auto` (Neutrino).
+   launch it with the default `motor = opl` (OPL BDM). Repeat with `motor = neutrino` to verify the supported Neutrino ISO path.
 3. Place a matching ZSO in `DVD/`; confirm title/serial discovery and launch
-   with `motor = auto`. Repeat after a cold console restart.
+   with `motor = opl` (OPL BDM). Do not select Neutrino for ZSO; this build has no verified Neutrino ZSO sector decoder. Repeat after a cold console restart.
 4. For SMB, configure fixed PS2 IPv4 and the `[smb]` settings in
    `tea_g3/config.ini`, export `DVD/` and/or `CD/`, generate
-   `TEAG3.GAMES` with `tools/smb_catalog.py`, then select SMB and test one
-   plain ISO and one ZSO.
+   `TEAG3.GAMES` with `tools/smb_catalog.py`, then test SMB with `motor = opl` (OPL ETH) using one plain ISO and one ZSO. Separately test SMB ISO with `motor = neutrino` if the Neutrino SMB modules are installed; ZSO must remain on OPL.
 5. Test APA/HDLoader on an emulated or real internal HDD separately.
 6. Confirm no root-level `OPL.ELF` or `neutrino/` folder is needed; TEa.G3 must install its embedded runtime under `tea_g3/runtime/` automatically.
 7. Put a valid USBExtreme `ul.cfg` and all of its declared `ul.*` split parts
    in the same USB root. Confirm TEa.G3 lists the game only when every part is
    present, with the correct title and serial.
-8. Select the UL game with `motor = auto`. Verify that TEa.G3 invokes OPL
+8. Select the UL game with `motor = opl` (UL is OPL-only). Verify that TEa.G3 invokes OPL
    directly, that the selected game starts, and that reads continue across all
    split parts.
-9. For an ordinary USB ISO/ZSO, set `[juegos] motor = opl` in
-   `tea_g3/config.ini`, restart TEa.G3, and verify the manual OPL direct-boot
-   route. Restore `motor = auto` or `motor = neutrino` afterwards.
+9. For an ordinary USB ISO, set `[juegos] motor = neutrino` in
+   `tea_g3/config.ini`, restart TEa.G3, and verify the Neutrino ISO route. Confirm
+   that ZSO is rejected with a clear message when Neutrino is selected. Restore
+   `motor = opl` afterwards; optionally repeat with `motor = auto`.
 
 ## Independent return-path checks
 
@@ -64,8 +64,7 @@ unsupported for that title. No physical-console acceptance is implied by CI.
 
 Repeat USB ISO, USB ZSO, UL and manual OPL tests on real hardware. Record the
 console model, storage device, filesystem, game serial, engine selection and
-result. Verify in-game reads and stability, not just the first screen. Also
-verify that Neutrino ISO/ZSO, SMB, and APA/HDLoader paths remain intact.
+result. Verify in-game reads and stability, not just the first screen. Also verify Neutrino ISO (not ZSO), OPL USB/SMB ZSO, SMB ISO, and APA/HDLoader paths separately.
 
 ## Current automated coverage
 
