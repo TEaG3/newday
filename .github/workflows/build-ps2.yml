@@ -240,6 +240,16 @@ jobs:
         run: |
           set -euo pipefail
           make clean
+          # The TEaG3/OPL fork intentionally omits generated language files.
+          # Recreate the two compiler inputs from the pinned upstream generator.
+          apk add --no-cache py3-yaml
+          curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/lang_compiler.py -o lang_compiler.py
+          python3 -m py_compile lang_compiler.py
+          python3 -c "import yaml"
+          python3 lang_compiler.py --make_header --base lng_tmpl/_base.yml include/lang_autogen.h
+          python3 lang_compiler.py --make_source --base lng_tmpl/_base.yml src/lang_internal.c
+          test -s include/lang_autogen.h
+          test -s src/lang_internal.c
           make NOT_PACKED=1 RTL=1 PADEMU=1
           test -s opl.elf
           cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
