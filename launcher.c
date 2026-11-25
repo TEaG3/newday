@@ -2501,7 +2501,14 @@ static const char *launch_problem(int i) // select a viable engine before handin
 		return L("The game image is no longer readable from its source");
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
-	if (cv[i].kind == K_PS2 && engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this OPL source adapter");
+	if (cv[i].kind == K_PS2 && decision.reason == ENGINE_REASON_ENGINE_REMOVED)
+		return L("Neutrino is retired; this game has no OPL route");
+	if (cv[i].kind == K_PS2 && decision.reason == ENGINE_REASON_OPL_RUNTIME_MISSING)
+		return L("OPL runtime failed its integrity check");
+	if (cv[i].kind == K_PS2 && decision.reason == ENGINE_REASON_OPL_NETWORK_CONFIG_INVALID)
+		return L("SMB network configuration is invalid");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_UNSUPPORTED)
+		return L("This game format is not supported by this OPL source adapter");
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO)
 		return L("Neutrino is retired; this game has no OPL route");
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
