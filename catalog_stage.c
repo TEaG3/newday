@@ -247,9 +247,9 @@ int catalog_guard_scan_end(catalog_guard *guard)
     if (!guard_valid(guard)) return 0;
     guard->lock(guard->lock_context);
     if (guard->scanning) {
+        ended = !guard->scan_cancelled;
         guard->scanning = 0;
         guard->scan_cancelled = 0;
-        ended = 1;
     }
     guard->unlock(guard->lock_context);
     return ended;
