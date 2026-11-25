@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "update.h"
 
 static int vnum(const char *v, int *n) // strict numeric version: v1.2.3 (1..4 components)
@@ -83,17 +84,18 @@ int upd_parse(const char *t, upd_manifest *m)
     memset(m, 0, sizeof(*m));
     while (*t) {
         const char *line_start = t;
-        const char *e = t + strcspn(t, "\\r\\n");
-        char line[200], asset[32], dest[64], sha[65], extra;
+        const char *e = t + strcspn(t, "\r\n");
+        char line[200], asset[32], dest[64], size_text[16], sha[65], extra;
+        char *size_end;
         long size;
         int n = (int)(e - t);
-        while (*e == '\\r' || *e == '\\n') e++;
+        while (*e == '\r' || *e == '\n') e++;
         t = e;
         if (n >= (int)sizeof(line)) return 0;
         memcpy(line, line_start, (size_t)n);
         line[n] = 0;
         char *p = line;
-        while (*p == ' ' || *p == '\\t') p++;
+        while (*p == ' ' || *p == '\t') p++;
         if (!*p || *p == '#' || *p == ';') continue;
         if (!strncmp(p, "version", 7)) {
             char version[16];
@@ -105,12 +107,13 @@ int upd_parse(const char *t, upd_manifest *m)
             continue;
         }
         if (!strncmp(p, "file", 4)) {
-            int nums[4] = {0};
             if (m->n >= UPD_MAXF ||
-                sscanf(p, "file = %31s %63s %ld %64s %c", asset, dest, &size, sha, &extra) != 4)
+                sscanf(p, "file = %31s %63s %15s %64s %c", asset, dest, size_text, sha, &extra) != 4)
                 return 0;
-            if (size <= 0 || size > 2147483647L || !safe_asset(asset) ||
-                !safe_destination(dest) || !safe_sha256(sha)) return 0;
+            errno = 0;
+            size = strtol(size_text, &size_end, 10);
+            if (errno || !*size_text || *size_end || size <= 0 || size > 2147483647L ||
+                !safe_asset(asset) || !safe_destination(dest) || !safe_sha256(sha)) return 0;
             for (int i = 0; i < m->n; i++)
                 if (!strcmp(m->f[i].asset, asset) || !strcmp(m->f[i].dest, dest)) return 0;
             snprintf(m->f[m->n].asset, sizeof(m->f[m->n].asset), "%s", asset);
