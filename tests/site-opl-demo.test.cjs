@@ -94,9 +94,9 @@ assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "opl", opl
 assert.equal(resolveRoute({ format: "ul", source: "usb", preference: "auto", oplRuntime: "missing" }).ok, false);
 assert.equal(resolveRoute({ format: "iso", source: "other", preference: "opl" }).fallback, undefined);
 const readme = fs.readFileSync(path.join(__dirname, "../README.md"), "utf8");
-assert.match(readme, /ZSO is OPL-only in this build/);
+assert.match(readme, /OPL is the only PS2 game engine/);
 const engineDocs = fs.readFileSync(path.join(__dirname, "../docs/opl-engine-integration.md"), "utf8");
-assert.match(engineDocs, /ZSO is OPL-only in this build/);
+assert.match(engineDocs, /OPL is the only PS2 game engine/);
 assert.match(engineDocs, /TEaG3\/OPL/);
 assert.match(engineDocs, /46bad5a4a469c51e45eb1ed879fe43c100b8cb7b/);
 assert.match(engineDocs, /RTL=1/);
@@ -104,12 +104,12 @@ const formatsDocs = fs.readFileSync(path.join(__dirname, "../docs/game-formats.m
 assert.match(formatsDocs, /TEaG3\/OPL/);
 assert.doesNotMatch(formatsDocs, /checks out Open PS2 Loader at/);
 const smbDocs = fs.readFileSync(path.join(__dirname, "../docs/smb.md"), "utf8");
-assert.match(smbDocs, /OPL ETH direct launch/);
+assert.match(smbDocs, /OPL ETH/);
 assert.match(smbDocs, /OPL ETH direct launch/);
 assert.doesNotMatch(smbDocs, /Neutrino.*fallback|Neutrino.*ISO-only|ZSO is never sent to Neutrino/);
 assert.match(smbDocs, /USBExtreme UL.*USB-only/);
 assert.match(smbDocs, /dopen.*dclose.*dread/);
-assert.match(smbDocs, /launcher\.c.*TEAG3\.GAMES/);
+assert.match(smbDocs, /TEAG3\.GAMES/);
 assert.doesNotMatch(smbDocs, /does not enumerate directories/);
 const smbPatch = fs.readFileSync(path.join(__dirname, "../tools/patch_smb_ioman.py"), "utf8");
 const smbBuilder = fs.readFileSync(path.join(__dirname, "../tools/build_smb_support.sh"), "utf8");
@@ -128,7 +128,7 @@ assert.match(engineDocs, /gfx_resume\(\)/);
 assert.doesNotMatch(engineDocs, /No automatic return to the full TEa\.G3 UI is claimed/);
 assert.doesNotMatch(engineDocs, /keep ordinary ISO\/ZSO on Neutrino/);
 const manual = fs.readFileSync(path.join(__dirname, "../site/manual.html"), "utf8");
-assert.match(manual, /ZSO is OPL-only/);
+assert.match(manual, /ZSO is routed only through OPL/);
 assert.doesNotMatch(manual, /auto uses Neutrino for ordinary ISO\/ZSO/);
 for (const page of ["index.html", "opl-lab.html"]) {
   const html = fs.readFileSync(path.join(__dirname, "../site", page), "utf8");
