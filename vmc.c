@@ -100,6 +100,10 @@ int vmc_create(const char *path)
     if (fclose(f) != 0) ok = 0;
     free(buf);
     if (ok) {
+        vmc_ent check[2];
+        if (vmc_list(temp, check, 2) != 0) ok = 0;
+    }
+    if (ok) {
         existing = fopen(path, "rb");
         if (existing) { fclose(existing); ok = 0; }
     }
