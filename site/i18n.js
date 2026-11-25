@@ -33,7 +33,7 @@
     "Each game is identified with the rcheevos hash. While you play, an agent inside the game sends its memory to the xeRAbora client, which unlocks them on your profile.":"يُعرّف كل لعبة باستخدام بصمة rcheevos. أثناء اللعب يرسل وكيل داخل اللعبة بيانات الذاكرة إلى عميل xeRAbora لفتح الإنجازات في حسابك.",
     "ISOs on a Linux box list instantly and load over the cable, with the same covers, cards and achievements as the USB.":"تظهر ملفات ISO الموجودة على خادم Linux فوراً، وتُحمّل عبر الشبكة مع دعم الأغلفة وبطاقات الذاكرة والإنجازات كما في USB.",
     "USB, internal HDD (exFAT or HD Loader), MX4SIO, i.Link, MMCE, UDPBD and udpfs, mixed in one list. Discs, PS1 games through POPStarter, and homebrew from APPS/ too.":"USB والقرص الداخلي (exFAT أو HD Loader) وMX4SIO وi.Link وMMCE وUDPBD وudpfs في قائمة واحدة. كما يدعم الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من APPS/.",
-    "Force 480p or 1080i, Neutrino's compatibility modes, which memory card. Remembered per game.":"فرض دقة 480p أو 1080i، وأنماط التوافق في Neutrino، واختيار بطاقة الذاكرة. تُحفظ الإعدادات لكل لعبة.",
+    "Force 480p or 1080i, OPL compatibility modes, which memory card. Remembered per game.":"فرض دقة 480p أو 1080i، وأنماط التوافق في Neutrino، واختيار بطاقة الذاكرة. تُحفظ الإعدادات لكل لعبة.",
     "A wizard writes config.ini and FreeMcBoot's autoboot. With the cable in, TEa.G3 installs a new release only after every file matches a signed manifest.":"ينشئ المعالج ملف config.ini وإعداد التشغيل التلقائي في FreeMcBoot. وعند الاتصال بالشبكة، لا يثبت TEa.G3 إصداراً جديداً إلا بعد مطابقة الملفات لبيان موثّق.",
     "One setting changes the menus, the in-game menu and the comments in the config file.":"يغيّر إعداد واحد لغة القوائم وقائمة داخل اللعبة والتعليقات في ملف الإعداد.",
     "Each theme has its own colours, animated background, loading screen and launch screen. A folder with eleven colours and a picture is a new one: the":"لكل سمة ألوانها وخلفيتها المتحركة وشاشة التحميل وشاشة تشغيل اللعبة. ويمكن إنشاء سمة جديدة بمجلد يحتوي على أحد عشر لوناً وصورة عبر",
@@ -112,7 +112,7 @@
   "Launch game": "تشغيل اللعبة",
   "What runs on the console": "ما الذي يعمل على الجهاز",
   "TEa.G3 · PS2 Game Launcher": "TEa.G3 · مشغّل ألعاب PS2",
-  "Embedded OPL and Neutrino. One launcher for PlayStation 2.": "محركا OPL وNeutrino مدمجان في مشغّل واحد لجهاز PlayStation 2.",
+  "Embedded OPL only. One launcher for PlayStation 2.": "محركا OPL وNeutrino مدمجان في مشغّل واحد لجهاز PlayStation 2.",
   "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.": "هذه معاينة للشاشة الرئيسية للمشغّل بسماته الاثنتي عشرة داخل المتصفح. اضغط على جانبي الغلاف للتنقل بين الألعاب.",
   "Make your own theme": "أنشئ سمة خاصة بك",
   "theme maker": "مصمم السمات",
@@ -143,7 +143,7 @@
   "The setup wizard writes config.ini and FreeMcBoot autoboot settings.": "ينشئ معالج الإعداد ملف config.ini ويضبط إعدادات التشغيل التلقائي عبر FreeMcBoot.",
   "One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.": "ملف ZIP واحد لنسخه إلى وحدة USB. هل تنتقل من ORBIT أو NULD القديم؟ عند التشغيل الأول ينقل TEa.G3 إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
   "TEa.G3 complete package": "حزمة TEa.G3 الشاملة",
-  "TEa.G3.ELF, embedded OPL and Neutrino engines, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحركي OPL وNeutrino المدمجين، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
+  "TEa.G3.ELF, embedded OPL and Neutrino engines, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحرك OPL فقط المدمجين، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
   "all releases": "جميع الإصدارات",
   "Release notes and SHA-256 checksums. What changed in each: the": "ملاحظات الإصدارات وبصمات التحقق SHA-256. لمعرفة التغييرات في كل إصدار، راجع",
   "jfplay.elf": "ملف jfplay.elf",
@@ -303,7 +303,7 @@
   "press L2+R2 together for 480i.": "اضغط L2+R2 معاً للتبديل إلى 480i.",
   "Logs": "سجلات التشغيل",
   "records each launch.": "يسجل تفاصيل كل عملية تشغيل.",
-  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino المرخّص بموجب AFL-3.0.",
+  "TEa.G3 is free software under GPL-3.0 and ships the TEa.G3 OPL fork (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino المرخّص بموجب AFL-3.0.",
   "TEa.G3 theme maker": "مصمم سمات TEa.G3",
   "Pick the colours, add a picture if you want one, and download a folder for": "اختر ألوان السمة، وأضف صورة خلفية إن رغبت، ثم نزّل المجلد إلى",
   "on your USB drive. Nothing is uploaded: it all happens in this page.": "على وحدة USB. لا تُرفع ملفاتك إلى أي خادم؛ تتم جميع العمليات داخل هذه الصفحة.",
@@ -947,7 +947,7 @@
     "Current route":"المسار الحالي",
     "OPL · UL direct boot":"OPL · إقلاع UL مباشر",
     "OPL · USB direct boot":"OPL · إقلاع USB مباشر",
-    "Existing Neutrino route":"مسار Neutrino الحالي",
+    "Unsupported legacy engine route":"مسار Neutrino الحالي",
     "Not wired to OPL":"غير موصول بـ OPL",
     "Unsupported in current adapter":"غير مدعوم في المحوّل الحالي",
     "PS1 ":"ألعاب PS1 ",
@@ -967,7 +967,7 @@
     "UL record, CRC and split-part validation":"التحقق من سجل UL وCRC وأجزاء اللعبة",
     "TEa.G3's pinned OPL UL direct-boot patch":"تصحيح الإقلاع المباشر لـ OPL UL المثبّت في TEa.G3",
     "Runtime installation and CRC-32 checks":"تثبيت موارد التشغيل وفحوص CRC-32",
-    "CI build of pinned OPL, Neutrino and the single ELF":"بناء OPL وNeutrino وملف ELF الواحد عبر CI",
+    "CI build of pinned OPL and the single ELF":"بناء OPL وNeutrino وملف ELF الواحد عبر CI",
     "OPL and Neutrino are embedded runtime components; the routing boundary above is specific to this TEa.G3 integration.":"محركا OPL وNeutrino مكوّنان مضمّنان في موارد التشغيل؛ وحدود التوجيه أعلاه خاصة بطريقة تكاملهما في TEa.G3.",
     "Browser simulation only; no PS2 game or ELF is executed.":"محاكاة داخل المتصفح فقط؛ لا يتم تشغيل لعبة PS2 أو ملف ELF.",
     "Browser simulation only · no PS2 ELF, emulator or game is executed here.":"محاكاة داخل المتصفح فقط · لا يتم تشغيل ملف ELF أو محاكي أو لعبة هنا.",
@@ -985,7 +985,7 @@
     "The route selector":"محدد مسار التشغيل"
   });
   Object.assign(attributeDict.alt, {
-    "TEa.G3 embeds OPL and Neutrino in one ELF and routes games according to format, source and engine preference":"يدمج TEa.G3 محركي OPL وNeutrino في ملف ELF واحد ويوجه الألعاب وفق الصيغة والمصدر وتفضيل المحرك.",
+    "TEa.G3 embeds OPL as its only PS2 game engine and routes supported games through its BDM adapter":"يدمج TEa.G3 محركي OPL وNeutrino في ملف ELF واحد ويوجه الألعاب وفق الصيغة والمصدر وتفضيل المحرك.",
     "USBExtreme UL scan, split-part validation and direct OPL launch flow":"مخطط فحص USBExtreme UL والتحقق من أجزاء اللعبة ومسار الإقلاع المباشر عبر OPL.",
     "Embedded runtime build, CRC verification and installation under tea_g3/runtime":"مخطط بناء موارد التشغيل المضمّنة والتحقق من CRC وتثبيتها داخل tea_g3/runtime.",
     "OPL integration diagrams, scroll sideways":"مخططات تكامل OPL القابلة للاستعراض"
@@ -994,7 +994,7 @@
     "TEa.G3 OPL Integration Lab":"مختبر تكامل OPL في TEa.G3"
   });
   Object.assign(metaDict, {
-    "Explore how TEa.G3 embeds OPL and Neutrino in one ELF, see the verified USBExtreme UL and USB ISO/ZSO routing rules, and try a browser-only launch-path simulation.":"استكشف طريقة دمج OPL وNeutrino داخل ملف ELF واحد في TEa.G3، وراجع مسارات USBExtreme UL وUSB ISO/ZSO، وجرّب محاكاة لمسارات التشغيل داخل المتصفح."
+    "Explore how TEa.G3 embeds OPL as its only PS2 game engine, see the USBExtreme UL and USB ISO/ZSO routing rules, and try a browser-only launch-path simulation.":"استكشف طريقة دمج OPL وNeutrino داخل ملف ELF واحد في TEa.G3، وراجع مسارات USBExtreme UL وUSB ISO/ZSO، وجرّب محاكاة لمسارات التشغيل داخل المتصفح."
   });
 
   // Correct normalized text-node keys and translate the new manual chapter.

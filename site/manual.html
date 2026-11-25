@@ -47,7 +47,7 @@
   <section class="chapter" id="usb">
     <header><b>1</b><h2>The USB drive</h2></header>
     <div>
-      <p>Copy <code>TEa.G3.ELF</code> and the game folders to the USB root. OPL, Neutrino and their modules are embedded in the ELF and extracted automatically on first boot. Put DVD ISOs in <code>DVD/</code> and CD games in <code>CD/</code>, then start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF. The setup wizard opens on the first boot.</p>
+      <p>Copy <code>TEa.G3.ELF</code> and the game folders to the USB root. Only OPL is embedded in the ELF and extracted automatically on first boot. Put DVD ISOs in <code>DVD/</code> and CD games in <code>CD/</code>, then start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF. The setup wizard opens on the first boot.</p>
 <pre>USB root
 ├── TEa.G3.ELF
 ├── DVD/          PS2 DVD ISOs
@@ -56,7 +56,7 @@
 ├── APPS/         homebrew .ELF files, optional
 ├── covers/       written by TEa.G3: the covers it downloads
 └── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini, runtime/ (engines installed automatically)</pre>
-      <p>FAT32 cannot hold a single file over 4 GB: use a supported exFAT OPL/Neutrino path for large ISO files, or USBExtreme UL split files on FAT32. Keep <code>ul.cfg</code> and all <code>ul.*</code> parts on the USB. Virtual memory cards live in <code>VMC/</code> on the game's own device.</p>
+      <p>FAT32 cannot hold a single file over 4 GB: use an OPL-supported exFAT BDM source for large ISO files, or USBExtreme UL split files on FAT32. Keep <code>ul.cfg</code> and all <code>ul.*</code> parts on the USB. Virtual memory cards live in <code>VMC/</code> on the game's own device.</p>
     </div>
   </section>
 
@@ -91,7 +91,7 @@
         <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes</td><td>The theme; the legacy config key `nuld` remains accepted and is displayed as Classic. Change it live in the START setup panel (<a href="#themes">chapter 11</a>)</td></tr>
         <tr><td>[juegos] origen</td><td>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</td><td>Where to look for games, comma-separated</td></tr>
         <tr><td>[juegos] servidor</td><td>an IP</td><td>The home game server (udpfs)</td></tr>
-        <tr><td>[juegos] motor</td><td>auto, neutrino, opl</td><td>Engine policy: the fresh configuration defaults to `motor = opl`; OPL is selected for ISO/ZSO sources with a ready BDM/ETH adapter and OPL HDD for APA/HDL. Supported ISO paths without an OPL hand-off use Neutrino. ZSO is OPL-only and is rejected if its required OPL route is unavailable. UL always uses OPL.</td></tr>
+        <tr><td>[juegos] motor</td><td>opl only</td><td>OPL is the only PS2 game engine. USB ISO/ZSO and USBExtreme UL are routed through the OPL BDM adapter. Other sources fail closed; no Neutrino fallback exists.</td></tr>
         <tr><td>[memorycard] modo</td><td>juego, compartida, fisica</td><td>A virtual card per game, one shared, or the physical one</td></tr>
         <tr><td>[video] modo</td><td>nativo, 480p, 1080i</td><td>Video mode of the games</td></tr>
         <tr><td>[video] pantalla</td><td>720p, 480i</td><td>The menu's own output; 480i for a CRT</td></tr>
@@ -127,7 +127,7 @@
         <figcaption>Fig. 3, △ on a PS2 game.</figcaption>
       </figure>
       <p>The card at the top right shows the game's newest save and its 3D icon: from the virtual card, or from the physical one in slot 1 when you choose it here.</p>
-      <p>Video mode (480p or 1080i, forced), Neutrino's compatibility modes for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in <code>tea_g3/juegos.ini</code>.</p>
+      <p>Video mode (480p or 1080i, forced), OPL compatibility modes for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in <code>tea_g3/juegos.ini</code>.</p>
     </div>
   </section>
 
@@ -168,14 +168,14 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
     <div>
       <p>At startup TEa.G3 automatically probes the configured sources and scans the game folders; the default configuration enables <code>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</code>. Games are listed as each source scan completes; no separate Discover or Show Games action is required. Automatic probing is controlled by <code>[juegos] auto = si</code> (default); set it to <code>no</code> to use only the comma-separated devices in <code>[juegos] origen</code>. <code>hdd</code> covers the internal exFAT disk or HD Loader partitions; <code>mmce</code> and <code>mx4sio</code> share the SIO2 path and cannot be used together. <code>udpbd</code> and catalog-less <code>udpfs</code> need a fixed IP in <code>[red]</code>. TEa.G3 can also run from an MMCE's SD card with no USB drive at all.</p>
       <p>A MemCard PRO 2 or SD2PSX switches to the game's own card when a game starts, whatever its source. To save there instead of a virtual card, set the game's memory card to <code>fisica</code> with △.</p>
-      <p><b>OPL compatibility boundary:</b> TEa.G3 has source-specific OPL direct-boot adapters for BDM devices (USB, MX4SIO, iLink and ATA-backed FAT/exFAT HDD), SMB/ETH, APA/HD Loader and USBExtreme UL. Neutrino remains available for supported ISO paths on MMCE/UDPBD/UDPFS or when an ISO OPL hand-off/configuration is unavailable. ZSO is OPL-only and is rejected when no ready BDM/ETH decoder path exists; it is never sent to Neutrino. Every adapter still needs physical-PS2 game and sustained-read testing.</p>
+      <p><b>OPL compatibility boundary:</b> ZSO is OPL-only in this build.  TEa.G3 currently wires USB ISO/ZSO and USBExtreme UL through OPL BDM direct boot. HDD exFAT, MX4SIO and iLink pass a BDM selector but still need device-specific console testing. SMB, UDPBD, UDPFS, MMCE and APA/HDL are disabled until matching OPL adapters are completed. Unsupported routes are blocked; Neutrino is never used as a fallback.</p>
     </div>
   </section>
 
   <section class="chapter" id="opl">
     <header><b>OPL</b><h2>Integrated OPL engine</h2></header>
     <div>
-      <p>TEa.G3 ships one user-facing executable: <code>TEa.G3.ELF</code>. The build pins the upstream OPL source, fetches its pinned <code>lwNBD</code> dependency, applies the TEa.G3 UL, BDM, SMB/ETH and guarded APA/HD Loader direct-launch patches, builds OPL, and embeds it beside Neutrino and the required runtime modules.</p>
+      <p>TEa.G3 ships one user-facing executable: <code>TEa.G3.ELF</code>. The build pins the TEa.G3 OPL fork, builds its standalone ELF with pad emulation, RTL and IGR enabled, and embeds only OPL beside the TEa.G3 front end.</p>
       <p>On first boot, TEa.G3 installs the embedded files under <code>tea_g3/runtime/</code>. Each file is written to a temporary path and checked with CRC-32 before it is renamed into place. A bundle identifier and per-file checks let later boots skip a complete, matching runtime or repair missing/corrupt assets.</p>
       <h3>What is routed today</h3>
       <div class="scroll"><table>
@@ -183,19 +183,19 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
         <tr><td>ISO</td><td>USB / MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL BDM direct boot</td></tr>
         <tr><td>ISO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
         <tr><td>ISO</td><td>APA / HD Loader internal HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL HDD mini-launch; existing OPL config required</td></tr>
-        <tr><td>ISO</td><td>MMCE / UDPBD / UDPFS</td><td><code>auto</code> / <code>opl</code></td><td>Neutrino fallback</td></tr>
-        <tr><td>ISO</td><td>Any configured source</td><td><code>neutrino</code></td><td>Neutrino</td></tr>
+        <tr><td>ISO/ZSO</td><td>SMB / MMCE / UDPBD / UDPFS / APA</td><td>OPL only</td><td>Disabled; no OPL adapter</td></tr>
+        
         <tr><td>ZSO</td><td>USB / MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL BDM direct boot</td></tr>
         <tr><td>ZSO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
-        <tr><td>ZSO</td><td>Any source</td><td><code>neutrino</code></td><td>Rejected; Neutrino ZSO decoding is not verified</td></tr>
-        <tr><td>ZSO</td><td>APA / HD Loader, MMCE / UDP, or unavailable OPL route</td><td>Any preference</td><td>Rejected; no Neutrino fallback</td></tr>
+        <tr><td>ZSO</td><td>Any source</td><td>Neutrino</td><td>Rejected; Neutrino is not a runtime engine</td></tr>
+        <tr><td>ZSO</td><td>SMB / APA / MMCE / UDP or unavailable OPL route</td><td>OPL only</td><td>Rejected; no fallback engine</td></tr>
         <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td>OPL UL direct boot</td></tr>
         <tr><td>USBExtreme UL</td><td>Non-USB source</td><td>Any preference</td><td>Unsupported by current adapter</td></tr>
       </table></div>
       <h3>USBExtreme UL safety checks</h3>
       <p>The TEa.G3 scanner reads <code>ul.cfg</code>, validates the fixed-size records, and checks that every declared <code>ul.*</code> split part is present. A record with missing or invalid parts is skipped instead of being offered as a working game. A valid entry receives the OPL UL route with its title, startup ID, media type and part count.</p>
       <h3>Important limits</h3>
-      <p>Embedding upstream OPL does not mean every standalone OPL feature is connected. TEa.G3 has source-specific adapters for BDM devices, SMB/ETH and APA/HD Loader, in addition to USBExtreme UL. MMCE and UDPBD/UDPFS use Neutrino for supported ISO images; ZSO is rejected on those sources. The adapters have passed source/build checks but still require physical-PS2 game, sustained-read, VMC and return-to-launcher testing.</p>
+      <p>Embedding OPL does not mean every standalone OPL feature is connected to TEa.G3 settings. USB ISO/ZSO and USBExtreme UL have direct-launch routes; unsupported sources are disabled. VMC, GSM, cheats and compatibility controls must be mapped into OPL configuration before the launcher can claim to apply them. Hardware tests remain pending.</p>
       <p><a class="btn ink" href="opl-lab.html">Open the interactive OPL Integration Lab</a> — its browser simulation mirrors the route selector; it does not execute an ELF, emulate a console or launch a game.</p>
     </div>
   </section>
@@ -276,7 +276,7 @@ inverso = 0E0714</pre>
 
   <footer class="site">
     <span>التعديل والتطوير العربي: المطور العراقي - <a href="https://github.com/TEaG3" rel="noopener">TEa.G3</a></span>
-    <span>TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0). Called ORBIT until v1.1.</span>
+    <span>TEa.G3 is free software under GPL-3.0 and ships the TEa.G3 OPL fork (AFL-3.0). Called ORBIT until v1.1.</span>
     <span><a href="https://github.com/TEaG3/newday/releases" rel="noopener">سجل الإصدارات الكامل · Full release archive (includes historical ORBIT/NULD releases)</a></span>
     <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
   </footer>
