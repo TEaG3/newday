@@ -13,6 +13,7 @@ class LauncherHandoffTests(unittest.TestCase):
         cls.gfx = (ROOT / "gfx.c").read_text(encoding="utf-8")
         cls.header = (ROOT / "gfx.h").read_text(encoding="utf-8")
         cls.release_workflow = (ROOT / ".github/workflows/publish-arabic-release.yml").read_text(encoding="utf-8")
+        cls.build_workflow = (ROOT / ".github/workflows/build-ps2.yml").read_text(encoding="utf-8")
 
     def test_low_level_loader_is_called_only_by_recovery_wrapper(self):
         # Every caller must pass through the VBlank recovery path.
@@ -61,6 +62,13 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("repository: TEaG3/OPL", self.release_workflow)
         self.assertIn("ref: 46bad5a4a469c51e45eb1ed879fe43c100b8cb7b", self.release_workflow)
         self.assertNotIn("repository: ps2homebrew/Open-PS2-Loader", self.release_workflow)
+
+    def test_release_opl_build_flags_match_ci(self):
+        flags = "make NOT_PACKED=1 RTL=1 PADEMU=1"
+        self.assertIn(flags, self.build_workflow)
+        self.assertIn(flags, self.release_workflow)
+        self.assertIn("test -s include/lang_autogen.h", self.release_workflow)
+        self.assertIn("test -s src/lang_internal.c", self.release_workflow)
 
 
 if __name__ == "__main__":
