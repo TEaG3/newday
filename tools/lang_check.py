@@ -136,7 +136,7 @@ def main():
         "fresh config must use Arabic": 'ini_parse(&cfg, config_template[LANG_AR]);' in launcher,
         "Arabic config template marker must exist": '"; TEa.G3 - إعدادات عربية\\n"' in launcher,
         "Arabic config template must set idioma=ar": "idioma = ar\\n" in launcher,
-        "developer credit must be present": 'TEa.G3' in launcher and "تعديل المطور العراقي" in launcher,
+        "developer credit must be present": 'TEa.G3' in launcher and "تعديل وتطوير المطور العراقي TEa.G3" in launcher,
         "Arabic settings include the default engine selector": "محرك التشغيل" in launcher and "W_ENGINE" in launcher,
         "engine preference is loaded from config.ini": 'ini_get(&cfg, "juegos", "motor", "auto")' in launcher,
         "engine preference is saved to config.ini": 'ini_set(&cfg, "juegos", "motor", w_engine_key[w_val[W_ENGINE]])' in launcher,
