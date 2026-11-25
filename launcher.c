@@ -664,7 +664,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
     if (fd < 0) return n;
     s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
     if (end <= 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
-        printf("UL: invalid ul.cfg size %lld\\n", end);
+        printf("UL: invalid ul.cfg size %lld\n", end);
         fileXioClose(fd);
         return n;
     }
@@ -678,7 +678,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
         ul_game game;
         int got = fileXioRead(fd, raw, sizeof(raw));
         if (got != (int)sizeof(raw)) {
-            printf("UL: short read at record %d (%d/%u)\\n", r, got, (unsigned)sizeof(raw));
+            printf("UL: short read at record %d (%d/%u)\n", r, got, (unsigned)sizeof(raw));
             break;
         }
         if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
@@ -696,7 +696,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
         e->parts = game.parts;
         n++, done_n++, total_n++;
     }
-    if (fileXioClose(fd) < 0) printf("UL: close failed for %s\\n", cfg_path);
+    if (fileXioClose(fd) < 0) printf("UL: close failed for %s\n", cfg_path);
     return n;
 }
 
@@ -734,18 +734,18 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 PO
                     ok = iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw);
                 }
             }
-            if (fileXioClose(fd) < 0) printf("scan: close failed: %s\\n", path);
+            if (fileXioClose(fd) < 0) printf("scan: close failed: %s\n", path);
         }
         /* OPL's canonical filename can supply a serial when SYSTEM.CNF is absent,
            but a missing, empty, or unreadable file is never listed. */
         done_n++;
         if (bytes <= 0) {
-            printf("scan: unreadable or empty game image: %s\\n", path);
+            printf("scan: unreadable or empty game image: %s\n", path);
             continue;
         }
         if (!ok && !zso_file) ok = name_serial(e->d_name, raw);
         if (!ok && !ps1) {
-            printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\\n", path);
+            printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\n", path);
             continue;
         }
         if (ok) serial_dash(raw, item->serial);
