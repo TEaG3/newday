@@ -223,6 +223,12 @@
     rows.acento.forEach(i => { i.disabled = state.coverAccent; });
     $('no-picture').hidden = !state.picture;
     $('ini').textContent = ini();
+    const credit = $('maker-credit');
+    if (credit) {
+      credit.style.color = '#' + state.pal.texto;
+      credit.style.backgroundColor = '#' + state.pal.panel;
+      credit.style.borderColor = '#' + state.pal.acento;
+    }
     warnings();
     draw();
   }
