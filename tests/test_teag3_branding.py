@@ -42,7 +42,7 @@ class TEaG3BrandingTests(unittest.TestCase):
     def test_current_runtime_has_no_secondary_engine_symbols(self):
         for name, text in (("launcher", self.launcher), ("sources", self.sources)):
             with self.subTest(name=name):
-                self.assertNotRegex(text, r"(?i)\\b(?:neutrino|engine_neutrino|ndir)\\b")
+                self.assertNotRegex(text, r"(?i)\b(?:neutrino|engine_neutrino|ndir)\b")
 
     def test_arabic_catalog_error_matches_the_current_message_key(self):
         self.assertIn("is the TEa.G3 catalog service running?", self.launcher)
