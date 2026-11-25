@@ -1,6 +1,6 @@
 // The home page's screen: the launcher's home drawn by preview.js, with a theme and a view to pick.
 (() => {
-  const P = window.NULDPreview, themes = document.querySelector('[data-themes]'), views = document.querySelector('[data-views]');
+  const P = window.TEaG3Preview, themes = document.querySelector('[data-themes]'), views = document.querySelector('[data-views]');
   if (!P || !themes) return;
   const NAMES = { torres: 'Torres', nuld: 'Classic', cristal: 'Cristal', aurora: 'Aurora', liquid: 'Liquid', onda: 'Onda', orbit: 'Orbit',
     techstep: 'Techstep', wireframe: 'Wireframe', neuro: 'Neuro', fosforo: 'Fósforo', papel: 'Papel' };
