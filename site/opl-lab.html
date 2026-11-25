@@ -27,8 +27,6 @@
     <a href="manual.html">Manual</a>
     <a href="themes.html">Theme maker</a>
     <a href="changelog.html">Changelog</a>
-    <a href="https://github.com/TEaG3/newday">Source</a>
-    <a class="btn solid small" href="https://github.com/TEaG3/newday/releases" data-zip><span data-zip-name>Download package</span></a>
   </div>
 </nav>
 
@@ -40,7 +38,6 @@
     <div class="btns">
       <a class="btn solid" href="#simulator">Try the engine-routing preview</a>
       <a class="btn" href="manual.html#opl">Read the OPL guide</a>
-      <a class="btn" href="https://github.com/TEaG3/newday/actions/workflows/build-ps2.yml">Build workflow</a>
     </div>
     <p class="opl-caution"><strong>Verification boundary:</strong> CI proves the pinned OPL build, the TEa.G3 patch, the embedded ELF and the host-side routing tests. It does not prove gameplay or storage compatibility on a physical PS2.</p>
   </header>
@@ -122,21 +119,10 @@
       <div><span class="opl-kicker mono">04 / SOURCE OF TRUTH</span><h2>Where to inspect the real implementation</h2></div>
       <p>The interactive route above mirrors the C selector for USB, BDM devices, SMB, APA/HD Loader and Neutrino fallback.</p>
     </div>
-    <div class="opl-source-grid">
-      <a href="https://github.com/TEaG3/newday/blob/master/engine.c"><strong>engine.c</strong><span>Format + source + preference selection matrix</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/launcher.c"><strong>launcher.c</strong><span>USB UL scanning, game metadata and launch hand-off</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/ul.c"><strong>ul.c</strong><span>UL record, CRC and split-part validation</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/tools/patch_opl_ul.py"><strong>patch_opl_ul.py</strong><span>TEa.G3 pinned OPL UL and BDM direct-boot patch</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/tools/patch_opl_hdl.py"><strong>patch_opl_hdl.py</strong><span>Safe APA / HD Loader mini-launch and existing-config guard</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/sources.c"><strong>sources.c</strong><span>APA start-sector and sub-partition size discovery</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/runtime_install.c"><strong>runtime_install.c</strong><span>Runtime installation and CRC-32 checks</span></a>
-      <a href="https://github.com/TEaG3/newday/blob/master/.github/workflows/build-ps2.yml"><strong>build-ps2.yml</strong><span>CI build of pinned OPL, Neutrino and the single ELF</span></a>
-    </div>
-  </section>
 </main>
 
 <footer class="wrap site">
-  <span class="credit" lang="ar" dir="rtl"><strong>تعديل وتطوير المطور العراقي</strong> — <a href="https://github.com/TEaG3" rel="noopener"><strong>TEa.G3</strong></a></span>
+  <span class="credit" lang="ar" dir="rtl"><strong>تعديل وتطوير المطور العراقي</strong> — <strong>TEa.G3</strong></span>
   <span>OPL and Neutrino are embedded runtime components; the routing boundary above is specific to this TEa.G3 integration.</span>
   <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
 </footer>
