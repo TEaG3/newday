@@ -26,7 +26,8 @@ class TEaG3BrandingTests(unittest.TestCase):
         config = self.launcher[start:end]
         self.assertNotIn("nuld", config.lower())
         self.assertIn("downloadable applications only", config)
-        self.assertIn("Classic", config)
+        self.assertIn("motor = opl", config)
+        self.assertIn("pantalla = 480i", config)
 
     def test_network_identifies_the_current_product(self):
         self.assertIn("User-Agent: TEa.G3", self.net)
