@@ -2683,6 +2683,7 @@ static const char *launch_err; // why the last launch() came back (toast)
 
 static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is created now (a few seconds, 8 MB)
 {
+	static vmc_ent existing_entries[MAXDIR];
 	char path[64], dir[24];
 	if (on_catalog(i)) { // phase 17: the card lives on the server, its catalog service makes it
 		char name[40], buf[512];
@@ -2695,7 +2696,12 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 		return st == 200 || st == 201;
 	}
 	vmc_file(i, path, sizeof(path));
-	if (exists(path)) return 1;
+	int entries = vmc_list(path, existing_entries, MAXDIR);
+	if (entries >= 0) return 1;
+	if (exists(path)) {
+		launch_err = L("Virtual memory card is corrupt or unreadable");
+		return 0;
+	}
 	gfx_begin();
 	T->bg(0);
 	gfx_alpha(0x80);
@@ -2710,7 +2716,9 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 	mkdir(dir, 0777);
 	clock_t c0 = clock();
 	int ok = vmc_create(path);
-	printf("vmc %s: %s in %d ms\n", path, ok ? "created" : "FAILED", (int)((long long)(clock() - c0) * 1000 / CLOCKS_PER_SEC));
+	if (ok && vmc_list(path, existing_entries, MAXDIR) < 0) ok = 0;
+	printf("vmc %s: %s in %d ms\n", path, ok ? "created and verified" : "FAILED", (int)((long long)(clock() - c0) * 1000 / CLOCKS_PER_SEC));
+	if (!ok) launch_err = L("Virtual memory card is corrupt or unreadable");
 	return ok;
 }
 
