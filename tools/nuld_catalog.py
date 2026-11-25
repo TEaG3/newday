@@ -201,7 +201,13 @@ def main():
     ap.add_argument("--port", type=int, default=18290)
     ap.add_argument("--tool", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "nuld_hash"))
     ap.add_argument("--cache", default=os.path.expanduser("~/.cache/nuld-catalog.json"))
-    ap.add_argument("--rescan", type=int, default=60, help="seconds between scans for new ISOs")
+    ap.add_argument(
+        "--rescan",
+        type=int,
+        default=60,
+        help=("seconds between full scans for new, changed and removed ISOs; "
+              "changes become visible after the next completed scan (default: 60)"),
+    )
     a = ap.parse_args()
     os.makedirs(os.path.dirname(a.cache), exist_ok=True)
     cat = Catalog(a.root, a.tool, a.cache)

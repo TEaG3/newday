@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build the NULD fork of Neutrino (base: rickgaiser/neutrino dev 7be8de2) into dist/neutrino/.
+# Build the TEa.G3 Neutrino fork from its pinned upstream base into dist/neutrino/.
 # usage (from Windows): wsl bash /mnt/d/ps2/ps2-launcher/tools/build_neutrino.sh
 #
 # Rebuilt: the loader (neutrino.elf: -igr / -igroff / -igrexit / -igrmenu / -ra options), modules/ee_core.elf (In
@@ -13,7 +13,7 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 FORK="$REPO/third_party/neutrino-igr"
 python3 "$REPO/tools/fetch_arabic_font.py"
 python3 "$REPO/tools/generate_igr_arabic.py"
-WORK="${WORK:-$HOME/orbit-build}"
+WORK="${WORK:-$HOME/tea-g3-build}"
 BASE=229cf1dc7a8e0e58c2da390c1caa63e2b61795dd
 mkdir -p "$WORK"
 cd "$WORK"
@@ -41,7 +41,7 @@ rm -rf iop/raagent && cp -r "$FORK/raagent" iop/raagent
 python3 "$FORK/patch_neutrino.py"
 make -C iop/cdvdman_emu IOP_SRXFIXUP_FLAGS="--rb --irx1 --allow-zero-text" > "$WORK/cdvdman_emu.log" 2>&1 || { tail -20 "$WORK/cdvdman_emu.log"; exit 1; }
 make -C ee/ee_core clean all > "$WORK/ee_core.log" 2>&1 || { tail -20 "$WORK/ee_core.log"; exit 1; }
-grep -E ' _end$|_end = ' ee/ee_core/ee_core.map | head -2 # the 64 KB region ends at 0x94000
+python3 "$REPO/tools/check_ee_core_headroom.py" ee/ee_core/ee_core.map
 # the packed neutrino.elf needs ps2-packer's stubs, which this toolchain cannot find; the unpacked ELF runs the same
 make -C ee/loader neutrino_unpacked.elf > "$WORK/loader.log" 2>&1 || { tail -20 "$WORK/loader.log"; exit 1; }
 make -C iop/raagent > "$WORK/raagent.log" 2>&1 || { tail -20 "$WORK/raagent.log"; exit 1; }

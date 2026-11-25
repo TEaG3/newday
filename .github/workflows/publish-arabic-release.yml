@@ -77,7 +77,7 @@ jobs:
           grep -Fq 'argc >= 6 && !strcmp(argv[5], "mini")' src/opl.c
           grep -Fq 'argv[6] = "mini"' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'argv[5] = disc_type' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
-          grep -Fq 'run_loader(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader_recover(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py"
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[13]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py"
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
@@ -178,7 +178,9 @@ jobs:
             - ملف تشغيل واحد للمستخدم: TEa.G3.ELF.
             - OPL وNeutrino ووحداتهما مضمّنة داخل الملف وتُجهّز تلقائياً على USB.
             - العربية هي اللغة الافتراضية مع دعم تغيير اللغة والمظاهر من الإعدادات.
-            - ISO/ZSO يستخدم Neutrino تلقائياً؛ وUSBExtreme UL يستخدم OPL.
+            - الإعداد الافتراضي motor=opl يوجه USB/BDM إلى OPL BDM وSMB المهيأ إلى OPL ETH وAPA/HDL إلى OPL HDD.
+            - يبقى Neutrino متاحاً لمسارات ISO المدعومة؛ ويتطلب ZSO محول OPL ولا يمرر إلى Neutrino.
+            - USBExtreme UL يستخدم OPL فقط.
             - يتضمن الأرشيف INSTALL-AR.txt وتراخيص المحركات وبصمات SHA-256.
             - تم تضمين CRC-32 لكل ملف runtime والتحقق منه بعد الاستخراج.
 

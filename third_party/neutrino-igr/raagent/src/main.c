@@ -184,6 +184,7 @@ int _start(int argc, char *argv[])
             strncpy(me, argv[i] + 3, sizeof(me) - 1);
         else if (!strncmp(argv[i], "mbox=", 5))
             mbox = strtoul(argv[i] + 5, NULL, 16);
+    me[sizeof(me) - 1] = '\0'; // strncpy may fill the whole buffer when the supplied address is too long.
     printf("raagent: client %08x, me %s, mailbox %08x, buffer %p\n", (unsigned)srv_ip, me, (unsigned)mbox, snap);
     if (srv_ip == 0 || (sock = udp_bind(AGENT_PORT, rx_handler, NULL)) == NULL)
         return MODULE_NO_RESIDENT_END;
