@@ -2555,7 +2555,7 @@ static void launch(int i)
         filename = filename ? filename + 1 : cv[i].path;
         if (st == SRC_HDD) driver = "ata";
         else if (st == SRC_MX4SIO) driver = "sdc";
-        else if (st == SRC_ILINK) driver = "sd";
+        else if (st == SRC_ILINK) driver = "ilink";
         snprintf(unit, sizeof(unit), "%u", (unsigned char)src[(int)cv[i].src].unit);
         argv[0] = OPL_PATH; argv[1] = ""; argv[2] = (char *)filename; argv[3] = cv[i].boot;
         argv[4] = cv[i].cd ? "CD" : "DVD"; argv[5] = "bdm"; argv[6] = (char *)driver;
