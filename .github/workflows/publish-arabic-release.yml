@@ -33,11 +33,11 @@ jobs:
         with:
           path: tea-g3
 
-      - name: Check out pinned Open PS2 Loader
+      - name: Check out the same pinned TEaG3/OPL source used by CI
         uses: actions/checkout@v4
         with:
-          repository: ps2homebrew/Open-PS2-Loader
-          ref: b3a2199795fe89ba7e2dd7b843354472dff2c3eb
+          repository: TEaG3/OPL
+          ref: 46bad5a4a469c51e45eb1ed879fe43c100b8cb7b
           path: Open-PS2-Loader
 
       - name: Fetch lwNBD dependency before cleaning

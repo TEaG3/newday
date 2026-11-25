@@ -57,6 +57,11 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertNotIn("run_loader(8, opl_argv)", self.release_workflow)
         self.assertIn("USBExtreme UL يستخدم OPL فقط", self.release_workflow)
 
+    def test_release_workflow_uses_the_ci_pinned_teag3_opl_source(self):
+        self.assertIn("repository: TEaG3/OPL", self.release_workflow)
+        self.assertIn("ref: 46bad5a4a469c51e45eb1ed879fe43c100b8cb7b", self.release_workflow)
+        self.assertNotIn("repository: ps2homebrew/Open-PS2-Loader", self.release_workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
