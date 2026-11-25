@@ -389,9 +389,9 @@ static icon *load_icon(int i)
 	return ic;
 }
 
-// ---- In Game Reset (phase 12): the NULD Neutrino fork reboots through rom0:OSDSYS, and FMCB autoboots
-// mc?:/BOOT/NULD.ELF (boot.c, embedded here), which runs mass0:/TEa.G3.ELF. The icon thread (the libmc owner)
-// installs it, rewriting it only when it differs ----
+// ---- In Game Reset: the TEa.G3 Neutrino fork reboots through rom0:OSDSYS, and FMCB starts
+// mc?:/BOOT/TEa.G3.ELF (boot.c, embedded here), which reloads mass0:/TEa.G3.ELF.
+// Legacy NULD/ORBIT stubs remain refreshed for existing FreeMcBoot shortcuts. ----
 extern unsigned char boot_elf[];
 extern unsigned int size_boot_elf;
 static unsigned igr_exit, igr_off, igr_menu; // libpad masks from config.ini [igr]; 0 = off
@@ -433,7 +433,7 @@ static int stub_file(int port, const char *path, int create) // 1 if written now
 	return ok ? 1 : -1;
 }
 
-static int stub_write(int port) // 1 if mc<port>:/BOOT/NULD.ELF is this launcher's stub (already, or written now)
+static int stub_write(int port) // 1 if the TEa.G3 return stub is installed (already, or written now)
 {
 	int r;
 	mcMkDir(port, 0, "/BOOT"), mcSync(0, NULL, &r);
