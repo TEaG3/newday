@@ -139,9 +139,9 @@ A feature is complete only after discovery, argument translation, runtime startu
 ## Validation status
 
 The latest successful post-merge master run is
-[45688916569](https://github.com/TEaG3/newday/actions/runs/45688916569),
+[45690674459](https://github.com/TEaG3/newday/actions/runs/45688916569),
 dated 2026-11-25, at commit
-`6644f213b7feb44beb18a246e48bc975e5a760f8`.
+`1c93269fc5f87762986266cc333360369e0d941c`.
 
 It validated:
 - 37 host unit tests, including SMB/catalog, NULD migration compatibility, release/version, launcher hand-off, EE headroom, Neutrino guardrails and TEa.G3 branding;
@@ -156,11 +156,11 @@ It validated:
 - the single `TEa.G3.ELF` build and 76-file runtime manifest.
 
 The unified test bundle is
-[artifact 15058490585](https://github.com/TEaG3/newday/actions/runs/45688916569/artifacts/15058490585).
+[artifact 15059245856](https://github.com/TEaG3/newday/actions/runs/45688916569/artifacts/15058490585).
 Its downloaded ZIP passed `unzip -t`; all 76 manifest entries matched their
 recorded sizes and CRC-32 values. SHA-256:
 
-`5f752c367e4056241e2b390d29235fd3731e59169eee5822422fc156262157b3`.
+`4938038596ce95a8c245108fc38359dbbe8a7e83f58ec4df0516fedb6eea2247`.
 
 The launcher ELF SHA-256 is
 `cfe29292b57d6d52f50f3bd1902fa3f8273730b1e9b6a289ecfa5404e2e1e7cc`;
