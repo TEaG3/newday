@@ -1,4 +1,4 @@
-// TEa.G3 launcher: loading screen + home screen in the Classic theme (the canvas "NULD — identidad",
+// TEa.G3 launcher: loading screen + home screen in the Classic theme (the canvas "Classic — identidad",
 // https://claude.ai/artifact/Nme3Y6XiWdQGTsMA2YbnbS; splash.c is link.elf's). Specs: openspec launcher-ui, cover-art.
 // A loader thread brings up the IOP/USB, reads the memory cards and the games; a cover thread loads the covers on screen
 // (mass0:/covers/<serial>.c16 256x368 + <serial>_s.c16 184x264, tools/covers.py) while the render thread animates;
@@ -63,6 +63,7 @@ static void theme_set(int id) // render thread; a theme with a backdrop to dithe
 }
 static int theme_of(const char *key)
 {
+	if (!strcasecmp(key, "classic")) return TH_NULD; // display name; keep the legacy "nuld" key readable too
 	for (int i = 0; i < themes_n; i++)
 		if (!strcasecmp(key, themes[i].key)) return i;
 	return TH_TORRES;
@@ -161,7 +162,7 @@ static void *make_half(const void *big, int sq) // 128x184 (128x128) grid tile f
 	return h; // NULL: the grid draws the small cover scaled instead
 }
 static volatile int ncv, stage, done_n, total_n, usb, load_ms, neutrino; // written by the loader thread
-#define POPSTARTER "mass0:/POPS/POPSTARTER.ELF" // PS1 games only with NULD on the USB (POPStarter reads mass:)
+#define POPSTARTER "mass0:/POPS/POPSTARTER.ELF" // PS1 games only with TEa.G3 on the USB (POPStarter reads mass:)
 
 // ---- saves: root dirs of both cards, read once by the loader (design: phase-3-ui). mcn[p] < 0: no card ----
 #define MAXDIR 128
@@ -1097,7 +1098,7 @@ static const char *const config_template[LANG_N] = {
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar = L1+L2+R1+R2+TRIANGLE+CIRCLE\napagar = L1+L2+R1+R2+L3+R3\n",
 "; TEa.G3 - إعدادات عربية\n"
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، en = الإنجليزية\nidioma = ar\n"
-	"; المظهر: torres أو الكلاسيكية أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
+	"; المظهر: torres أو Classic (الكلاسيكية) أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = opl\nauto = si\n"
@@ -1631,7 +1632,7 @@ static int ra_prepare(int i, char *arg, int n)
 	return ok;
 }
 
-// ---- self-update (#15): the latest release's signed update.txt (update.c) names NULD's own files; a newer version
+// ---- self-update (#15): the latest release's signed update.txt (update.c) names TEa.G3's own files; a newer version
 // shows a toast and the wizard's first row, which downloads, checks and swaps them (the old ones stay as .old) ----
 #define UPD_URL "https://github.com/TEaG3/newday/releases/latest/download/"
 static upd_manifest upd;
@@ -2974,12 +2975,12 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		if (game_gc(i, k)) gc[n++] = gc_modes[k];
 	gc[n] = 0;
 	if (n > 4) argv[argc++] = gc;
-	if (neutrino_igr && igr_exit) // In Game Reset (phase 12): only the NULD fork knows these
+	if (neutrino_igr && igr_exit) // In Game Reset (phase 12): only the TEa.G3 fork knows these
 		snprintf(igr[0], sizeof(igr[0]), "-igr=0x%04x", igr_exit), argv[argc++] = igr[0];
 	if (neutrino_menu && igr_menu) // in-game menu (phase 13)
 		snprintf(igr[2], sizeof(igr[2]), "-igrmenu=0x%04x", igr_menu), argv[argc++] = igr[2];
 	if (neutrino_igr && (igr_exit || (neutrino_menu && igr_menu)))
-		argv[argc++] = "-igrexit=rom0:OSDSYS"; // the reboot: FMCB comes up from the card and autoboots NULD
+		argv[argc++] = "-igrexit=rom0:OSDSYS"; // the reboot: FMCB comes up from the card and autoboots TEa.G3
 	if (neutrino_igr && igr_off) snprintf(igr[1], sizeof(igr[1]), "-igroff=0x%04x", igr_off), argv[argc++] = igr[1];
 	if (neutrino_lang && neutrino_menu && igr_menu) {
 		if (lang == LANG_EN) argv[argc++] = "-igrlang=en";
@@ -3105,7 +3106,7 @@ int main(int argc, char *argv[])
 		if (ra_down && !ra_told) ra_told = 1, toast = 240, toast_msg = ra_down == 1 ? L("Achievements: no network") : L("Achievements: no server");
 		if (w_first && usb && booted) w_first = 0, wiz_open(), play(S_PANEL, 70); // first boot (#15)
 		if (wiz >= 0) { // setup wizard owns the pad until ○ / Save (#15)
-			if (w_done == 2) { // saved: NULD starts again only if the sources or the network changed
+			if (w_done == 2) { // saved: TEa.G3 starts again only if the sources or the network changed
 				if (w_quiet) wiz = -1, toast = 180, toast_msg = L("Setup saved");
 				else if (pressed & PAD_CROSS) { if (w_restart) restart_self(); else wiz = -1, play(S_PANEL, 70); }
 			}
