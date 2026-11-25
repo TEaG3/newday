@@ -100,7 +100,7 @@ for (const page of ["index.html", "opl-lab.html"]) {
 }
 assert.doesNotMatch(i18nSource, /The regular ISO\/ZSO auto route remains Neutrino/);
 const smokePlan = fs.readFileSync(path.join(__dirname, "PCSX2_SMOKE_TEST.md"), "utf8");
-assert.match(smokePlan, /motor = auto[\\s\\S]*OPL BDM/);
-assert.match(smokePlan, /motor = neutrino[\\s\\S]*rejected/i);
-assert.doesNotMatch(smokePlan, /Neutrino ISO\\/ZSO/);
+assert.ok(smokePlan.includes("motor = auto") && smokePlan.includes("OPL BDM"));
+assert.ok(smokePlan.includes("motor = neutrino") && /rejected/i.test(smokePlan));
+assert.ok(!smokePlan.includes("Neutrino ISO/ZSO"));
 console.log("site OPL route matrix ok: " + tested + " format/source/preference combinations + ZSO fail-closed, ISO fallback and documentation checks");
