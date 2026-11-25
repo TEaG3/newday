@@ -670,7 +670,7 @@
 
   delete dict.to;
   Object.assign(dict, {
-    "USB root ├── TEa.G3.ELF ├── tea_g3/runtime/ OPL and SMB support modules installed automatically ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
+    "USB root ├── TEa.G3.ELF ├── tea_g3/runtime/ OPL and SMB support modules installed automatically ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── tea_g3/runtime/ وحدات OPL وSMB المساعدة التي يثبتها TEa.G3 تلقائياً\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
   });
 
   Object.assign(dict, {
