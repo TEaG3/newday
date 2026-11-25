@@ -275,13 +275,6 @@ const char *src_smb_init(const char *ip, const char *mask, const char *gw, const
 	return NULL;
 }
 
-// phase 17: the game stage's ministack (Neutrino boots it, no -qb) takes the address the launcher has, fixed or the
-// DHCP lease: ministack itself has no DHCP
-void src_udpfs_ip(const char *ndir, const char *ip)
-{
-	if (*ip) neutrino_ip(ndir, "bsd-udpfs.toml", ip);
-}
-
 // HD Loader metadata, matching upstream OPL's hddGetHDLGamelist() calculation.
 typedef struct hdl_scan_record {
 	struct hdl_scan_record *next;
