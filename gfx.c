@@ -73,26 +73,46 @@ static unsigned utf8_next(const char **ps)
 {
 	const unsigned char *s = (const unsigned char *)*ps;
 	unsigned cp;
+
+	if (!*s) return 0;
 	if (*s < 0x80) { *ps += 1; return *s; }
-	if ((*s & 0xE0) == 0xC0 && (s[1] & 0xC0) == 0x80) {
-		cp = (s[0] & 0x1F) << 6 | (s[1] & 0x3F);
+
+	/* Decode only complete, shortest-form UTF-8 scalar values. Check each byte
+	 * before reading the next one: game titles and config strings are external
+	 * data and may end in the middle of a multibyte sequence. */
+	if (s[0] >= 0xC2 && s[0] <= 0xDF && s[1] &&
+	    (s[1] & 0xC0) == 0x80) {
+		cp = ((unsigned)(s[0] & 0x1F) << 6) | (s[1] & 0x3F);
 		*ps += 2;
 		return cp;
 	}
-	if ((*s & 0xF0) == 0xE0 && (s[1] & 0xC0) == 0x80 && (s[2] & 0xC0) == 0x80) {
-		cp = (s[0] & 0x0F) << 12 | (s[1] & 0x3F) << 6 | (s[2] & 0x3F);
+	if (s[0] >= 0xE0 && s[0] <= 0xEF && s[1] &&
+	    (s[1] & 0xC0) == 0x80 && s[2] &&
+	    (s[2] & 0xC0) == 0x80 &&
+	    !(s[0] == 0xE0 && s[1] < 0xA0) && /* overlong */
+	    !(s[0] == 0xED && s[1] >= 0xA0)) { /* UTF-16 surrogate */
+		cp = ((unsigned)(s[0] & 0x0F) << 12) |
+		     ((unsigned)(s[1] & 0x3F) << 6) | (s[2] & 0x3F);
 		*ps += 3;
 		return cp;
 	}
-	if ((*s & 0xF8) == 0xF0 && (s[1] & 0xC0) == 0x80 && (s[2] & 0xC0) == 0x80 &&
-	    (s[3] & 0xC0) == 0x80) {
-		cp = (s[0] & 7) << 18 | (s[1] & 0x3F) << 12 | (s[2] & 0x3F) << 6 | (s[3] & 0x3F);
+	if (s[0] >= 0xF0 && s[0] <= 0xF4 && s[1] &&
+	    (s[1] & 0xC0) == 0x80 && s[2] &&
+	    (s[2] & 0xC0) == 0x80 && s[3] &&
+	    (s[3] & 0xC0) == 0x80 &&
+	    !(s[0] == 0xF0 && s[1] < 0x90) && /* overlong */
+	    !(s[0] == 0xF4 && s[1] > 0x8F)) { /* above U+10FFFF */
+		cp = ((unsigned)(s[0] & 0x07) << 18) |
+		     ((unsigned)(s[1] & 0x3F) << 12) |
+		     ((unsigned)(s[2] & 0x3F) << 6) | (s[3] & 0x3F);
 		*ps += 4;
 		return cp;
 	}
+
+	/* Consume one bad byte, not the following continuation bytes. This keeps
+	 * the rest of a damaged game title visible and guarantees forward progress. */
 	*ps += 1;
-	while ((**(const unsigned char **)ps & 0xC0) == 0x80) *ps += 1;
-	return 0xFFFFFFFFu;
+	return '?';
 }
 
 static int glyph_index(const gfx_font *f, unsigned cp)
@@ -297,8 +317,22 @@ int main(void)
 	const gfx_font *f = &gfx_font_ui;
 	const char *s = "a\xC3\xA9" "b";                    // "aéb"
 	assert(next_glyph(f, &s) == 'a' - 32 && next_glyph(f, &s) == 95 + 1 && next_glyph(f, &s) == 'b' - 32 && !*s);
-	s = "\xE2\x82\xAC!";                                 // 3-byte sequence (euro): skipped as one unknown
+	s = "\xE2\x82\xAC!";                                 // 3-byte sequence (euro): unknown glyph
 	assert(next_glyph(f, &s) == -1 && next_glyph(f, &s) == '!' - 32);
+	/* Truncated, overlong, surrogate and out-of-range encodings must never read
+	 * beyond the terminator or be accepted as Unicode scalar values. */
+	s = "\xE2";
+	assert(next_glyph(f, &s) == '?' - 32 && !*s);
+	s = "\xF0\x9F";
+	assert(next_glyph(f, &s) == '?' - 32 && next_glyph(f, &s) == '?' - 32 && !*s);
+	s = "\xC0\xAF";
+	assert(next_glyph(f, &s) == '?' - 32 && next_glyph(f, &s) == '?' - 32 && !*s);
+	s = "\xED\xA0\x80";
+	assert(next_glyph(f, &s) == '?' - 32 && next_glyph(f, &s) == '?' - 32 &&
+	       next_glyph(f, &s) == '?' - 32 && !*s);
+	s = "\xF4\x90\x80\x80";
+	assert(next_glyph(f, &s) == '?' - 32 && next_glyph(f, &s) == '?' - 32 &&
+	       next_glyph(f, &s) == '?' - 32 && next_glyph(f, &s) == '?' - 32 && !*s);
 	assert(gfx_text_width(f, "AB") == f->g['A' - 32].adv + f->g['B' - 32].adv);
 	assert(gfx_text_width(f, "AB\nCCCC") == gfx_text_width(f, "AB")); // first line only
 	tracking = 4;
