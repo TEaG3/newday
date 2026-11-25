@@ -310,6 +310,8 @@ out:
 int main(int argc, char **argv)
 {
 	const char *p = "/tmp/vmc_selftest.bin";
+	/* This fixed path belongs to the host selftest; clear only its own prior output before testing no-overwrite. */
+	remove(p);
 	assert(vmc_create(p));
 	FILE *f = fopen(p, "rb");
 	fseek(f, 0, SEEK_END);
