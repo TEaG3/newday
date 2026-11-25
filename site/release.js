@@ -24,7 +24,7 @@
     }).then(function (releases) {
       var candidates = (releases || []).filter(function (item) {
         return !item.draft && (item.assets || []).some(function (asset) {
-          return /^TEa\.G3-PS2\.zip$/i.test(asset.name || "");
+          return /^TEa\.G3-Complete-Package\.zip$/i.test(asset.name || "");
         });
       });
       if (!candidates.length) return Promise.reject("No published TEa.G3 package with the expected asset");
@@ -32,7 +32,7 @@
       // GitHub's release list is newest-first; use its first eligible package,
       // regardless of prerelease status, so the site never silently links an older stable build.
       var rel = candidates[0], assets = rel.assets || [], zip = assets.find(function (asset) {
-        return /^TEa\.G3-PS2\.zip$/i.test(asset.name || "");
+        return /^TEa\.G3-Complete-Package\.zip$/i.test(asset.name || "");
       });
       if (!zip || !zip.browser_download_url) return Promise.reject("The current package asset is missing");
 
