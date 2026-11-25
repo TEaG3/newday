@@ -26,7 +26,7 @@ const releaseFallback = "https://github.com/TEaG3/newday/releases/download/arabi
 for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
   const html = fs.readFileSync(path.join(__dirname, "../site", page), "utf8");
   assert.ok(html.includes(releaseFallback), page + " must have the current verified package as its no-JS fallback");
-  assert.doesNotMatch(html, /arabic-v1\\.3\\.5|\\/releases\\/latest/, page + " must not fall back to a stale or stable-only release URL");
+  assert.doesNotMatch(html, /arabic-v1\.3\.5|\/releases\/latest/, page + " must not fall back to a stale or stable-only release URL");
 }
 
 const siteCss = fs.readFileSync(path.join(__dirname, "../site/site.css"), "utf8");
