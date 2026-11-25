@@ -39,6 +39,14 @@ Previously named ORBIT and then NULD. Upgrading preserves existing data: the fir
 - **Arabic by default, with English as the only secondary language** (`config.ini [ui] idioma`); the launcher shapes Arabic letters, joins contextual forms, lays out right-to-left text, and keeps Latin runs and numbers readable. The in-game pause menu and achievement-unlocked heading also have Arabic labels.
 - Companion app: [ORBIT Jellyfin](https://github.com/danielnuld/orbit-jellyfin), your Jellyfin library on the PS2.
 
+## USB folder template and guides
+
+The repository includes a ready-to-copy folder layout in [USB-Template/](USB-Template/),
+with placeholders for `DVD/`, `CD/`, `POPS/` and `APPS/`.
+Read the setup instructions in [Arabic](INSTALL-AR.txt) or [English](INSTALL-EN.txt).
+Keep USBExtreme/UL files (`ul.cfg` and `ul.*`) in the USB root; they do not belong
+inside any of these folders. The template does not include the launcher ELF or game files.
+
 ## Quick start
 
 1. **Copy** `TEa.G3.ELF` and your `DVD/` / `CD/` game folders to the root of a FAT32 or exFAT USB drive. OPL, Neutrino and their required modules are embedded in TEa.G3; the first boot installs them automatically under `tea_g3/runtime/`. No separate engine files or folders are required.
