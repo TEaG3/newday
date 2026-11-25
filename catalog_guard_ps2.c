@@ -2,10 +2,10 @@
 
 #include <kernel.h>
 
-static void catalog_guard_ps2_lock(void *opaque)
+static int catalog_guard_ps2_lock(void *opaque)
 {
     catalog_guard_ps2_context *context = (catalog_guard_ps2_context *)opaque;
-    (void)WaitSema(context->sema_id);
+    return WaitSema(context->sema_id) >= 0;
 }
 
 static void catalog_guard_ps2_unlock(void *opaque)
@@ -63,11 +63,10 @@ int catalog_guard_ps2_destroy(catalog_guard *guard,
     if (guard == NULL || context == NULL || context->sema_id < 0 ||
         guard->lock != catalog_guard_ps2_lock ||
         guard->unlock != catalog_guard_ps2_unlock ||
-        guard->lock_context != context) {
+        guard->lock_context != context ||
+        !catalog_guard_ps2_lock(context)) {
         return 0;
     }
-
-    catalog_guard_ps2_lock(context);
     idle = guard->readers == 0 &&
            !guard->playing &&
            !guard->io_busy &&
