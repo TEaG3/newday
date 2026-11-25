@@ -107,7 +107,7 @@ static int mmce_load(void)
 	return mmce_up > 0;
 }
 
-int src_home(const char *root) // #8: NULD started from an MMCE: its driver before config.ini; 0 for the USB
+int src_home(const char *root) // #8: TEa.G3 started from an MMCE: load its driver before config.ini; 0 for USB
 {
 	return !strncmp(root, "mmce", 4) && mmce_load() && mounted(root, 20);
 }
@@ -150,9 +150,9 @@ const char *src_init(unsigned mask, const char *ip, const char *ndir, int udpfs_
 			else FAIL(SRC_HDD, L("Hard disk not found (exFAT or HD Loader)"));
 		}
 	}
-	if (mask & 1u << SRC_USB && !add(SRC_USB, "mass0:", 20)) // only when NULD runs from an MMCE (#8)
+	if (mask & 1u << SRC_USB && !add(SRC_USB, "mass0:", 20)) // only when TEa.G3 runs from an MMCE (#8)
 		FAIL(SRC_USB, L("USB drive not found"));
-	if (mask & 1u << SRC_MX4SIO && mmce_up > 0) // NULD runs from an MMCE: same SIO2 port
+	if (mask & 1u << SRC_MX4SIO && mmce_up > 0) // TEa.G3 runs from an MMCE: same SIO2 port
 		mask &= ~(1u << SRC_MX4SIO), FAIL(SRC_MX4SIO, L("MX4SIO does not go with TEa.G3 on an MMCE"));
 	if (mask & 1u << SRC_MX4SIO && mask & 1u << SRC_MMCE) // both on the SIO2 of slot 2 (nhddl README)
 		mask &= ~(1u << SRC_MMCE), FAIL(SRC_MMCE, L("MX4SIO and MMCE do not go together: using MX4SIO"));
