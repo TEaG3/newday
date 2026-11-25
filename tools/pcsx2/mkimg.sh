@@ -3,4 +3,4 @@
 . "$(dirname "$0")/env.sh"; export MTOOLS_SKIP_CHECK=1
 pkill -x AppRun.wrapped; sleep 1
 rm -f $W/usb.img; dd if=/dev/zero of=$W/usb.img bs=1M count=0 seek=256 2>/dev/null
-mkfs.vfat -F 32 -n ORBIT $W/usb.img >/dev/null && cd $W/usb && mcopy -s -i $W/usb.img ./* ::/
+mkfs.vfat -F 32 -n TEAG3 $W/usb.img >/dev/null && cd $W/usb && mcopy -s -i $W/usb.img ./* ::/
