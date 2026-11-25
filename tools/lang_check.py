@@ -30,7 +30,20 @@ def english():
 
 def table(filename):
     source = (ROOT / filename).read_text(encoding="utf-8")
-    return {join(match.group(1)): join(match.group(2)) for match in PAIR.finditer(source)}
+    pairs = [(join(match.group(1)), join(match.group(2))) for match in PAIR.finditer(source)]
+    keys = [key for key, _ in pairs]
+    seen = set()
+    duplicates = set()
+    for key in keys:
+        if key in seen:
+            duplicates.add(key)
+        seen.add(key)
+    duplicates = sorted(duplicates)
+    if duplicates:
+        for key in duplicates:
+            print(f"duplicate translation key ({filename}):", key)
+        raise SystemExit(1)
+    return dict(pairs)
 
 
 def initializer_rows(source, symbol):
@@ -93,6 +106,24 @@ def main():
               f"{len(missing)} missing, {len(extra)} unused")
         failed |= bool(missing or extra or bad)
 
+    # Reject malformed UTF-8 and replacement characters in user-visible source files.
+    text_paths = [ROOT / name for name in ("launcher.c", "lang_ar.c", "lang.h",
+                  "gfx.c", "gfx.h", "sources.c", "tools/font.py",
+                  "tools/generate_igr_arabic.py", "site/i18n.js")]
+    encoding_failed = False
+    for path in text_paths:
+        raw = path.read_bytes()
+        try:
+            decoded = raw.decode("utf-8", errors="strict")
+        except UnicodeDecodeError as exc:
+            print(f"FAIL: invalid UTF-8 in {path.relative_to(ROOT)}: {exc}")
+            encoding_failed = True
+            continue
+        if "\uFFFD" in decoded:
+            print(f"FAIL: replacement character U+FFFD in {path.relative_to(ROOT)}")
+            encoding_failed = True
+    failed |= encoding_failed
+
     launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
     required = {
         "Arabic must be the initial language": "int lang = LANG_AR;" in launcher,
@@ -129,6 +160,11 @@ def main():
     arabic_used = {ord(ch) for source in (launcher, (ROOT / "lang_ar.c").read_text(encoding="utf-8"))
                    for ch in source if 0x0600 <= ord(ch) <= 0x06FF}
     unsupported = sorted(arabic_used - arabic_supported)
+    combining_marks = sorted({ord(ch) for source in (launcher, (ROOT / "lang_ar.c").read_text(encoding="utf-8"))
+                              for ch in source if 0x064B <= ord(ch) <= 0x065F})
+    for cp in combining_marks:
+        print(f"FAIL: Arabic combining mark U+{cp:04X} needs mark positioning support")
+    failed |= bool(combining_marks)
     for cp in unsupported:
         print(f"FAIL: Arabic codepoint U+{cp:04X} is used but has no shaping/font mapping")
     print(("ok: " if not unsupported else "FAIL: ") +
