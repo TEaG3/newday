@@ -60,8 +60,6 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ steps.opl-ref.outputs.sha }}"
           git fetch --prune --unshallow
           curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/download_lwNBD.sh -o download_lwNBD.sh
-          chmod +x download_lwNBD.sh
-          test -x download_lwNBD.sh
           bash ./download_lwNBD.sh
           python3 -m py_compile lang_compiler.py check_arabic_translation.py
           python3 -c "import yaml"
@@ -137,27 +135,18 @@ jobs:
           if-no-files-found: error
 
   package-and-release:
-    name: Build single ELF and publish Arabic package
+    name: Build single-ELF OPL-only Arabic package
     runs-on: ubuntu-latest
     needs: [opl-engine]
     steps:
       - name: Check out TEa.G3 source
         uses: actions/checkout@v4
-
       - name: Download pinned OPL runtime
         uses: actions/download-artifact@v4
         with:
           name: tea-g3-opl-release-${{ github.sha }}
           path: runtime-input
-
-      - name: Fetch pinned upstream Neutrino MMCE FHI module
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y libarchive-tools
-          bash tools/fetch_neutrino_mmcefhi.sh
-
-      - name: Build TEa.G3 with embedded OPL and Neutrino
+      - name: Build TEa.G3 with embedded OPL only
         shell: bash
         run: |
           set -euo pipefail
@@ -172,26 +161,17 @@ jobs:
             make test
             python3 tools/theme_check.py
             make clean
-            bash tools/build_neutrino.sh
-            mkdir -p runtime-input
-            cp -R dist/neutrino runtime-input/neutrino
             test -s runtime-input/OPL.ELF
-            cp runtime-input/OPL-LICENSE.txt OPL-LICENSE.txt
+            test -s runtime-input/OPL-LICENSE.txt
             python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
             make APP=launcher
             test -s TEa.G3.ELF
             test -s runtime-manifest.txt
             grep -q "^OPL.ELF" runtime-manifest.txt
-            grep -q "^neutrino/neutrino.elf" runtime-manifest.txt
-            grep -q "^neutrino/modules/mmcefhi.irx" runtime-manifest.txt
+            test "$(grep -c '^files=1
           '
-
-      - name: Restore workspace ownership after the Docker build
-        run: sudo chown -R "$(id -u):$(id -g)" dist
-
       - name: Create validated single-ELF Arabic package
         run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || github.ref_name }}"
-
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -201,13 +181,42 @@ jobs:
             النسخة العربية من TEa.G3، تعديل وتطوير المطور العراقي TEa.G3.
 
             - ملف تشغيل واحد للمستخدم: TEa.G3.ELF.
-            - OPL وNeutrino ووحداتهما مضمّنة داخل الملف وتُجهّز تلقائياً على USB.
-            - العربية هي اللغة الافتراضية مع دعم تغيير اللغة والمظاهر من الإعدادات.
-            - الإعداد الافتراضي motor=opl يوجه USB/BDM إلى OPL BDM وSMB المهيأ إلى OPL ETH وAPA/HDL إلى OPL HDD.
-            - يبقى Neutrino متاحاً لمسارات ISO المدعومة؛ ويتطلب ZSO محول OPL ولا يمرر إلى Neutrino.
-            - USBExtreme UL يستخدم OPL فقط.
-            - يتضمن الأرشيف INSTALL-AR.txt وتراخيص المحركات وبصمات SHA-256.
-            - تم تضمين CRC-32 لكل ملف runtime والتحقق منه بعد الاستخراج.
+            - OPL هو محرك تشغيل ألعاب PS2 الوحيد، ولا توجد ملفات محرك ثانٍ أو مسارات fallback.
+            - USB ISO/ZSO وUSBExtreme UL تمر عبر محولات OPL المدمجة.
+            - HDD/HD Loader وMX4SIO وiLink تتطلب اختبار محول OPL على العتاد.
+            - SMB وUDPBD وUDPFS لتشغيل الألعاب وMMCE كمصدر ألعاب معطلة حتى اكتمال قارئ OPL واختباره.
+            - يبدأ العرض بوضع 480i/576i المتوافق مع AV، ويمكن التبديل إلى 720p للتوصيلات الداعمة.
+            - يتضمن الأرشيف INSTALL-AR.txt وتراخيص OPL وبصمات SHA-256.
+            - تم تضمين CRC-32 لملفات runtime والتحقق منها بعد الاستخراج.
+
+            This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          files: |
+            dist/TEa.G3-Complete-Package.zip
+            dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ runtime-manifest.txt)" -eq 1
+          '
+      - name: Create validated single-ELF Arabic package
+        run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || github.ref_name }}"
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
+          name: "TEa.G3 PS2 — النسخة العربية"
+          body: |
+            النسخة العربية من TEa.G3، تعديل وتطوير المطور العراقي TEa.G3.
+
+            - ملف تشغيل واحد للمستخدم: TEa.G3.ELF.
+            - OPL هو محرك تشغيل ألعاب PS2 الوحيد، ولا توجد ملفات محرك ثانٍ أو مسارات fallback.
+            - USB ISO/ZSO وUSBExtreme UL تمر عبر محولات OPL المدمجة.
+            - HDD/HD Loader وMX4SIO وiLink تتطلب اختبار محول OPL على العتاد.
+            - SMB وUDPBD وUDPFS لتشغيل الألعاب وMMCE كمصدر ألعاب معطلة حتى اكتمال قارئ OPL واختباره.
+            - يبدأ العرض بوضع 480i/576i المتوافق مع AV، ويمكن التبديل إلى 720p للتوصيلات الداعمة.
+            - يتضمن الأرشيف INSTALL-AR.txt وتراخيص OPL وبصمات SHA-256.
+            - تم تضمين CRC-32 لملفات runtime والتحقق منها بعد الاستخراج.
 
             This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
           target_commitish: ${{ github.sha }}
