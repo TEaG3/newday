@@ -196,7 +196,8 @@ int catalog_guard_read_begin(catalog_guard *guard)
     int allowed;
     if (!guard_valid(guard)) return 0;
     guard->lock(guard->lock_context);
-    allowed = !guard->apply_pending && !guard->applying && guard->readers < UINT_MAX;
+    allowed = !guard->apply_pending && !guard->applying && !guard->downloading &&
+              guard->readers < UINT_MAX;
     if (allowed) ++guard->readers;
     guard->unlock(guard->lock_context);
     return allowed;
@@ -228,7 +229,7 @@ int catalog_guard_scan_begin(catalog_guard *guard)
     int allowed;
     if (!guard_valid(guard)) return 0;
     guard->lock(guard->lock_context);
-    allowed = !guard->playing && !guard->io_busy && !guard->scanning &&
+    allowed = !guard->playing && !guard->io_busy && !guard->downloading && !guard->scanning &&
               !guard->apply_pending && !guard->applying && guard->readers == 0;
     if (allowed) guard->scanning = 1, guard->scan_cancelled = 0;
     guard->unlock(guard->lock_context);
