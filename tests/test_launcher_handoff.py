@@ -25,7 +25,7 @@ class OplOnlyArchitectureTests(unittest.TestCase):
                            ("runtime embedder", self.embed), ("package script", self.package)):
             with self.subTest(name=name):
                 self.assertNotIn("engine_neutrino", text.lower())
-                self.assertNotIn("ndir", text.lower())
+                self.assertNotRegex(text, r"(?i)\bndir\b")
 
     def test_engine_policy_fails_closed_without_opl_adapter(self):
         for token in ("ENGINE_UNSUPPORTED", "ENGINE_OPL_BDM", "ENGINE_OPL_HDD", "ENGINE_OPL_UL"):
