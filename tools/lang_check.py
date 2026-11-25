@@ -195,7 +195,7 @@ def main():
             "tools/build_neutrino.sh" not in build_workflow and "tools/build_neutrino.sh" not in release_workflow and
             "cp -R dist/neutrino" not in build_workflow and "cp -R dist/neutrino" not in release_workflow and
             "make -C ee" not in smb_builder and "make -C iop/smb" in smb_builder,
-        "PS2SDK strlcpy compatibility is linked into Neutrino": "size_t strlcpy(char *dst, const char *src, size_t size)" in neutrino_igr,
+        "Retained IGR UI source includes the PS2SDK strlcpy compatibility shim": "size_t strlcpy(char *dst, const char *src, size_t size)" in neutrino_igr,
     }
     for description, passed in igr_checks.items():
         print(("ok: " if passed else "FAIL: ") + description)
