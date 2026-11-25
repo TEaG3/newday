@@ -58,7 +58,7 @@ for (const format of formats) {
   for (const source of sources) {
     for (const preference of preferences) {
       let expected;
-      if (preference !== "opl") expected = "engine-removed";
+      if (preference === "neutrino") expected = "engine-removed";
       else if (format === "ul") expected = source === "usb" ? "opl-ul" : "unsupported-source";
       else if (source === "usb" || source === "bdm") expected = "opl-bdm";
       else if (format === "zso" && source === "hdl") expected = "zso-hdl-unsupported";
@@ -74,9 +74,11 @@ for (const format of formats) {
 }
 assert.equal(resolveRoute({ format: "vcd", source: "usb", preference: "opl" }).ok, false);
 assert.equal(resolveRoute({ format: "iso", source: "ata", preference: "opl" }).id, "unsupported");
-assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "auto", network: "missing" }).id, "engine-removed");
-assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "opl", network: "missing" }).id, "unsupported-source");
-assert.equal(resolveRoute({ format: "zso", source: "smb", preference: "opl", network: "missing" }).id, "zso-source-unsupported");
+assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "auto", network: "missing" }).id, "opl-network-config-invalid");
+assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "opl", network: "missing" }).id, "opl-network-config-invalid");
+assert.equal(resolveRoute({ format: "zso", source: "smb", preference: "opl", network: "missing" }).id, "opl-network-config-invalid");
+assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "auto" }).id, "opl-bdm");
+assert.equal(resolveRoute({ format: "ul", source: "usb", preference: "auto" }).id, "opl-ul");
 assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "zso-opl-missing");
 assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "neutrino" }).id, "engine-removed");
 assert.equal(resolveRoute({ format: "zso", source: "hdl", preference: "opl" }).id, "zso-hdl-unsupported");
