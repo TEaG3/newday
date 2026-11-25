@@ -50,29 +50,81 @@ class Catalog:
                     st = os.stat(os.path.join(self.root, p))
                     yield p, st.st_size, int(st.st_mtime)
 
-    def apps(self):  # (path under APPS, title) per app, as the launcher's load_games reads its USB
-        d = os.path.join(self.root, "APPS")
+    @staticmethod
+    def _within(root, candidate):
+        try:
+            return os.path.commonpath((root, candidate)) == root
+        except ValueError:
+            return False
+
+    def _app_path(self, rel, base=None):
+        """Resolve one APPS-relative file without allowing traversal or symlink escape."""
+        if not isinstance(rel, str) or not rel or rel.startswith("/") or "\\" in rel or "\x00" in rel:
+            return None
+        parts = rel.split("/")
+        if any(part in ("", ".", "..") for part in parts):
+            return None
+        share_root = os.path.realpath(self.root)
+        apps_root = os.path.realpath(os.path.join(share_root, "APPS"))
+        if not self._within(share_root, apps_root):
+            return None
+        candidate = os.path.realpath(os.path.join(apps_root, *parts))
+        if not self._within(apps_root, candidate):
+            return None
+        if base is not None and not self._within(os.path.realpath(base), candidate):
+            return None
+        return candidate if os.path.isfile(candidate) else None
+
+    def apps(self):  # (path under APPS, title) per app; title.cfg boot is confined to its app folder
+        share_root = os.path.realpath(self.root)
+        d = os.path.realpath(os.path.join(share_root, "APPS"))
+        if not self._within(share_root, d):
+            return
         try:
             names = sorted(os.listdir(d))
         except OSError:
             return
         for n in names:
-            p = os.path.join(d, n)
-            if n.lower().endswith(".elf") and os.path.isfile(p):
-                yield n, title_of(n)
-            elif os.path.isfile(os.path.join(p, "title.cfg")):
-                cfg = {}
-                for line in open(os.path.join(p, "title.cfg"), encoding="utf-8", errors="replace"):
-                    k, _, v = line.partition("=")
-                    cfg[k.strip().lower()] = v.strip()
-                if cfg.get("boot") and os.path.isfile(os.path.join(p, cfg["boot"])):
-                    yield n + "/" + cfg["boot"], cfg.get("title") or n
+            if not n or n in (".", "..") or "/" in n or "\\" in n:
+                continue
+            if n.lower().endswith(".elf"):
+                if self._app_path(n):
+                    yield n, title_of(n)
+                continue
 
-    def app_get(self, path):  # (status, bytes) for GET /app/<quoted path>: only what apps() lists
+            app_dir = os.path.realpath(os.path.join(d, n))
+            if not self._within(d, app_dir) or not os.path.isdir(app_dir):
+                continue
+            cfg_path = self._app_path(n + "/title.cfg", base=app_dir)
+            if not cfg_path:
+                continue
+            cfg = {}
+            try:
+                with open(cfg_path, encoding="utf-8", errors="replace") as stream:
+                    for line in stream:
+                        k, _, v = line.partition("=")
+                        cfg[k.strip().lower()] = v.strip()
+            except OSError:
+                continue
+            boot = cfg.get("boot", "")
+            if not boot or boot.startswith("/") or "\\" in boot or "\x00" in boot:
+                continue
+            rel = n + "/" + boot
+            if self._app_path(rel, base=app_dir):
+                yield rel, cfg.get("title") or n
+
+    def app_get(self, path):  # serve only an app path that is still confined beneath APPS
         rel = unquote(path[len("/app/"):])
         if rel not in {a for a, _ in self.apps()}:
             return 404, b""
-        return 200, open(os.path.join(self.root, "APPS", rel), "rb").read()
+        candidate = self._app_path(rel)
+        if not candidate:
+            return 404, b""
+        try:
+            with open(candidate, "rb") as stream:
+                return 200, stream.read()
+        except OSError:
+            return 404, b""
 
     def art_get(self, path):  # (status, bytes) for GET /art/<quoted name>: one file of <root>/ART, no subfolders
         name = unquote(path[len("/art/"):])
