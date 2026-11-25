@@ -128,6 +128,7 @@ static void test_download_gate(void)
     assert(catalog_guard_can_download(&guard));
     assert(catalog_guard_download_begin(&guard));
     assert(!catalog_guard_can_download(&guard));
+    assert(!catalog_guard_read_begin(&guard));
     assert(!catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_can_scan(&guard));
     assert(!catalog_guard_request_apply(&guard));
