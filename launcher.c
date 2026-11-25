@@ -1068,7 +1068,7 @@ static const char *const config_template[LANG_N] = {
 	"; Empty = use the TEa.G3 HTTP catalog default.\nservidor =\n"
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
 	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
-	"\n[memorycard]\n; memory card for PS2 games: juego = a virtual card per game (VMC/<serial>.bin on the same\n"
+	"\n[memorycard]\n; Legacy TEa.G3 memory-card preferences are retained for config compatibility; OPL manages its own VMC settings.\n"
 	"; device, created on first play), compartida = one virtual card for all (VMC/TEa.G3.bin), fisica = the one in slot 1.\n"
 	"; Each game can change it with triangle. HD Loader only allows the physical one; an MMCE switches to the game's.\n"
 	"modo = juego\n"
@@ -1103,7 +1103,7 @@ static const char *const config_template[LANG_N] = {
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وملفات الشبكة وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو opl فقط. إعداد neutrino القديم مرفوض ولا يوجد محرك بديل\nmotor = opl\nauto = si\n"
 	"; عنوان خادم فهرسة TEa.G3 عبر HTTP. لا يتم تفعيل UDPFS/UDPBD في محرك OPL-only\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
-	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
+	"\n[memorycard]\n; إعدادات بطاقات الذاكرة القديمة محفوظة للتوافق؛ محرك OPL يدير إعدادات VMC الخاصة به.\n"
 	"; تنشأ البطاقة الافتراضية عند أول تشغيل. يمكن تغييرها من خيارات اللعبة بزر المثلث\nmodo = juego\n"
 	"\n[video]\n; وضع عرض الألعاب: nativo أو 480p أو 1080i\nmodo = 480p\n"
 	"; دقة قائمة المشغل: 720p، أو 480i لأجهزة CRT. اضغط L2+R2 معا للتبديل عند تعذر ظهور الصورة\npantalla = 720p\n"
@@ -1620,7 +1620,7 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	if (usb) {
 		/* OPL-only runtime: no Neutrino ELF is probed, installed or launched. */
 		nsrc = 1, src[0].type = strcmp(homedev, "mass0:") ? SRC_MMCE : SRC_USB, strcpy(src[0].root, homedev); // the home
-		udpfs_cat = *ini_get(&cfg, "juegos", "servidor", "") != 0;
+		udpfs_cat = 0; // UDPFS is retired; OPL ETH is the only network game route
 		const char *why = src_init(src_want & ~(1u << src[0].type) & ~(1u << SRC_SMB) & ~(1u << SRC_UDPBD) & ~(1u << SRC_UDPFS), ini_get(&cfg, "red", "ip", "dhcp"), NETDIR, 0);
 		if (why && !src_why) src_why = why;
 		if (src_want & 1u << SRC_SMB) {
@@ -1996,7 +1996,7 @@ static void options_panel(int i, int row) // △ menu: legacy compatibility opti
 // starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts TEa.G3 only
 // when the sources or the network changed (read at boot). ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
 enum { W_UPD, W_LANG, W_THEME, W_ENGINE, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
-static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS, SRC_SMB}; // checkboxes
+static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_SMB}; // OPL-capable sources only
 #define W_NCHIP (int)sizeof(w_chip)
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
 static const char *const w_mcm[3] = {"juego", "compartida", "fisica"}, *const w_vid[3] = {"nativo", "480p", "1080i"};
@@ -2185,8 +2185,6 @@ static int wiz_toggle(void) // X on the sources row; 0 if refused (the last one 
 	if (m & 1u << w_chip[w_cur]) { // MX4SIO and MMCE share slot 2's SIO2: checking one unchecks the other
 		if (w_chip[w_cur] == SRC_MX4SIO) m &= ~(1u << SRC_MMCE);
 		if (w_chip[w_cur] == SRC_MMCE) m &= ~(1u << SRC_MX4SIO);
-		if (w_chip[w_cur] == SRC_SMB) m &= ~((1u << SRC_UDPBD) | (1u << SRC_UDPFS));
-		if (w_chip[w_cur] == SRC_UDPBD || w_chip[w_cur] == SRC_UDPFS) m &= ~(1u << SRC_SMB);
 	}
 	w_val[W_SRC] = m;
 	return 1;
