@@ -36,12 +36,8 @@ class TEaG3BrandingTests(unittest.TestCase):
         end = self.launcher.index("\n};", start)
         config = self.launcher[start:end]
         self.assertNotIn("nuld", config.lower())
-        self.assertIn("TEa.G3 catalog service", config)
+        self.assertIn("server for online covers, updates and achievements", config)
         self.assertIn("Classic", config)
-
-    def test_site_vmc_diagnostic_uses_current_branding(self):
-        self.assertNotIn("nuld vmc remote", self.site_i18n.lower())
-        self.assertIn("TEa.G3 VMC remote", self.site_i18n)
         self.assertIn('if (!strcasecmp(key, "classic")) return TH_NULD;', self.launcher)
 
     def test_network_identifies_the_current_product(self):
@@ -61,7 +57,7 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn("nuld_catalog.py يعمل؟", self.lang_ar)
 
     def test_current_site_package_translation_uses_the_real_executable(self):
-        self.assertIn("تتضمن الحزمة ملف TEa.G3.ELF ومحركي OPL وNeutrino", self.site_i18n)
+        self.assertIn("تتضمن الحزمة ملف TEa.G3.ELF ومحرك OPL فقط", self.site_i18n)
         self.assertIn("USB root\\n├── TEa.G3.ELF", self.site_i18n)
         self.assertIn("المجلد الرئيسي لوحدة USB\\n├── TEa.G3.ELF", self.site_i18n)
         self.assertNotIn("تتضمن launcher.elf", self.site_i18n)

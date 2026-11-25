@@ -40,18 +40,14 @@ class Catalog:
 
     def isos(self):
         for d in ("DVD", "CD"):
-            directory = self._root_path(d)
-            if not directory or not os.path.isdir(directory):
-                continue
             try:
-                names = sorted(os.listdir(directory))
+                names = sorted(os.listdir(os.path.join(self.root, d)))
             except OSError:
                 continue
             for n in names:
                 p = os.path.join(d, n)
-                candidate = self._root_path(d, n)
-                if n.lower().endswith(".iso") and candidate and os.path.isfile(candidate):
-                    st = os.stat(candidate)
+                if n.lower().endswith(".iso") and os.path.isfile(os.path.join(self.root, p)):
+                    st = os.stat(os.path.join(self.root, p))
                     yield p, st.st_size, int(st.st_mtime)
 
     @staticmethod
@@ -60,12 +56,6 @@ class Catalog:
             return os.path.commonpath((root, candidate)) == root
         except ValueError:
             return False
-
-    def _root_path(self, *parts):
-        """Resolve a path beneath the configured share without following symlinks outside it."""
-        root = os.path.realpath(self.root)
-        candidate = os.path.realpath(os.path.join(root, *parts))
-        return candidate if self._within(root, candidate) else None
 
     def _app_path(self, rel, base=None):
         """Resolve one APPS-relative file without allowing traversal or symlink escape."""
@@ -138,16 +128,10 @@ class Catalog:
 
     def art_get(self, path):  # (status, bytes) for GET /art/<quoted name>: one file of <root>/ART, no subfolders
         name = unquote(path[len("/art/"):])
-        if not name or "/" in name or "\\" in name or "\x00" in name or name.startswith("."):
+        p = os.path.join(self.root, "ART", name)
+        if "/" in name or "\\" in name or name.startswith(".") or not os.path.isfile(p):
             return 404, b""
-        candidate = self._root_path("ART", name)
-        if not candidate or not os.path.isfile(candidate):
-            return 404, b""
-        try:
-            with open(candidate, "rb") as stream:
-                return 200, stream.read()
-        except OSError:
-            return 404, b""
+        return 200, open(p, "rb").read()
 
     def text(self):
         out = []

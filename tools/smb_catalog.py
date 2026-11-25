@@ -46,31 +46,14 @@ def display_title(stem: str) -> str:
     return title.encode("utf-8")[:63].decode("utf-8", "ignore")
 
 
-def _within_root(root: Path, candidate: Path) -> bool:
-    try:
-        candidate.relative_to(root)
-        return True
-    except ValueError:
-        return False
-
-
 def build_rows(root: Path) -> list[str]:
-    root = root.resolve()
     rows: list[str] = []
     for folder in ("DVD", "CD"):
         directory = root / folder
-        if directory.is_symlink() or not directory.is_dir():
-            continue
-        resolved_directory = directory.resolve()
-        if not _within_root(root, resolved_directory):
+        if not directory.is_dir():
             continue
         for image in sorted(directory.rglob("*")):
-            try:
-                resolved_image = image.resolve(strict=True)
-            except (OSError, RuntimeError):
-                continue
-            if (not _within_root(root, resolved_image) or not resolved_image.is_file()
-                    or image.suffix.lower() not in {".iso", ".zso"}):
+            if not image.is_file() or image.suffix.lower() not in {".iso", ".zso"}:
                 continue
             relative = image.relative_to(root).as_posix()
             if not safe_relative_path(relative):

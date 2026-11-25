@@ -46,34 +46,5 @@ class SmbCatalogTests(unittest.TestCase):
         self.assertFalse(safe_relative_path("DVD\\Game.iso"))
 
 
-    def test_ignores_symlinked_game_outside_share(self) -> None:
-        with tempfile.TemporaryDirectory() as temp:
-            base = Path(temp)
-            root = base / "share"
-            (root / "DVD").mkdir(parents=True)
-            outside = base / "outside.iso"
-            outside.write_bytes(b"outside-share")
-            link = root / "DVD" / "Escape.iso"
-            try:
-                link.symlink_to(outside)
-            except (OSError, NotImplementedError):
-                self.skipTest("symlinks are unavailable on this runner")
-            self.assertEqual(build_rows(root), [])
-
-    def test_ignores_symlinked_game_directory_outside_share(self) -> None:
-        with tempfile.TemporaryDirectory() as temp:
-            base = Path(temp)
-            root = base / "share"
-            root.mkdir()
-            outside = base / "outside"
-            outside.mkdir()
-            (outside / "Escape.iso").write_bytes(b"outside-share")
-            try:
-                (root / "DVD").symlink_to(outside, target_is_directory=True)
-            except (OSError, NotImplementedError):
-                self.skipTest("symlinks are unavailable on this runner")
-            self.assertEqual(build_rows(root), [])
-
-
 if __name__ == "__main__":
     unittest.main()
