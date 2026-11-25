@@ -9,6 +9,8 @@ class TEaG3BrandingTests(unittest.TestCase):
     def setUpClass(cls):
         cls.launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
         cls.net = (ROOT / "net.c").read_text(encoding="utf-8")
+        cls.sources = (ROOT / "sources.c").read_text(encoding="utf-8")
+        cls.gfx_header = (ROOT / "gfx.h").read_text(encoding="utf-8")
         cls.lang_ar = (ROOT / "lang_ar.c").read_text(encoding="utf-8")
         cls.neutrino_patch = (ROOT / "third_party/neutrino-igr/patch_neutrino.py").read_text(encoding="utf-8")
         cls.site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
@@ -59,6 +61,23 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertIn("USB root\\n├── TEa.G3.ELF", self.site_i18n)
         self.assertIn("المجلد الرئيسي لوحدة USB\\n├── TEa.G3.ELF", self.site_i18n)
         self.assertNotIn("تتضمن launcher.elf", self.site_i18n)
+
+    def test_current_runtime_comments_do_not_misidentify_teag3(self):
+        for stale in (
+            "mass0:/nuld/ra/",
+            "a nuld game's bsd-udpfs config",
+            "nuld game the agent loaded",
+            "so do nuld games",
+            "<home>/nuld/red.elf",
+        ):
+            with self.subTest(stale=stale):
+                self.assertNotIn(stale, self.launcher.lower())
+        self.assertNotIn("nuld started from an mmce", self.sources.lower())
+        self.assertNotIn("only when nuld runs from an mmce", self.sources.lower())
+        self.assertIn("TEa.G3 started from an MMCE", self.sources)
+        self.assertNotIn('Michroma 60 px ("NULD" only)', self.gfx_header)
+        self.assertIn("Michroma 60 px (TEa.G3 wordmark)", self.gfx_header)
+        self.assertNotIn("a nuld game", self.neutrino_patch.lower())
 
     def test_legacy_boot_and_user_data_paths_are_preserved(self):
         # These names are intentionally retained only to migrate or reuse existing user data.
