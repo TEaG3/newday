@@ -13,22 +13,30 @@
   "use strict";
   function resolveRoute(input) {
     const format = input && input.format, source = input && input.source, preference = input && input.preference;
+    const oplReady = !input || input.oplRuntime !== "missing" && input.oplRuntime !== false;
+    const networkReady = !input || input.network !== "missing" && input.network !== false;
     if (!["iso", "zso", "ul"].includes(format) ||
         !["usb", "bdm", "smb", "hdl", "other"].includes(source) ||
         !["auto", "neutrino", "opl"].includes(preference)) {
       return { id: "unsupported", engine: "none", ok: false, reason: "invalid" };
     }
     if (format === "ul") {
-      return source === "usb" ? { id: "opl-ul", engine: "OPL", ok: true, reason: "ul-usb" } :
-        { id: "unsupported", engine: "none", ok: false, reason: "ul-needs-usb" };
+      if (source !== "usb") return { id: "unsupported", engine: "none", ok: false, reason: "ul-needs-usb" };
+      return oplReady ? { id: "opl-ul", engine: "OPL", ok: true, reason: "ul-usb" } :
+        { id: "unsupported", engine: "none", ok: false, reason: "opl-runtime-missing" };
     }
     if (preference !== "opl") return { id: "neutrino", engine: "Neutrino", ok: true, reason: "default-neutrino" };
     if (source === "usb" || source === "bdm")
-      return { id: "opl-bdm", engine: "OPL", ok: true, reason: "manual-opl-bdm" };
+      return oplReady ? { id: "opl-bdm", engine: "OPL", ok: true, reason: "manual-opl-bdm" } :
+        { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
+    if (source === "smb" && !networkReady)
+      return { id: "neutrino-smb-fallback", engine: "Neutrino", ok: true, fallback: true, reason: "opl-network-config-invalid" };
     if (source === "smb")
-      return { id: "opl-eth", engine: "OPL", ok: true, reason: "manual-opl-eth" };
+      return oplReady ? { id: "opl-eth", engine: "OPL", ok: true, reason: "manual-opl-eth" } :
+        { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
     if (source === "hdl")
-      return { id: "opl-hdd", engine: "OPL", ok: true, reason: "manual-opl-hdd" };
+      return oplReady ? { id: "opl-hdd", engine: "OPL", ok: true, reason: "manual-opl-hdd" } :
+        { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
     return { id: "neutrino", engine: "Neutrino", ok: true, reason: "opl-fallback-neutrino" };
   }
 
@@ -41,6 +49,8 @@
         "opl-eth": "Embedded OPL · SMB / ETH",
         "opl-hdd": "Embedded OPL · APA / HD Loader",
         neutrino: "Neutrino · existing launch path",
+        "neutrino-smb-fallback": "Neutrino · SMB configuration fallback",
+        "neutrino-opl-missing": "Neutrino · OPL runtime unavailable",
         unsupported: "No launch route for this selection"
       },
       sources: {
@@ -72,6 +82,14 @@
           "OPL reads the existing hdd_partition setting from hdd0:__common/OPL/conf_hdd.cfg using a read-only config mount.",
           "If the configured OPL partition or its existing OPL folder is missing, OPL refuses launch; it does not create or format partitions."
         ],
+        "neutrino-smb-fallback": [
+          "The SMB network configuration is incomplete, so the C engine controller does not select OPL ETH.",
+          "The existing Neutrino route remains the fallback; fix the PS2 IPv4, server, share and credentials before retrying OPL."
+        ],
+        "neutrino-opl-missing": [
+          "The embedded OPL.ELF is missing or has not passed runtime installation checks.",
+          "TEa.G3 retains the Neutrino route for ISO/ZSO instead of attempting an OPL hand-off."
+        ],
         neutrino: [
           "TEa.G3 keeps the selected ISO/ZSO on its existing Neutrino path.",
           "Auto and neutrino always select Neutrino for ISO/ZSO; unsupported OPL source combinations also retain Neutrino.",
@@ -80,7 +98,7 @@
         unsupported: ["Choose a supported format, source and engine preference."]
       },
       hardware: "Browser simulation only · no PS2 ELF, emulator or game is executed here.",
-      supported: "Routed by current TEa.G3 code", blocked: "Unsupported selection",
+      supported: "Route exists in code · hardware test pending", fallback: "Safe Neutrino fallback", blocked: "Unsupported selection",
       auto: "Auto", neutrino: "Neutrino", opl: "OPL (manual)",
       iso: "ISO", zso: "ZSO", ul: "USBExtreme UL"
     },
@@ -92,6 +110,8 @@
         "opl-eth": "OPL المضمّن · SMB / ETH",
         "opl-hdd": "OPL المضمّن · APA / HD Loader",
         neutrino: "Neutrino · مسار التشغيل الحالي",
+        "neutrino-smb-fallback": "Neutrino · رجوع آمن بسبب إعداد SMB",
+        "neutrino-opl-missing": "Neutrino · محرك OPL غير جاهز",
         unsupported: "لا يوجد مسار تشغيل لهذا الاختيار"
       },
       sources: {
@@ -123,6 +143,14 @@
           "يقرأ OPL إعداد hdd_partition الموجود في hdd0:__common/OPL/conf_hdd.cfg عبر تركيب قراءة فقط.",
           "إذا لم يجد قسم OPL المهيأ أو مجلد OPL الموجود مسبقاً يرفض الإقلاع ولا ينشئ الأقسام أو يهيئها."
         ],
+        "neutrino-smb-fallback": [
+          "إعداد شبكة SMB غير مكتمل؛ لذلك لا يختار متحكم المحركات في TEa.G3 محول OPL ETH.",
+          "يبقى مسار Neutrino متاحاً كبديل آمن. أكمل IP الخاص بـ PS2 والخادم والمشاركة وبيانات الدخول قبل إعادة المحاولة."
+        ],
+        "neutrino-opl-missing": [
+          "ملف OPL.ELF المضمّن غير موجود أو لم يجتز التحقق من التثبيت.",
+          "يبقي TEa.G3 ألعاب ISO/ZSO على Neutrino بدلاً من تنفيذ تسليم OPL."
+        ],
         neutrino: [
           "يبقي TEa.G3 لعبة ISO/ZSO على مسار Neutrino الحالي.",
           "يختار auto وneutrino محرك Neutrino دائماً؛ كما تبقى المصادر التي لا تملك محوّل OPL على مسار Neutrino.",
@@ -131,7 +159,7 @@
         unsupported: ["اختر صيغة ومصدراً وتفضيل محرك مدعوماً."]
       },
       hardware: "محاكاة داخل المتصفح فقط · لا يتم تشغيل ELF أو محاكي أو لعبة PS2 هنا.",
-      supported: "موصول في كود التوجيه الحالي لـ TEa.G3", blocked: "اختيار غير مدعوم",
+      supported: "المسار موجود في الكود · اختبار الجهاز الفعلي متبقٍ", fallback: "تحويل آمن إلى Neutrino", blocked: "اختيار غير مدعوم",
       auto: "تلقائي", neutrino: "Neutrino", opl: "OPL (يدوي)",
       iso: "ISO", zso: "ZSO", ul: "USBExtreme UL"
     }
@@ -140,7 +168,15 @@
   function render(form) {
     const output = form.closest("[data-opl-widget]").querySelector("[data-opl-result]");
     const ar = form.ownerDocument.documentElement.lang === "ar", c = ar ? COPY.ar : COPY.en;
-    const input = { format: form.elements.format.value, source: form.elements.source.value, preference: form.elements.preference.value };
+    const input = {
+      format: form.elements.format.value,
+      source: form.elements.source.value,
+      preference: form.elements.preference.value,
+      oplRuntime: form.elements.oplRuntime ? form.elements.oplRuntime.value : "ready",
+      network: form.elements.network ? form.elements.network.value : "ready"
+    };
+    const smbConfig = form.querySelector("[data-smb-config]");
+    if (smbConfig) smbConfig.hidden = input.source !== "smb";
     const route = resolveRoute(input);
     const details = c.details[route.id] || c.details.unsupported;
     const title = c.titles[route.id] || c.titles.unsupported;
@@ -153,7 +189,7 @@
     const head = form.ownerDocument.createElement("div"); head.className = "opl-result-head";
     const titleNode = form.ownerDocument.createElement("h3"); titleNode.textContent = title;
     const status = form.ownerDocument.createElement("span"); status.className = "opl-status";
-    status.textContent = route.ok ? c.supported : c.blocked;
+    status.textContent = !route.ok ? c.blocked : route.fallback ? c.fallback : c.supported;
     head.append(titleNode, status); output.appendChild(head);
 
     const meta = form.ownerDocument.createElement("p"); meta.className = "opl-result-meta";
@@ -180,9 +216,14 @@
       const reset = form.querySelector("[data-opl-reset]");
       if (reset) reset.addEventListener("click", () => {
         form.elements.format.value = "iso"; form.elements.source.value = "usb";
-        form.elements.preference.value = "auto"; render(form);
+        form.elements.preference.value = "auto";
+        if (form.elements.oplRuntime) form.elements.oplRuntime.value = "ready";
+        if (form.elements.network) form.elements.network.value = "ready";
+        render(form);
       });
-      ["format", "source", "preference"].forEach(name => form.elements[name].addEventListener("change", () => render(form)));
+      ["format", "source", "preference", "oplRuntime", "network"].forEach(name => {
+        if (form.elements[name]) form.elements[name].addEventListener("change", () => render(form));
+      });
       render(form);
     });
     document.addEventListener("nuld:languagechange", () => document.querySelectorAll("[data-opl-form]").forEach(render));
