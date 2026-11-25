@@ -32,7 +32,13 @@ def table(filename):
     source = (ROOT / filename).read_text(encoding="utf-8")
     pairs = [(join(match.group(1)), join(match.group(2))) for match in PAIR.finditer(source)]
     keys = [key for key, _ in pairs]
-    duplicates = sorted({key for key in keys if keys.count(key) > 1})
+    seen = set()
+    duplicates = set()
+    for key in keys:
+        if key in seen:
+            duplicates.add(key)
+        seen.add(key)
+    duplicates = sorted(duplicates)
     if duplicates:
         for key in duplicates:
             print(f"duplicate translation key ({filename}):", key)
@@ -113,7 +119,7 @@ def main():
             print(f"FAIL: invalid UTF-8 in {path.relative_to(ROOT)}: {exc}")
             encoding_failed = True
             continue
-        if "\\ufffd" in decoded:
+        if "\uFFFD" in decoded:
             print(f"FAIL: replacement character U+FFFD in {path.relative_to(ROOT)}")
             encoding_failed = True
     failed |= encoding_failed
