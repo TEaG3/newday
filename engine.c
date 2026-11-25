@@ -19,6 +19,13 @@ engine_decision engine_assess(engine_format format, engine_source source,
     int force_neutrino = preference && !strcasecmp(preference, "neutrino");
     int automatic = !preference || !*preference || !strcasecmp(preference, "auto");
 
+    /* ZSO support is wired to the OPL BDM/ETH sector readers, not the APA/HDL mini path. */
+    if (format == ENGINE_FORMAT_ZSO && source == ENGINE_SOURCE_HDL) {
+        d.engine = ENGINE_UNSUPPORTED;
+        d.reason = ENGINE_REASON_UNSUPPORTED_FORMAT_SOURCE;
+        return d;
+    }
+
     /* UL is a split USBExtreme container: Neutrino cannot consume this layout. */
     if (format == ENGINE_FORMAT_UL) {
         if (source != ENGINE_SOURCE_USB) {
@@ -122,7 +129,7 @@ int main(void)
     d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_OTHER, "auto", 1, 1);
     assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_ZSO_REQUIRES_OPL);
     d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_HDL, "auto", 1, 1);
-    assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_ZSO_REQUIRES_OPL);
+    assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_UNSUPPORTED_FORMAT_SOURCE);
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "auto", 1, 1);
     assert(d.engine == ENGINE_OPL_HDD);
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "auto", 1, 0);
