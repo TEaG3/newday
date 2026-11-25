@@ -6,7 +6,7 @@
   font-display: swap;
 }
 
-/* NULD website: the launcher's palette and type (the canvas "NULD — identidad"). Fonts are served from fonts/
+/* TEa.G3 website: the launcher's palette and type (the canvas "NULD — identidad"). Fonts are served from fonts/
    (SIL OFL 1.1, licences beside them), nothing is loaded from other sites but GitHub's API (release.js). */
 @font-face { font-family: Archivo; src: url(fonts/archivo.woff2) format("woff2"); font-weight: 400 800; font-stretch: 100% 125%; font-display: swap; }
 @font-face { font-family: "IBM Plex Mono"; src: url(fonts/ibm-plex-mono-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
@@ -227,7 +227,7 @@ body.paper { background: var(--fg); color: var(--bg); }
   --font-arabic: "Noto Sans Arabic", "Geeza Pro", Tahoma, Arial, sans-serif;
 }
 html { text-rendering: optimizeLegibility; }
-body.nuld-rtl {
+body.tea-g3-rtl {
   direction: ltr;
   font-family: var(--font-arabic);
   font-stretch: normal;
@@ -235,7 +235,7 @@ body.nuld-rtl {
   word-spacing: normal;
   line-height: 1.85;
 }
-.nuld-rtl :is(p, li, td, th, label, h1, h2, h3, figcaption,
+.tea-g3-rtl :is(p, li, td, th, label, h1, h2, h3, figcaption,
                .lead, .caption, .site span, .field > span, .hint,
                .howto, .warnings, .nav a:not(.brand), .runhead a) {
   direction: rtl;
@@ -245,45 +245,45 @@ body.nuld-rtl {
   word-spacing: normal;
   text-shadow: none;
 }
-.nuld-rtl :is(h1, h2, h3) {
+.tea-g3-rtl :is(h1, h2, h3) {
   font-family: var(--font-arabic);
   font-stretch: normal;
   letter-spacing: 0;
   line-height: 1.5;
 }
-.nuld-rtl :is(button, .btn, .tabs button) {
+.tea-g3-rtl :is(button, .btn, .tabs button) {
   font-family: var(--font-arabic);
   letter-spacing: 0;
 }
-.nuld-rtl :is(code, pre, .mono, .ini) {
+.tea-g3-rtl :is(code, pre, .mono, .ini) {
   direction: ltr;
   unicode-bidi: isolate;
   text-align: left;
   font-family: var(--mono);
   text-shadow: none;
 }
-.nuld-rtl .nav .wrap,
-.nuld-rtl .runhead,
-.nuld-rtl .hero-top,
-.nuld-rtl .maker-grid,
-.nuld-rtl .chapter > header,
-.nuld-rtl .btns,
-.nuld-rtl .tabs {
+.tea-g3-rtl .nav .wrap,
+.tea-g3-rtl .runhead,
+.tea-g3-rtl .hero-top,
+.tea-g3-rtl .maker-grid,
+.tea-g3-rtl .chapter > header,
+.tea-g3-rtl .btns,
+.tea-g3-rtl .tabs {
   direction: ltr;
 }
-.nuld-rtl .nav .wrap { flex-wrap: wrap; }
-.nuld-rtl .btns > .btn,
-.nuld-rtl .tabs button { text-align: center; }
-.nuld-rtl #live .screen,
-.nuld-rtl #live canvas { direction: ltr; }
-.nuld-rtl .files td:nth-child(2) { font-family: var(--font-arabic); }
-.nuld-rtl .site { text-align: left; }
-.nuld-rtl .site span { text-align: right; }
-.paper.nuld-rtl {
+.tea-g3-rtl .nav .wrap { flex-wrap: wrap; }
+.tea-g3-rtl .btns > .btn,
+.tea-g3-rtl .tabs button { text-align: center; }
+.tea-g3-rtl #live .screen,
+.tea-g3-rtl #live canvas { direction: ltr; }
+.tea-g3-rtl .files td:nth-child(2) { font-family: var(--font-arabic); }
+.tea-g3-rtl .site { text-align: left; }
+.tea-g3-rtl .site span { text-align: right; }
+.paper.tea-g3-rtl {
   font-family: var(--font-arabic);
   line-height: 1.9;
 }
-.paper.nuld-rtl :is(h1, h2, h3, p, li, td, th, label, figcaption,
+.paper.tea-g3-rtl :is(h1, h2, h3, p, li, td, th, label, figcaption,
                      .lead, .caption, .site span, .runhead a) {
   text-shadow: none;
 }
