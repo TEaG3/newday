@@ -15,6 +15,10 @@ on:
       - "arabic-v*"
     paths-ignore:
       - "site/**"
+      - "tests/**"
+      - "docs/**"
+      - ".github/workflows/build-ps2.yml"
+      - ".github/workflows/pages.yml"
       - ".github/workflows/publish-arabic-release.yml"
 
 permissions:
