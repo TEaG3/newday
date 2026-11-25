@@ -61,7 +61,7 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();
-  document.addEventListener("nuld:languagechange", function () {
+  document.addEventListener("tea-g3:languagechange", function () {
     var prerelease = document.documentElement.dataset.releasePrerelease;
     setStatus(prerelease === "true" ? "pre" : prerelease === "false" ? "stable" : "fallback");
   });
