@@ -1,6 +1,7 @@
-// TEa.G3 boot stub (phase 12), installed by the launcher at mc?:/BOOT/NULD.ELF. Two uses:
-// - the In Game Reset of the NULD Neutrino fork returns here (after an IOP reset only the ROM modules are left,
-//   so the way back has to start on a memory card);
+// TEa.G3 boot stub (phase 12), installed at mc?:/BOOT/TEa.G3.ELF.
+// Legacy NULD.ELF and ORBIT.ELF entry points are refreshed for existing FreeMcBoot shortcuts.
+// - The TEa.G3 Neutrino fork returns here after In Game Reset; after an IOP reset only ROM modules remain,
+//   so the return path has to start from a memory card);
 // - autoboot: OSDMenu / FMCB can start this file.
 // It brings up the USB (iop.c, same modules as the launcher) and runs mass0:/TEa.G3.ELF through the loader, so the
 // launcher itself is only ever updated on the USB. Without the USB it says so and keeps waiting.
