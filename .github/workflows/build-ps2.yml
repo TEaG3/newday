@@ -168,7 +168,7 @@ jobs:
           grep -Fq 'gAutoLaunchDeviceData->massDeviceIndex == wantedUnit' src/opl.c
           grep -Fq 'TEa.G3 BDM auto-launch: requested device not found' src/opl.c
           grep -Fq 'run_loader_recover(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
-          grep -Fq 'run_loader_recover(9, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader_recover(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'strcasecmp(&name[size - 4], ".zso")' src/supportbase.c
           grep -Fq 'IOP_OBJS = isofs.o zso.o lz4.o imports.o' modules/isofs/Makefile
           python3 - <<'PY'
