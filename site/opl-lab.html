@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEa.G3 OPL Integration Lab</title>
-<meta name="description" content="Explore how TEa.G3 embeds OPL as its only PS2 game engine, compare wired local BDM routes and unsupported sources, and try a browser-only routing simulation.">
+<meta name="description" content="Explore how TEa.G3 embeds OPL and Neutrino in one ELF, compare USB/BDM, SMB and APA/HD Loader launch adapters, and try a browser-only routing simulation.">
 <meta property="og:title" content="TEa.G3 — OPL Integration Lab">
 <meta property="og:description" content="An interactive, source-aligned explanation of the OPL runtime embedded in TEa.G3.">
 <meta name="theme-color" content="#06070A">
@@ -33,7 +33,7 @@
   <header class="opl-hero">
     <div class="opl-kicker"><span class="opl-pill">EMBEDDED RUNTIME</span><span class="mono">TEa.G3 / OPL</span></div>
     <h1>OPL · TEa.G3</h1>
-    <p class="opl-intro">Select a format and storage source. OPL is the only PS2 game engine.</p>
+    <p class="opl-intro">Select a format, storage source and engine.</p>
     <div class="opl-form-actions" aria-label="TEa.G3 download">
       <a class="btn solid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.6/TEa.G3-Complete-Package.zip" data-zip data-version="Download v{v}" aria-label="Download the latest TEa.G3 package">Download</a>
       <a class="btn" href="manual.html">Read the manual</a>
@@ -55,10 +55,13 @@
           <select name="source"><option value="usb" selected>USB</option><option value="bdm">MX4SIO / iLink / FAT-exFAT HDD</option><option value="smb">SMB share</option><option value="hdl">APA / HD Loader HDD</option><option value="other">MMCE / UDPBD / UDPFS</option></select>
         </label>
         <label>Engine preference
-          <select name="preference"><option value="opl" selected>opl</option></select>
+          <select name="preference"><option value="auto">auto</option><option value="opl" selected>opl</option><option value="neutrino">neutrino</option></select>
         </label>
         <label>Embedded OPL runtime
           <select name="oplRuntime"><option value="ready" selected>Available</option><option value="missing">Missing / not verified</option></select>
+        </label>
+        <label data-smb-config hidden>SMB network configuration
+          <select name="network"><option value="ready" selected>Valid</option><option value="missing">Incomplete</option></select>
         </label>
         <div class="opl-form-actions">
           <button class="btn solid" type="submit">Check route</button>

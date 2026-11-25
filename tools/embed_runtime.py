@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn the OPL-only runtime into linkable PS2SDK bin2c objects."""
+"""Turn the built OPL + Neutrino runtime tree into linkable PS2SDK bin2c objects."""
 from __future__ import annotations
 import hashlib
 from pathlib import Path
@@ -10,6 +10,17 @@ import zlib
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = (
     "OPL.ELF",
+    "neutrino/neutrino.elf",
+    "neutrino/modules/ee_core.elf",
+    "neutrino/modules/raagent.irx",
+    "neutrino/modules/cdvdman_emu.irx",
+    "neutrino/modules/udpfs_fhi.irx",
+    "neutrino/modules/smap.irx",
+    "neutrino/modules/ministack.irx",
+    "neutrino/modules/smb_ioman.irx",
+    "neutrino/modules/smb_fhi.irx",
+    "neutrino/modules/mmcefhi.irx",
+    "neutrino/config/bsd-smb.toml",
 )
 
 def main() -> None:

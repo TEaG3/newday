@@ -792,7 +792,7 @@ static int ipv4_text(const char *s)
 
 static engine_decision engine_for(const entry *e) // silent policy decision plus reason for the private log
 {
-	engine_decision none = {ENGINE_UNSUPPORTED, ENGINE_REASON_ENGINE_REMOVED};
+	engine_decision none = {ENGINE_NEUTRINO, ENGINE_REASON_AUTO_NEUTRINO_BASELINE};
 	if (e->kind != K_PS2) return none;
 	engine_format format = e->engine == ENGINE_OPL_UL ? ENGINE_FORMAT_UL :
 	                       has_ext(e->path, ".zso") ? ENGINE_FORMAT_ZSO : ENGINE_FORMAT_ISO;
@@ -1061,10 +1061,12 @@ static const char *const config_template[LANG_N] = {
 	"\n[ui]\n; language of the interface and of these comments: en = English, ar = Arabic\nidioma = en\n"
 	"; tema (theme): torres (prisms of light in a blue night), Classic (black and acid green, v1.2 look), cristal, aurora,\n"
 	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in tea_g3/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
-	"\n[juegos]\n; local PS2 game sources: usb, hdd, mx4sio, ilink. OPL is the only PS2 game engine.\n"
-	"; Network, MMCE and APA/HDL game sources are disabled until their OPL adapters are implemented and tested.\n"
-	"; Settings, covers, POPS and APPS stay on the USB.\norigen = usb\nmotor = opl\nauto = si\n"
-	"; server for online covers, updates and achievements; it is not a PS2 game-streaming engine.\nservidor =\n"
+	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
+	"; udpbd, udpfs, smb. hdd = internal exFAT disk, or APA with HD Loader partitions. smb is read-only and needs a TEAG3.GAMES index;\n"
+	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
+	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL wherever an OPL adapter is available; Neutrino fallback)\nmotor = opl\nauto = si\n"
+	"; udpfs: IP of the game server running the TEa.G3 catalog service (lists the games; covers and achievements keep working).\n"
+	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
 	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
 	"\n[memorycard]\n; memory card for PS2 games: juego = a virtual card per game (VMC/<serial>.bin on the same\n"
@@ -1098,10 +1100,9 @@ static const char *const config_template[LANG_N] = {
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، en = الإنجليزية\nidioma = ar\n"
 	"; المظهر: torres أو Classic (الكلاسيكية) أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
-	"\n[juegos]\n; مصادر ألعاب PS2 المحلية: usb أو hdd أو mx4sio أو ilink. محرك التشغيل الوحيد هو OPL\n"
-	"; مصادر الشبكة وMMCE وAPA/HDL معطلة حتى اكتمال محولات OPL واختبارها\n"
-	"; تبقى الإعدادات والأغلفة وPOPS وAPPS على USB\norigen = usb\nmotor = opl\nauto = si\n"
-	"; خادم الأغلفة والتحديثات والإنجازات عبر الشبكة، وليس خادم بث ألعاب PS2\nservidor =\n"
+	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
+	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = opl\nauto = si\n"
+	"; عنوان خادم الألعاب الذي يشغل خدمة فهرسة TEa.G3. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
 	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
 	"; تنشأ البطاقة الافتراضية عند أول تشغيل. يمكن تغييرها من خيارات اللعبة بزر المثلث\nmodo = juego\n"
@@ -1155,8 +1156,6 @@ static void load_config(void) // loader thread, before the splash sound
 		if (f) fputs(config_template[LANG_AR], f), fclose(f);
 		ini_parse(&cfg, config_template[LANG_AR]);
 	}
-	/* Migrate legacy auto/Neutrino preferences: OPL is the only PS2 game engine. */
-	ini_set(&cfg, "juegos", "motor", "opl");
 	lang = lang_of(ini_get(&cfg, "ui", "idioma", "ar")); // resolve language before drawing the rest of the UI
 	char tdir[40];
 	snprintf(tdir, sizeof(tdir), "%s/%s/themes", homedev, home_dir);
@@ -1193,7 +1192,7 @@ static void load_config(void) // loader thread, before the splash sound
 	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
 	// Auto-discover every supported source on first boot unless the user explicitly narrows [juegos] origen.
 	// Missing devices are reported per-source by src_init(); they do not block the sources that are present.
-	static const char *auto_sources = "usb,hdd,mx4sio,ilink";
+	static const char *auto_sources = "usb,hdd,mx4sio,ilink,mmce,udpbd,udpfs";
 	src_want = src_mask(ini_get(&cfg, "juegos", "origen", auto_sources));
 	if (!strcasecmp(ini_get(&cfg, "juegos", "auto", "si"), "si"))
 		src_want |= src_mask(auto_sources); // existing configs also probe every supported source unless auto=no
@@ -1212,7 +1211,7 @@ static void load_config(void) // loader thread, before the splash sound
 		if (!strcasecmp(ini_get(&state, "ui", "vista", ""), view_key[v])) view = v;
 }
 
-// video: 0 = default (config), 1 nativo, 2 480p (-gsm=fp2), 3 1080i (-gsm=1080ix2); OPL configuration for GSM and compatibility modes
+// video: 0 = default (config), 1 nativo, 2 480p (-gsm=fp2), 3 1080i (-gsm=1080ix2); Neutrino README for -gsm / -gc
 static const char *vid_key[4] = {NULL, "nativo", "480p", "1080i"};
 static const char *const vid_labels[LANG_N][4] = {
 {"Default", "Native", "480p", "1080i"},
@@ -1687,19 +1686,37 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	stage = 2;
 	clock_t c0 = clock();
 	if (usb) {
-		/* OPL is the only game engine; retain the legacy interface but never load Neutrino. */
-		neutrino = 0;
-		neutrino_igr = neutrino_menu = neutrino_ra = neutrino_lang = 0;
-		nsrc = 1, src[0].type = strcmp(homedev, "mass0:") ? SRC_MMCE : SRC_USB, strcpy(src[0].root, homedev); // the home
-		/* Start only local sources with an OPL direct-launch adapter. */
-		const unsigned opl_sources = (1u << SRC_USB) | (1u << SRC_HDD) | (1u << SRC_MX4SIO) | (1u << SRC_ILINK);
-		if (src_want & ~opl_sources) {
-			src_want &= opl_sources;
-			if (!src_why) src_why = L("Network, MMCE and APA sources are not enabled in OPL-only mode");
+		FILE *f = fopen(NEUTRINO, "rb");
+		neutrino = f != NULL;
+		if (f) { // the TEa.G3 fork's usage text names -igrexit; the official build would reject the option
+			fseek(f, 0, SEEK_END);
+			long n = ftell(f);
+			char *b = n > 0 && n < (4 << 20) ? malloc(n) : NULL;
+			fseek(f, 0, SEEK_SET);
+			if (b && fread(b, 1, n, f) == (size_t)n)
+				for (long i = 0; i + 8 <= n; i++) {
+					neutrino_igr |= !memcmp(b + i, "-igrexit", 8);
+					neutrino_menu |= !memcmp(b + i, "-igrmenu", 8); // phase 13 fork
+					neutrino_ra |= !memcmp(b + i, "-ra=<file>", 10); // phase 16b fork (its usage text)
+					neutrino_lang |= !memcmp(b + i, "-igrlang=", 9); // phase 18 fork
+				}
+			free(b);
+			fclose(f);
 		}
-		udpfs_cat = 0;
-		const char *why = src_init(src_want & ~(1u << src[0].type), ini_get(&cfg, "red", "ip", "dhcp"), NULL, 1);
+		nsrc = 1, src[0].type = strcmp(homedev, "mass0:") ? SRC_MMCE : SRC_USB, strcpy(src[0].root, homedev); // the home
+		udpfs_cat = *ini_get(&cfg, "juegos", "servidor", "") != 0;
+		const char *why = src_init(src_want & ~(1u << src[0].type) & ~(1u << SRC_SMB), ini_get(&cfg, "red", "ip", "dhcp"), NDIR, !udpfs_cat);
 		if (why && !src_why) src_why = why;
+		if (src_want & 1u << SRC_SMB) {
+			const char *smb_why = src_smb_init(ini_get(&cfg, "red", "ip", "dhcp"),
+			                                  ini_get(&cfg, "red", "mascara", "255.255.255.0"),
+			                                  ini_get(&cfg, "red", "puerta", ""),
+			                                  ini_get(&cfg, "smb", "server", ""),
+			                                  ini_get(&cfg, "smb", "user", "guest"),
+			                                  ini_get(&cfg, "smb", "password", ""),
+			                                  ini_get(&cfg, "smb", "share", ""), NDIR);
+			if (smb_why && !src_why) src_why = smb_why;
+		}
 		load_games();
 	}
 	load_ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
@@ -2034,7 +2051,7 @@ static void fit(const gfx_font *f, const char *s, int max_w, char *out, int n) /
 		strcpy(out + len - 4, "...");
 }
 
-static void options_panel(int i, int row) // △ menu: per-game settings
+static void options_panel(int i, int row) // △ menu: the game's Neutrino options
 {
 	char a[96];
 	int x = 300, y = 130, w = 680, h = 70 + 3 * 46 + 34 + 5 * 46 + 16;
@@ -2045,7 +2062,7 @@ static void options_panel(int i, int row) // △ menu: per-game settings
 	for (int r = 0; r < OPT_ROWS; r++) {
 		if (r == OPT_GC) { // section label
 			gfx_tracking(3);
-			gfx_text(&gfx_font_mono, x + 28, ry + 8, L("OPL COMPATIBILITY MODES"), LABEL);
+			gfx_text(&gfx_font_mono, x + 28, ry + 8, L("COMPATIBILITY MODES (NEUTRINO -GC)"), LABEL);
 			gfx_tracking(0);
 			ry += 34;
 		}
@@ -2063,11 +2080,11 @@ static void options_panel(int i, int row) // △ menu: per-game settings
 // starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts TEa.G3 only
 // when the sources or the network changed (read at boot). ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
 enum { W_UPD, W_LANG, W_THEME, W_ENGINE, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
-static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK}; // checkboxes
+static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS, SRC_SMB}; // checkboxes
 #define W_NCHIP (int)sizeof(w_chip)
 static int w_cur; // the source checkbox under the cursor; w_val[W_SRC] is the mask (1 << SRC_*)
 static const char *const w_mcm[3] = {"juego", "compartida", "fisica"}, *const w_vid[3] = {"nativo", "480p", "1080i"};
-static const char *const w_engine_key[3] = {"opl", "opl", "opl"};
+static const char *const w_engine_key[3] = {"auto", "neutrino", "opl"};
 static const char *const w_lk[] = {"Auto", "R1", "L1", "R2", "L2", "Triangle", "Circle", "Square", "Cross", "Start", "Select"};
 static const char *const w_lk_ar[] = {"تلقائي", "R1", "L1", "R2", "L2", "مثلث", "دائرة", "مربع", "إكس", "Start", "Select"};
 #define W_NLK 11 // w_val[W_FMCB]: 0 no change, 1 autoboot, 2..W_NLK a button, W_NLK + 1 an item in FMCB's menu
@@ -2091,9 +2108,10 @@ static int w_fmcb_card(void) // the FREEMCB.CNF to edit: the chosen card's, else
 static void wiz_open(void)
 {
 	const char *o = ini_get(&cfg, "juegos", "origen", "usb"), *ip = ini_get(&cfg, "red", "ip", "dhcp");
-		memset(w_val, 0, sizeof(w_val));
+	const char *motor = ini_get(&cfg, "juegos", "motor", "opl");
+	memset(w_val, 0, sizeof(w_val));
 	w_val[W_LANG] = lang, w_val[W_THEME] = theme_id, w_val[W_SRC] = src_mask(o), w_val[W_VIDEO] = 1, w_val[W_CARD] = mcn[0] >= 0 ? 0 : mcn[1] >= 0 ? 1 : -1;
-	w_val[W_ENGINE] = 0; /* OPL is the only game engine. */
+	w_val[W_ENGINE] = !strcasecmp(motor, "opl") ? 2 : !strcasecmp(motor, "neutrino") ? 1 : 0;
 	if (!w_val[W_SRC]) w_val[W_SRC] = 1u << SRC_USB;
 	w_cur = 0;
 	for (int k = 0; k < 3; k++) {
@@ -2213,7 +2231,7 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 	switch (r) {
 	case W_LANG: snprintf(a, n, "%s", v == LANG_EN ? "English" : "العربية"); break;
 	case W_THEME: snprintf(a, n, "%s", themes[v].name); break;
-	case W_ENGINE: snprintf(a, n, "OPL"); break;
+	case W_ENGINE: snprintf(a, n, "%s", v == 1 ? "Neutrino" : v == 2 ? "OPL" : L("Automatic")); break;
 	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Per-game virtual") : v == 1 ? L("Shared virtual") : L("Physical")); break;
 	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Native") : w_vid[v]); break;
 	case W_NET: snprintf(a, n, "%s", v ? w_ip : "DHCP"); break;
@@ -2425,7 +2443,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		int st = src[(int)cv[sel].src].type;
 		const char *src_txt = cv[sel].kind == K_DISC ? L("DRIVE") : st == SRC_HDL ? "HDL" : src_label[st];
 		x = tag(x, src_txt, cv[sel].kind == K_DISC ? UI_DVD_18 : src_icon[st], ACID, ACID, 0); // the source: acid
-		if (cv[sel].kind == K_PS2) x = tag(x, vid_label[game_video(sel)], UI_CHIP_18, EDGE, TEXT, 0); // what OPL forces
+		if (cv[sel].kind == K_PS2) x = tag(x, vid_label[game_video(sel)], UI_CHIP_18, EDGE, TEXT, 0); // what Neutrino forces
 		if (ra_game_ok(sel)) { // achievements tag (phase 16): "LOGROS" with a spinner while asking, none without a set
 			if (!ra_state[sel] && ra_sema >= 0) ra_want = sel, SignalSema(ra_sema); // coalesced: max_count 1
 			int st = ra_state[sel];
@@ -2574,7 +2592,7 @@ static int status_text(char *b, int max)
 	}
 	const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
 	if (k >= max) return max - 1;
-	if (net_busy) k += snprintf(b + k, max - k, L("NETWORK BUSY (covers / updates / achievements), IP %s\n"), ip);
+	if (net_busy) k += snprintf(b + k, max - k, L("NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n"), ip);
 	else if (net_res == 1) k += snprintf(b + k, max - k, L("NETWORK not used\n"));
 	else if (net_res < 0) k += snprintf(b + k, max - k, L("NETWORK %s\n"), net_err(net_res));
 	else k += snprintf(b + k, max - k, L("NETWORK %s (%s)\n"), net_ip(), strcasecmp(ip, "dhcp") ? L("fixed") : "DHCP");
@@ -2632,11 +2650,28 @@ static const char *launch_problem(int i) // select a viable engine before handin
 		return L("The game image is no longer readable from its source");
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
-	if (cv[i].kind == K_PS2 && engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this source");
-	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM) {
+	if (engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this source");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO) {
+		if (!neutrino) return L("Could not install the embedded Neutrino runtime");
+		if (!runtime_asset_valid(RUNTIME_DIR, "neutrino/neutrino.elf"))
+			return L("Neutrino runtime failed its integrity check");
+	}
+	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
 		if (!runtime_asset_valid(RUNTIME_DIR, "OPL.ELF"))
 			return L("OPL runtime failed its integrity check");
 		if (stub_port < 0) return stub_install ? L("Preparing the independent return path; try again shortly") : L("A memory-card return stub is required before this launch");
+	}
+	if (engine == ENGINE_OPL_HDD &&
+	    (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector ||
+	     !cv[i].hdl_size_kb || !cv[i].hdl_disc_type))
+		return L("HD Loader partition metadata is incomplete");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO &&
+	    src[(int)cv[i].src].type == SRC_SMB) {
+		char smb_module[192], smb_config[192];
+		snprintf(smb_module, sizeof(smb_module), "%s/modules/smb_fhi.irx", NDIR);
+		snprintf(smb_config, sizeof(smb_config), "%s/config/bsd-smb.toml", NDIR);
+		if (!exists(smb_module) || !exists(smb_config))
+			return L("Install a Neutrino build with the SMB modules first");
 	}
 	if (cv[i].kind == K_PS1 && (!exists(POPSTARTER) || !exists("mass0:/POPS/POPS_IOX.PAK")))
 		return L("POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/");
@@ -2759,7 +2794,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		        (unsigned)engine, engine_reason_name(decision.reason));
 		fclose(diag);
 	}
-	const char *how[4] = {L("STARTING WITH OPL"), L("STARTING WITH POPSTARTER"), L("STARTING APPLICATION"),
+	const char *how[4] = {L("STARTING WITH NEUTRINO"), L("STARTING WITH POPSTARTER"), L("STARTING APPLICATION"),
 	                             L("STARTING DISC")};
 	for (int t = 0; t < (theme_id == TH_NULD ? 40 : 64); t++) { // let the confirm sound play while the screen fades to the entry's name
 		gfx_begin();
@@ -2769,52 +2804,30 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
 		text_c(&gfx_font_mono, 400, cv[i].kind == K_PS2 ? L("STARTING GAME") : how[(int)cv[i].kind], LABEL);
-		if (0 && ra_game_ok(i) && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
+		if (engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
 			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("WITH ACHIEVEMENTS") : L("NO ACHIEVEMENTS: NO ANSWER YET"),
 			       ra_state[i] == RA_SET ? ACID : LABEL);
 		gfx_tracking(0);
 		gfx_end();
 		gfx_flip();
 	}
-	if (engine == ENGINE_OPL_UL) {
-		static char ul_arg[96];
-		snprintf(ul_arg, sizeof(ul_arg), "ul:%s", cv[i].ul_name);
-		char *opl_argv[8] = {OPL_PATH, "", ul_arg, cv[i].boot, cv[i].cd ? "CD" : "DVD",
-		                     "bdm", "mass0", (char *)igr_stub_path()};
-		printf("launch OPL USBExtreme: %s\\n", cv[i].boot);
-		gfx_shutdown();
-		run_loader_recover(8, opl_argv);
-		printf("OPL USBExtreme launch returned\\n");
-		return;
-	}
-	if (engine == ENGINE_OPL_BDM) {
-		const char *filename = strrchr(cv[i].path, '/');
-		char mass_device[16];
-		char *opl_argv[8];
-		int source_type = src[(int)cv[i].src].type;
-		filename = filename ? filename + 1 : cv[i].path;
-		opl_argv[0] = OPL_PATH;
-		opl_argv[1] = "";
-		opl_argv[2] = (char *)filename;
-		opl_argv[3] = cv[i].boot;
-		opl_argv[4] = cv[i].cd ? "CD" : "DVD";
-		opl_argv[5] = "bdm";
-		if (source_type == SRC_HDD) {
-			opl_argv[6] = "";
-			opl_argv[7] = (char *)igr_stub_path();
-		} else {
-			snprintf(mass_device, sizeof(mass_device), "mass%u", (unsigned char)src[(int)cv[i].src].unit);
-			opl_argv[6] = mass_device;
-			opl_argv[7] = (char *)igr_stub_path();
-		}
-		printf("launch OPL BDM: %s source=%u\\n", cv[i].boot, (unsigned)source_type);
-		gfx_shutdown();
-		run_loader_recover(8, opl_argv);
-		printf("OPL BDM launch returned\\n");
-		return;
-	}
-	if (cv[i].kind == K_DISC) {
-		char *a[2] = {cv[i].boot, "???"};
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("Could not create the virtual memory card"); return; }
+	// no ISO read nor socket call of the achievements worker left half-way under the IOP reset (phase 16: the game
+	// hung when launched while its hash was being computed); the render thread sleeps so the worker can stop
+	ra_launching = 1, ra_abort = 1;
+	for (int t = 0; t < 150 && ra_busy; t++) usleep(10000);
+	// phase 16b: the watch list and the agent's config, while the network is still up (the worker takes no new work)
+	static char ra_arg[72];
+	int ra = 0;
+	if (!ra_busy && engine == ENGINE_NEUTRINO && neutrino_ra && ra_game_ok(i) && ra_state[i] == RA_SET && ra_on)
+		ra_abort = 0, ra = ra_prepare(i, ra_arg, sizeof(ra_arg)), ra_abort = 1;
+	static char file[200], arg0[200];
+	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
+	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down(); // ponytail: a cover download in flight keeps it up
+	// no libcdvd call of the disc thread left half-way under the next program (Neutrino's branch: after its checks)
+	if ((cv[i].kind != K_PS2 || engine != ENGINE_NEUTRINO) && disc_tid >= 0) TerminateThread(disc_tid);
+	if (cv[i].kind == K_DISC) { // the BIOS: PS2LOGO checks and runs the BOOT2 path; PS1DRV takes file name + version
+		char *a[2] = {cv[i].boot, "???"}; // ponytail: version "???", as the OSD libraries fall back to
 		printf("launch: %s %s\n", cv[i].disc == D_PS2 ? "rom0:PS2LOGO" : "rom0:PS1DRV", cv[i].boot);
 		gfx_shutdown();
 		SifExitRpc();
@@ -2822,17 +2835,105 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		handoff_returned("BIOS");
 		return;
 	}
-	if (cv[i].kind == K_PS1 || cv[i].kind == K_APP) {
-		static char file[200], arg0[200];
+	if (engine == ENGINE_OPL_UL) {
+		static char part_count[8];
+		snprintf(part_count, sizeof(part_count), "%u", (unsigned char)cv[i].parts);
+		/* OPL's main() expects the launch mode in argv[4]. The loader removes argv[0],
+		   so reserve an empty OPL argv[0] before the UL record. */
+		char *opl_argv[8] = {OPL_PATH, "", cv[i].ul_name, cv[i].boot,
+		                     cv[i].cd ? "CD" : "DVD", "ul", part_count, (char *)igr_stub_path()};
+		printf("launch OPL UL: %s parts=%s\n", cv[i].boot, part_count);
+		gfx_shutdown();
+		run_loader_recover(8, opl_argv);
+		printf("OPL UL launch returned\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_HDD) {
+		char sector[16], size_kb[16], disc_type[16];
+		char *opl_argv[9];
+		if (src[(int)cv[i].src].type != SRC_HDL || !cv[i].hdl_start_sector ||
+		    !cv[i].hdl_size_kb || !cv[i].hdl_disc_type) {
+			launch_err = L("HD Loader partition metadata is incomplete");
+			return;
+		}
+		snprintf(sector, sizeof(sector), "%lu", (unsigned long)cv[i].hdl_start_sector);
+		snprintf(size_kb, sizeof(size_kb), "%lu", (unsigned long)cv[i].hdl_size_kb);
+		snprintf(disc_type, sizeof(disc_type), "%lu", (unsigned long)cv[i].hdl_disc_type);
+		opl_argv[0] = OPL_PATH;
+		opl_argv[1] = "";
+		opl_argv[2] = cv[i].boot;
+		opl_argv[3] = sector;
+		opl_argv[4] = size_kb;
+		opl_argv[5] = disc_type;
+		opl_argv[6] = "mini";
+		opl_argv[7] = (char *)igr_stub_path();
+		opl_argv[8] = NULL;
+		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s disc_type=%s (existing OPL config only)\n",
+		       cv[i].boot, sector, size_kb, disc_type);
+		gfx_shutdown();
+		run_loader_recover(8, opl_argv);
+		printf("OPL HD Loader launch returned\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_ETH) {
+		char *opl_argv[15];
+		opl_argv[0] = OPL_PATH;
+		opl_argv[1] = "";
+		opl_argv[2] = cv[i].path;
+		opl_argv[3] = cv[i].boot;
+		opl_argv[4] = cv[i].cd ? "CD" : "DVD";
+		opl_argv[5] = "eth";
+		opl_argv[6] = (char *)ini_get(&cfg, "red", "ip", "dhcp");
+		opl_argv[7] = (char *)ini_get(&cfg, "red", "mascara", "255.255.255.0");
+		opl_argv[8] = (char *)ini_get(&cfg, "red", "puerta", "");
+		opl_argv[9] = (char *)ini_get(&cfg, "red", "dns", "");
+		opl_argv[10] = (char *)ini_get(&cfg, "smb", "server", "");
+		opl_argv[11] = (char *)ini_get(&cfg, "smb", "share", "");
+		opl_argv[12] = (char *)ini_get(&cfg, "smb", "user", "guest");
+		opl_argv[13] = (char *)ini_get(&cfg, "smb", "password", "");
+		opl_argv[14] = (char *)igr_stub_path();
+		printf("launch OPL SMB: %s\n", cv[i].boot);
+		gfx_shutdown();
+		run_loader_recover(15, opl_argv);
+		printf("OPL SMB launch returned\n");
+		return;
+	}
+	if (engine == ENGINE_OPL_BDM) {
+		const char *filename = strrchr(cv[i].path, '/');
+		const char *driver = "usb";
+		char unit[8];
+		char *opl_argv[9];
+		int source_type = src[(int)cv[i].src].type;
+		filename = filename ? filename + 1 : cv[i].path;
+		if (source_type == SRC_HDD) driver = "ata";
+		else if (source_type == SRC_MX4SIO) driver = "sdc";
+		else if (source_type == SRC_ILINK) driver = "sd";
+		snprintf(unit, sizeof(unit), "%u", (unsigned char)src[(int)cv[i].src].unit);
+		opl_argv[0] = OPL_PATH;
+		opl_argv[1] = "";
+		opl_argv[2] = (char *)filename;
+		opl_argv[3] = cv[i].boot;
+		opl_argv[4] = cv[i].cd ? "CD" : "DVD";
+		opl_argv[5] = "bdm";
+		opl_argv[6] = (char *)driver;
+		opl_argv[7] = unit;
+		opl_argv[8] = (char *)igr_stub_path();
+		printf("launch OPL BDM: %s driver=%s unit=%s\n", cv[i].boot, driver, unit);
+		gfx_shutdown();
+		run_loader_recover(9, opl_argv);
+		printf("OPL BDM launch returned\n");
+		return;
+	}
+	if (cv[i].kind != K_PS2) { // loader argv: the file, then the program's argv
 		char *argv[2] = {file, arg0};
-		if (cv[i].kind == K_PS1) {
+		if (cv[i].kind == K_PS1) { // POPStarter finds <name>.VCD from an argv[0] of mass:/POPS/XX.<name>.ELF
 			char name[160];
-			snprintf(name, sizeof(name), "%s", cv[i].path + 5);
-			name[strlen(name) - 4] = 0;
+			snprintf(name, sizeof(name), "%s", cv[i].path + 5); // after "POPS/"
+			name[strlen(name) - 4] = 0;                          // without ".VCD"
 			snprintf(file, sizeof(file), "%s", POPSTARTER);
 			snprintf(arg0, sizeof(arg0), "mass:/POPS/XX.%s.ELF", name);
 		} else {
-			if (!on_catalog(i)) snprintf(file, sizeof(file), "%s/%s", homedev, cv[i].path);
+			if (!on_catalog(i)) snprintf(file, sizeof(file), "%s/%s", homedev, cv[i].path); // else app_fetch's
 			snprintf(arg0, sizeof(arg0), "%s", file);
 		}
 		printf("launch: %s as %s\n", file, arg0);
@@ -2841,9 +2942,82 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		printf("launch failed\n");
 		return;
 	}
-	/* No Neutrino fallback: unsupported formats/sources stop here. */
-	launch_err = L("This game source is not available through the OPL adapter yet");
-	return;
+	static char dvd[200], gsm[24], gc[12] = "-gc=", mc0[64], root[16];
+	static char igr[3][48];
+	char *argv[16];
+	int argc = 0, v = game_video(i), c = game_compat(i), n = 4, st = src[(int)cv[i].src].type;
+	// the source as Neutrino names it (phase 14): the BDM driver's name ("usb:" as phase 6, "ata0:", "mx4sio0:",
+	// ...; Neutrino takes -bsd from it), the MMCE / UDPFS device as nhddl passes it ("mmce0:/")
+	if (st == SRC_USB) strcpy(root, "usb:");
+	else snprintf(root, sizeof(root), st == SRC_MMCE ? "%s/" : "%s", src[(int)cv[i].src].root); // "udpfs:" (phase 17)
+	argv[argc++] = NEUTRINO; // the file to load
+	argv[argc++] = "";       // Neutrino's argv[0]: "" = the same as the file (loader.c), 28 bytes less of arguments
+	if (st == SRC_HDL) { // HD Loader partition (Neutrino README: -bsd=ata -bsdfs=hdl -dvd=hdl:<part>)
+		argv[argc++] = "-bsd=ata";
+		argv[argc++] = "-bsdfs=hdl";
+		snprintf(dvd, sizeof(dvd), "-dvd=hdl:%s", cv[i].path);
+	} else snprintf(dvd, sizeof(dvd), "-dvd=%s%s", root, cv[i].path);
+	if (st == SRC_UDPFS) argv[argc++] = "-bsd=udpfs"; // phase 17: Neutrino loads its own smap / ministack / udpfs
+	if (st == SRC_SMB) argv[argc++] = "-bsd=smb"; // read-only share; Neutrino loads its own SMB FHI
+	argv[argc++] = dvd;
+	if (uses_vmc(i)) { // virtual memory card in slot 1, on the game's own source (Neutrino -mc0=<file>)
+		char name[40];
+		vmc_name(i, name, sizeof(name));
+		snprintf(mc0, sizeof(mc0), "-mc0=%s%s", root, name);
+		argv[argc++] = mc0;
+	}
+	if (v > 1) { // 480p / 1080i forced by Neutrino's GS mode selector; native: no -gsm
+		snprintf(gsm, sizeof(gsm), "-gsm=%s", v == 2 ? "fp2" : "1080ix2");
+		if (c) snprintf(gsm + strlen(gsm), sizeof(gsm) - strlen(gsm), ":%d", c);
+		argv[argc++] = gsm;
+	}
+	for (int k = 0; k < 5; k++)
+		if (game_gc(i, k)) gc[n++] = gc_modes[k];
+	gc[n] = 0;
+	if (n > 4) argv[argc++] = gc;
+	if (neutrino_igr && igr_exit) // In Game Reset (phase 12): only the TEa.G3 fork knows these
+		snprintf(igr[0], sizeof(igr[0]), "-igr=0x%04x", igr_exit), argv[argc++] = igr[0];
+	if (neutrino_menu && igr_menu) // in-game menu (phase 13)
+		snprintf(igr[2], sizeof(igr[2]), "-igrmenu=0x%04x", igr_menu), argv[argc++] = igr[2];
+	if (neutrino_igr && (igr_exit || (neutrino_menu && igr_menu)))
+		argv[argc++] = "-igrexit=rom0:OSDSYS"; // the reboot: FMCB comes up from the card and autoboots TEa.G3
+	if (neutrino_igr && igr_off) snprintf(igr[1], sizeof(igr[1]), "-igroff=0x%04x", igr_off), argv[argc++] = igr[1];
+	if (neutrino_lang && neutrino_menu && igr_menu) {
+		if (lang == LANG_EN) argv[argc++] = "-igrlang=en";
+		else if (lang == LANG_AR) argv[argc++] = "-igrlang=ar"; // Arabic IGR menu uses its generated RTL labels.
+	}
+	if (ra) argv[argc++] = "-cfg=ra", argv[argc++] = ra_arg; // phase 16b: the achievements agent and its watch list
+	if (!strcasecmp(ini_get(&cfg, "juegos", "logo", "no"), "si")) argv[argc++] = "-logo"; // Neutrino runs the game through rom0:PS2LOGO
+	// HD Loader needs Neutrino's own load stage (hdlfs; nhddl neutrino.c); so do games
+	// whose selected source relies on Neutrino's network stack (the launcher's lwIP is shut down, phase 17)
+	if (st != SRC_HDL && st != SRC_UDPFS && st != SRC_SMB) argv[argc++] = "-qb";
+	int len = 0;
+	for (int k = 0; k < argc; k++) len += strlen(argv[k]) + 1;
+	if (len > 255) { // the documented limit for Neutrino's arguments (nhddl README "Argument files")
+		printf("launch: %d bytes of arguments\n", len);
+		launch_err = L("ISO name too long for Neutrino: shorten it");
+		return;
+	}
+	// any MMCE (MemCard PRO 2, SD2PSX) switches to the game's card, as nhddl mmceMountVMC (#2); a game from the MMCE
+	// itself keeps the current card when asked for a shared or the physical one
+	if (st != SRC_MMCE || game_mc(i) == MC_GAME) {
+		char id[16];
+		snprintf(id, sizeof(id), "%.4s_%.3s.%.2s", cv[i].serial, cv[i].serial + 5, cv[i].serial + 8); // SLUS_213.76
+		src_mmce_game(id);
+	}
+	if (disc_tid >= 0) TerminateThread(disc_tid);
+	FILE *fp = fopen(LOG_TXT, "a"); // what Neutrino got, for console checks
+	printf("launch:");
+	if (fp) fprintf(fp, "TEa.G3 launch:");
+	for (int k = 0; k < argc; k++) {
+		printf(" %s", argv[k]);
+		if (fp) fprintf(fp, " %s", argv[k]);
+	}
+	printf("\n");
+	if (fp) fprintf(fp, "\n"), fclose(fp);
+	gfx_shutdown(); // our vsync handler must not outlive this ELF
+	run_loader_recover(argc, argv);
+	printf("launch failed\n"); // only reached if the ELF could not be loaded
 }
 
 int main(int argc, char *argv[])
@@ -2961,7 +3135,7 @@ int main(int argc, char *argv[])
 					if (gicon_state[sel] == 2) gicon_state[sel] = 0, gicon[sel] = NULL; // ponytail: the old icon leaks
 				}
 				if (usb && !ini_save(&games, GAMES_INI, L("; TEa.G3 - per-game options (triangle menu)\n"
-				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = OPL compatibility modes,\n"
+				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = Neutrino modes (0 2 3 5 7),\n"
 				                     "; mc = juego | compartida | fisica\n")))
 					toast = 180, toast_msg = L("Could not save the options to the USB");
 			}
