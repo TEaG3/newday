@@ -44,6 +44,9 @@ static void test_path_and_validation(void)
     assert(catalog_stage_snapshot_validate(&snapshot) == CATALOG_STAGE_OK);
     snapshot.count = CATALOG_STAGE_MAX_ITEMS + 1u;
     assert(catalog_stage_snapshot_validate(&snapshot) == CATALOG_STAGE_ERR_CAPACITY);
+    snapshot.count = 1;
+    memset(snapshot.records[0].path, 'A', sizeof(snapshot.records[0].path));
+    assert(catalog_stage_snapshot_find(&snapshot, 1, 0, 0, "DVD/Game.iso") == -1);
 }
 
 static void test_diff_and_stable_selection(void)
