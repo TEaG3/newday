@@ -129,7 +129,7 @@
   "Setup and updates on the PS2": "الإعداد والتحديث على جهاز PS2",
   "Arabic or English": "العربية أو الإنجليزية",
   "Twelve themes, and yours": "اثنتا عشرة سمة، مع إمكانية إنشاء سمتك",
-  "Captured from the launcher at 1280×720, in the Classic theme. Select one to see it full size.": "لقطات مأخوذة من المشغّل بدقة 1280×720 باستخدام سمة TEa.G3. اختر أي لقطة لعرضها بالحجم الكامل.",
+  "Captured from the launcher at 1280×720, in the Classic theme. Select one to see it full size.": "لقطات مأخوذة من المشغّل بدقة 1280×720 باستخدام السمة الكلاسيكية. اختر أي لقطة لعرضها بالحجم الكامل.",
   "Previous screens": "اللقطات السابقة",
   "Next screens": "اللقطات التالية",
   "Previous": "السابق",
@@ -142,7 +142,7 @@
   "The setup wizard writes config.ini and FreeMcBoot autoboot settings.": "ينشئ معالج الإعداد ملف config.ini ويضبط إعدادات التشغيل التلقائي عبر FreeMcBoot.",
   "One zip for the USB drive. Coming from ORBIT? The first boot moves your settings from orbit/ to nuld/ and keeps everything working.": "ملف ZIP واحد لنسخه إلى وحدة USB. هل تنتقل من ORBIT؟ عند التشغيل الأول ينقل TEa.G3 إعداداتك من orbit/ إلى nuld/ مع الحفاظ عليها.",
   "TEa.G3 complete package": "حزمة TEa.G3 الشاملة",
-  "launcher.elf, Neutrino with NULD's in-game menu and achievements agent, the folders, the optional home server and a quick start": "تتضمن launcher.elf ومحرك Neutrino مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات، إضافة إلى المجلدات وخادم الألعاب الاختياري ودليل البدء السريع.",
+  "TEa.G3.ELF, embedded OPL and Neutrino engines, Arabic and English guides, USB folders, licenses and quick start": "تتضمن launcher.elf ومحرك Neutrino مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات، إضافة إلى المجلدات وخادم الألعاب الاختياري ودليل البدء السريع.",
   "all releases": "جميع الإصدارات",
   "Release notes and SHA-256 checksums. What changed in each: the": "ملاحظات الإصدارات وبصمات التحقق SHA-256. لمعرفة التغييرات في كل إصدار، راجع",
   "jfplay.elf": "ملف jfplay.elf",
@@ -169,7 +169,7 @@
   "View": "طريقة العرض",
   "Screenshots, scrolls sideways": "لقطات الشاشة؛ مرّر جانبياً لاستعراضها",
   "TEa.G3 manual": "دليل TEa.G3",
-  "NULD instruction manual,": "دليل استخدام TEa.G3،",
+  "TEa.G3 instruction manual,": "دليل استخدام TEa.G3،",
   "version 1.2": "الإصدار 1.2",
   "version {v}": "الإصدار {v}",
   "1 The USB drive": "1. وحدة USB",
@@ -187,13 +187,13 @@
   " ) and start": " )، ثم شغّل",
   "from uLaunchELF. The setup wizard opens on the first boot.": "من خلال uLaunchELF. سيظهر معالج الإعداد عند التشغيل الأول.",
   "USB root": "المجلد الرئيسي لوحدة USB",
-  "the loader, with NULD's in-game menu and achievements agent": "محرك التشغيل، ويضم قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات",
+  "the TEa.G3 launcher with its in-game menu and achievements agent": "محرك التشغيل، ويضم قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات",
   "PS2 DVD ISOs": "ألعاب PS2 بصيغة DVD ISO",
   "PS2 CD ISOs": "ألعاب PS2 بصيغة CD ISO",
   "PS1 games (POPStarter .VCD), optional": "ألعاب PS1 بصيغة POPStarter VCD (اختياري)",
   "homebrew .ELF files, optional": "ملفات تطبيقات Homebrew بصيغة ELF (اختياري)",
-  "written by NULD: the covers it downloads": "ينشئه TEa.G3 لحفظ أغلفة الألعاب التي ينزّلها",
-  "written by NULD: config.ini, juegos.ini, estado.ini": "ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
+  "written by TEa.G3: the covers it downloads": "ينشئه TEa.G3 لحفظ أغلفة الألعاب التي ينزّلها",
+  "written by TEa.G3: config.ini, juegos.ini, estado.ini": "ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
   "FAT32 cannot hold files over 4 GB: format the drive as exFAT for big ISOs. Virtual memory cards live in": "لا يدعم FAT32 الملفات التي يزيد حجمها على 4 GB؛ استخدم exFAT للألعاب الكبيرة. تُحفظ بطاقات الذاكرة الافتراضية داخل",
   "on the game's own device.": "على وحدة التخزين التي توجد عليها اللعبة.",
   "Buttons": "أزرار التحكم",
@@ -302,7 +302,7 @@
   "press L2+R2 together for 480i.": "اضغط L2+R2 معاً للتبديل إلى 480i.",
   "Logs": "سجلات التشغيل",
   "records each launch.": "يسجل تفاصيل كل عملية تشغيل.",
-  "NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino المرخّص بموجب AFL-3.0.",
+  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino المرخّص بموجب AFL-3.0.",
   "TEa.G3 theme maker": "مصمم سمات TEa.G3",
   "Pick the colours, add a picture if you want one, and download a folder for": "اختر ألوان السمة، وأضف صورة خلفية إن رغبت، ثم نزّل المجلد إلى",
   "on your USB drive. Nothing is uploaded: it all happens in this page.": "على وحدة USB. لا تُرفع ملفاتك إلى أي خادم؛ تتم جميع العمليات داخل هذه الصفحة.",
@@ -370,7 +370,7 @@
   "START, then": "اضغط START ثم",
   ": each theme is shown at once behind the panel. Saved as": ": تُعرض معاينة كل سمة خلف لوحة الإعداد. ويُحفظ الاختيار في",
   "in": "في",
-  "To keep v1.2's look, pick NULD.": "للاحتفاظ بمظهر الإصدار v1.2، اختر سمة Classic.",
+  "To keep v1.2's look, pick the Classic theme.": "للاحتفاظ بمظهر الإصدار v1.2، اختر سمة Classic.",
   "Themes from folders.": "السمات المخصصة من المجلدات.",
   "with a": "ويحتوي على ملف",
   "(a name, a built-in theme as its base and eleven colours) and, optionally, a 1280 x 720": "(يتضمن الاسم والسمة الأساسية المدمجة وأحد عشر لوناً)، ويمكن إضافة صورة اختيارية بأبعاد 1280×720",
@@ -379,11 +379,11 @@
   "A": "صفحة",
   "page": "على شكل صفحة",
   "that builds that folder in the browser, with a live preview of the home screen, and downloads it as a zip.": "تنشئ مجلد السمة داخل المتصفح، وتعرض معاينة مباشرة للشاشة الرئيسية، ثم تتيح تنزيله في ملف ZIP.",
-  "Saving the setup no longer restarts NULD.": "حفظ الإعدادات لم يعد يعيد تشغيل TEa.G3.",
+  "Saving the setup no longer restarts TEa.G3.": "حفظ الإعدادات لم يعد يعيد تشغيل TEa.G3.",
   "Language, theme, memory card and video apply at once; it only starts again when the game sources or the network changed.": "تُطبّق تغييرات اللغة والسمة وبطاقة الذاكرة والفيديو فوراً. ولا يُعاد تشغيل المشغّل إلا عند تغيير مصادر الألعاب أو إعدادات الشبكة.",
   "A loading sound for the new themes": "صوت تحميل للسمات الجديدة",
   "After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.": "كان عنوان اللعبة على الشاشة الرئيسية يبقى باللغة السابقة بعد تغيير اللغة من لوحة الإعداد؛ وقد عولجت هذه المشكلة.",
-  "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.": "قيس معدل الإطارات لسمتي Torres وClassic فقط على جهاز SCPH-75001، وسجلتا 60 إطاراً في الثانية. أما السمات العشر الأخرى فتم تشغيلها على الجهاز نفسه دون تقطّع ملحوظ، لكن لم يُقَس معدل الإطارات لها.",
+  "Only Torres and Classic have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.": "قيس معدل الإطارات لسمتي Torres وClassic فقط على جهاز SCPH-75001، وسجلتا 60 إطاراً في الثانية. أما السمات العشر الأخرى فتم تشغيلها على الجهاز نفسه دون تقطّع ملحوظ، لكن لم يُقَس معدل الإطارات لها.",
   "Covers from your home server, interface language options, and the PlayStation 2 logo before the games.": "تنزيل أغلفة الألعاب من الخادم المنزلي، وإتاحة إعدادات لغة الواجهة، وإظهار شعار PlayStation 2 قبل الألعاب.",
   "Covers from the home server (#19).": "الأغلفة من الخادم المنزلي (#19).",
   "Apps from your home server, OPL's ART folder, and square covers for PS1 games and apps.": "تشغيل التطبيقات من الخادم المنزلي، ودعم مجلد ART الخاص بـ OPL، والأغلفة المربعة لألعاب PS1 والتطبيقات.",
@@ -444,7 +444,7 @@
   "2026-11-19 ·": "19 نوفمبر 2026 ·",
   "download": "تنزيل",
   "Torres (the new default: prisms of light in a blue night), TEa.G3 (v1.2's look), Cristal, Aurora, Liquid, Onda, Orbit, Techstep, Wireframe, Neuro, Fósforo and Papel. Each has its own colours, animated background, loading screen, launch screen and way of marking the selected game. The layout is the same in all of them.": "أضيفت اثنتا عشرة سمة: Torres (السمة الافتراضية الجديدة، بأضواء متلألئة على خلفية ليلية زرقاء)، وTEa.G3 (مظهر الإصدار v1.2)، وCristal وAurora وLiquid وOnda وOrbit وTechstep وWireframe وNeuro وFósforo وPapel. لكل سمة ألوانها وخلفيتها المتحركة وشاشة التحميل وشاشة تشغيل اللعبة وطريقة تمييز اللعبة المحددة، مع الحفاظ على تخطيط موحّد.",
-  ". To keep v1.2's look, pick NULD.": ". للاحتفاظ بمظهر الإصدار v1.2، اختر سمة TEa.G3.",
+  ". To keep v1.2's look, pick the Classic theme.": ". للاحتفاظ بمظهر الإصدار v1.2، اختر سمة TEa.G3.",
   ": air rising and a low piano strike in a hall. TEa.G3 keeps its own.": ": يتضمن صوتاً تصاعدياً ونغمة بيانو منخفضة ذات صدى. ويحتفظ TEa.G3 بصوته الأصلي.",
   "1.2.14": "الإصدار 1.2.14",
   "2026-11-17 ·": "17 نوفمبر 2026 ·",
@@ -469,7 +469,7 @@
   "for apps (for example": "للتطبيقات (على سبيل المثال",
   "). The launcher looks in the": "). يبحث المشغّل في مجلد",
   "folder of its own drive and of the game's drive. It converts each image once into": "الموجود على وحدة التخزين التي يعمل منها وعلى وحدة اللعبة. يحوّل كل صورة مرة واحدة إلى مجلد",
-  ", and does not download a cover for that game from the internet. Transparent PNGs are drawn over NULD's background.": "، ولا ينزّل غلافاً لهذه اللعبة من الإنترنت بعد ذلك. وتُعرض صور PNG الشفافة فوق خلفية TEa.G3.",
+  ", and does not download a cover for that game from the internet. Transparent PNGs are drawn over the TEa.G3 background.": "، ولا ينزّل غلافاً لهذه اللعبة من الإنترنت بعد ذلك. وتُعرض صور PNG الشفافة فوق خلفية TEa.G3.",
   "PS1 covers are no longer squashed into the DVD case shape: they are drawn square, like a CD case, and so are app covers. PS1 covers downloaded by earlier versions are downloaded again in the new shape.": "لم تعد أغلفة ألعاب PS1 تُضغط لتأخذ شكل غلاف DVD؛ بل أصبحت مربعة مثل أغلفة الأقراص المدمجة، وكذلك أغلفة التطبيقات. ويُعاد تنزيل أغلفة PS1 التي جرى الحصول عليها في الإصدارات السابقة بالشكل الجديد.",
   "makes square covers by hand; app covers made earlier with": "ينشئ الأغلفة المربعة يدوياً؛ أما أغلفة التطبيقات التي أُنشئت سابقاً باستخدام",
   "have to be made again with": "فيجب إنشاؤها مجدداً باستخدام الخيار",
@@ -587,8 +587,8 @@
 
 
   Object.assign(dict, {
-  "NULD is free software under GPL-3.0. Themes need NULD v1.3 or newer.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0. يتطلب استخدام السمات الإصدار TEa.G3 v1.3 أو أحدث.",
-  "USB root\n├── launcher.elf\n├── neutrino/     the loader, with NULD's in-game menu and achievements agent\n├── DVD/          PS2 DVD ISOs\n├── CD/           PS2 CD ISOs\n├── POPS/         PS1 games (POPStarter .VCD), optional\n├── APPS/         homebrew .ELF files, optional\n├── covers/       written by NULD: the covers it downloads\n└── nuld/         written by TEa.G3: config.ini, juegos.ini, estado.ini": "المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── nuld/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
+  "TEa.G3 is free software under GPL-3.0. Themes need TEa.G3 v1.3 or newer.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0. يتطلب استخدام السمات الإصدار TEa.G3 v1.3 أو أحدث.",
+  "USB root\n├── launcher.elf\n├── neutrino/     the TEa.G3 launcher with its in-game menu and achievements agent\n├── DVD/          PS2 DVD ISOs\n├── CD/           PS2 CD ISOs\n├── POPS/         PS1 games (POPStarter .VCD), optional\n├── APPS/         homebrew .ELF files, optional\n├── covers/       written by TEa.G3: the covers it downloads\n└── nuld/         written by TEa.G3: config.ini, juegos.ini, estado.ini": "المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── nuld/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
   "The theme (": "السمة (",
   "The setup wizard opens on the first boot.": "يظهر معالج الإعداد عند التشغيل الأول.",
   "tools/covers.py": "الأداة tools/covers.py",
@@ -669,11 +669,11 @@
 
   delete dict.to;
   Object.assign(dict, {
-    "USB root ├── launcher.elf ├── neutrino/ the loader, with NULD's in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by NULD: the covers it downloads └── nuld/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── nuld/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
+    "USB root ├── launcher.elf ├── neutrino/ the TEa.G3 launcher with its in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── nuld/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── nuld/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
   });
 
   Object.assign(dict, {
-  "NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0). Called ORBIT until v1.1.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0. كان اسم المشروع ORBIT حتى الإصدار v1.1.",
+  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0). Called ORBIT until v1.1.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0. كان اسم المشروع ORBIT حتى الإصدار v1.1.",
   "mass0:/nuld/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)": "mass0:/nuld/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
   "nombre = Ocaso ; the name in the setup panel base = nuld ; the built-in theme it starts from [colores] ; RRGGBB; what you leave out keeps the base's fondo = 0E0714 panel = 1A0F22 fila = 3A2140 borde = 6A4A66 tenue = 5A4458 texto = FFF4E8 texto2 = E8D2C4 etiqueta = C9A9A0 acento = FF8A3C acero = 2A1830 inverso = 0E0714": "nombre = Ocaso       ; اسم السمة في لوحة الإعداد\\nbase = nuld          ; السمة المدمجة التي تنطلق منها\\n\\n[colores]            ; قيم الألوان بصيغة RRGGBB\\n                     ; أي لون لا تحدده يحتفظ بلون السمة الأساسية\\nfondo = 0E0714\\npanel = 1A0F22\\nfila = 3A2140\\nborde = 6A4A66\\ntenue = 5A4458\\ntexto = FFF4E8\\ntexto2 = E8D2C4\\netiqueta = C9A9A0\\nacento = FF8A3C\\nacero = 2A1830\\ninverso = 0E0714",
   ", and keeps using": "، ويواصل استخدام",
@@ -688,7 +688,7 @@
   ", needs numpy and Pillow).": "، ويتطلب مكتبتي numpy وPillow).",
   "RetroAchievements on real hardware": "خدمة RetroAchievements على جهاز حقيقي",
   "manual": "الدليل",
-  "NULD is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0."
+  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0."
 });
 
   Object.assign(dict, {
@@ -796,10 +796,10 @@
     "Logs": "السجلات",
     "Theme selector.": "محدد السمات.",
     "Themes from folders.": "السمات من المجلدات.",
-    "Saving the setup no longer restarts NULD.": "لم يعد حفظ الإعدادات يؤدي إلى إعادة تشغيل TEa.G3.",
+    "Saving the setup no longer restarts TEa.G3.": "لم يعد حفظ الإعدادات يؤدي إلى إعادة تشغيل TEa.G3.",
     "A loading sound for the new themes": "صوت تحميل للسمات الجديدة",
     "After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.":"بعد تغيير اللغة من لوحة الإعداد، كان عنوان القرص في الشاشة الرئيسية يبقى باللغة السابقة.",
-    "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.":"تم قياس أداء سمتي Torres وClassic فقط على جهاز حقيقي بمعدل 60 إطاراً في الثانية على SCPH-75001. أما السمات العشر الأخرى فقد عملت على الجهاز نفسه دون تقطع ملحوظ، لكن لم يُقَس معدل إطاراتها."
+    "Only Torres and Classic have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.":"تم قياس أداء سمتي Torres وClassic فقط على جهاز حقيقي بمعدل 60 إطاراً في الثانية على SCPH-75001. أما السمات العشر الأخرى فقد عملت على الجهاز نفسه دون تقطع ملحوظ، لكن لم يُقَس معدل إطاراتها."
   });
   Object.assign(dict, {
     "under the picture and where nothing is drawn; the base’s own background keeps its colours":"الخلفية التي تظهر أسفل الصورة وفي المساحات الفارغة؛ تحتفظ خلفية السمة الأساسية بألوانها.",
@@ -845,10 +845,10 @@
     "TEa.G3 changelog":"سجل تغييرات TEa.G3"
   };
   const metaDict = {
-    "NULD is a game launcher that runs on a real PlayStation 2: covers downloaded by the console, 3D save icons, virtual memory cards, an in-game menu, games from a home server and RetroAchievements on hardware.":"TEa.G3 مشغّل ألعاب يعمل مباشرة على جهاز PlayStation 2، ويوفّر تنزيل الأغلفة وأيقونات الحفظ ثلاثية الأبعاد وبطاقات الذاكرة الافتراضية وقائمة داخل اللعبة وتشغيل الألعاب من خادم منزلي ودعم RetroAchievements على الجهاز.",
+    "TEa.G3 is a game launcher that runs on a real PlayStation 2: covers downloaded by the console, 3D save icons, virtual memory cards, an in-game menu, games from a home server and RetroAchievements on hardware.":"TEa.G3 مشغّل ألعاب يعمل مباشرة على جهاز PlayStation 2، ويوفّر تنزيل الأغلفة وأيقونات الحفظ ثلاثية الأبعاد وبطاقات الذاكرة الافتراضية وقائمة داخل اللعبة وتشغيل الألعاب من خادم منزلي ودعم RetroAchievements على الجهاز.",
     "Covers, 3D save icons, an in-game menu, a home game server and RetroAchievements, all running on the PS2.":"أغلفة الألعاب وأيقونات الحفظ ثلاثية الأبعاد وقائمة داخل اللعبة وخادم ألعاب منزلي ودعم RetroAchievements؛ جميعها تعمل على جهاز PS2.",
-    "How to install and set up NULD, the PlayStation 2 game launcher: the USB drive, the buttons, config.ini, covers, achievements, the home game server and every game source.":"طريقة تثبيت TEa.G3 وإعداده على جهاز PlayStation 2: وحدة USB وأزرار التحكم وملف config.ini وأغلفة الألعاب والإنجازات والخادم المنزلي وجميع مصادر الألعاب.",
-    "Make a theme for NULD, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.":"أنشئ سمة لمشغّل TEa.G3 في المتصفح: اختر الألوان وأضف صورة خلفية، ثم عاينها على الشاشة الرئيسية ونزّل مجلدها إلى وحدة USB."
+    "How to install and set up TEa.G3, the PlayStation 2 game launcher: the USB drive, the buttons, config.ini, covers, achievements, the home game server and every game source.":"طريقة تثبيت TEa.G3 وإعداده على جهاز PlayStation 2: وحدة USB وأزرار التحكم وملف config.ini وأغلفة الألعاب والإنجازات والخادم المنزلي وجميع مصادر الألعاب.",
+    "Make a theme for TEa.G3, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.":"أنشئ سمة لمشغّل TEa.G3 في المتصفح: اختر الألوان وأضف صورة خلفية، ثم عاينها على الشاشة الرئيسية ونزّل مجلدها إلى وحدة USB."
   };
   Object.assign(attributeDict["aria-label"], {
     "Switch language":"تغيير اللغة",
@@ -881,7 +881,7 @@
   });
   Object.assign(attributeDict.alt, {
     "Logo":"الشعار",
-    "NULD logo":"شعار TEa.G3"
+    "TEa.G3 logo":"شعار TEa.G3"
   });
   Object.assign(attributeDict.title, {
     "Switch language":"تغيير اللغة"
