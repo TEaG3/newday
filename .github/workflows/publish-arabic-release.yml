@@ -13,6 +13,9 @@ on:
       - "arabic-v*"
     tags:
       - "arabic-v*"
+    paths-ignore:
+      - "site/**"
+      - ".github/workflows/publish-arabic-release.yml"
 
 permissions:
   contents: write
