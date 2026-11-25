@@ -21,6 +21,16 @@ REQUIRED = (
     "neutrino/modules/smb_fhi.irx", "neutrino/modules/mmcefhi.irx",
 )
 
+OPL_LICENSE_ARCHIVE_PATH = "licenses/OPL-AFL-3.0.txt"
+
+
+def validate_opl_license(license_text: str) -> str:
+    """Keep the release archive label aligned with OPL's upstream license notice."""
+    expected_notice = 'Academic Free License ("AFL") v. 3.0'
+    if expected_notice not in license_text[:512]:
+        raise ValueError("OPL-LICENSE.txt does not declare the expected AFL-3.0 license")
+    return OPL_LICENSE_ARCHIVE_PATH
+
 def validate_release_version(version: str, launcher_source: str) -> str:
     """Require release metadata and the in-app updater version to identify the same build."""
     if version == "development":
@@ -62,6 +72,10 @@ def main() -> None:
     missing = [str(p.relative_to(ROOT)) for p in required_files if not p.is_file() or p.stat().st_size == 0]
     if missing:
         raise SystemExit("release inputs missing or empty: " + ", ".join(missing))
+    try:
+        opl_license_archive_path = validate_opl_license(opl_license.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        raise SystemExit(str(exc))
     embedded = manifest.read_text(encoding="utf-8")
     for item in REQUIRED:
         if item not in embedded:
@@ -74,7 +88,7 @@ def main() -> None:
         z.write(ROOT / "INSTALL-EN.txt", "INSTALL-EN.txt")
         z.write(ROOT / "README.md", "README.md")
         z.write(ROOT / "LICENSE", "LICENSE")
-        z.write(opl_license, "licenses/OPL-GPL-3.0.txt")
+        z.write(opl_license, opl_license_archive_path)
         z.write(neutrino_license, "licenses/Neutrino-AFL-3.0.txt")
         # Optional diagnostics are bundled for completeness; normal installation uses the single embedded ELF.
         if opl_diagnostic.is_file():
