@@ -142,45 +142,48 @@ A feature is complete only after discovery, argument translation, runtime startu
 ## Validation status
 
 The latest successful post-merge master run is
-[#818](https://github.com/TEaG3/newday/actions/runs/45697088760),
+[#838](https://github.com/TEaG3/newday/actions/runs/45707753101),
 dated 2026-11-25, at commit
-9c6eb16506a87bd9d62594e8c9f648e052b349e7.
+`973c981a8aac1b421c560a46f73eab11426ead77`.
 
 It validated:
-- 49 Python host unit tests covering SMB/catalog path safety, symlink confinement, release/version checks, launcher hand-off, EE headroom, Neutrino guardrails and TEa.G3 branding;
+- 50 Python host unit tests covering SMB/catalog path safety, symlink confinement, release/version checks, launcher hand-off, EE headroom, Neutrino guardrails and TEa.G3 branding;
 - ISO and USBExtreme UL parser C self-tests, engine-selection tests, plus the remaining launcher self-tests;
 - ZSO host fixtures for raw/compressed images, headers, bounds, I/O and allocation failures;
 - the EE ZSO scanner adapter, including malformed input and ISO fallback;
-- catalog snapshot validation, safe paths, stable-key diff, concurrent-reader/apply and scan/download exclusion;
-- PS2 EE compilation of catalog_stage.c with an 8 KiB frame-size warning limit (compile-only; the live monitor is not wired into the launcher);
-- Arabic localization: 161 English texts and 161 Arabic texts, no missing/unused entries, 38 UI codepoints and 18 IGR codepoints covered; the font self-test generated 509 glyphs in a 512x384 atlas;
-- the pinned TEaG3/OPL source at 46bad5a4a469c51e45eb1ed879fe43c100b8cb7b, with the TEa.G3 UL, BDM, ETH and APA/HDL direct-launch patches; RTL=1 and PADEMU=1 were used and DS3/DS4 USB/Bluetooth modules compiled;
-- the pinned lwNBD dependency at 15f1c14536d662e2e00d38d0aa91ef24149e8b96, with the upstream downloader and language compiler fetched from pinned commit b3a2199795fe89ba7e2dd7b843354472dff2c3eb;
-- Neutrino runtime build from 229cf1dc7a8e0e58c2da390c1caa63e2b61795dd, including the patched SMB IOMAN directory operations, with EE core headroom of 9,840 bytes against a 1,024-byte minimum;
+- catalog snapshot validation, safe paths, stable-key diff, concurrent readers/apply, scan/download exclusion, and the I/O-busy cases: block new scans, cancel an active scan, and refuse apply while storage I/O is active;
+- PS2 EE compilation of `catalog_stage.c` with an 8 KiB frame-size warning limit (compile-only; the live monitor is not wired into the launcher and the PS2 semaphore adapter is not yet integrated);
+- Arabic launcher localization: 161 English texts and 161 Arabic texts, no missing/unused entries, 38 UI codepoints and 18 IGR codepoints covered; the font self-test generated 509 glyphs in a 512x384 atlas;
+- Arabic OPL localization: 326/326 strings, no untranslated or English-only entries, placeholders preserved, and the Arabic font bundled;
+- the pinned TEaG3/OPL source at `395022e266eaea723e3c58dd16b240887b5b0a37`, with the TEa.G3 UL, BDM, ETH and APA/HDL direct-launch patches; `RTL=1` and `PADEMU=1` were used and DS3/DS4 USB/Bluetooth modules compiled;
+- the pinned lwNBD dependency at `15f1c14536d662e2e00d38d0aa91ef24149e8b96`, with the upstream downloader and language compiler fetched from pinned commit `b3a2199795fe89ba7e2dd7b843354472dff2c3eb`;
+- Neutrino runtime build from `229cf1dc7a8e0e58c2da390c1caa63e2b61795dd`, including the patched SMB IOMAN directory operations, with EE core headroom of 9,840 bytes against a 1,024-byte minimum;
 - the single TEa.G3.ELF build and 76-file runtime manifest.
 
 The unified test bundle is
-[artifact 15060354688](https://github.com/TEaG3/newday/actions/runs/45697088760/artifacts/15060354688).
-Its downloaded ZIP passed unzip -t; all 76 manifest entries matched their recorded sizes and CRC-32 values. SHA-256:
+[artifact 15065708391](https://github.com/TEaG3/newday/actions/runs/45707753101/artifacts/15065708391).
+Its downloaded ZIP passed `unzip -t`; all 76 manifest entries matched their recorded sizes and CRC-32 values. The ZIP SHA-256 is:
 
-031c7457be0a223e9f762d435121f4655763fa5a5f4f630fe3eec6fb864111a9.
+`1c4a215d74bcd969191f02ee8c147f8567824e68de6e5f0207e688a8948d2d74`.
 
-The launcher ELF SHA-256 is
-cfe29292b57d6d52f50f3bd1902fa3f8273730b1e9b6a289ecfa5404e2e1e7cc;
-standalone OPL is
-ed3d7712c7ae220509b27f98c0d9afb09947e3b659f7e649f6913cfea61f8e60;
-Neutrino is
-6be1b16207593fde6821539f234ad6cec3cad13ef1e8002df938362d7e51ca09.
+The launcher ELF is 10,076,308 bytes, SHA-256
+`77f5ee723f593c66e467732d86096f130c66accabe2e460544581cc1078d9fb5`;
+standalone OPL is 5,690,908 bytes, SHA-256
+`2857d74eaddaa46af3923914d6077c9b32a7358120924fcd20cb4dd5fe91b9cb`;
+Neutrino is 146,100 bytes, SHA-256
+`6be1b16207593fde6821539f234ad6cec3cad13ef1e8002df938362d7e51ca09`.
+
+Branding checks confirm that the visible product identity and splash use TEa.G3. The old `nuld` theme key is retained internally but displayed as “Classic”; old boot/VMC/data-directory aliases and the historical server cache/tool names remain for migration and compatibility. These are not active product labels and must not be removed without a data migration.
 
 CI success is not proof of game compatibility. Still required:
 1. Test the USB ISO/ZSO/UL adapters on a physical PS2.
 2. Confirm UL entries are discovered and the selected game is passed to OPL.
 3. Confirm gameplay and sustained reads across every UL split part.
-4. Test manual motor=opl for USB ISO/ZSO, MX4SIO, iLink and internal FAT/exFAT HDD.
+4. Test manual `motor=opl` for USB ISO/ZSO, MX4SIO, iLink and internal FAT/exFAT HDD.
 5. Validate the OPL APA/HD Loader mini-launch on physical hardware, including games with multiple APA sub-partitions; confirm missing configuration refuses launch without creating partitions.
 6. Verify read-only SMB discovery, launch, sustained reads, VMC/compatibility settings and return behaviour on physical hardware.
 7. Test DS3/DS4 pairing and input on a real PS2; successful module compilation alone is not controller validation.
 
-The live catalog monitor remains deliberately inactive. Its snapshot/diff and concurrency gate pass host tests and its source compiles for the EE target, but all cv[] readers, the real PS2 semaphore adapter and device-removal paths must be integrated and tested before activation.
+The live catalog monitor remains deliberately inactive. Its snapshot/diff and concurrency gate pass host tests and its source compiles for the EE target, but all `cv[]` readers, the real PS2 semaphore adapter and device-removal paths must be integrated and tested before activation.
 
 Do not advertise untested backend adapters as ready. Neutrino remains available as the existing compatible path until the corresponding OPL adapter has passed physical-console tests.
