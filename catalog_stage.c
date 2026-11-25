@@ -173,6 +173,11 @@ static int guard_valid(const catalog_guard *guard)
     return guard && guard->lock && guard->unlock;
 }
 
+static int guard_lock(catalog_guard *guard)
+{
+    return guard_valid(guard) && guard->lock(guard->lock_context);
+}
+
 static int guard_download_allowed(const catalog_guard *guard)
 {
     return !guard->playing && !guard->io_busy && !guard->downloading &&
@@ -181,7 +186,7 @@ static int guard_download_allowed(const catalog_guard *guard)
 }
 
 int catalog_guard_init(catalog_guard *guard, catalog_guard_lock_fn lock,
-                       catalog_guard_lock_fn unlock, void *lock_context)
+                       catalog_guard_unlock_fn unlock, void *lock_context)
 {
     if (!guard || !lock || !unlock) return 0;
     memset(guard, 0, sizeof(*guard));
@@ -194,8 +199,7 @@ int catalog_guard_init(catalog_guard *guard, catalog_guard_lock_fn lock,
 int catalog_guard_read_begin(catalog_guard *guard)
 {
     int allowed;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     allowed = !guard->apply_pending && !guard->applying && !guard->downloading &&
               guard->readers < UINT_MAX;
     if (allowed) ++guard->readers;
@@ -239,8 +243,7 @@ int catalog_guard_scan_begin(catalog_guard *guard)
 int catalog_guard_scan_cancelled(catalog_guard *guard)
 {
     int cancelled;
-    if (!guard_valid(guard)) return -1;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return -1;
     cancelled = guard->scan_cancelled != 0;
     guard->unlock(guard->lock_context);
     return cancelled;
