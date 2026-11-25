@@ -16,13 +16,13 @@ assert.ok(i18nSource.includes('const savedLanguage = localStorage.getItem(langua
 assert.ok(i18nSource.includes('localStorage.removeItem(legacyLanguageKey)'));
 assert.ok(i18nSource.includes('localStorage.setItem(languageKey, lang)'));
 assert.ok(i18nSource.includes("legacy settings from orbit/ or nuld/ into tea_g3/"));
-assert.doesNotMatch(i18nSource, /moves your settings from orbit\\/ to nuld\\//);
+assert.ok(!i18nSource.includes("moves your settings from orbit/ to nuld/"));
 assert.ok(i18nSource.includes("mass0:/tea_g3/themes/"));
-assert.doesNotMatch(i18nSource, /mass0:\\/nuld\\/themes\\//);
+assert.ok(!i18nSource.includes("mass0:/nuld/themes/"));
 assert.ok(i18nSource.includes("└── tea_g3/"));
-assert.doesNotMatch(i18nSource, /└── nuld\\//);
+assert.ok(!i18nSource.includes("└── nuld/"));
 assert.ok(i18nSource.includes("TEa.G3 can also run from an MMCE"));
-assert.doesNotMatch(i18nSource, /NULD can also run from an MMCE/);
+assert.ok(!i18nSource.includes("NULD can also run from an MMCE"));
 const pagesWorkflow = fs.readFileSync(path.join(__dirname, "../.github/workflows/pages.yml"), "utf8");
 assert.ok(pagesWorkflow.includes("name: github-pages"));
 assert.ok(pagesWorkflow.includes("path: ${{ runner.temp }}/artifact.tar"));
