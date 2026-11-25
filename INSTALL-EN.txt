@@ -1,68 +1,43 @@
-TEa.G3 — USB Drive Setup Guide (English)
-==========================================
+# Installing TEa.G3
 
-1. USB drive layout
--------------------
-Extract the USB-Template.zip archive and copy its folders directly to the USB
-root. DVD, CD, POPS and APPS must sit beside TEa.G3.ELF, not inside another
-enclosing folder.
+## 1. Requirements
+- A PlayStation 2 that can run homebrew through FreeMcBoot or uLaunchELF.
+- FAT32 or exFAT USB storage.
+- For SMB: wired Ethernet and a compatible network adapter.
 
-USB:/
-├── TEa.G3.ELF
-├── DVD/
-├── CD/
-├── POPS/
-├── APPS/
-├── ul.cfg          (only when using USBExtreme/UL games)
-└── ul.*            (the game's split parts, if present)
+## 2. Install
+1. Copy `TEa.G3.ELF` and your game folders to the USB root.
+2. Put DVD ISO/ZSO images in `DVD/` and CD images in `CD/`.
+3. Keep USBExtreme UL files (`ul.cfg` and every `ul.*` part) in the USB root, not inside `DVD/`.
+4. Start `mass0:/TEa.G3.ELF` from uLaunchELF or add it to FreeMcBoot.
 
-The folder template contains neither TEa.G3.ELF nor games. Copy the actual
-launcher ELF from a TEa.G3 release to the USB root.
+**Do not copy a separate OPL.ELF or Neutrino folder.** TEa.G3.ELF embeds OPL and the SMB support IOP modules and installs them under `tea_g3/runtime/`. OPL is the only PS2 game engine; Neutrino is not built, launched or used as a fallback.
 
-2. Where to put games
----------------------
-- DVD/: PS2 DVD games in ISO or ZSO format.
-- CD/: PS2 CD-based games.
-- POPS/: PS1 game files compatible with POPStarter, prepared using the file
-  format and naming required by the POPStarter setup in use.
-- APPS/: homebrew applications in ELF format.
+## 3. Supported launch sources
 
-Do not place ISO files directly in the USB root. Do not put DVD games in CD,
-or CD games in DVD.
+| Source | Formats | Engine |
+|---|---|---|
+| USB / MX4SIO / iLink / BDM | ISO and ZSO | OPL BDM |
+| Configured SMB share | ISO and ZSO | OPL ETH |
+| Internal APA / HD Loader HDD | ISO only | OPL HDD |
+| USBExtreme UL on USB | UL | OPL UL |
+| MMCE / UDPBD / UDPFS | — | Disabled; no OPL adapter |
 
-3. USBExtreme / UL games
-------------------------
-UL games are not ordinary ISO files. Keep ul.cfg and every associated ul.*
-part in the USB root, using their original filenames. Do not rename the parts
-or move them into DVD or CD.
+Both `auto` and `opl` select OPL only. The legacy `motor = neutrino` setting is rejected and never starts another engine.
 
-4. Launcher and game engines
------------------------------
-Copy the actual TEa.G3.ELF file to the USB root. You do not need a separate
-OPL.ELF or Neutrino folder: the engines are embedded in the TEa.G3 package,
-and TEa.G3 prepares its runtime files on first boot.
+## 4. SMB / ETH setup
+1. Set a static PS2 IPv4 address in `[red]` in `tea_g3/config.ini`.
+2. Set the SMB server, share, user and password in `[smb]`.
+3. Place the `TEAG3.GAMES` index file in the share with valid game paths.
+4. Enable SMB in the source selector. OPL ETH reads game data; the embedded SMB modules are used only for catalog access.
 
-5. USB file system
-------------------
-Use FAT32. If a game image is larger than FAT32's 4 GB file-size limit, use
-exFAT only if your TEa.G3 build, console setup and storage path support it.
-Do not manually split an ISO or rename its extension to work around the limit.
+The SMB password is stored as plain text in `tea_g3/config.ini`. Keep this file private.
 
-6. First boot
--------------
-Start TEa.G3.ELF from uLaunchELF or FreeMcBoot. On first boot, the launcher
-creates tea_g3/runtime/ and prepares the embedded engine files. Do not unplug
-the USB drive while this setup is running.
+## 5. OPL settings
+Legacy TEa.G3 video, compatibility and VMC values are retained for configuration migration but are not passed to OPL. Configure video, compatibility and VMC inside OPL. Use OPL's own IGR controls; the former Neutrino in-game menu is not part of this build.
 
-7. Important notes
-------------------
-- Do not delete tea_g3/runtime after TEa.G3 creates it; it contains runtime
-  engine files.
-- Keep UL filenames and split parts unchanged.
-- A game appearing in the list does not guarantee that every title will boot.
-  Compatibility can depend on the game, console configuration and storage path.
-- Successful builds and automated tests do not replace testing on real PS2
-  hardware.
+## 6. Test status
+Passing CI and building the ELF do not prove gameplay on a real console. USB/BDM, SMB/ETH, APA/HDL and UL require physical PS2 testing, including sustained reads and return-to-launcher behavior. ZSO is not supported by the APA/HDL mini-launch path.
 
-Project: https://github.com/TEaG3/newday
-Website: https://teag3.github.io/newday/
+## 7. Upgrading
+Keep `tea_g3/` and your game files. The updater migrates legacy `orbit/` or `nuld/` data to `tea_g3/` when needed and preserves old FreeMcBoot entry points.
