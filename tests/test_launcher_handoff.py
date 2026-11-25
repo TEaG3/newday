@@ -22,8 +22,8 @@ class LauncherHandoffTests(unittest.TestCase):
 
     def test_every_launcher_handoff_uses_recovery_wrapper(self):
         calls = re.findall(r"\brun_loader_recover\s*\(", self.launcher)
-        # Seven hand-off sites plus the wrapper definition.
-        self.assertEqual(len(calls), 8)
+        # Six active hand-off sites plus the wrapper definition; no Neutrino fallback.
+        self.assertEqual(len(calls), 7)
         self.assertIn("if (gfx_resume())", self.launcher)
 
     def test_resume_reuses_existing_vblank_state(self):
@@ -53,10 +53,40 @@ class LauncherHandoffTests(unittest.TestCase):
     def test_resume_is_declared_in_public_header(self):
         self.assertIn("int gfx_resume(void);", self.header)
 
-    def test_release_workflow_uses_the_recovery_wrapper(self):
-        self.assertIn("run_loader_recover(8, opl_argv)", self.release_workflow)
-        self.assertNotIn("run_loader(8, opl_argv)", self.release_workflow)
-        self.assertIn("USBExtreme UL يستخدم OPL فقط", self.release_workflow)
+    def test_all_opl_adapters_use_the_recovery_wrapper(self):
+        self.assertIn("if (engine == ENGINE_OPL_UL)", self.launcher)
+        self.assertIn("run_loader_recover(8, opl_argv);", self.launcher)
+        self.assertIn("if (engine == ENGINE_OPL_BDM)", self.launcher)
+        self.assertIn("if (engine == ENGINE_OPL_ETH)", self.launcher)
+        self.assertIn("run_loader_recover(15, opl_argv);", self.launcher)
+        self.assertIn("if (engine == ENGINE_OPL_HDD)", self.launcher)
+        self.assertIn("run_loader_recover(9, opl_argv);", self.launcher)
+        self.assertNotIn("argv[argc++] = NEUTRINO", self.launcher)
+
+    def test_engine_policy_has_no_neutrino_fallback(self):
+        engine = (ROOT / "engine.c").read_text(encoding="utf-8")
+        self.assertIn("ENGINE_REASON_ENGINE_REMOVED", engine)
+        self.assertIn("ENGINE_OPL_ETH", engine)
+        self.assertIn("ENGINE_OPL_HDD", engine)
+        self.assertNotIn("d.engine = ENGINE_NEUTRINO", engine)
+
+    def test_runtime_build_embeds_opl_and_smb_support_only(self):
+        self.assertIn("tools/build_smb_support.sh", self.build_workflow)
+        self.assertIn("network/modules/smb_ioman.irx", self.build_workflow)
+        self.assertNotIn("tools/build_neutrino.sh", self.build_workflow)
+        self.assertNotIn("tea-g3-neutrino-", self.build_workflow)
+        self.assertNotIn("cp -R dist/neutrino", self.build_workflow)
+        self.assertNotIn("tools/build_neutrino.sh", self.release_workflow)
+        self.assertNotIn("cp -R dist/neutrino", self.release_workflow)
+        self.assertIn("network/modules/smb_ioman.irx", self.release_workflow)
+
+    def test_release_package_contains_both_support_licenses(self):
+        package = (ROOT / "tools/package_single_elf_release.py").read_text(encoding="utf-8")
+        self.assertIn("runtime-input/OPL-LICENSE.txt", package)
+        self.assertIn("runtime-input/network/SMB-LICENSE.txt", package)
+        self.assertIn("SMB-support-AFL-3.0.txt", package)
+        self.assertIn("OPL is the only PS2 game engine", package)
+        self.assertNotIn("diagnostics/neutrino", package)
 
     def test_release_workflow_uses_the_ci_pinned_teag3_opl_source(self):
         self.assertIn("repository: TEaG3/OPL", self.release_workflow)
