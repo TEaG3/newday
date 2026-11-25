@@ -2,6 +2,7 @@
 """Build one complete, single-ELF TEa.G3 user package for USB installation."""
 from __future__ import annotations
 import hashlib
+import re
 from pathlib import Path
 import sys
 import zipfile
@@ -20,6 +21,22 @@ REQUIRED = (
     "neutrino/modules/smb_fhi.irx", "neutrino/modules/mmcefhi.irx",
 )
 
+def validate_release_version(version: str, launcher_source: str) -> str:
+    """Require release metadata and the in-app updater version to identify the same build."""
+    if version == "development":
+        return version
+    tag_version = version[len("arabic-"):] if version.startswith("arabic-") else version
+    if not re.fullmatch(r"v\d+(?:\.\d+){1,3}", tag_version):
+        raise ValueError(f"invalid TEa.G3 release version: {version}")
+    match = re.search(r'#define TEAG3_VERSION "([^"]+)"', launcher_source)
+    if not match:
+        raise ValueError("launcher.c does not define TEAG3_VERSION")
+    built = match.group(1)
+    if built != tag_version:
+        raise ValueError(f"launcher.c TEAG3_VERSION is {built}, not {tag_version}")
+    return tag_version
+
+
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -28,6 +45,10 @@ def sha256(path: Path) -> str:
     return h.hexdigest().upper()
 
 def main() -> None:
+    try:
+        validate_release_version(VERSION, (ROOT / "launcher.c").read_text(encoding="utf-8"))
+    except ValueError as exc:
+        raise SystemExit(str(exc))
     elf = ROOT / "TEa.G3.ELF"
     manifest = ROOT / "runtime-manifest.txt"
     opl_license = ROOT / "OPL-LICENSE.txt"

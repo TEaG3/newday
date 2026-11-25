@@ -42,7 +42,7 @@
 #include "theme.h"
 #include "runtime_install.h"
 
-#define TEAG3_VERSION "v1.3" // tools/make_release.py checks it against the release tag
+#define TEAG3_VERSION "v1.3.6" // must match the published release tag
 #include "lang.h"
 #include "achievements.h"
 #include "third_party/neutrino-igr/raagent/ra_watch.h"
