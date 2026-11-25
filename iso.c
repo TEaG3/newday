@@ -120,7 +120,11 @@ int cnf_boot(const char *cnf, int ps1, char *file, char *raw, int raw_n)
         line_end = strpbrk(b, "\r\n");
         if (!line_end) line_end = b + strlen(b);
         const char *eq = memchr(b + key_len, '=', (size_t)(line_end - (b + key_len)));
-        if (!eq) { b = *line_end ? line_end + 1 : line_end; continue; }
+        if (!eq) {
+            if (!*line_end) return 0;
+            b = line_end + 1;
+            continue;
+        }
         const char *value = eq + 1;
         while (value < line_end && (*value == ' ' || *value == '\t')) value++;
         while (line_end > value && isspace((unsigned char)line_end[-1])) line_end--;
@@ -219,6 +223,12 @@ int main(void)
 	assert(iso_find(read_file, f, "\\data\\main.elf", &lba, &size) && lba == 19 && size == 5);
 	assert(iso_find(read_file, f, "SYSTEM.CNF", &lba, &size) && lba == 20 && size == 40);
 	assert(!iso_find(read_file, f, "DATA\\MAIN.EL", &lba, &size) && !iso_find(read_file, f, "MAIN.ELF", &lba, &size));
+    /* Malformed directory-record length and root-record length must fail closed. */
+    root[34] = 255; rewind(f); fwrite(iso, 1, sizeof(iso), f);
+    assert(!iso_find(read_file, f, "SYSTEM.CNF", &lba, &size));
+    root[34] = 46; pvd[156] = 0; rewind(f); fwrite(iso, 1, sizeof(iso), f);
+    assert(!iso_find(read_file, f, "SYSTEM.CNF", &lba, &size));
+    pvd[156] = 34; rewind(f); fwrite(iso, 1, sizeof(iso), f);
 	assert(iso_serial(f, s) && !strcmp(s, "SLUS_209.46"));
 	memcpy(iso + 20 * SECTOR, "BOOT = cdrom:\\SLPS_123.45;1\r\n\0\0\0\0\0\0\0\0\0\0\0", 40); // PS1: no BOOT2
 	rewind(f); fwrite(iso, 1, sizeof(iso), f);
