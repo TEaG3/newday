@@ -16,8 +16,12 @@ assert.ok(i18nSource.includes('const savedLanguage = localStorage.getItem(langua
 assert.ok(i18nSource.includes('localStorage.removeItem(legacyLanguageKey)'));
 assert.ok(i18nSource.includes('localStorage.setItem(languageKey, lang)'));
 const pagesWorkflow = fs.readFileSync(path.join(__dirname, "../.github/workflows/pages.yml"), "utf8");
-assert.ok(pagesWorkflow.includes("name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}"));
-assert.ok(pagesWorkflow.includes("artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}"));
+assert.ok(pagesWorkflow.includes("name: github-pages"));
+assert.ok(pagesWorkflow.includes("path: ${{ runner.temp }}/artifact.tar"));
+assert.ok(pagesWorkflow.includes("overwrite: true"));
+assert.ok(pagesWorkflow.includes("artifact_name: github-pages"));
+assert.ok(pagesWorkflow.includes("Archive site for GitHub Pages"));
+assert.doesNotMatch(pagesWorkflow, /upload-pages-artifact/);
 const siteCss = fs.readFileSync(path.join(__dirname, "../site/site.css"), "utf8");
 assert.match(siteCss, /[.]tea-g3-rtl/);
 assert.doesNotMatch(siteCss, /[.]nuld-rtl/);
