@@ -313,6 +313,39 @@ int main(int argc, char **argv)
 	fclose(f);
 	vmc_ent e[8];
 	assert(vmc_list(p, e, 8) == 0); // formatted and empty
+    /* Exercise the IFC -> FAT -> directory -> file path on an actual VMC image. */
+    {
+        FILE *card = fopen(p, "r+b");
+        unsigned char word[4], folder[512], directory[1024], file_entry[512], data[CSIZE];
+        int size = 0;
+        void *payload;
+        assert(card);
+        put32(word, 3);
+        assert(fseek(card, ALLOC * CSIZE + 4, SEEK_SET) == 0 && fwrite(word, 1, 4, card) == 4);
+        put32(word, 0x80000001u);
+        assert(fseek(card, FAT0 * CSIZE, SEEK_SET) == 0 && fwrite(word, 1, 4, card) == 4);
+        memset(folder, 0, sizeof(folder));
+        put16(folder, 0x8427); put32(folder + 4, 3); put32(folder + 16, 2);
+        memcpy(folder + 64, "TESTDIR", 7);
+        assert(fseek(card, (ALLOC + 1) * CSIZE, SEEK_SET) == 0 && fwrite(folder, 1, sizeof(folder), card) == sizeof(folder));
+        put32(word, 0x80000003u);
+        assert(fseek(card, FAT0 * CSIZE + 8, SEEK_SET) == 0 && fwrite(word, 1, 4, card) == 4);
+        memset(directory, 0, sizeof(directory));
+        put16(directory, 0x8427); put32(directory + 4, 3); memcpy(directory + 64, ".", 1);
+        put16(directory + 512, 0xA426); put32(directory + 516, 3); memcpy(directory + 576, "..", 2);
+        assert(fseek(card, (ALLOC + 2) * CSIZE, SEEK_SET) == 0 && fwrite(directory, 1, sizeof(directory), card) == sizeof(directory));
+        memset(file_entry, 0, sizeof(file_entry));
+        put16(file_entry, 0x8001); put32(file_entry + 4, 5); put32(file_entry + 16, 4);
+        memcpy(file_entry + 64, "icon.sys", 8);
+        assert(fseek(card, (ALLOC + 3) * CSIZE, SEEK_SET) == 0 && fwrite(file_entry, 1, sizeof(file_entry), card) == sizeof(file_entry));
+        memset(data, 0xff, sizeof(data)); memcpy(data, "PS2D!", 5);
+        assert(fseek(card, (ALLOC + 4) * CSIZE, SEEK_SET) == 0 && fwrite(data, 1, sizeof(data), card) == sizeof(data));
+        assert(fclose(card) == 0);
+        assert(vmc_list(p, e, 8) == 1 && !strcmp(e[0].name, "TESTDIR"));
+        payload = vmc_read(p, "TESTDIR/icon.sys", &size);
+        assert(payload && size == 5 && !memcmp(payload, "PS2D!", 5));
+        free(payload);
+    }
 	assert(vmc_list("/tmp/does-not-exist.bin", e, 8) == -1);
     /* Creating over an existing path must never truncate a user's existing card. */
     {
