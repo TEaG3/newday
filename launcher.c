@@ -2689,9 +2689,9 @@ static void run_loader_recover(int argc, char **argv)
 	run_loader(argc, argv);
 	launch_err = L("Could not start");
 	if (gfx_resume())
-		printf("TEa.G3: ELF hand-off returned; launcher display resumed\\n");
+		printf("TEa.G3: ELF hand-off returned; launcher display resumed\n");
 	else
-		printf("TEa.G3: ELF hand-off returned; VBlank handler could not be restored\\n");
+		printf("TEa.G3: ELF hand-off returned; VBlank handler could not be restored\n");
 }
 
 
