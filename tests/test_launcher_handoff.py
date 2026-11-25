@@ -21,8 +21,8 @@ class LauncherHandoffTests(unittest.TestCase):
 
     def test_every_launcher_handoff_uses_recovery_wrapper(self):
         calls = re.findall(r"\brun_loader_recover\s*\(", self.launcher)
-        # OPL BDM, OPL UL, restart, PS1/app loader and the wrapper definition.
-        self.assertEqual(len(calls), 5)
+        # Seven hand-off sites plus the wrapper definition.
+        self.assertEqual(len(calls), 8)
         self.assertIn("if (gfx_resume())", self.launcher)
 
     def test_resume_reuses_existing_vblank_state(self):

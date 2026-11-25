@@ -143,8 +143,8 @@ def main():
         "Arabic settings include the default engine selector": "محرك التشغيل" in launcher and "W_ENGINE" in launcher,
         "engine preference is loaded from config.ini": 'ini_get(&cfg, "juegos", "motor", "opl")' in launcher,
         "engine preference is saved to config.ini": 'ini_set(&cfg, "juegos", "motor", w_engine_key[w_val[W_ENGINE]])' in launcher,
-        "OPL is the only selectable game engine": 'w_engine_key[3] = {"opl", "opl", "opl"}' in launcher,
-        "OPL-only engine label is displayed": 'case W_ENGINE: snprintf(a, n, "OPL"); break;' in launcher,
+        "engine choices preserve auto, Neutrino and OPL": 'w_engine_key[3] = {"auto", "neutrino", "opl"}' in launcher,
+        "automatic engine label has an Arabic translation": '{"Automatic", "تلقائي"}' in (ROOT / "lang_ar.c").read_text(encoding="utf-8"),
     }
     for description, passed in required.items():
         print(("ok: " if passed else "FAIL: ") + description)
@@ -180,12 +180,14 @@ def main():
     neutrino_build = (ROOT / "tools" / "build_neutrino.sh").read_text(encoding="utf-8")
     igr_generator = (ROOT / "tools" / "generate_igr_arabic.py").read_text(encoding="utf-8")
     igr_checks = {
-        "launcher does not pass Neutrino runtime flags": '"-igrlang=ar"' not in launcher,
+        "launcher passes Arabic to the in-game menu": '"-igrlang=ar"' in launcher,
+        "Neutrino patch maps Arabic to language 1": 'if (!strcmp(&argv[i][9], "ar")) igr_lang = 1;' in neutrino_patch,
+        "Neutrino IGR rejects unknown language identifiers": 'else if (!strcmp(&argv[i][9], "en")) igr_lang = 0;' in neutrino_patch and "unsupported language" in neutrino_patch and 'igr_lang = !strcmp(&argv[i][9], "ar") ? 1 : 0;' not in neutrino_patch,
         "Neutrino in-game menu renders Arabic labels": 'eec.IgrLang == 1' in neutrino_menu and "igr_ar_label_pixels" in neutrino_menu,
         "Neutrino achievement notice has Arabic text": "igr_ar_notice_pixels" in neutrino_menu and "IGR_AR_NOTICE_WIDTH" in neutrino_menu,
         "Arabic IGR bitmap is generated from pinned font": 'NOTICE = "تم فتح الإنجاز"' in igr_generator and 'LABELS = ("إعادة تشغيل", "إيقاف التشغيل", "إلغاء")' in igr_generator,
-        "Arabic IGR source remains available for the OPL UI port": "igr_ar_label_pixels" in neutrino_menu and "tools/generate_igr_arabic.py" in igr_generator,
-        "Neutrino is not built by the OPL-only workflow": "build_neutrino.sh" not in (ROOT / ".github/workflows/build-ps2.yml").read_text(encoding="utf-8"),
+        "Neutrino builder copies the generated Arabic menu header": '"$FORK/menu_arabic.h"' in neutrino_build and "tools/generate_igr_arabic.py" in neutrino_build,
+        "PS2SDK strlcpy compatibility is linked into Neutrino": "size_t strlcpy(char *dst, const char *src, size_t size)" in neutrino_igr,
     }
     for description, passed in igr_checks.items():
         print(("ok: " if passed else "FAIL: ") + description)

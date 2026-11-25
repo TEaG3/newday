@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEa.G3 — مشغّل ألعاب PlayStation 2 بتطوير المطور العراقي</title>
-<meta name="description" content="TEa.G3 is a PlayStation 2 launcher with embedded OPL only, USBExtreme UL direct boot, Arabic UI, themes and an interactive OPL routing lab.">
+<meta name="description" content="TEa.G3 is a PlayStation 2 launcher with embedded OPL and Neutrino runtimes, USBExtreme UL direct boot, Arabic UI, themes and an interactive OPL routing lab.">
 <meta property="og:title" content="TEa.G3 — مشغّل ألعاب PlayStation 2">
-<meta property="og:description" content="مشغّل TEa.G3 لجهاز PlayStation 2، بمحرك OPL المضمّن فقط، وواجهة عربية واثنتي عشرة سمة ومعاينة تفاعلية لمسارات التشغيل.">
+<meta property="og:description" content="مشغّل TEa.G3 لجهاز PlayStation 2، بمحركي OPL وNeutrino المدمجين، وواجهة عربية واثنتي عشرة سمة ومعاينة تفاعلية لمسارات التشغيل.">
 <meta property="og:image" content="https://teag3.github.io/newday/img/home-carousel.jpg">
 <meta name="theme-color" content="#06070A">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
@@ -40,7 +40,7 @@
     <div class="hero-top">
       <h1>TEa.G3 · PS2 Game Launcher</h1>
       <div>
-        <p>Embedded OPL only. One launcher for PlayStation 2.</p>
+        <p>Embedded OPL and Neutrino. One launcher for PlayStation 2.</p>
         <div class="btns">
           <a class="btn solid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.6/TEa.G3-Complete-Package.zip" data-zip data-version="Download v{v}">Download</a>
           <a class="btn" href="INSTALL-AR.txt" download>دليل التثبيت العربي</a>
@@ -82,7 +82,7 @@
           <select name="source"><option value="usb" selected>USB</option><option value="other">Other source</option></select>
         </label>
         <label>Engine preference
-          <select name="preference"><option value="opl" selected>opl</option></select>
+          <select name="preference"><option value="auto">auto</option><option value="opl" selected>opl</option><option value="neutrino">neutrino</option></select>
         </label>
         <div class="opl-form-actions">
           <button class="btn solid" type="submit">Simulate route</button>
@@ -111,7 +111,7 @@
       <figure><button type="button"><img src="img/save-icon.jpg" alt="God of War selected: the saves card shows 1 save on memory card 1 with its 3D icon" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">mc1</span>The newest save on the memory card, with its 3D icon turning on the card.</figcaption></figure>
       <figure><button type="button"><img src="img/achievements-tag.jpg" alt="Black selected, with an Achievements 56 tag next to its serial, media, source and video tags" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">ra</span>Black has a set: 56 achievements, found by the game's rcheevos hash.</figcaption></figure>
       <figure><button type="button"><img src="img/achievements.jpg" alt="Achievements panel for Black: 0 of 56, 0 of 600 points, each achievement with its points" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">○</span>The achievements and your progress, from the xeRAbora client at home.</figcaption></figure>
-      <figure><button type="button"><img src="img/options.jpg" alt="Per-game options panel: video mode, video compatibility, memory card and OPL compatibility modes" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">△</span>Per-game options: video mode, compatibility and memory card.</figcaption></figure>
+      <figure><button type="button"><img src="img/options.jpg" alt="Per-game options panel: video mode, video compatibility, memory card and Neutrino's compatibility modes" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">△</span>Per-game options: video mode, compatibility and memory card.</figcaption></figure>
       <figure><button type="button"><img src="img/setup.jpg" alt="Setup wizard in Spanish: language, game sources, memory card, video, network, boot stub and FreeMcBoot" width="1280" height="720" loading="lazy"></button><figcaption><span class="mono">start</span>The setup wizard, here in Spanish, writes config.ini and FreeMcBoot's autoboot.</figcaption></figure>
     </div>
   </section>
@@ -122,7 +122,7 @@
 
 <footer class="wrap site">
   <span class="credit" lang="ar" dir="rtl"><strong>تعديل وتطوير المطور العراقي</strong> — <strong>TEa.G3</strong></span>
-  <span>Ships the TEa.G3 fork of <a href="https://github.com/TEaG3/OPL">OPL</a> (AFL-3.0). Covers from <a href="https://github.com/xlenore/ps2-covers">xlenore/ps2-covers</a>.</span>
+  <span>Ships a fork of <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> (AFL-3.0). Covers from <a href="https://github.com/xlenore/ps2-covers">xlenore/ps2-covers</a>.</span>
   <span><a href="https://github.com/TEaG3/newday/releases" rel="noopener">سجل الإصدارات الكامل · Full release archive (includes historical ORBIT/NULD releases)</a></span>
   <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
 </footer>
