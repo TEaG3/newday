@@ -73,6 +73,16 @@ class LauncherHandoffTests(unittest.TestCase):
             self.assertIn("grep -Fq 'العودة' lng/lang_Arabic.lng", workflow)
             self.assertIn("test -s lng_src/thirdparty/font_Arabic.ttf", workflow)
 
+    def test_lwnbd_script_is_executable_before_make_clean(self):
+        for workflow in (self.build_workflow, self.release_workflow):
+            download = workflow.index("download_lwNBD.sh -o download_lwNBD.sh")
+            chmod = workflow.index("chmod +x download_lwNBD.sh", download)
+            executable = workflow.index("test -x download_lwNBD.sh", chmod)
+            clean = workflow.index("make clean", executable)
+            self.assertLess(download, chmod)
+            self.assertLess(chmod, executable)
+            self.assertLess(executable, clean)
+
     def test_release_opl_build_flags_match_ci(self):
         flags = "make NOT_PACKED=1 RTL=1 PADEMU=1"
         self.assertIn(flags, self.build_workflow)
