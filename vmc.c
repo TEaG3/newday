@@ -160,13 +160,15 @@ static int open_card(card *v, const char *path)
 
 static unsigned next(card *v, unsigned rel)
 {
-    unsigned per, idx, ifc_idx, fc, e, target;
+    unsigned per, idx, ifc_idx, ifc_cluster, fc, e, target;
     if (!v || rel >= ALLOC_END) return 0xffffffffu;
     per = v->csize / 4;
     idx = rel / per;
     ifc_idx = idx / per;
     if (ifc_idx >= 32) return 0xffffffffu;
-    fc = v->ifc[ifc_idx];
+    ifc_cluster = v->ifc[ifc_idx];
+    if (ifc_cluster == 0xffffffffu || ifc_cluster >= NCL || !rd(v, ifc_cluster, v->b)) return 0xffffffffu;
+    fc = get32(v->b + 4 * (idx % per));
     if (fc == 0xffffffffu || fc < FAT0 || fc >= FAT0 + FATN) return 0xffffffffu;
     if (!v->fat_ok || v->fat_cl != fc) {
         if (!rd(v, fc, v->fat)) return 0xffffffffu;
