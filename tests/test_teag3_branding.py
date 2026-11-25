@@ -38,6 +38,10 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn("nuld", config.lower())
         self.assertIn("TEa.G3 catalog service", config)
         self.assertIn("Classic", config)
+
+    def test_site_vmc_diagnostic_uses_current_branding(self):
+        self.assertNotIn("nuld vmc remote", self.site_i18n.lower())
+        self.assertIn("TEa.G3 VMC remote", self.site_i18n)
         self.assertIn('if (!strcasecmp(key, "classic")) return TH_NULD;', self.launcher)
 
     def test_network_identifies_the_current_product(self):
