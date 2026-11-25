@@ -41,6 +41,8 @@ jobs:
             -o /tmp/zso_ee_host_test
           /tmp/zso_ee_host_test
           python3 -m unittest tests/test_smb_catalog.py tests/test_nuld_catalog.py tests/test_release_version.py
+          cc -std=c99 -Wall -Wextra -Werror -pthread -I. catalog_stage.c tests/catalog_host/test_catalog_stage.c -o /tmp/catalog_stage_test
+          /tmp/catalog_stage_test
 
   launcher:
     name: Embed OPL and Neutrino into the single launcher ELF
