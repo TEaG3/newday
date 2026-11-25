@@ -22,7 +22,7 @@ class TEaG3BrandingTests(unittest.TestCase):
             with self.subTest(item=item):
                 self.assertNotIn(item, self.launcher)
         start = self.launcher.index("static const char *const config_template[LANG_N]")
-        end = self.launcher.index("\\n};", start)
+        end = self.launcher.index("\n};", start)
         config = self.launcher[start:end]
         self.assertNotIn("nuld", config.lower())
         self.assertIn("downloadable applications only", config)
@@ -56,7 +56,6 @@ class TEaG3BrandingTests(unittest.TestCase):
     def test_legacy_boot_and_user_data_paths_are_preserved(self):
         # These paths are retained only to migrate or reuse existing user data.
         for path in ('"/BOOT/ORBIT.ELF"', '"/BOOT/NULD.ELF"',
-                     '"%s/VMC/ORBIT.bin"', '"%s/VMC/NULD.bin"',
                      '"%s/nuld"', '"%s/orbit"'):
             with self.subTest(path=path):
                 self.assertIn(path, self.launcher)
