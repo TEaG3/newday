@@ -198,17 +198,48 @@ static int cat_hash_valid(const char *s)
     return 1;
 }
 
+static int cat_utf8_valid(const unsigned char *s)
+{
+    while (*s) {
+        unsigned char a = *s++;
+        if (a < 0x80) continue;
+        if (a >= 0xc2 && a <= 0xdf) {
+            if ((s[0] & 0xc0) != 0x80) return 0;
+            s++;
+        } else if (a == 0xe0) {
+            if (s[0] < 0xa0 || s[0] > 0xbf || (s[1] & 0xc0) != 0x80) return 0;
+            s += 2;
+        } else if ((a >= 0xe1 && a <= 0xec) || (a >= 0xee && a <= 0xef)) {
+            if ((s[0] & 0xc0) != 0x80 || (s[1] & 0xc0) != 0x80) return 0;
+            s += 2;
+        } else if (a == 0xed) {
+            if (s[0] < 0x80 || s[0] > 0x9f || (s[1] & 0xc0) != 0x80) return 0;
+            s += 2;
+        } else if (a == 0xf0) {
+            if (s[0] < 0x90 || s[0] > 0xbf || (s[1] & 0xc0) != 0x80 || (s[2] & 0xc0) != 0x80) return 0;
+            s += 3;
+        } else if (a >= 0xf1 && a <= 0xf3) {
+            if ((s[0] & 0xc0) != 0x80 || (s[1] & 0xc0) != 0x80 || (s[2] & 0xc0) != 0x80) return 0;
+            s += 3;
+        } else if (a == 0xf4) {
+            if (s[0] < 0x80 || s[0] > 0x8f || (s[1] & 0xc0) != 0x80 || (s[2] & 0xc0) != 0x80) return 0;
+            s += 3;
+        } else return 0;
+    }
+    return 1;
+}
+
 static int cat_path_valid(const char *path)
 {
     const char *part;
     size_t len;
     int app;
-    if (!path || !(len = strlen(path)) || len >= 160 || path[0] == '/' ||
+    if (!path || !(len = strlen(path)) || len >= 160 || !cat_utf8_valid((const unsigned char *)path) || path[0] == '/' ||
         path[len - 1] == '/' || strchr(path, '\\') || strchr(path, ':')) return 0;
     app = !strncmp(path, "APPS/", 5);
     if (!app && strncmp(path, "DVD/", 4) && strncmp(path, "CD/", 3)) return 0;
     for (const unsigned char *p = (const unsigned char *)path; *p; p++) {
-        if (*p < 0x20 || *p > 0x7e || *p == '?' || *p == '#') return 0;
+        if (*p < 0x20 || *p == 0x7f || *p == '?' || *p == '#') return 0;
         if (*p == '%') {
             int h1, h2;
             if (!p[1] || !p[2] || !isxdigit(p[1]) || !isxdigit(p[2])) return 0;
