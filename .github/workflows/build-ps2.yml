@@ -247,12 +247,6 @@ jobs:
           name: tea-g3-launcher-${{ github.sha }}
           path: bundle
 
-      - name: Download Neutrino runtime and modules
-        uses: actions/download-artifact@v4
-        with:
-          name: tea-g3-neutrino-${{ github.sha }}
-          path: bundle/neutrino
-
       - name: Download OPL runtime
         uses: actions/download-artifact@v4
         with:
@@ -265,10 +259,6 @@ jobs:
           set -euo pipefail
           test -s bundle/TEa.G3.ELF
           test -s bundle/OPL.ELF
-          test -s bundle/neutrino/neutrino.elf
-          test -s bundle/neutrino/modules/cdvdman_emu.irx
-          test -s bundle/neutrino/modules/smb_fhi.irx
-          test -s bundle/neutrino/modules/mmcefhi.irx
           mkdir -p bundle/docs
           cp docs/game-formats.md docs/opl-engine-integration.md docs/smb.md bundle/docs/
           cp tests/PCSX2_SMOKE_TEST.md bundle/PCSX2_SMOKE_TEST.md
@@ -276,11 +266,11 @@ jobs:
           TEa.G3 embedded-runtime integration test bundle
 
           User installation:
-          - Copy TEa.G3.ELF only; OPL only plus their modules are embedded
+          - Copy TEa.G3.ELF only; OPL and its runtime assets are embedded
             and extracted automatically to tea_g3/runtime/ on first boot.
 
           Diagnostic files:
-          - OPL.ELF and neutrino/: standalone CI build outputs for inspection only.
+          - OPL.ELF: standalone CI build output for inspection only.
 
           For USBExtreme tests, keep ul.cfg and every ul.* part in the USB root.
           Follow PCSX2_SMOKE_TEST.md before reporting runtime compatibility.
