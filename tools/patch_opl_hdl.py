@@ -147,7 +147,7 @@ hdd = once(
     hdd,
     '''        if (gOPLPart[5] != '+') {
             hddCheckOPLFolder(hddPrefix);
-            gGHDPrefix = "pfs0:PS2L/";
+            gHDDPrefix = "pfs0:PS2L/";
         }''',
     '''        if (gOPLPart[5] != '+') {
             if (gTEaG3HDDMiniMode) {
