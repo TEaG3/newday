@@ -206,7 +206,7 @@ jobs:
           grep -Fq 'IOP_OBJS = isofs.o zso.o lz4.o imports.o' modules/isofs/Makefile
           python3 - <<'PY'
           from pathlib import Path
-          launcher = Path("$GITHUB_WORKSPACE/tea-g3/launcher.c").read_text(encoding="utf-8")
+          launcher = Path("../tea-g3/launcher.c").read_text(encoding="utf-8")
           bdm = launcher.split('if (engine == ENGINE_OPL_BDM)', 1)[1].split('if (cv[i].kind != K_PS2)', 1)[0]
           assert 'char *opl_argv[9]' in bdm
           assert 'opl_argv[8] = (char *)igr_stub_path();' in bdm
