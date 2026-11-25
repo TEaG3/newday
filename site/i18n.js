@@ -1051,8 +1051,8 @@
     }
     for (const node of nodes) {
       const raw = node.nodeValue;
-      if (node.__nuldOriginal === undefined) node.__nuldOriginal = raw;
-      const original = node.__nuldOriginal, originalKey = key(original);
+      if (node.__teaG3Original === undefined) node.__teaG3Original = raw;
+      const original = node.__teaG3Original, originalKey = key(original);
       if (ar && dict[originalKey]) {
         const leading = original.match(/^\s*/)?.[0] || "", trailing = original.match(/\s*$/)?.[0] || "";
         node.nodeValue = leading + dict[originalKey] + trailing;
@@ -1068,7 +1068,7 @@
     for (const el of elements) {
       for (const attr of ["aria-label", "alt", "title", "placeholder"]) {
         if (!el.hasAttribute(attr)) continue;
-        const store = "nuldOriginal" + attr.replace(/(^|-)([a-z])/g, (_, dash, ch) => ch.toUpperCase());
+        const store = "teaG3Original" + attr.replace(/(^|-)([a-z])/g, (_, dash, ch) => ch.toUpperCase());
         if (el.dataset[store] === undefined) el.dataset[store] = el.getAttribute(attr);
         const original = el.dataset[store];
         const translated = attributeDict[attr] && attributeDict[attr][key(original)];
@@ -1079,8 +1079,8 @@
 
   function translateMeta(ar) {
     document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(el => {
-      if (el.dataset.nuldOriginalContent === undefined) el.dataset.nuldOriginalContent = el.getAttribute("content") || "";
-      const original = el.dataset.nuldOriginalContent;
+      if (el.dataset.teaG3OriginalContent === undefined) el.dataset.teaG3OriginalContent = el.getAttribute("content") || "";
+      const original = el.dataset.teaG3OriginalContent;
       el.setAttribute("content", ar && metaDict[original] ? metaDict[original] : original);
     });
   }
@@ -1089,22 +1089,22 @@
     const ar = lang === "ar";
     document.documentElement.lang = ar ? "ar" : "en";
     document.documentElement.dir = "ltr"; // Keep navigation and page geometry LTR; Arabic text runs are RTL in site.css.
-    document.body.classList.toggle("nuld-rtl", ar);
+    document.body.classList.toggle("tea-g3-rtl", ar);
     translateText(document.body, ar);
-    document.querySelectorAll("[data-nuld-lang]").forEach(b => {
+    document.querySelectorAll("[data-teag3-lang]").forEach(b => {
       const label = ar ? "الإنجليزية" : "العربية";
       if (b.textContent !== label) b.textContent = label;
     });
     document.title = ar ? (pageTitles[originalTitle] || originalTitle) : originalTitle;
     translateAttributes(document.body, ar);
     translateMeta(ar);
-    document.dispatchEvent(new Event("nuld:languagechange"));
+    document.dispatchEvent(new Event("tea-g3:languagechange"));
   }
   document.addEventListener("DOMContentLoaded", () => {
     const nav = document.querySelector(".nav .wrap, .runhead");
-    if (nav && !document.querySelector("[data-nuld-lang]")) {
+    if (nav && !document.querySelector("[data-teag3-lang]")) {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "lang-switch"; b.dataset.nuldLang = "1";
+      b.type = "button"; b.className = "lang-switch"; b.dataset.teaG3Lang = "1";
       b.setAttribute("aria-label", "Switch language");
       b.addEventListener("click", () => { lang = lang === "ar" ? "en" : "ar"; localStorage.setItem("nuld-site-lang", lang); apply(); });
       nav.append(b);
