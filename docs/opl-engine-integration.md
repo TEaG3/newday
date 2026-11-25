@@ -2,30 +2,29 @@
 
 ## Architecture and compatibility boundary
 
-TEa.G3 remains the front end. Neutrino remains the default engine for ordinary
-ISO/ZSO games. When the global preference is explicitly set to OPL, the launcher
+TEa.G3 remains the front end. OPL is the automatic default for every ISO/ZSO source with an implemented OPL direct-boot adapter. Neutrino remains the automatic fallback only for sources without an OPL adapter or when OPL runtime/configuration is unavailable. An explicit Neutrino preference remains available. The launcher
 uses source-specific direct-boot adapters for BDM devices (USB, MX4SIO, iLink
 and ATA-backed FAT/exFAT HDD), SMB/ETH, and APA/HD Loader HDD mini-launch.
 MMCE and UDP-based sources remain on Neutrino until their OPL hand-offs exist.
 
-The engine controller keeps image format, storage backend, runtime availability and engine choice as separate inputs. It produces an internal decision reason for each launch, writes that reason only to the private launcher log, and never exposes engine selection in the normal interface. Auto remains conservative: ISO/ZSO use the existing Neutrino baseline; USBExtreme UL uses OPL because it is OPL-only. Explicit OPL preference is accepted only when the matching adapter and its required configuration are available; otherwise ISO/ZSO silently fall back to Neutrino. The second-stage loader now validates its arguments and calls `SifLoadElf` before clearing the launcher's main memory. A missing or invalid target ELF therefore fails before the destructive memory-clear boundary, and returns a distinct loader error (`-2`) while the launcher's main memory has not been erased. This is a pre-handoff safety improvement, not a complete recovery mechanism: a successfully loaded target may overwrite launcher memory, and failures after that point still require a separately resident recovery path. No automatic return to the full TEa.G3 UI is claimed until that path is implemented and verified on hardware. The controller does not infer successful gameplay from a successful ELF hand-off. The current launcher-to-OPL direct-boot adapter is narrower than upstream OPL's full feature set. Upstream OPL supports USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, and ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts (availability depends on OPL build and backend). The launcher must not claim that every upstream OPL capability is already exposed through TEa.G3. The current adapter matrix is:
+The engine controller keeps image format, storage backend, runtime availability and engine choice as separate inputs. It produces an internal decision reason for each launch, writes that reason only to the private launcher log, and never exposes engine selection in the normal interface. Auto selects OPL for USB/BDM ISO/ZSO, SMB/ETH ISO/ZSO when network configuration is valid, and APA/HD Loader games when the configured OPL HDD partition exists. USBExtreme UL remains OPL-only. MMCE and UDPBD/UDPFS remain on Neutrino because no OPL hand-off adapter is enabled. If the OPL runtime or required source configuration is unavailable, the decision falls back to Neutrino with an explicit private-log reason. Explicit OPL preference follows the same adapter checks; explicit Neutrino preference keeps ordinary ISO/ZSO on Neutrino. The second-stage loader now validates its arguments and calls `SifLoadElf` before clearing the launcher's main memory. A missing or invalid target ELF therefore fails before the destructive memory-clear boundary, and returns a distinct loader error (`-2`) while the launcher's main memory has not been erased. This is a pre-handoff safety improvement, not a complete recovery mechanism: a successfully loaded target may overwrite launcher memory, and failures after that point still require a separately resident recovery path. No automatic return to the full TEa.G3 UI is claimed until that path is implemented and verified on hardware. The controller does not infer successful gameplay from a successful ELF hand-off. The current launcher-to-OPL direct-boot adapter is narrower than upstream OPL's full feature set. Upstream OPL supports USB mass storage, MX4SIO, iLink, SMBv1 and ATA/IDE HDD backends, and ISO, ZSO, USBExtreme/UL, ELF homebrew and HDLoader HDD layouts (availability depends on OPL build and backend). The launcher must not claim that every upstream OPL capability is already exposed through TEa.G3. The current adapter matrix is:
 
 | Format | Source | Automatic engine | Manual OPL |
 |---|---|---|---|
-| ISO | USB | Neutrino | OPL BDM |
-| ZSO | USB | Neutrino | OPL BDM |
-| ISO/ZSO | MX4SIO | Neutrino | OPL BDM (`sdc`) |
-| ISO/ZSO | iLink | Neutrino | OPL BDM (`sd`) |
-| ISO/ZSO | internal FAT/exFAT HDD | Neutrino | OPL BDM (`ata`) |
+| ISO | USB | OPL BDM | OPL BDM |
+| ZSO | USB | OPL BDM | OPL BDM |
+| ISO/ZSO | MX4SIO | OPL BDM (`sdc`) | OPL BDM (`sdc`) |
+| ISO/ZSO | iLink | OPL BDM (`sd`) | OPL BDM (`sd`) |
+| ISO/ZSO | internal FAT/exFAT HDD | OPL BDM (`ata`) | OPL BDM (`ata`) |
 | USBExtreme UL | USB | OPL | OPL-only |
-| ISO/ZSO | SMBv1 share | Neutrino | OPL ETH direct launch |
+| ISO/ZSO | SMBv1 share | OPL ETH direct launch | OPL ETH direct launch |
 | ISO/ZSO | MMCE, UDPBD/UDPFS | Neutrino | Neutrino fallback (OPL adapter not enabled) |
-| HDLoader/APA | internal HDD | Neutrino | OPL HDD mini-launch (existing configured OPL partition required) |
+| HDLoader/APA | internal HDD | OPL HDD mini-launch (existing configured OPL partition required) | OPL HDD mini-launch |
 | OPL ELF apps | APPS/ | TEa.G3 app path | Not an OPL game hand-off |
 
 The config key is `[juegos] motor` in `tea_g3/config.ini` on the launcher's home
 device:
-- `auto`: Neutrino for ISO/ZSO; OPL for UL. This is an intentional safe baseline until per-adapter physical-console evidence supports broader automatic routing.
+- `auto`: OPL for ISO/ZSO on USB, MX4SIO, iLink, ATA-backed FAT/exFAT HDD and configured SMB/ETH; OPL for APA/HDL when its existing configured OPL partition is available; OPL-only for UL. Neutrino is the fallback for MMCE, UDPBD/UDPFS, missing OPL runtime or invalid required configuration.
 - `neutrino`: keep ISO/ZSO on Neutrino; UL remains OPL-only.
 - `opl`: prefer OPL for USB, MX4SIO, iLink, ATA-backed FAT/exFAT HDD, SMB ISO/ZSO and APA/HD Loader. MMCE and UDP-based sources remain on Neutrino. UL remains OPL-only.
 
@@ -102,9 +101,7 @@ game configuration may write data inside that existing filesystem, but the
 mini-launch adapter does not create, format, resize or rewrite APA partitions.
 Normal interactive OPL behavior is left unchanged.
 
-The global default remains `motor = auto` (Neutrino for APA/HDL). Selecting
-`motor = opl` opts into the OPL mini-launch. If the OPL runtime is absent, the
-existing Neutrino route remains the safe fallback. The APA/HDL adapter still
+The global default remains `motor = auto` and selects OPL for APA/HDL when the configured OPL partition and runtime are available. If either is absent, Neutrino remains the fallback. The APA/HDL adapter still
 requires physical-console validation before being advertised as hardware
 verified.
 
@@ -130,7 +127,7 @@ that device's root as well.
 
 ## Upstream OPL capability coverage and remaining adapter work
 
-The OPL build is included and TEa.G3 now has explicit direct-launch adapters for BDM, SMB/ETH and APA/HD Loader, in addition to USBExtreme UL. A successful compile does not mean every backend is hardware-verified. Remaining work is physical-console validation of sustained reads, SMB read-only behavior, VMC/compatibility settings and return-to-launcher behavior. Some formats are backend-specific: UL is a USB/BDM split layout; HDLoader is an APA/PFS HDD layout; ELF files are applications rather than PS2 disc images. Neutrino paths remain intact as the default and fallback for sources without an OPL adapter.
+The OPL build is included and TEa.G3 now has explicit direct-launch adapters for BDM, SMB/ETH and APA/HD Loader, in addition to USBExtreme UL. A successful compile does not mean every backend is hardware-verified. Remaining work is physical-console validation of sustained reads, SMB read-only behavior, VMC/compatibility settings and return-to-launcher behavior. Some formats are backend-specific: UL is a USB/BDM split layout; HDLoader is an APA/PFS HDD layout; ELF files are applications rather than PS2 disc images. Neutrino paths remain intact as the explicit user choice and as the automatic fallback for sources without an OPL adapter.
 
 A feature is complete only after discovery, argument translation, runtime startup, sustained reads, return-to-launcher behavior and physical-console acceptance are all verified.
 
