@@ -127,14 +127,7 @@ jobs:
           name: tea-g3-opl-release-${{ github.sha }}
           path: runtime-input
 
-      - name: Fetch pinned upstream Neutrino MMCE FHI module
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y libarchive-tools
-          bash tools/fetch_neutrino_mmcefhi.sh
-
-      - name: Build TEa.G3 with embedded OPL and Neutrino
+      - name: Build TEa.G3 with embedded OPL and SMB support modules
         shell: bash
         run: |
           set -euo pipefail
@@ -145,22 +138,29 @@ jobs:
             export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
             apk add --no-cache python3 py3-pip make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
             pip3 install --break-system-packages --no-cache-dir fonttools mapbox-earcut
-            python3 -m py_compile tools/make_release.py tools/embed_runtime.py tools/package_single_elf_release.py tools/theme_check.py
+            python3 -m py_compile tools/make_release.py tools/embed_runtime.py tools/package_single_elf_release.py tools/theme_check.py tools/patch_smb_ioman.py
             make test
             python3 tools/theme_check.py
             make clean
-            bash tools/build_neutrino.sh
+            bash tools/build_smb_support.sh
             mkdir -p runtime-input
-            cp -R dist/neutrino runtime-input/neutrino
+            cp -R dist/network runtime-input/network
             test -s runtime-input/OPL.ELF
+            test -s runtime-input/OPL-LICENSE.txt
+            test -s runtime-input/network/modules/smap.irx
+            test -s runtime-input/network/modules/ministack.irx
+            test -s runtime-input/network/modules/smb_ioman.irx
+            test -s runtime-input/network/SMB-LICENSE.txt
             cp runtime-input/OPL-LICENSE.txt OPL-LICENSE.txt
             python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
             make APP=launcher
             test -s TEa.G3.ELF
             test -s runtime-manifest.txt
             grep -q "^OPL.ELF" runtime-manifest.txt
-            grep -q "^neutrino/neutrino.elf" runtime-manifest.txt
-            grep -q "^neutrino/modules/mmcefhi.irx" runtime-manifest.txt
+            grep -q "^network/modules/smap.irx" runtime-manifest.txt
+            grep -q "^network/modules/ministack.irx" runtime-manifest.txt
+            grep -q "^network/modules/smb_ioman.irx" runtime-manifest.txt
+            ! grep -qi "neutrino/neutrino.elf" runtime-manifest.txt
           '
 
       - name: Restore workspace ownership after the Docker build
@@ -178,12 +178,12 @@ jobs:
             النسخة العربية من TEa.G3، تعديل وتطوير المطور العراقي TEa.G3.
 
             - ملف تشغيل واحد للمستخدم: TEa.G3.ELF.
-            - OPL وNeutrino ووحداتهما مضمّنة داخل الملف وتُجهّز تلقائياً على USB.
+            - OPL هو محرك ألعاب PS2 الوحيد؛ لا يوجد Neutrino ELF ولا رجوع إلى Neutrino.
+            - مسارات التشغيل المدمجة: USB/BDM عبر OPL BDM، وUSBExtreme UL عبر OPL UL، وSMB عبر OPL ETH، وAPA/HDL ISO عبر OPL HDD.
+            - وحدات SMB IOP المساعدة مضمّنة لفهرسة TEAG3.GAMES فقط؛ OPL ETH يتولى قراءة بيانات اللعبة.
             - العربية هي اللغة الافتراضية مع دعم تغيير اللغة والمظاهر من الإعدادات.
-            - الإعداد الافتراضي motor=opl يوجه USB/BDM إلى OPL BDM وSMB المهيأ إلى OPL ETH وAPA/HDL إلى OPL HDD.
-            - يبقى Neutrino متاحاً لمسارات ISO المدعومة؛ ويتطلب ZSO محول OPL ولا يمرر إلى Neutrino.
-            - USBExtreme UL يستخدم OPL فقط.
-            - يتضمن الأرشيف INSTALL-AR.txt وتراخيص المحركات وبصمات SHA-256.
+            - ZSO عبر BDM وETH؛ لا يدعم مسار APA/HDL mini صيغة ZSO.
+            - يتضمن الأرشيف INSTALL-AR.txt وتراخيص OPL ووحدات SMB وبصمات SHA-256.
             - تم تضمين CRC-32 لكل ملف runtime والتحقق منه بعد الاستخراج.
 
             This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
