@@ -239,14 +239,14 @@ int catalog_next(char **p, cat_ent *e)
 {
     if (!p || !*p || !e) return 0;
     while (**p) {
-        char *line = *p, *nl = strpbrk(line, "\\r\\n"), *field[5];
+        char *line = *p, *nl = strpbrk(line, "\r\n"), *field[5];
         char *end;
         unsigned long long size;
         int n;
         if (nl) {
             *nl = 0;
             end = nl + 1;
-            while (*end == '\\r' || *end == '\\n') end++;
+            while (*end == '\r' || *end == '\n') end++;
             *p = end;
         } else {
             *p = line + strlen(line);
@@ -255,12 +255,12 @@ int catalog_next(char **p, cat_ent *e)
         if (!n || line[0] == '#') continue;
         field[0] = line;
         for (int i = 1; i < 5; i++) {
-            char *tab = strchr(field[i - 1], '\\t');
+            char *tab = strchr(field[i - 1], '\t');
             if (!tab) { field[0] = NULL; break; }
             *tab = 0;
             field[i] = tab + 1;
         }
-        if (!field[0] || strchr(field[4], '\\t')) continue;
+        if (!field[0] || strchr(field[4], '\t')) continue;
         if (!*field[0] || !*field[1] || !*field[2] || !*field[3] || !*field[4]) continue;
         if (!cat_path_valid(field[0]) || strlen(field[4]) >= 64 ||
             !cat_serial_valid(field[2]) || !cat_hash_valid(field[3])) continue;
