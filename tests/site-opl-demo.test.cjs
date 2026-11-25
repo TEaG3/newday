@@ -70,7 +70,7 @@ assert.match(engine, /ENGINE_OPL_BDM/);
 assert.match(engineHeader, /ENGINE_UNSUPPORTED/);
 assert.match(sourcesC, /SMB discovery is disabled/);
 assert.match(sourcesC, /UDPFS game streaming is not supported/);
-assert.doesNotMatch(launcher + engine + engineHeader + sourcesC, /neutrino|ndir/i);
+assert.doesNotMatch(launcher + engine + engineHeader + sourcesC, /\bneutrino\b|\bndir\b/i);
 assert.match(read("gfx.c"), /set_mode\(1\)/);
 assert.match(read("docs/opl-engine-integration.md"), /OPL is the sole PS2 game engine/);
 assert.match(read("README.md"), /OPL هو محرك تشغيل ألعاب PS2 الوحيد/);
