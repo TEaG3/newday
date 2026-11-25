@@ -99,6 +99,7 @@ for (const page of ["index.html", "opl-lab.html"]) {
   const html = fs.readFileSync(path.join(__dirname, "../site", page), "utf8");
   assert.match(html, /Embedded OPL · BDM direct boot/);
   assert.match(html, /option value="opl" selected>opl/);
+  assert.equal((html.match(/<option value="opl"/g) || []).length, 1);
   assert.doesNotMatch(html, /option value="auto" selected>auto/);
   assert.doesNotMatch(html, /Auto keeps ordinary ISO\/ZSO games on Neutrino/);
 }
