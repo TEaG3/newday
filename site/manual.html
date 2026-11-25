@@ -184,12 +184,12 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
         <tr><td>ISO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
         <tr><td>ISO</td><td>APA / HD Loader internal HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL HDD mini-launch; existing OPL config required</td></tr>
         <tr><td>ISO</td><td>MMCE / UDPBD / UDPFS</td><td>Any preference</td><td>Rejected; no OPL adapter</td></tr>
-        <tr><td>ISO</td><td>Any configured source</td><td><code>neutrino</code></td><td>Neutrino</td></tr>
+        <tr><td>ISO</td><td>Any source</td><td><code>neutrino</code> (legacy)</td><td>Rejected; Neutrino is retired</td></tr>
         <tr><td>ZSO</td><td>USB / MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL BDM direct boot</td></tr>
         <tr><td>ZSO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
         <tr><td>ZSO</td><td>APA / HD Loader</td><td>Any preference</td><td>Rejected; OPL HDD mini-launch does not accept ZSO</td></tr>
         <tr><td>ZSO</td><td>MMCE / UDPBD / UDPFS, or unavailable OPL route</td><td>Any preference</td><td>Rejected; no fallback engine</td></tr>
-        <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td>OPL UL direct boot</td></tr>
+        <tr><td>USBExtreme UL</td><td>USB</td><td><code>auto</code> / <code>opl</code></td><td>OPL UL direct boot</td></tr>
         <tr><td>USBExtreme UL</td><td>Non-USB source</td><td>Any preference</td><td>Unsupported by current adapter</td></tr>
       </table></div>
       <h3>USBExtreme UL safety checks</h3>
