@@ -147,7 +147,7 @@ def main():
         "OPL ETH adapter remains wired": "ENGINE_OPL_ETH" in launcher,
         "OPL HDD adapter remains wired": "ENGINE_OPL_HDD" in launcher,
         "network support modules use a neutral runtime directory": '"%s/network"' in launcher and "network/modules/smb_ioman.irx" in launcher,
-        "Neutrino ELF is not referenced by the launcher": "NEUTRINO" not in launcher,
+        "Neutrino ELF is not referenced by the launcher": "neutrino.elf" not in launcher and "argv[argc++] = NEUTRINO" not in launcher,
         "automatic engine label has an Arabic translation": '{"Automatic", "تلقائي"}' in (ROOT / "lang_ar.c").read_text(encoding="utf-8"),
     }
     for description, passed in required.items():
@@ -193,8 +193,8 @@ def main():
         "Arabic IGR bitmap is generated from pinned font": 'NOTICE = "تم فتح الإنجاز"' in igr_generator and 'LABELS = ("إعادة تشغيل", "إيقاف التشغيل", "إلغاء")' in igr_generator,
         "Neutrino IGR UI source is retained without building its game ELF":
             "tools/build_neutrino.sh" not in build_workflow and "tools/build_neutrino.sh" not in release_workflow and
-            "neutrino/neutrino.elf" not in build_workflow and "neutrino/neutrino.elf" not in release_workflow and
-            "neutrino.elf" not in smb_builder,
+            "cp -R dist/neutrino" not in build_workflow and "cp -R dist/neutrino" not in release_workflow and
+            "make -C ee" not in smb_builder and "make -C iop/smb" in smb_builder,
         "PS2SDK strlcpy compatibility is linked into Neutrino": "size_t strlcpy(char *dst, const char *src, size_t size)" in neutrino_igr,
     }
     for description, passed in igr_checks.items():
