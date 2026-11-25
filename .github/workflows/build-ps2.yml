@@ -87,8 +87,9 @@ jobs:
               pip3 install --break-system-packages --no-cache-dir fonttools mapbox-earcut
               command -v mips64r5900el-ps2-elf-gcc
               test -x "$PS2DEV/ee/bin/mips64r5900el-ps2-elf-gcc"
-              python3 -m py_compile tools/lang_check.py tools/font.py tools/generate_igr_arabic.py
+              python3 -m py_compile tools/lang_check.py tools/font.py tools/generate_igr_arabic.py tools/fetch_arabic_font.py
               python3 tools/lang_check.py
+              python3 tools/fetch_arabic_font.py
               python3 tools/font.py --selftest
               make test
               python3 tools/theme_check.py
