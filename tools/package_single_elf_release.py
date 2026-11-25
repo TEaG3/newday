@@ -53,24 +53,24 @@ def main() -> None:
         z.write(ROOT / "LICENSE", "LICENSE")
         z.write(opl_license, "licenses/OPL-GPL-3.0.txt")
         z.write(neutrino_license, "licenses/Neutrino-AFL-3.0.txt")
-        z.writestr("README-AR.txt", "حزمة TEa.G3 الشاملة. انسخ TEa.G3.ELF ومجلدات الألعاب إلى جذر USB. راجع INSTALL-AR.txt.\\n")
+        z.writestr("README-AR.txt", "حزمة TEa.G3 الشاملة. انسخ TEa.G3.ELF ومجلدات الألعاب إلى جذر USB. راجع INSTALL-AR.txt.\n")
         z.writestr("QUICKSTART.txt", (ROOT / "INSTALL-AR.txt").read_text(encoding="utf-8"))
-        z.writestr("DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب PS2 DVD هنا.\\n")
-        z.writestr("CD/ضع ألعاب CD هنا.txt", "ضع ألعاب PS2 CD هنا.\\n")
-        z.writestr("POPS/ضع ألعاب PS1 المتوافقة هنا.txt", "ضع ملفات PS1 المتوافقة مع POPStarter هنا.\\n")
-        z.writestr("APPS/ضع تطبيقات ELF هنا.txt", "ضع تطبيقات Homebrew بصيغة ELF هنا.\\n")
-        z.writestr("USB-Template/README-AR.txt", "قالب مجلدات USB؛ ملفات UL تبقى في الجذر.\\n")
-        z.writestr("USB-Template/README-EN.txt", "USB folder template; UL files remain in the root.\\n")
+        z.writestr("DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب PS2 DVD هنا.\n")
+        z.writestr("CD/ضع ألعاب CD هنا.txt", "ضع ألعاب PS2 CD هنا.\n")
+        z.writestr("POPS/ضع ألعاب PS1 المتوافقة هنا.txt", "ضع ملفات PS1 المتوافقة مع POPStarter هنا.\n")
+        z.writestr("APPS/ضع تطبيقات ELF هنا.txt", "ضع تطبيقات Homebrew بصيغة ELF هنا.\n")
+        z.writestr("USB-Template/README-AR.txt", "قالب مجلدات USB؛ ملفات UL تبقى في الجذر.\n")
+        z.writestr("USB-Template/README-EN.txt", "USB folder template; UL files remain in the root.\n")
         z.writestr("docs/runtime-manifest.txt", manifest.read_text(encoding="utf-8"))
         z.writestr("PACKAGE-MANIFEST.txt",
-            f"TEa.G3 complete package\\nVersion: {VERSION}\\n"
-            "Single user entry point: TEa.G3.ELF\\n"
-            "OPL and Neutrino runtimes are embedded in the ELF.\\n"
-            "No game images are included.\\n"
-            "CI success does not replace physical PS2 acceptance testing.\\n")
+            f"TEa.G3 complete package\nVersion: {VERSION}\n"
+            "Single user entry point: TEa.G3.ELF\n"
+            "OPL and Neutrino runtimes are embedded in the ELF.\n"
+            "No game images are included.\n"
+            "CI success does not replace physical PS2 acceptance testing.\n")
 
     sums = DIST / "SHA256SUMS.txt"
-    sums.write_text(f"{sha256(ZIP_PATH)}  {ZIP_PATH.name}\\n{sha256(elf)}  {elf.name}\\n", encoding="utf-8")
+    sums.write_text(f"{sha256(ZIP_PATH)}  {ZIP_PATH.name}\n{sha256(elf)}  {elf.name}\n", encoding="utf-8")
     with zipfile.ZipFile(ZIP_PATH) as z:
         bad = z.testzip()
         required = {"TEa.G3.ELF", "INSTALL-AR.txt", "INSTALL-EN.txt", "DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt",
