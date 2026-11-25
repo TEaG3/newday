@@ -1,4 +1,4 @@
-// NULD launcher (ORBIT until v1.1): loading screen + home screen in the NULD look (the canvas "NULD — identidad",
+// TEa.G3 launcher: loading screen + home screen in the Classic theme (the canvas "NULD — identidad",
 // https://claude.ai/artifact/Nme3Y6XiWdQGTsMA2YbnbS; splash.c is link.elf's). Specs: openspec launcher-ui, cover-art.
 // A loader thread brings up the IOP/USB, reads the memory cards and the games; a cover thread loads the covers on screen
 // (mass0:/covers/<serial>.c16 256x368 + <serial>_s.c16 184x264, tools/covers.py) while the render thread animates;
@@ -52,7 +52,7 @@
 #include <io_common.h>
 
 // ---- themes (v1.3, theme.h): a palette each, and what only that theme draws behind the same layout (T). Torres
-// is the default; NULD is the look of v1.2 ----
+// is the default; Classic preserves the v1.2 look ----
 static palette thm;              // the colours in use: set in main before the first frame that is not black
 static int theme_id = TH_TORRES; // [ui] tema (load_config)
 static const theme_def *T = &themes[TH_TORRES];
@@ -75,7 +75,7 @@ static int theme_of(const char *key)
 #define TEXT thm.text
 #define TEXT2 thm.text2
 #define LABEL thm.label
-#define ACID thm.accent // the accent: NULD's acid, Torres's ice
+#define ACID thm.accent // the accent: Classic's acid, Torres's ice
 #define STEEL thm.steel // filled chips, bar tracks
 #define INV thm.inv     // text over TEXT or the accent
 
@@ -229,10 +229,10 @@ static void *vmc_remote(int i, const char *what, int *size) // icon thread: GET 
 	for (char *s = path; *s; s++)
 		if (*s == ' ') memmove(s + 3, s + 1, strlen(s)), memcpy(s, "%20", 3); // save names may hold spaces
 	FILE *lf = fopen(LOG_TXT, "a"); // before the request: a hang here shows as the last line (v1.2.6 froze once)
-	if (lf) fprintf(lf, "nuld vmc remote: %s (network %d)\n", path, net_res), fclose(lf);
+	if (lf) fprintf(lf, "TEa.G3 VMC remote: %s (network %d)\n", path, net_res), fclose(lf);
 	int st = buf ? http_get(ini_get(&cfg, "juegos", "servidor", ""), 18290, path, buf, 256 << 10, &body, &len) : -1;
 	if (st == 200 && (out = memalign(64, len + 1))) memcpy(out, buf + body, len), out[len] = 0, *size = len;
-	if ((lf = fopen(LOG_TXT, "a"))) fprintf(lf, "nuld vmc remote: %s -> %d, %d bytes\n", path, st, out ? len : 0), fclose(lf);
+	if ((lf = fopen(LOG_TXT, "a"))) fprintf(lf, "TEa.G3 VMC remote: %s -> %d, %d bytes\n", path, st, out ? len : 0), fclose(lf);
 	free(buf);
 	return out;
 }
@@ -391,7 +391,7 @@ static icon *load_icon(int i)
 
 // ---- In Game Reset: the TEa.G3 Neutrino fork reboots through rom0:OSDSYS, and FMCB starts
 // mc?:/BOOT/TEa.G3.ELF (boot.c, embedded here), which reloads mass0:/TEa.G3.ELF.
-// Legacy NULD/ORBIT stubs remain refreshed for existing FreeMcBoot shortcuts. ----
+// Legacy FreeMcBoot boot stubs remain refreshed for existing shortcuts. ----
 extern unsigned char boot_elf[];
 extern unsigned int size_boot_elf;
 static unsigned igr_exit, igr_off, igr_menu; // libpad masks from config.ini [igr]; 0 = off
@@ -404,7 +404,7 @@ static const char *igr_stub_path(void)
 	snprintf(path, sizeof(path), "mc%d:/BOOT/TEa.G3.ELF", stub_port);
 	return path;
 }
-static volatile int neutrino_igr, neutrino_menu, neutrino_ra, neutrino_lang; // the USB's neutrino.elf is the NULD fork (knows -igrexit / -igrmenu / -ra=)
+static volatile int neutrino_igr, neutrino_menu, neutrino_ra, neutrino_lang; // the USB's neutrino.elf is the TEa.G3 Neutrino fork (knows -igrexit / -igrmenu / -ra=)
 
 static int mc_write(int port, const char *path, const void *data, int n) // whole file; 1 if every byte went
 {
@@ -831,7 +831,7 @@ static int catalog_load(int s, int n)
 	if (!buf || (r = net_ready()) < 0)
 		snprintf(detail, sizeof(detail), L("No network (%s): the server's game catalog was not read"), net_err(r)), why = detail;
 	else if ((r = http_get(host, 18290, "/catalog", buf, max - 1, &body, &len)) != 200)
-		snprintf(detail, sizeof(detail), L("The catalog at %s:18290 did not answer (%s): nuld_catalog.py running? (none: empty servidor)"),
+		snprintf(detail, sizeof(detail), L("The catalog at %s:18290 did not answer (%s): is the TEa.G3 catalog service running? (none: empty servidor)"),
 		         host, net_err(r)), why = detail;
 	else {
 		char *p = buf + body;
@@ -1053,18 +1053,18 @@ static void disc_thread(void *arg)
 	}
 }
 
-// ---- config (phase 7): mass0:/nuld/config.ini, created from this template when missing; per-game options in
+// ---- config (phase 7): mass0:/tea_g3/config.ini, created from this template when missing; per-game options in
 // juegos.ini, one section per dash serial with only the keys that differ from the defaults ----
 static const char *const config_template[LANG_N] = {
 "; TEa.G3 - configuration, read at boot\n"
 	"\n[ui]\n; language of the interface and of these comments: en = English, ar = Arabic\nidioma = en\n"
-	"; tema (theme): torres (prisms of light in a blue night), nuld (black and acid green, v1.2's), cristal, aurora,\n"
+	"; tema (theme): torres (prisms of light in a blue night), Classic (black and acid green, v1.2 look), cristal, aurora,\n"
 	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in tea_g3/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs, smb. hdd = internal exFAT disk, or APA with HD Loader partitions. smb is read-only and needs a TEAG3.GAMES index;\n"
 	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
 	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL wherever an OPL adapter is available; Neutrino fallback)\nmotor = opl\nauto = si\n"
-	"; udpfs: IP of the game server running nuld_catalog (lists the games; covers and achievements keep working).\n"
+	"; udpfs: IP of the game server running the TEa.G3 catalog service (lists the games; covers and achievements keep working).\n"
 	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
 	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
@@ -1097,11 +1097,11 @@ static const char *const config_template[LANG_N] = {
 	"menu = L1+L2+R1+R2+START+SELECT\nreiniciar = L1+L2+R1+R2+TRIANGLE+CIRCLE\napagar = L1+L2+R1+R2+L3+R3\n",
 "; TEa.G3 - إعدادات عربية\n"
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، en = الإنجليزية\nidioma = ar\n"
-	"; المظهر: torres أو nuld أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
+	"; المظهر: torres أو الكلاسيكية أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = opl\nauto = si\n"
-	"; عنوان خادم الألعاب الذي يشغل nuld_catalog. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
+	"; عنوان خادم الألعاب الذي يشغّل خدمة فهرسة TEa.G3. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
 	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
 	"; تنشأ البطاقة الافتراضية عند أول تشغيل. يمكن تغييرها من خيارات اللعبة بزر المثلث\nmodo = juego\n"
@@ -1474,7 +1474,7 @@ static void download_covers(void)
 	int ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
 	printf("covers: %d of %d downloaded in %d ms, state %d\n", dl_got, dl_total, ms, dl_state);
 	FILE *fp = fopen(LOG_TXT, "a"); // gate: time per pair
-	if (fp) fprintf(fp, "nuld covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n", dl_got, dl_total,
+	if (fp) fprintf(fp, "TEa.G3 covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n", dl_got, dl_total,
 	                ms, dl_got ? ms / dl_got : 0, dl_state, net_why, net_ip()), fclose(fp);
 	if (dl_state == 2) dl_state = 3;
 }
@@ -1503,7 +1503,7 @@ static void ra_log(const char *fmt, ...) // the console has no printf: launcher.
 	va_end(ap);
 	printf("%s\n", line);
 	FILE *fp = fopen(LOG_TXT, "a");
-	if (fp) fprintf(fp, "nuld %s\n", line), fclose(fp);
+	if (fp) fprintf(fp, "TEa.G3 %s\n", line), fclose(fp);
 }
 
 // the serial as SYSTEM.CNF and Neutrino's GameID have it ("SLUS_213.76"): the client pairs the snapshots' serial
@@ -1614,7 +1614,7 @@ static int ra_prepare(int i, char *arg, int n)
 	if (f) ok &= fclose(f) == 0;
 	snprintf(path, sizeof(path), "%s/config/ra.toml", NDIR);
 	if (ok && (f = fopen(path, "w"))) {
-		ok = fputs("# written by NULD at each launch (phase 16b): RetroAchievements agent in the game\n"
+		ok = fputs("# written by TEa.G3 at each launch (phase 16b): RetroAchievements agent in the game\n"
 		           "name = \"TEa.G3 RetroAchievements\"\n", f) >= 0;
 		if (src[(int)cv[i].src].type != SRC_UDPFS) // a nuld game's bsd-udpfs config already loads these (phase 17)
 			ok &= fprintf(f, "depends = [\"i_dev9_hidden\"]\n[[module]]\nfile = \"smap.irx\"\nenv = [\"EE\"]\n"
@@ -1654,7 +1654,7 @@ static void update_check(void) // loader thread; the network is up for the cover
 		if (sig && upd_parse(t + body, &upd) && upd_newer(upd.version, TEAG3_VERSION)) upd_avail = 1;
 	}
 	FILE *lf = fopen(LOG_TXT, "a");
-	if (lf) fprintf(lf, "nuld update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
+	if (lf) fprintf(lf, "TEa.G3 update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
 	                sig ? upd.version : "?", TEAG3_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
 	free(t), free(g);
 }
@@ -1687,7 +1687,7 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	if (usb) {
 		FILE *f = fopen(NEUTRINO, "rb");
 		neutrino = f != NULL;
-		if (f) { // the NULD fork's usage text names -igrexit; the official build would reject the option
+		if (f) { // the TEa.G3 fork's usage text names -igrexit; the official build would reject the option
 			fseek(f, 0, SEEK_END);
 			long n = ftell(f);
 			char *b = n > 0 && n < (4 << 20) ? malloc(n) : NULL;
@@ -1719,9 +1719,9 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 		load_games();
 	}
 	load_ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
-	printf("%d games loaded in %d ms, neutrino %d (nuld igr %d)\n", ncv, load_ms, neutrino, neutrino_igr);
+	printf("%d games loaded in %d ms, neutrino %d (TEa.G3 igr %d)\n", ncv, load_ms, neutrino, neutrino_igr);
 	FILE *lf = usb ? fopen(LOG_TXT, "a") : NULL; // the toast is gone after a few seconds
-	if (lf) fprintf(lf, "nuld games: %d in %d ms, sources %d%s%s (me %s, net %d %s)\n", ncv, load_ms, nsrc,
+	if (lf) fprintf(lf, "TEa.G3 games: %d in %d ms, sources %d%s%s (me %s, net %d %s)\n", ncv, load_ms, nsrc,
 	                src_why ? ": " : "", src_why ? src_why : "", net_ip(), net_res, net_why), fclose(lf);
 	stage = 3;
 	cover_lock = CreateSema(&(ee_sema_t){ .init_count = 1, .max_count = 1 });
@@ -1769,7 +1769,7 @@ static void text_c(const gfx_font *f, int y, const char *s, unsigned rgb) // cen
 	gfx_text(f, (GFX_W - gfx_text_width(f, s)) / 2, y, s, rgb);
 }
 
-// ---- splash: the NULD loading screen (splash.c) with the loader's progress under the status line, at 60 Hz ----
+// ---- splash: the TEa.G3 loading screen (splash.c) with the loader's progress under the status line, at 60 Hz ----
 static float shown; // displayed progress, eased towards the real one
 
 static void splash(int t, float fade)
@@ -1799,7 +1799,7 @@ static void splash(int t, float fade)
 	gfx_flip();
 }
 
-// ---- home screen (NULD board "Inicio"): black, a faint floor, 1 px frames, acid HUD corners, scanlines ----
+// ---- home screen (TEa.G3 board "Inicio"): black, a faint floor, 1 px frames, acid HUD corners, scanlines ----
 static void frame1(int x, int y, int w, int h, unsigned rgb) // 1 px outline
 {
 	gfx_rect(x, y, w, 1, rgb), gfx_rect(x, y + h - 1, w, 1, rgb), gfx_rect(x, y, 1, h, rgb), gfx_rect(x + w - 1, y, 1, h, rgb);
@@ -2076,7 +2076,7 @@ static void options_panel(int i, int row) // △ menu: the game's Neutrino optio
 }
 
 // ---- setup wizard (#15): the config.ini basics, the boot stub on a chosen memory card and how FreeMcBoot 1.966
-// starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts NULD only
+// starts it (fmcb.c). Opens by itself on the first boot (no config.ini) and with START; saving restarts TEa.G3 only
 // when the sources or the network changed (read at boot). ponytail: no IP editor, DHCP or the fixed IP config.ini already has ----
 enum { W_UPD, W_LANG, W_THEME, W_ENGINE, W_SRC, W_MC, W_VIDEO, W_NET, W_CARD, W_FMCB, W_SAVE, W_ROWS }; // W_UPD: only with an update
 static const char w_chip[] = {SRC_USB, SRC_HDD, SRC_MX4SIO, SRC_ILINK, SRC_MMCE, SRC_UDPBD, SRC_UDPFS, SRC_SMB}; // checkboxes
@@ -2743,7 +2743,7 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 
 static char self_path[128]; // this ELF as it was started (argv[0]), for restart_self
 
-static void restart_self(void) // the setup wizard saved (#15): start NULD again, as launch() leaves for an app
+static void restart_self(void) // the setup wizard saved (#15): start TEa.G3 again, as launch() leaves for an app
 {
 	char *argv[2] = {self_path, ""};
 	ra_launching = 1, ra_abort = 1;
@@ -3007,7 +3007,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	if (disc_tid >= 0) TerminateThread(disc_tid);
 	FILE *fp = fopen(LOG_TXT, "a"); // what Neutrino got, for console checks
 	printf("launch:");
-	if (fp) fprintf(fp, "nuld launch:");
+	if (fp) fprintf(fp, "TEa.G3 launch:");
 	for (int k = 0; k < argc; k++) {
 		printf(" %s", argv[k]);
 		if (fp) fprintf(fp, " %s", argv[k]);
@@ -3059,7 +3059,7 @@ int main(int argc, char *argv[])
 	printf("splash: %d frames, %u us/frame by COP0\n", t, t ? (unsigned)(frame_us / t) : 0);
 	FILE *fp = usb ? fopen(LOG_TXT, "a") : NULL; // frames vs wall time: did the animation run at 60 Hz?
 	if (fp) {
-		fprintf(fp, "nuld splash: %d frames (%d black) in %d ms by clock(), %u ms by COP0 = %u us/frame (16667 expected)\n",
+		fprintf(fp, "TEa.G3 splash: %d frames (%d black) in %d ms by clock(), %u ms by COP0 = %u us/frame (16667 expected)\n",
 		        t, HOLD, splash_ms, (unsigned)(frame_us / 1000), t ? (unsigned)(frame_us / t) : 0);
 		fclose(fp);
 	}
@@ -3249,7 +3249,7 @@ int main(int argc, char *argv[])
 #endif
 			FILE *fp = usb && windows <= 3 ? fopen(LOG_TXT, "a") : NULL;
 			if (fp) {
-				fprintf(fp, "nuld window %u (%d frames, %d covers, overlay %d): median %u us  max %u us  missed vsync %u  "
+				fprintf(fp, "TEa.G3 window %u (%d frames, %d covers, overlay %d): median %u us  max %u us  missed vsync %u  "
 				        "load %d ms\n", windows, WINDOW, ncv, overlay, med, max, missed, load_ms);
 				saved = fclose(fp) == 0 ? L("  (SAVED TO USB)") : L("  (SAVE ERROR)");
 			}
