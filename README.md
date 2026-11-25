@@ -68,7 +68,7 @@ Optional:
 - **Achievements**: run the xeRAbora client (signed in to your RetroAchievements account) on a PC or server on the
   same network. Use [v0.1.0-alpha.9](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9), the version
   TEa.G3 is tested with: xeRAbora is in active development and newer releases may change the protocol.
-- **Home game server**: on a Linux box, run Neutrino's `udpfs_server.py` and TEa.G3's `server/nuld_catalog.py`
+- **Home game server**: on a Linux box, run Neutrino's `udpfs_server.py` and TEa.G3's `tools/nuld_catalog.py`
   (zip, `server/`) over `<root>/DVD`; set `[juegos] origen = usb, udpfs` and `servidor = <server IP>`. Use a cable.
   Any other udpfs server (Server2PS2, ...): leave `servidor` empty and set a fixed `[red] ip`; no online covers or
   achievements then.
