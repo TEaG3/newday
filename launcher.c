@@ -185,8 +185,8 @@ static void scan_cards(void)
 }
 
 // ---- virtual memory cards (phase 14): the default for PS2 games. Per game (VMC/<serial>.bin) or shared
-// (VMC/TEa.G3.bin), on the game's own source, created at the first launch; Neutrino -mc0 serves it as the card in slot
-// 1 (its mc_emu emulates port 0 only). HD Loader cannot hold one (Neutrino README: hdl is read-only, DVD only), and
+// (VMC/TEa.G3.bin), on the game's own source, created at the first launch; OPL manages the actual VMC selection.
+// Legacy Neutrino-specific VMC behavior is not active in this OPL-only build; HD Loader remains read-only, and
 // an MMCE switches its own per-game card instead. The saves card reads it: the icon thread lists its root once ----
 enum { MC_DEFAULT, MC_GAME, MC_SHARED, MC_REAL, MC_N };
 static int game_mc(int i);                                 // effective mode, MC_GAME..MC_REAL (config section)
@@ -215,8 +215,7 @@ static void vmc_file(int i, char *out, int n) // the launcher's path to it
 	snprintf(out, n, "%s/%s", src[(int)cv[i].src].root, name);
 }
 
-static int udpfs_cat; // [juegos] servidor set: udpfs games come from its catalog (phase 17), else udpfs is mounted (#10)
-static int on_catalog(int i) { return src[(int)cv[i].src].type == SRC_UDPFS && udpfs_cat; }
+static int on_catalog(int i) { (void)i; return 0; } // UDPFS game catalogs are retired; HTTP covers/achievements remain separate
 
 static int net_res;
 static ini cfg; // tentative: defined with the config below
@@ -389,7 +388,7 @@ static icon *load_icon(int i)
 	return ic;
 }
 
-// ---- In Game Reset: the TEa.G3 Neutrino fork reboots through rom0:OSDSYS, and FMCB starts
+// ---- OPL return path: TEa.G3's recovery ELF is started by FMCB after OPL's IGR reset
 // mc?:/BOOT/TEa.G3.ELF (boot.c, embedded here), which reloads mass0:/TEa.G3.ELF.
 // Legacy FreeMcBoot boot stubs remain refreshed for existing shortcuts. ----
 extern unsigned char boot_elf[];
@@ -774,7 +773,7 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 	case NET_ERR_CONNECT: return L("connection failed");
 	case NET_ERR_TLS: return "TLS";
 	case NET_ERR_PROTO: return L("bad response");
-	case NET_ERR_BUSY: return L("the adapter belongs to UDPBD");
+	case NET_ERR_BUSY: return L("the network adapter is busy");
 	}
 	return snprintf(http, sizeof(http), "HTTP %d", r), http;
 }
@@ -953,7 +952,7 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	snprintf(cv[0].title, sizeof(cv[0].title), L("No disc"));
 	total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
 	for (int s = 0; s < nsrc; s++)
-		if (src[s].type != SRC_HDL && src[s].type != SRC_SMB && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
+		if (src[s].type != SRC_HDL && src[s].type != SRC_SMB && src[s].type != SRC_UDPFS && src[s].type != SRC_UDPBD && (s || src_want & 1u << src[0].type))
 			total_n += count_dir(src[s].root, "DVD", ".iso") + count_dir(src[s].root, "DVD", ".zso") +
 			           count_dir(src[s].root, "CD", ".iso") + count_dir(src[s].root, "CD", ".zso");
 	for (int s = 0; s < nsrc; s++) {
@@ -961,8 +960,6 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 			hdl_ctx c = {s, n};
 			src_hdl_scan(hdl_add, &c);
 			n = c.n;
-		} else if (src[s].type == SRC_UDPFS && udpfs_cat)
-			n = catalog_load(s, n);
 		else if (src[s].type == SRC_SMB)
 			n = smb_catalog_load(s, n);
 		else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
@@ -1061,7 +1058,7 @@ static const char *const config_template[LANG_N] = {
 	"; tema (theme): torres (prisms of light in a blue night), Classic (black and acid green, v1.2 look), cristal, aurora,\n"
 	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in tea_g3/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
-	"; udpbd, udpfs, smb. hdd = internal exFAT disk, or APA with HD Loader partitions. smb is read-only and needs a TEAG3.GAMES index;\n"
+	"; smb is a read-only catalog source for OPL ETH and needs a TEAG3.GAMES index. hdd = internal exFAT disk or APA/HDL partitions;\n"
 	"; udpfs is legacy and disabled. mx4sio and mmce do not go together. Settings, covers, SMB support modules, POPS\n"
 	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL adapter only) or opl (force OPL); legacy neutrino is rejected\nmotor = opl\nauto = si\n"
 	"; IP of the HTTP game catalog server. UDPFS/UDPBD game-launch sources are retired in the OPL-only runtime.\n"
@@ -1099,7 +1096,7 @@ static const char *const config_template[LANG_N] = {
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، en = الإنجليزية\nidioma = ar\n"
 	"; المظهر: torres أو Classic (الكلاسيكية) أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
-	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
+	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو smb. مصادر UDPBD/UDPFS القديمة غير مفعّلة\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وملفات الشبكة وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو opl فقط. إعداد neutrino القديم مرفوض ولا يوجد محرك بديل\nmotor = opl\nauto = si\n"
 	"; عنوان خادم فهرسة TEa.G3 عبر HTTP. لا يتم تفعيل UDPFS/UDPBD في محرك OPL-only\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
@@ -1191,7 +1188,7 @@ static void load_config(void) // loader thread, before the splash sound
 	crt = !strcasecmp(ini_get(&cfg, "video", "pantalla", "720p"), "480i");
 	// Auto-discover every supported source on first boot unless the user explicitly narrows [juegos] origen.
 	// Missing devices are reported per-source by src_init(); they do not block the sources that are present.
-	static const char *auto_sources = "usb,hdd,mx4sio,ilink,mmce,udpbd,udpfs";
+	static const char *auto_sources = "usb,hdd,mx4sio,ilink,mmce,smb";
 	src_want = src_mask(ini_get(&cfg, "juegos", "origen", auto_sources));
 	if (!strcasecmp(ini_get(&cfg, "juegos", "auto", "si"), "si"))
 		src_want |= src_mask(auto_sources); // existing configs also probe every supported source unless auto=no
@@ -1210,7 +1207,7 @@ static void load_config(void) // loader thread, before the splash sound
 		if (!strcasecmp(ini_get(&state, "ui", "vista", ""), view_key[v])) view = v;
 }
 
-// video: 0 = default (config), 1 nativo, 2 480p (-gsm=fp2), 3 1080i (-gsm=1080ix2); Neutrino README for -gsm / -gc
+// Legacy video/compatibility values are kept for configuration compatibility; OPL uses its own per-game settings.
 static const char *vid_key[4] = {NULL, "nativo", "480p", "1080i"};
 static const char *const vid_labels[LANG_N][4] = {
 {"Default", "Native", "480p", "1080i"},
@@ -1506,7 +1503,7 @@ static void ra_log(const char *fmt, ...) // the console has no printf: launcher.
 	if (fp) fprintf(fp, "TEa.G3 %s\n", line), fclose(fp);
 }
 
-// the serial as SYSTEM.CNF and Neutrino's GameID have it ("SLUS_213.76"): the client pairs the snapshots' serial
+// the serial as SYSTEM.CNF and the PS2 game ID have it ("SLUS_213.76"): the client pairs the snapshots' serial
 // with the hash it got in RAQ1, so both must use the same form (phase 16b)
 static const char *ra_id(int i)
 {
@@ -1620,7 +1617,6 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	if (usb) {
 		/* OPL-only runtime: no Neutrino ELF is probed, installed or launched. */
 		nsrc = 1, src[0].type = strcmp(homedev, "mass0:") ? SRC_MMCE : SRC_USB, strcpy(src[0].root, homedev); // the home
-		udpfs_cat = 0; // UDPFS is retired; OPL ETH is the only network game route
 		const char *why = src_init(src_want & ~(1u << src[0].type) & ~(1u << SRC_SMB) & ~(1u << SRC_UDPBD) & ~(1u << SRC_UDPFS), ini_get(&cfg, "red", "ip", "dhcp"), NETDIR, 0);
 		if (why && !src_why) src_why = why;
 		if (src_want & 1u << SRC_SMB) {
