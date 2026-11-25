@@ -33,10 +33,10 @@ The OPL IOP ISOFS build includes the ZSO/LZ4 decoder, and the TEa.G3 engine poli
 
 ## SMB source requirements
 
-- Configure a fixed IPv4 address, netmask and gateway under `[red]`; the SMB
-  modules do not use the launcher's DHCP configuration.
+- Configure a fixed IPv4 address, netmask, gateway and DNS under `[red]`;
+  the current OPL ETH and Neutrino SMB hand-offs do not accept `red.ip = dhcp`.
 - Configure `[smb]` with `server` (IPv4), `share`, `user` and `password`.
-  The Neutrino SMB modules use TCP port 445.
+  The Neutrino SMB fallback uses TCP port 445; OPL ETH uses its own SMB adapter.
 - The share must contain `DVD/`, `CD/` and a generated `TEAG3.GAMES` file.
   Run `python tools/smb_catalog.py <local-share-root>` on the computer hosting
   the share. The index format is `relative-path<TAB>title<TAB>serial`.
@@ -58,29 +58,22 @@ additional animation definitions remain controlled by the built-in theme.
 See [themes.md](themes.md).
 
 
-## OPL build status (integration branch)
+## OPL build status
 
-The `opl-engine` CI job checks out Open PS2 Loader at
-`b3a2199795fe89ba7e2dd7b843354472dff2c3eb`, fetches its separately pinned
-`lwNBD` dependency using the upstream `download_lwNBD.sh` script, then builds
-an uncompressed `opl.elf` and uploads it as `OPL.ELF`.
+The complete `TEaG3/OPL` source is pinned as the `engine/opl` submodule at
+`46bad5a4a469c51e45eb1ed879fe43c100b8cb7b`. CI fetches the upstream
+`download_lwNBD.sh` helper and `lang_compiler.py` from the fixed upstream
+Open-PS2-Loader commit `b3a2199795fe89ba7e2dd7b843354472dff2c3eb`, checks out
+`lwNBD` at `15f1c14536d662e2e00d38d0aa91ef24149e8b96`, and generates the
+fork's missing language header/source before compiling. The OPL build uses
+`RTL=1` and `PADEMU=1`; the latter builds the DS3/DS4 USB and Bluetooth
+modules. The TEa.G3 UL, BDM, ETH and guarded APA/HDL direct-launch patches are
+applied to that pinned source.
 
-Important: `lwNBD` is not a Git submodule in the upstream OPL repository.
-The upstream Makefile exposes a `download_lwNBD` target and makes `clean`
-depend on it. Therefore enabling `submodules: recursive` on checkout alone
-does not fetch this dependency; the workflow explicitly runs and verifies the
-upstream downloader before `make clean`.
-
-The successful CI run builds the pinned upstream OPL source with the TEa.G3
-direct-boot patch, compiles the launcher and Neutrino, and passes the UL parser,
-split-part and engine-selection host tests. The launcher passes the fixed-width
-UL name, startup ID, media type and split count to OPL; OPL selects the USB
-mass-storage driver and sets `GAME_FORMAT_USBLD` for UL. It also builds the
-BDM, SMB/ETH and guarded APA/HD Loader mini-launch adapters. The remaining work is
-runtime verification on a physical PS2: confirm the hand-off, actual game boot, sustained in-game reads and stability. An emulator may be used for diagnostics only and is not the acceptance reference. A green build is not a gameplay compatibility claim.
-
-Do not mark UL or OPL engine selection as supported until those steps and
-runtime tests pass.
+The current CI build and artifact hashes are recorded in
+[OPL runtime integration](opl-engine-integration.md). This verifies source
+integration, compilation and packaging only. It does not verify controller
+pairing, a game boot, sustained reads or return-to-launcher on a physical PS2.
 
 
 ## Installing the OPL engine artifact for a test
