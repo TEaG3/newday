@@ -996,7 +996,7 @@ static const char *const config_template[LANG_N] = {
 	"\n[ui]\n; لغة واجهة المشغل والتعليقات: ar = العربية، en = الإنجليزية\nidioma = ar\n"
 	"; المظهر: torres أو Classic (الكلاسيكية) أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
-	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
+	"\n[juegos]\n; مصادر ألعاب PS2 المدعومة في الواجهة: usb أو hdd أو mx4sio أو ilink فقط\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. مصادر الشبكة غير مفعلة لتشغيل الألعاب. تبقى الإعدادات والأغلفة وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل الوحيد هو OPL؛ تُرفض المصادر التي لا تملك محول OPL\nmotor = opl\nauto = si\n"
 	"; عنوان خدمة فهرسة التطبيقات القابلة للتنزيل فقط. لا تستخدمه كمصدر لألعاب PS2\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
