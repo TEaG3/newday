@@ -2598,12 +2598,55 @@ static int status_text(char *b, int max)
 	return k < max ? k : max - 1;
 }
 
+static int launch_source_ready(int i)
+{
+    unsigned s;
+    char path[320];
+    int fd, n;
+    s64 size;
+    if (i < 0 || i >= ncv || i >= MAXC) return 0;
+    if (cv[i].kind == K_DISC) return 1;
+    s = (unsigned char)cv[i].src;
+    if (s >= (unsigned)nsrc) return 0;
+
+    if (cv[i].kind == K_PS2 && on_catalog(i))
+        return net_ready() >= 0; /* The server-backed catalog has no local ISO path. */
+
+    if (cv[i].kind == K_PS2 && src[s].type == SRC_HDL) {
+        DIR *d = opendir("hdd0:");
+        if (!d) return 0;
+        closedir(d);
+        return cv[i].hdl_start_sector && cv[i].hdl_size_kb && cv[i].hdl_disc_type;
+    }
+
+    if (cv[i].kind == K_PS2 && cv[i].engine == ENGINE_OPL_UL) {
+        unsigned int crc = ul_name_crc32(cv[i].ul_name);
+        char part[40];
+        if (src[s].type != SRC_USB || !cv[i].parts || !*cv[i].boot) return 0;
+        for (unsigned int k = 0; k < (unsigned char)cv[i].parts; k++) {
+            n = snprintf(part, sizeof(part), "ul.%08X.%s.%02x", crc, cv[i].boot, k);
+            if (n < 0 || n >= (int)sizeof(part) || !ul_part_exists(src[s].root, part)) return 0;
+        }
+        return 1;
+    }
+
+    n = snprintf(path, sizeof(path), "%s/%s", src[s].root, cv[i].path);
+    if (n < 0 || n >= (int)sizeof(path)) return 0;
+    fd = fileXioOpen(path, FIO_O_RDONLY);
+    if (fd < 0) return 0;
+    size = fileXioLseek64(fd, 0, FIO_SEEK_END);
+    int closed = fileXioClose(fd);
+    return size > 0 && closed >= 0;
+}
+
 static const char *launch_problem(int i) // select a viable engine before handing control away
 {
 	if (i < 0 || i >= MAXC || i >= ncv) return L("Invalid game selection");
 	if (cv[i].kind < K_PS2 || cv[i].kind > K_DISC) return L("Invalid game record");
 	if (cv[i].kind != K_DISC && (unsigned char)cv[i].src >= nsrc)
 		return L("Game source is no longer available");
+	if (!launch_source_ready(i))
+		return L("The game image is no longer readable from its source");
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
 	if (engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this source");
