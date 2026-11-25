@@ -202,12 +202,24 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_scan_begin(&guard));
     assert(catalog_guard_scan_end(&guard));
 
+    /* An apply request must not close the reader gate during launch or storage I/O. */
     assert(catalog_guard_set_activity(&guard, 1, 1));
-    assert(catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_request_apply(&guard));
     assert(!catalog_guard_can_scan(&guard));
     assert(!catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_try_apply(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    /* If gameplay starts after a request, cancel the pending apply and reopen readers. */
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_guard_set_activity(&guard, 1, 0));
+    assert(!catalog_guard_try_apply(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+    assert(catalog_guard_request_apply(&guard));
     assert(catalog_guard_try_apply(&guard));
     assert(catalog_guard_finish_apply(&guard));
 
