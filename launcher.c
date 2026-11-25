@@ -2722,10 +2722,7 @@ static void launch(int i) // per kind: OPL, POPStarter, an app ELF, or the BIOS 
 	// hung when launched while its hash was being computed); the render thread sleeps so the worker can stop
 	ra_launching = 1, ra_abort = 1;
 	for (int t = 0; t < 150 && ra_busy; t++) usleep(10000);
-	// phase 16b: the watch list and the agent's config, while the network is still up (the worker takes no new work)
-	static char ra_arg[72];
-	int ra = 0;
-	/* RetroAchievements remains visible in the catalog; Neutrino's in-game agent is not part of this runtime. */
+	/* RetroAchievements remains visible in the catalog; no in-game agent is prepared for OPL. */
 	static char file[200], arg0[200];
 	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
 	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down(); // ponytail: a cover download in flight keeps it up
