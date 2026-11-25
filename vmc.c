@@ -77,126 +77,226 @@ static void cluster(unsigned c, unsigned char *b, const unsigned char *t)
 
 int vmc_create(const char *path)
 {
-	FILE *f = fopen(path, "wb");
-	unsigned char t[8], *buf = malloc(32 * CSIZE);
-	int ok = f && buf;
-	now(t);
-	for (unsigned c = 0; ok && c < NCL; c += 32) { // 32 KB writes
-		for (unsigned k = 0; k < 32; k++) cluster(c + k, buf + k * CSIZE, t);
-		ok = fwrite(buf, 32 * CSIZE, 1, f) == 1;
-	}
-	if (f) ok &= fclose(f) == 0;
-	free(buf);
-	if (!ok) remove(path); // a short card would be served to the game as is
-	return ok;
+    char temp[160];
+    FILE *f = NULL, *existing;
+    unsigned char t[8], *buf = NULL;
+    int ok = 0;
+    if (!path || !*path || snprintf(temp, sizeof(temp), "%s.tmp", path) >= (int)sizeof(temp))
+        return 0;
+    /* Never truncate a pre-existing card, even if the caller's existence check raced. */
+    existing = fopen(path, "rb");
+    if (existing) { fclose(existing); return 0; }
+    buf = malloc(32 * CSIZE);
+    if (!buf) return 0;
+    remove(temp);
+    f = fopen(temp, "wb");
+    if (!f) { free(buf); return 0; }
+    now(t);
+    ok = 1;
+    for (unsigned c = 0; ok && c < NCL; c += 32) {
+        for (unsigned k = 0; k < 32; k++) cluster(c + k, buf + k * CSIZE, t);
+        ok = fwrite(buf, 32 * CSIZE, 1, f) == 1;
+    }
+    if (fclose(f) != 0) ok = 0;
+    free(buf);
+    if (ok) {
+        existing = fopen(path, "rb");
+        if (existing) { fclose(existing); ok = 0; }
+    }
+    if (ok && rename(temp, path) == 0) return 1;
+    remove(temp);
+    return 0;
 }
 
-typedef struct { FILE *f; unsigned csize, alloc, ifc[32], fat_cl, fat_ok; unsigned char b[CSIZE], fat[CSIZE]; } card;
+typedef struct {
+    FILE *f;
+    unsigned csize, alloc, ifc[32], fat_cl, fat_ok;
+    unsigned char b[CSIZE], fat[CSIZE];
+} card;
 
-static int rd(card *v, unsigned c, unsigned char *b) // absolute cluster
+static int rd(card *v, unsigned c, unsigned char *b)
 {
-	return fseek(v->f, (long)c * v->csize, SEEK_SET) == 0 && fread(b, v->csize, 1, v->f) == 1;
+    unsigned long offset;
+    if (!v || !v->f || !b || c >= NCL || !v->csize ||
+        c > 0x7fffffffu / v->csize) return 0;
+    offset = (unsigned long)c * v->csize;
+    return fseek(v->f, (long)offset, SEEK_SET) == 0 &&
+           fread(b, v->csize, 1, v->f) == 1;
 }
 
 static int open_card(card *v, const char *path)
 {
-	unsigned char s[512];
-	v->f = fopen(path, "rb");
-	v->fat_ok = 0;
-	if (!v->f) return 0;
-	if (fread(s, 512, 1, v->f) != 1 || memcmp(s, "Sony PS2 Memory Card Format ", 28) || get16(s + 0x28) != 512 ||
-	    get16(s + 0x2A) != 2 || get32(s + 0x154) != CSIZE) { fclose(v->f), v->f = NULL; return 0; } // ponytail: 1 KB clusters only
-	v->csize = CSIZE, v->alloc = get32(s + 0x34);
-	for (int i = 0; i < 32; i++) v->ifc[i] = get32(s + 0x50 + 4 * i);
-	return 1;
+    unsigned char s[512];
+    long bytes;
+    if (!v || !path || !*path) return 0;
+    memset(v, 0, sizeof(*v));
+    v->fat_cl = 0xffffffffu;
+    v->f = fopen(path, "rb");
+    if (!v->f) return 0;
+    if (fseek(v->f, 0, SEEK_END) != 0 || (bytes = ftell(v->f)) < VMC_SIZE ||
+        fseek(v->f, 0, SEEK_SET) != 0 || fread(s, 512, 1, v->f) != 1 ||
+        memcmp(s, "Sony PS2 Memory Card Format ", 28) ||
+        get16(s + 0x28) != 512 || get16(s + 0x2A) != 2 ||
+        get16(s + 0x2C) != 16 || get32(s + 0x30) != NCL ||
+        get32(s + 0x34) != ALLOC || get32(s + 0x154) != CSIZE) {
+        fclose(v->f), v->f = NULL;
+        return 0;
+    }
+    v->csize = CSIZE, v->alloc = get32(s + 0x34);
+    for (int i = 0; i < 32; i++) {
+        v->ifc[i] = get32(s + 0x50 + 4 * i);
+        if (v->ifc[i] != 0xffffffffu &&
+            (v->ifc[i] < FAT0 || v->ifc[i] >= FAT0 + FATN)) {
+            fclose(v->f), v->f = NULL;
+            return 0;
+        }
+    }
+    if (v->ifc[0] == 0xffffffffu) {
+        fclose(v->f), v->f = NULL;
+        return 0;
+    }
+    return 1;
 }
 
-static unsigned next(card *v, unsigned rel) // FAT entry of a relative cluster: bit 31 set + next, 0xFFFFFFFF = end
+static unsigned next(card *v, unsigned rel)
 {
-	unsigned per = v->csize / 4, idx = rel / per;
-	if (idx / per >= 32 || !rd(v, v->ifc[idx / per], v->b)) return 0xFFFFFFFF;
-	unsigned fc = get32(v->b + 4 * (idx % per));
-	if (!v->fat_ok || v->fat_cl != fc) {
-		if (!rd(v, fc, v->fat)) return 0xFFFFFFFF;
-		v->fat_cl = fc, v->fat_ok = 1;
-	}
-	unsigned e = get32(v->fat + 4 * (rel % per));
-	return e == 0xFFFFFFFF || !(e & 0x80000000) ? 0xFFFFFFFF : e & 0x7FFFFFFF;
+    unsigned per, idx, ifc_idx, fc, e, target;
+    if (!v || rel >= ALLOC_END) return 0xffffffffu;
+    per = v->csize / 4;
+    idx = rel / per;
+    ifc_idx = idx / per;
+    if (ifc_idx >= 32) return 0xffffffffu;
+    fc = v->ifc[ifc_idx];
+    if (fc == 0xffffffffu || fc < FAT0 || fc >= FAT0 + FATN) return 0xffffffffu;
+    if (!v->fat_ok || v->fat_cl != fc) {
+        if (!rd(v, fc, v->fat)) return 0xffffffffu;
+        v->fat_cl = fc, v->fat_ok = 1;
+    }
+    e = get32(v->fat + 4 * (rel % per));
+    if (e == 0xffffffffu || !(e & 0x80000000u)) return 0xffffffffu;
+    target = e & 0x7fffffffu;
+    return target < ALLOC_END ? target : 0xffffffffu;
 }
 
-// entry k of the directory starting at cluster rel (2 entries a cluster); 0 if the chain ends first
+/* 1 = entry read, 0 = chain ended, -1 = corrupt / I/O error. */
 static int dir_get(card *v, unsigned rel, unsigned k, unsigned char *e)
 {
-	for (unsigned n = k / 2; n; n--)
-		if ((rel = next(v, rel)) == 0xFFFFFFFF) return 0;
-	if (!rd(v, v->alloc + rel, v->b)) return 0;
-	memcpy(e, v->b + (k & 1) * 512, 512);
-	return 1;
+    unsigned steps = k / 2;
+    if (!v || !e || rel >= ALLOC_END || steps >= ALLOC_END) return -1;
+    for (unsigned n = 0; n < steps; n++) {
+        unsigned following = next(v, rel);
+        if (following == 0xffffffffu) return 0;
+        rel = following;
+    }
+    if (v->alloc > NCL || rel > NCL - v->alloc - 1 || !rd(v, v->alloc + rel, v->b))
+        return -1;
+    memcpy(e, v->b + (k & 1) * 512, 512);
+    return 1;
 }
 
 static void to_ent(const unsigned char *e, vmc_ent *o)
 {
-	memcpy(o->name, e + 64, 32);
-	o->name[32] = 0;
-	o->mode = get16(e);
-	memcpy(o->modified, e + 24, 8);
-	o->cluster = get32(e + 16), o->length = get32(e + 4);
+    memcpy(o->name, e + 64, 32);
+    o->name[32] = 0;
+    o->mode = get16(e);
+    memcpy(o->modified, e + 24, 8);
+    o->cluster = get32(e + 16), o->length = get32(e + 4);
 }
 
-// entries of a directory, without . and ..; count: from the parent's entry (a subdirectory's own "." says 0), or 0
-// for the root, whose "." holds it
+/* Directory entry count includes . and ..; return -1 on any short/corrupt chain. */
 static int list(card *v, unsigned rel, unsigned count, vmc_ent *out, int max)
 {
-	unsigned char e[512];
-	int n = 0;
-	if (!dir_get(v, rel, 0, e)) return -1;
-	if (!count) count = get32(e + 4);
-	for (unsigned k = 2; k < count && n < max; k++) {
-		if (!dir_get(v, rel, k, e)) break;
-		if (get16(e) & 0x8000) to_ent(e, &out[n++]); // deleted entries lose the "exists" bit
-	}
-	return n;
+    unsigned char e[512];
+    unsigned limit = NCL * 2;
+    int n = 0;
+    int status;
+    if (!v || !out || max <= 0 || rel >= ALLOC_END) return -1;
+    status = dir_get(v, rel, 0, e);
+    if (status != 1) return -1;
+    if (!count) count = get32(e + 4);
+    if (count < 2 || count > limit) return -1;
+    for (unsigned k = 2; k < count; k++) {
+        status = dir_get(v, rel, k, e);
+        if (status != 1) return -1;
+        if (!(get16(e) & 0x8000u)) continue;
+        if (!memchr(e + 64, 0, 32)) return -1;
+        if (get32(e + 16) >= ALLOC_END && (get16(e) & 0x20u)) return -1;
+        if (n < max) to_ent(e, &out[n++]);
+    }
+    return n;
 }
 
 int vmc_list(const char *path, vmc_ent *out, int max)
 {
-	card *v = malloc(sizeof(card));
-	int n = -1;
-	if (v && open_card(v, path)) n = list(v, 0, 0, out, max), fclose(v->f);
-	free(v);
-	return n;
+    card *v;
+    int n = -1;
+    if (!out || max <= 0) return -1;
+    v = malloc(sizeof(card));
+    if (v && open_card(v, path)) {
+        n = list(v, 0, 0, out, max);
+        fclose(v->f);
+    }
+    free(v);
+    return n;
 }
 
 void *vmc_read(const char *path, const char *file, int *size)
 {
-	char dir[33];
-	const char *slash = strchr(file, '/');
-	card *v = malloc(sizeof(card));
-	vmc_ent *e = malloc(sizeof(vmc_ent) * 64);
-	unsigned char *data = NULL;
-	if (!v || !e || !slash || slash - file > 32 || !open_card(v, path)) goto out;
-	snprintf(dir, sizeof(dir), "%.*s", (int)(slash - file), file);
-	int n = list(v, 0, 0, e, 64), i, d = -1, f = -1;
-	for (i = 0; i < n; i++)
-		if (e[i].mode & 0x20 && !strcmp(e[i].name, dir)) d = i;
-	if (d < 0) goto close;
-	n = list(v, e[d].cluster, e[d].length, e, 64);
-	for (i = 0; i < n; i++)
-		if (!(e[i].mode & 0x20) && !strcmp(e[i].name, slash + 1)) f = i;
-	if (f < 0 || !e[f].length || e[f].length > (2u << 20)) goto close;
-	data = memalign(64, (e[f].length + CSIZE + 63) & ~63);
-	unsigned rel = e[f].cluster, got = 0;
-	while (data && got < e[f].length) {
-		if (!rd(v, v->alloc + rel, data + got)) { free(data), data = NULL; break; } // reads a whole cluster
-		got += v->csize;
-		if (got < e[f].length && (rel = next(v, rel)) == 0xFFFFFFFF) { free(data), data = NULL; }
-	}
-	if (data) *size = e[f].length;
+    char dir[33];
+    const char *slash;
+    card *v = NULL;
+    vmc_ent *e = NULL;
+    unsigned char *data = NULL;
+    unsigned char *visited = NULL;
+    int n, d = -1, f = -1;
+    if (!path || !file || !size || !(slash = strchr(file, '/')) ||
+        slash == file || slash - file > 32 || !slash[1]) return NULL;
+    v = malloc(sizeof(card));
+    e = malloc(sizeof(vmc_ent) * 64);
+    visited = calloc((ALLOC_END + 7) / 8, 1);
+    if (!v || !e || !visited || !open_card(v, path)) goto out;
+    snprintf(dir, sizeof(dir), "%.*s", (int)(slash - file), file);
+    n = list(v, 0, 0, e, 64);
+    if (n < 0) goto close;
+    for (int i = 0; i < n; i++)
+        if ((e[i].mode & 0x20u) && !strcmp(e[i].name, dir)) { d = i; break; }
+    if (d < 0 || e[d].cluster >= ALLOC_END || e[d].length < 2) goto close;
+    n = list(v, e[d].cluster, e[d].length, e, 64);
+    if (n < 0) goto close;
+    for (int i = 0; i < n; i++)
+        if (!(e[i].mode & 0x20u) && !strcmp(e[i].name, slash + 1)) { f = i; break; }
+    if (f < 0 || !e[f].length || e[f].length > (2u << 20) || e[f].cluster >= ALLOC_END) goto close;
+    {
+        unsigned expected = (e[f].length + v->csize - 1) / v->csize;
+        unsigned rel = e[f].cluster, got = 0;
+        size_t alloc_size = ((size_t)expected * v->csize + 63u) & ~(size_t)63u;
+        if (!expected || expected > ALLOC_END) goto close;
+        data = memalign(64, alloc_size);
+        if (!data) goto close;
+        for (unsigned k = 0; k < expected; k++) {
+            unsigned amount = e[f].length - got;
+            if (amount > v->csize) amount = v->csize;
+            if (rel >= ALLOC_END || (visited[rel >> 3] & (1u << (rel & 7))) ||
+                !rd(v, v->alloc + rel, v->b)) {
+                free(data), data = NULL;
+                goto close;
+            }
+            visited[rel >> 3] |= (unsigned char)(1u << (rel & 7));
+            memcpy(data + got, v->b, amount);
+            got += amount;
+            if (k + 1 < expected) {
+                rel = next(v, rel);
+                if (rel == 0xffffffffu) { free(data), data = NULL; goto close; }
+            }
+        }
+        if (got != e[f].length) { free(data), data = NULL; goto close; }
+        *size = (int)got;
+    }
 close:
-	fclose(v->f);
+    if (v && v->f) fclose(v->f);
 out:
-	free(v), free(e);
-	return data;
+    free(visited), free(v), free(e);
+    return data;
 }
 
 #if defined(SELFTEST) && !defined(SELFTEST_LIB) // host check: `make test`; VMC_CHECK=<card.bin> also lists a card made elsewhere (mymcplus, PCSX2)
