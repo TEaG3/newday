@@ -74,6 +74,7 @@ class LauncherHandoffTests(unittest.TestCase):
             self.assertIn("test -s lng_src/thirdparty/font_Arabic.ttf", workflow)
 
     def test_lwnbd_script_is_executable_before_make_clean(self):
+        # OPL's clean target executes the downloaded helper directly, not through bash.
         for workflow in (self.build_workflow, self.release_workflow):
             download = workflow.index("download_lwNBD.sh -o download_lwNBD.sh")
             chmod = workflow.index("chmod +x download_lwNBD.sh", download)
