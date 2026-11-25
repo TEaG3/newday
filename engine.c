@@ -27,7 +27,7 @@ engine_decision engine_assess(engine_format format, engine_source source,
         return d;
     }
 
-    /* ZSO support is wired to the OPL BDM/ETH sector readers, not the APA/HDL mini path. */
+    /* ZSO is wired to the current OPL BDM route; SMB/ETH and APA/HDL are not enabled here. */
     if (format == ENGINE_FORMAT_ZSO && source == ENGINE_SOURCE_HDL) {
         d.engine = ENGINE_UNSUPPORTED;
         d.reason = ENGINE_REASON_UNSUPPORTED_FORMAT_SOURCE;
