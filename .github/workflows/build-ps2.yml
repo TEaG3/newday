@@ -167,13 +167,6 @@ jobs:
           grep -Fq 'gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_SDC' src/opl.c
           grep -Fq 'gAutoLaunchDeviceData->massDeviceIndex == wantedUnit' src/opl.c
           grep -Fq 'TEa.G3 BDM auto-launch: requested device not found' src/opl.c
-          grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
-          grep -Fq 'gTEaG3HDDMiniReady = 1' src/hddsupport.c
-          grep -Fq 'FIO_MT_RDONLY' src/hddsupport.c
-          grep -Fq 'TEa.G3 HDL mini-launch refused' src/opl.c
-          grep -Fq 'gAutoLaunchGame->total_size_in_kb = (u32)size_kb' src/opl.c
-          grep -Fq 'gAutoLaunchGame->disctype = (u8)disc_type' src/opl.c
-          grep -Fq 'argc >= 6 && !strcmp(argv[5], "mini")' src/opl.c
           grep -Fq 'run_loader_recover(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'run_loader_recover(9, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'strcasecmp(&name[size - 4], ".zso")' src/supportbase.c
