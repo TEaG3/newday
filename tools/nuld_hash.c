@@ -1,11 +1,11 @@
-// nuld_hash: the launcher's own ISO and memory-card code, run on the game server by tools/nuld_catalog.py
+// TEa.G3 catalog helper (legacy executable name: nuld_hash): the launcher's ISO and memory-card code, run by tools/nuld_catalog.py
 // (phase 17), so a game listed from the catalog has the same serial and RetroAchievements hash as one read by the
 // launcher, and its virtual memory card the same format.
 //   nuld_hash hash <iso>   prints "<serial>\t<hash>" (SLUS_213.76 form; "-" for what cannot be read), exit 1 if none
 //   nuld_hash vmc <file>   writes an empty formatted 8 MB card (the caller checks it does not exist)
 //   nuld_hash vmc-list <file>         the card's root: "<name>\t<mode>\t<modified, 16 hex>" per line
 //   nuld_hash vmc-read <file> <D/f>   one file of the card, raw, to stdout
-// Built static in WSL (nuld has no compiler): make nuld_hash
+// Built statically in WSL for the existing game-server deployment: make nuld_hash
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>

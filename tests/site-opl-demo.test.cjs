@@ -103,4 +103,12 @@ const smokePlan = fs.readFileSync(path.join(__dirname, "PCSX2_SMOKE_TEST.md"), "
 assert.ok(smokePlan.includes("motor = auto") && smokePlan.includes("OPL BDM"));
 assert.ok(smokePlan.includes("motor = neutrino") && /rejected/i.test(smokePlan));
 assert.ok(!smokePlan.includes("Neutrino ISO/ZSO"));
-console.log("site OPL route matrix ok: " + tested + " format/source/preference combinations + ZSO fail-closed, ISO fallback and documentation checks");
+const pcsx2Readme = fs.readFileSync(path.join(__dirname, "../tools/pcsx2/README.md"), "utf8");
+assert.ok(pcsx2Readme.includes("TEa.G3.ELF"));
+assert.ok(pcsx2Readme.includes("tea_g3/"));
+assert.ok(pcsx2Readme.includes("tools/pcsx2/work/usb/TEa.G3.ELF"));
+assert.doesNotMatch(pcsx2Readme, /launcher\.elf|orbit\//i);
+const pcsx2ImageScript = fs.readFileSync(path.join(__dirname, "../tools/pcsx2/mkimg.sh"), "utf8");
+assert.ok(pcsx2ImageScript.includes("-n TEAG3"));
+assert.doesNotMatch(pcsx2ImageScript, /ORBIT/);
+console.log("site OPL route matrix ok: " + tested + " format/source/preference combinations + ZSO fail-closed, ISO fallback and emulator-harness checks");

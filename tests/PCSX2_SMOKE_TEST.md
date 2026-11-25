@@ -31,8 +31,7 @@ For this diagnostic harness, configure USB1 as a mass-storage device using
 verify that `usb.img` exists, is FAT32 and contains `TEa.G3.ELF` plus the
 test folders. The configuration and image checks prove that the virtual
 device is prepared; only the running emulator and its `mass0:` diagnostics
-prove that PCSX2 enumerated the virtual USB device. Controller navigation,
-USB timing and game behavior in PCSX2 remain diagnostic observations only.
+prove that PCSX2 enumerated the virtual USB device. To launch the ELF diagnostic, use `tools/pcsx2/run.sh tools/pcsx2/work/usb/TEa.G3.ELF diagnostic-run1`; keyboard pad input is available through `tools/pcsx2/key.sh`. Controller navigation, USB timing and game behavior in PCSX2 remain diagnostic observations only.
 
 ## Real PS2 acceptance tests (mandatory)
 
