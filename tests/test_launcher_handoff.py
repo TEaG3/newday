@@ -33,6 +33,18 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("EnableIntc(INTC_VBLANK_S)", body)
         self.assertNotIn("gfx_init(", body)
 
+    def test_bios_disc_handoff_also_recovers_display(self):
+        self.assertIn('LoadExecPS2(cv[i].disc == D_PS2', self.launcher)
+        self.assertIn('handoff_returned("BIOS");', self.launcher)
+
+    def test_all_handoff_returns_share_the_recovery_function(self):
+        self.assertIn('handoff_returned("ELF");', self.launcher)
+        start = self.launcher.index("static void handoff_returned(")
+        end = self.launcher.index("static void run_loader_recover(", start)
+        body = self.launcher[start:end]
+        self.assertIn("gfx_resume()", body)
+        self.assertIn('L("Could not start")', body)
+
     def test_resume_is_declared_in_public_header(self):
         self.assertIn("int gfx_resume(void);", self.header)
 
