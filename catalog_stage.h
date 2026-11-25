@@ -84,6 +84,8 @@ int catalog_guard_can_download(catalog_guard *guard);
 int catalog_guard_download_begin(catalog_guard *guard);
 int catalog_guard_download_cancelled(catalog_guard *guard);
 int catalog_guard_download_end(catalog_guard *guard);
+/* Fails while gameplay or storage I/O is active. Starting either also cancels
+   a pending apply so launch/readers are never blocked by a stale safe-point request. */
 int catalog_guard_request_apply(catalog_guard *guard);
 int catalog_guard_try_apply(catalog_guard *guard);
 int catalog_guard_finish_apply(catalog_guard *guard);

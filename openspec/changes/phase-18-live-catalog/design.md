@@ -19,7 +19,8 @@ Therefore a monitor thread must never call load_games() against the active cv[].
 catalog_guard is a portable state machine whose lock/unlock callbacks must be backed by a real PS2 semaphore in the target build (pthread mutex in host tests).
 
 - Readers acquire a lease before retaining or dereferencing a catalog record and release it immediately after the last access.
-- Requesting an apply closes the reader gate to new readers. The candidate may be swapped only after existing readers drain, scanning has ended, the game is not running, and storage/network I/O is idle.
+- Requesting an apply is refused while gameplay or storage I/O is active. If either starts after a request but before the swap, `catalog_guard_set_activity()` cancels the pending apply and reopens the reader gate; the caller retains the candidate and retries at a later idle point. This prevents a stale apply request from blocking a new launch or reader.
+- An accepted apply closes the reader gate to new readers. The candidate may be swapped only after existing readers drain, scanning has ended, the game is not running, and storage/network I/O is idle.
 - The render thread is the only owner allowed to perform the short pointer/count swap, between completed frames. The apply lease remains held until the swap is complete.
 - Starting a game or marking storage I/O busy cancels an active scan; the scanner checks the cancellation flag between directories and closes all open handles before discarding its candidate.
 - A pending apply can wait while a game is running; it must not block launch or change the visible catalog during gameplay.

@@ -270,6 +270,9 @@ int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
     }
     guard->playing = playing != 0;
     guard->io_busy = io_busy != 0;
+    /* Never leave a pending apply blocking new readers when launch or I/O starts. */
+    if (guard->apply_pending && (guard->playing || guard->io_busy))
+        guard->apply_pending = 0;
     if (guard->scanning && (guard->playing || guard->io_busy))
         guard->scan_cancelled = 1;
     if (guard->downloading && (guard->playing || guard->io_busy))
@@ -328,7 +331,8 @@ int catalog_guard_request_apply(catalog_guard *guard)
     int requested = 0;
     if (!guard_valid(guard)) return 0;
     guard->lock(guard->lock_context);
-    if (!guard->applying && !guard->scanning && !guard->downloading) {
+    if (!guard->applying && !guard->scanning && !guard->downloading &&
+        !guard->playing && !guard->io_busy) {
         guard->apply_pending = 1;
         requested = 1;
     }
