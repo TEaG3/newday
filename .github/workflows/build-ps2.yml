@@ -153,35 +153,29 @@ jobs:
           if-no-files-found: warn
 
   opl-engine:
-    name: Build upstream OPL runtime (pinned source)
+    name: Build TEaG3/OPL source runtime (pinned submodule)
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
     steps:
-      - name: Check out TEa.G3 integration branch
+      - name: Check out TEa.G3 with the complete OPL source submodule
         uses: actions/checkout@v4
         with:
           path: tea-g3
+          submodules: recursive
 
-      - name: Check out Open PS2 Loader at pinned revision
-        uses: actions/checkout@v4
-        with:
-          repository: ps2homebrew/Open-PS2-Loader
-          ref: b3a2199795fe89ba7e2dd7b843354472dff2c3eb
-          path: Open-PS2-Loader
-
-      - name: Fetch lwNBD dependency before cleaning
-        working-directory: Open-PS2-Loader
+      - name: Fetch pinned lwNBD dependency before cleaning
+        working-directory: tea-g3/engine/opl
         shell: bash
         run: |
           set -euo pipefail
-          git config --global --add safe.directory "$GITHUB_WORKSPACE/Open-PS2-Loader"
-          git fetch --prune --unshallow
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/tea-g3/engine/opl"
+          curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/download_lwNBD.sh -o download_lwNBD.sh
           bash ./download_lwNBD.sh
           test -f modules/network/lwNBD/Makefile
           test "$(git -C modules/network/lwNBD rev-parse HEAD)" = "15f1c14536d662e2e00d38d0aa91ef24149e8b96"
 
       - name: Apply TEa.G3 USBExtreme direct-boot patch
-        working-directory: Open-PS2-Loader
+        working-directory: tea-g3/engine/opl
         shell: bash
         run: |
           set -euo pipefail
@@ -235,12 +229,12 @@ jobs:
           PY
 
       - name: Clean and compile OPL ELF
-        working-directory: Open-PS2-Loader
+        working-directory: tea-g3/engine/opl
         shell: bash
         run: |
           set -euo pipefail
           make clean
-          make NOT_PACKED=1
+          make NOT_PACKED=1 RTL=1 PADEMU=1
           test -s opl.elf
           cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
           cp LICENSE "$GITHUB_WORKSPACE/OPL-LICENSE.txt"
