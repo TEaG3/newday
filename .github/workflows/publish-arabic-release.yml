@@ -174,7 +174,7 @@ jobs:
             This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
           prerelease: true
           files: |
-            dist/TEa.G3-PS2.zip
+            dist/TEa.G3-Complete-Package.zip
             dist/SHA256SUMS.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
