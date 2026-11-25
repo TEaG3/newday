@@ -127,6 +127,10 @@ static void test_guard_and_concurrent_reader(void)
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
     assert(catalog_guard_can_scan(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(!catalog_guard_can_scan(&guard));
+    assert(!catalog_guard_scan_begin(&guard)); /* a scan cannot start while a reader holds the active snapshot */
+    assert(catalog_guard_read_end(&guard));
     assert(catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_can_scan(&guard));
     assert(catalog_guard_set_activity(&guard, 1, 0));
@@ -151,6 +155,7 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_set_activity(&guard, 1, 1));
     assert(catalog_guard_request_apply(&guard));
     assert(!catalog_guard_can_scan(&guard));
+    assert(!catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_try_apply(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_try_apply(&guard));
