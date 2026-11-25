@@ -87,6 +87,7 @@ const char *engine_reason_name(engine_reason reason)
     case ENGINE_REASON_OPL_RUNTIME_MISSING: return "opl-runtime-missing";
     case ENGINE_REASON_OPL_NETWORK_CONFIG_INVALID: return "opl-network-config-invalid";
     case ENGINE_REASON_OPL_SOURCE_UNAVAILABLE: return "opl-source-unavailable";
+    case ENGINE_REASON_ZSO_REQUIRES_OPL: return "zso-requires-opl";
     default: return "unsupported-format-source";
     }
 }
