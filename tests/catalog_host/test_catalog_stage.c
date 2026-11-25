@@ -117,6 +117,53 @@ static void *reader_thread(void *arg)
     return NULL;
 }
 
+
+static void test_download_gate(void)
+{
+    catalog_guard guard;
+    mutex_context mutex;
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+    assert(catalog_guard_can_download(&guard));
+    assert(catalog_guard_download_begin(&guard));
+    assert(!catalog_guard_can_download(&guard));
+    assert(!catalog_guard_scan_begin(&guard));
+    assert(!catalog_guard_can_scan(&guard));
+    assert(!catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_try_apply(&guard));
+
+    /* Entering gameplay cancels an active download; the downloader must stop and end it. */
+    assert(catalog_guard_set_activity(&guard, 1, 0));
+    assert(catalog_guard_download_cancelled(&guard));
+    assert(!catalog_guard_can_download(&guard));
+    assert(catalog_guard_download_end(&guard));
+    assert(!catalog_guard_download_cancelled(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+    assert(catalog_guard_can_download(&guard));
+
+    /* A download cannot overlap a scan, a reader, or a pending/applying snapshot. */
+    assert(catalog_guard_scan_begin(&guard));
+    assert(!catalog_guard_download_begin(&guard));
+    assert(catalog_guard_scan_end(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(!catalog_guard_download_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
+    assert(catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_download_begin(&guard));
+    assert(catalog_guard_try_apply(&guard));
+    assert(!catalog_guard_can_download(&guard));
+    assert(catalog_guard_finish_apply(&guard));
+
+    assert(catalog_guard_download_begin(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(catalog_guard_download_cancelled(&guard));
+    assert(catalog_guard_download_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+    assert(catalog_guard_can_download(&guard));
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
+}
+
 static void test_guard_and_concurrent_reader(void)
 {
     catalog_guard guard;
@@ -199,6 +246,7 @@ int main(void)
     test_path_and_validation();
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
-    puts("catalog stage: path, validation, diff, selection and concurrent apply gate PASS");
+    test_download_gate();
+    puts("catalog stage: path, validation, diff, selection, concurrent apply and download gates PASS");
     return 0;
 }
