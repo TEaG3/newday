@@ -112,7 +112,7 @@
   "Launch game": "تشغيل اللعبة",
   "What runs on the console": "ما الذي يعمل على الجهاز",
   "TEa.G3 · PS2 Game Launcher": "TEa.G3 · مشغّل ألعاب PS2",
-  "Embedded OPL and Neutrino. One launcher for PlayStation 2.": "محركا OPL وNeutrino مدمجان في مشغّل واحد لجهاز PlayStation 2.",
+  "OPL only. One Arabic launcher for PlayStation 2.": "OPL فقط. مشغّل عربي واحد لجهاز PlayStation 2.",
   "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.": "هذه معاينة للشاشة الرئيسية للمشغّل بسماته الاثنتي عشرة داخل المتصفح. اضغط على جانبي الغلاف للتنقل بين الألعاب.",
   "Make your own theme": "أنشئ سمة خاصة بك",
   "theme maker": "مصمم السمات",
