@@ -212,12 +212,12 @@
   function draw() {
     const def = {};
     BASES[state.base][1].split(' ').forEach((v, i) => { def[KEYS[i][0]] = v; });
-    NULDPreview.set(state.base, state.pal, def, state.picture, state.coverAccent);
-    NULDPreview.view(VIEWS[state.view]);
-    NULDPreview.overlay(state.view === 'setup' ? setup : null);
+    TEaG3Preview.set(state.base, state.pal, def, state.picture, state.coverAccent);
+    TEaG3Preview.view(VIEWS[state.view]);
+    TEaG3Preview.overlay(state.view === 'setup' ? setup : null);
   }
-  $('see-splash').onclick = () => NULDPreview.show('splash');
-  $('see-launch').onclick = () => NULDPreview.show('launch');
+  $('see-splash').onclick = () => TEaG3Preview.show('splash');
+  $('see-launch').onclick = () => TEaG3Preview.show('launch');
   function sync() {
     for (const [key] of KEYS) rows[key][0].value = '#' + state.pal[key], rows[key][1].value = state.pal[key];
     rows.acento.forEach(i => { i.disabled = state.coverAccent; });
