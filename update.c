@@ -182,7 +182,15 @@ int main(void)
 	assert(!upd_parse("version = v1.1\nfile = x ../evil.elf 10 "
 	                  "88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6\n", &m)); // no way out of the home
 	assert(!upd_parse("version = v1.1\n", &m)); // no files
-	puts("update selftest ok");
+
+    assert(!upd_newer("v1..2", "v1.0") && !upd_newer("v1.2x", "v1.0"));
+    assert(!upd_parse("version = v1.1junk\\nfile = x x 10 88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6\\n", &m));
+    assert(!upd_parse("version = v1.1\\nfile = x C:\\\\escape 10 88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6\\n", &m));
+    assert(!upd_parse("version = v1.1\\nfile = x a/../b 10 88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6\\n", &m));
+    assert(!upd_parse("version = v1.1\\nfile = x x 0 88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6\\n", &m));
+    assert(!upd_parse("version = v1.1\\nfile = x x 10 not-a-sha\\n", &m));
+    assert(!upd_parse("version = v1.1\\nfile = x x 10 88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6\\nfile = y x 10 88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6\\n", &m));
+    assert(!upd_parse("version = v1.1\\nfile = x x 10 88d0391f0b9e8c4edd72ff5d30630e21e8e2c86ee20578aa45323c3c0cdd07d6 extra\\n", &m));	puts("update selftest ok");
 	return 0;
 }
 #endif
