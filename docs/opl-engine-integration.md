@@ -134,23 +134,33 @@ A feature is complete only after discovery, argument translation, runtime startu
 
 ## Validation status
 
-The previous successful CI run `45337162329` validated:
-- ZSO host decoder/scanner fixtures;
-- UL record and split-part fixtures;
-- engine-selection capability matrix;
-- Arabic and Portuguese localization;
-- TEa.G3 launcher and Neutrino PS2SDK builds;
-- pinned OPL dependency retrieval, patch application, compilation and artifact
-  upload; the final bundle job also assembled and uploaded the combined test package.
+The latest successful master CI run is [#687](https://github.com/TEaG3/newday/actions/runs/45659251010), dated 2026-11-25, at commit `0e4c5bad82aaffd41b747745b014eb2951e48693`.
+
+It validated:
+- 37 host unit tests, including SMB/catalog, NULD migration compatibility, release/version, launcher hand-off, EE headroom, Neutrino guardrails and TEa.G3 branding;
+- ZSO host fixtures for raw/compressed images, headers, bounds, I/O and allocation failures;
+- the EE ZSO scanner adapter, including malformed input and ISO fallback;
+- catalog snapshot validation, safe paths, stable-key diff and the concurrent-reader/apply gate;
+- PS2 EE compilation of `catalog_stage.c` with an 8 KiB frame-size warning limit (compile-only; the live monitor is not wired into the launcher);
+- Arabic localization: 161 English strings and 161 Arabic strings, no missing/unused entries, 38 covered UI codepoints and a 509-glyph atlas;
+- OPL build from the pinned upstream source with the TEa.G3 UL, SMB/ETH and APA/HDL direct-launch patches; `PADEMU=1` built the DS3/DS4 USB and Bluetooth modules;
+- Neutrino runtime build from `229cf1dc7a8e0e58c2da390c1caa63e2b61795dd`, with EE core headroom of 9,840 bytes against a 1,024-byte minimum;
+- the single `TEa.G3.ELF` build and 76-file runtime manifest.
+
+The unified test bundle is [artifact 15043408874](https://github.com/TEaG3/newday/actions/runs/45659251010/artifacts/15043408874). Its downloaded ZIP passed `unzip -t`; all 76 manifest entries matched their recorded sizes and CRC-32 values. SHA-256:
+`01e18288cf0a0ec27ad740f5b691b0ad749936e8386ec57f0a67294c61f844dd`.
+
+The launcher ELF SHA-256 is `4bb1d2e89456f67e312eaa3b781c16e7856d38c23d68f2dcdbfff268d3dc443e`; standalone OPL is `21159d5a9b663b492c9232830cd53275dc842c1baa578996d3280dedc317bcb9`; Neutrino is `6be1b16207593fde6821539f234ad6cec3cad13ef1e8002df938362d7e51ca09`.
 
 CI success is not proof of game compatibility. Still required:
-1. Test the existing USB ISO/ZSO/UL adapters on a physical PS2.
+1. Test the USB ISO/ZSO/UL adapters on a physical PS2.
 2. Confirm UL entries are discovered and the selected game is passed to OPL.
 3. Confirm gameplay and sustained reads across every UL split part.
 4. Test manual `motor = opl` for USB ISO/ZSO, MX4SIO, iLink and internal FAT/exFAT HDD.
-5. Validate the OPL APA/HD Loader mini-launch on physical hardware, including games with multiple APA sub-partitions; confirm missing configuration refuses launch without creating partitions. TEa.G3 now preflights the required start sector, aggregate size and disc type before entering the OPL hand-off.
+5. Validate the OPL APA/HD Loader mini-launch on physical hardware, including games with multiple APA sub-partitions; confirm missing configuration refuses launch without creating partitions.
 6. Verify read-only SMB share compatibility, VMC/compatibility settings, sustained reads and return behaviour on physical hardware.
+7. Test DS3/DS4 pairing and input on a real PS2; successful module compilation alone is not controller validation.
 
-The unified test bundle is available from [CI run #45247633906](https://github.com/TEaG3/newday/actions/runs/45337162329) as `tea-g3-integration-test-bundle-cbce23482d2ac918d723be0f5c9ab767afaf0c74`.
+The live catalog monitor remains deliberately inactive. Its snapshot/diff and concurrency gate pass host tests and its source compiles for the EE target, but all `cv[]` readers, the real PS2 semaphore adapter and device-removal paths must be integrated and tested before activation.
 
-Do not advertise untested backend adapters as ready. Neutrino must remain available as the existing compatible path until the corresponding OPL adapter has passed physical-console tests.
+Do not advertise untested backend adapters as ready. Neutrino remains available as the existing compatible path until the corresponding OPL adapter has passed physical-console tests.
