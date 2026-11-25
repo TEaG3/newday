@@ -1481,7 +1481,7 @@ static void download_covers(void)
 }
 
 // ---- achievements (phase 16, step 1): the selected PS2 game's RetroAchievements hash, cached in
-// mass0:/nuld/ra/<serial>.txt with the ISO size, then the client on the home server asked about it; the loader
+// RA_DIR/<serial>.txt with the ISO size, then the client on the home server is asked about it; the loader
 // thread does it after the covers, one game at a time, the latest selection first ----
 static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy, ra_launching; // ra_down: 1 no network, 2 no client (toast once)
 static volatile char ra_state[MAXC];                      // 0 not asked, 1 working, then RA_SET.. (achievements.h)
@@ -1566,7 +1566,7 @@ static void ra_load_list(int i) // worker: game id from RetroAchievements (HTTPS
 }
 
 // phase 16b, at launch (render thread, worker stopped, network still up): the game's watch list to
-// mass0:/nuld/ra/<serial>.wl and Neutrino's extra config mass0:/neutrino/config/ra.toml, which loads smap,
+// RA_DIR/<serial>.wl and Neutrino's extra config NDIR/config/ra.toml, which loads smap,
 // ministack (no DHCP: the IP the launcher has now) and the agent into the game; arg gets "-ra=<list>". 0: none
 // phase 19: the titles of the achievements still to earn, for the in-game unlock notice: appended to the watch list
 // as RA_TITLES entries of {id, title}, then {count, "RATL"}; Neutrino's loader copies them next to the snapshot buffer
@@ -1617,11 +1617,11 @@ static int ra_prepare(int i, char *arg, int n)
 	if (ok && (f = fopen(path, "w"))) {
 		ok = fputs("# written by TEa.G3 at each launch (phase 16b): RetroAchievements agent in the game\n"
 		           "name = \"TEa.G3 RetroAchievements\"\n", f) >= 0;
-		if (src[(int)cv[i].src].type != SRC_UDPFS) // a nuld game's bsd-udpfs config already loads these (phase 17)
+		if (src[(int)cv[i].src].type != SRC_UDPFS) // a UDPFS source's bsd-udpfs config already loads these (phase 17)
 			ok &= fprintf(f, "depends = [\"i_dev9_hidden\"]\n[[module]]\nfile = \"smap.irx\"\nenv = [\"EE\"]\n"
 			                 "[[module]]\nfile = \"ministack.irx\"\nargs = [\"ip=%s\"]\nenv = [\"EE\"]\n", ra_me) > 0;
 		// load_order 30: after smap / ministack (20, the default). -cfg modules come first in Neutrino's list, so for a
-		// nuld game the agent loaded before bsd-udpfs' ministack and never ran (console, 2026-10-03)
+		// UDPFS game: the agent loaded before bsd-udpfs' ministack and never ran (console, 2026-10-03)
 		ok &= fprintf(f, "[[module]]\nfile = \"raagent.irx\"\nargs = [\"srv=%s\", \"me=%s\"]\nenv = [\"EE\"]\nload_order = 30\n",
 		              ra_srv_ip, ra_me) > 0;
 		ok &= fclose(f) == 0;
@@ -2755,7 +2755,7 @@ static void restart_self(void) // the setup wizard saved (#15): start TEa.G3 aga
 	run_loader_recover(2, argv);
 }
 
-// a server app (catalog APPS/): its ELF over HTTP to <home>/nuld/red.elf, run from there like a USB one. NULL or why not
+// a server app (catalog APPS/): its ELF is fetched over HTTP into the current data folder as red.elf. NULL or why not
 // ponytail: only the ELF comes down; an app that reads files next to itself needs to be on the USB
 static const char *app_fetch(int i, char *file, int n)
 {
@@ -2988,8 +2988,8 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	}
 	if (ra) argv[argc++] = "-cfg=ra", argv[argc++] = ra_arg; // phase 16b: the achievements agent and its watch list
 	if (!strcasecmp(ini_get(&cfg, "juegos", "logo", "no"), "si")) argv[argc++] = "-logo"; // Neutrino runs the game through rom0:PS2LOGO
-	// HD Loader needs Neutrino's own load stage (hdlfs; nhddl neutrino.c); so do nuld games, whose network stack is
-	// Neutrino's own (the launcher's lwIP is shut down, phase 17)
+	// HD Loader needs Neutrino's own load stage (hdlfs; nhddl neutrino.c); so do games
+	// whose selected source relies on Neutrino's network stack (the launcher's lwIP is shut down, phase 17)
 	if (st != SRC_HDL && st != SRC_UDPFS && st != SRC_SMB) argv[argc++] = "-qb";
 	int len = 0;
 	for (int k = 0; k < argc; k++) len += strlen(argv[k]) + 1;

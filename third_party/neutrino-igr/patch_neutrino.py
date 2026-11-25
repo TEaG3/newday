@@ -202,7 +202,7 @@ edit(L, '    printf("  -igrmenu=<mask>   TEa.G3: libpad button mask that opens t
      '    printf("  -igrlang=<en|ar>  TEa.G3: language of the in-game menu (phase 18)\\n");\n')
 edit(L, "static int parse_cmdline_args(int argc, char *argv[], int *out_iELFArgcStart)\n", r'''#include "../../../common/include/ra_snap.h"
 // TEa.G3 phase 17: the watch list file is read while the boot environment's devices are still there (before the IOP
-// reboot into the load environment: without -qb, a nuld game, mass0: is gone by ra_place). Heap, not BSS: a 16 KB
+// reboot into the load environment: without -qb, the USB mass0: mount is gone by ra_place). Heap, not BSS: a 16 KB
 // static array in this loader broke every launch (phase 16b)
 static uint8_t *ra_file;
 static int ra_file_len;
