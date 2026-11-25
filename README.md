@@ -1,6 +1,6 @@
 # TEa.G3 — a game launcher for the PlayStation 2
 
-TEa.G3 is a launcher that runs on a real PS2. It lists your games with their covers, starts ISO/ZSO games through [Neutrino](https://github.com/rickgaiser/neutrino) by default and USBExtreme UL through OPL, and adds what a modern console menu has: covers downloaded by the
+TEa.G3 is a launcher for the PlayStation 2. It lists games with their covers and routes each format to the source-specific runtime: USB/BDM ISO and ZSO through OPL, configured SMB ISO and ZSO through OPL ETH, APA/HD Loader ISO through OPL HDD, and supported ISO sources through Neutrino when selected or when no OPL adapter is available. ZSO is OPL-only in this build; USBExtreme UL is always OPL-only. The default configuration selects OPL (`motor = opl`). It adds what a modern console menu has: covers downloaded by the
 console itself, 3D save icons, virtual memory cards per game, an in-game menu, games served from a home server, and
 RetroAchievements on real hardware. Arabic is the primary and default interface language; English is the only secondary language.
 
