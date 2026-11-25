@@ -5,12 +5,12 @@ const { resolveRoute } = require("../site/opl-demo.js");
 
 const runtimeSources = ["i18n.js", "opl-demo.js", "release.js", "themes.js"]
   .map(name => fs.readFileSync(path.join(__dirname, "../site", name), "utf8"))
-  .join("\\n");
+  .join(" ");
 assert.match(runtimeSources, /tea-g3:languagechange/);
 assert.doesNotMatch(runtimeSources, /nuld:languagechange/);
 const siteCss = fs.readFileSync(path.join(__dirname, "../site/site.css"), "utf8");
-assert.match(siteCss, /\\.tea-g3-rtl/);
-assert.doesNotMatch(siteCss, /\\.nuld-rtl/);
+assert.match(siteCss, /[.]tea-g3-rtl/);
+assert.doesNotMatch(siteCss, /[.]nuld-rtl/);
 
 const formats = ["iso", "zso", "ul"];
 const sources = ["usb", "bdm", "smb", "hdl", "other"];
