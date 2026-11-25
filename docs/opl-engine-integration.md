@@ -62,19 +62,23 @@ post-launch return path, not proof that every failed `ExecPS2` can recover.
 
 ## OPL build and dependency pinning
 
-- Upstream source:
-  `ps2homebrew/Open-PS2-Loader@b3a2199795fe89ba7e2dd7b843354472dff2c3eb`
-- Upstream `lwNBD` dependency:
-  `15f1c14536d662e2e00d38d0aa91ef24149e8b96`
-- The OPL repository does not declare `lwNBD` as a Git submodule. Its Makefile
-  provides `download_lwNBD` and makes `clean` depend on that target.
-- CI explicitly runs and verifies `download_lwNBD.sh`, applies the TEa.G3
-  direct-boot patch, runs `make clean` and `make NOT_PACKED=1`, then uploads
-  the standalone `OPL.ELF` artifact.
+- Complete source: `TEaG3/OPL` at
+  `46bad5a4a469c51e45eb1ed879fe43c100b8cb7b`, pinned as the `engine/opl`
+  submodule.
+- Build helpers: `download_lwNBD.sh` and `lang_compiler.py` are fetched from
+  `ps2homebrew/Open-PS2-Loader@b3a2199795fe89ba7e2dd7b843354472dff2c3eb`.
+- `lwNBD` is checked out at
+  `15f1c14536d662e2e00d38d0aa91ef24149e8b96`.
+- The TEaG3/OPL fork does not declare `lwNBD` as a Git submodule. CI runs the
+  pinned downloader and verifies the exact dependency revision before
+  `make clean`.
+- The fork omits generated language header/source files. CI uses the pinned
+  compiler with the fork's `lng_tmpl/_base.yml` to generate them, then builds
+  with `make NOT_PACKED=1 RTL=1 PADEMU=1`.
 
 The direct-boot patches are maintained in `tools/patch_opl_ul.py`,
 `tools/patch_opl_eth.py` and `tools/patch_opl_hdl.py`, and are applied to the
-pinned upstream source during CI. The BDM patch:
+pinned TEaG3/OPL source during CI. The BDM patch:
 - accepts a `bdm` startup mode with an explicit OPL driver name and device unit;
 - maps USB to `usb`, MX4SIO to `sdc`, iLink to `sd`, and ATA-backed HDD to `ata`;
 - accepts a `ul` startup mode plus split-part count for USBExtreme;
