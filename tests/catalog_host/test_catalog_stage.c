@@ -132,7 +132,7 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_scan_cancelled(&guard));
     assert(!catalog_guard_try_apply(&guard));
-    assert(catalog_guard_scan_end(&guard));
+    assert(!catalog_guard_scan_end(&guard)); /* a cancelled scan cannot be published */
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_can_scan(&guard));
 
