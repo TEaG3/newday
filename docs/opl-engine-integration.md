@@ -134,7 +134,10 @@ A feature is complete only after discovery, argument translation, runtime startu
 
 ## Validation status
 
-The latest successful master CI run is [#687](https://github.com/TEaG3/newday/actions/runs/45659251010), dated 2026-11-25, at commit `0e4c5bad82aaffd41b747745b014eb2951e48693`.
+The latest successful post-merge master run is
+[45688916569](https://github.com/TEaG3/newday/actions/runs/45688916569),
+dated 2026-11-25, at commit
+`6644f213b7feb44beb18a246e48bc975e5a760f8`.
 
 It validated:
 - 37 host unit tests, including SMB/catalog, NULD migration compatibility, release/version, launcher hand-off, EE headroom, Neutrino guardrails and TEa.G3 branding;
@@ -143,14 +146,24 @@ It validated:
 - catalog snapshot validation, safe paths, stable-key diff and the concurrent-reader/apply gate;
 - PS2 EE compilation of `catalog_stage.c` with an 8 KiB frame-size warning limit (compile-only; the live monitor is not wired into the launcher);
 - Arabic localization: 161 English strings and 161 Arabic strings, no missing/unused entries, 38 covered UI codepoints and a 509-glyph atlas;
-- OPL build from the pinned upstream source with the TEa.G3 UL, SMB/ETH and APA/HDL direct-launch patches; `PADEMU=1` built the DS3/DS4 USB and Bluetooth modules;
+- the pinned `TEaG3/OPL` source at `46bad5a4a469c51e45eb1ed879fe43c100b8cb7b`, with the TEa.G3 UL, BDM, ETH and APA/HDL direct-launch patches; `RTL=1` and `PADEMU=1` were used, and DS3/DS4 USB/Bluetooth modules were built;
+- the pinned `lwNBD` dependency at `15f1c14536d662e2e00d38d0aa91ef24149e8b96`, with the upstream downloader and language compiler fetched from pinned commit `b3a2199795fe89ba7e2dd7b843354472dff2c3eb`;
 - Neutrino runtime build from `229cf1dc7a8e0e58c2da390c1caa63e2b61795dd`, with EE core headroom of 9,840 bytes against a 1,024-byte minimum;
 - the single `TEa.G3.ELF` build and 76-file runtime manifest.
 
-The unified test bundle is [artifact 15043408874](https://github.com/TEaG3/newday/actions/runs/45659251010/artifacts/15043408874). Its downloaded ZIP passed `unzip -t`; all 76 manifest entries matched their recorded sizes and CRC-32 values. SHA-256:
-`01e18288cf0a0ec27ad740f5b691b0ad749936e8386ec57f0a67294c61f844dd`.
+The unified test bundle is
+[artifact 15058490585](https://github.com/TEaG3/newday/actions/runs/45688916569/artifacts/15058490585).
+Its downloaded ZIP passed `unzip -t`; all 76 manifest entries matched their
+recorded sizes and CRC-32 values. SHA-256:
 
-The launcher ELF SHA-256 is `4bb1d2e89456f67e312eaa3b781c16e7856d38c23d68f2dcdbfff268d3dc443e`; standalone OPL is `21159d5a9b663b492c9232830cd53275dc842c1baa578996d3280dedc317bcb9`; Neutrino is `6be1b16207593fde6821539f234ad6cec3cad13ef1e8002df938362d7e51ca09`.
+`5f752c367e4056241e2b390d29235fd3731e59169eee5822422fc156262157b3`.
+
+The launcher ELF SHA-256 is
+`cfe29292b57d6d52f50f3bd1902fa3f8273730b1e9b6a289ecfa5404e2e1e7cc`;
+standalone OPL is
+`ed3d7712c7ae220509b27f98c0d9afb09947e3b659f7e649f6913cfea61f8e60`;
+Neutrino is
+`6be1b16207593fde6821539f234ad6cec3cad13ef1e8002df938362d7e51ca09`.
 
 CI success is not proof of game compatibility. Still required:
 1. Test the USB ISO/ZSO/UL adapters on a physical PS2.
