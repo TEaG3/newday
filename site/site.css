@@ -57,6 +57,7 @@ h1, h2, h3 { font-stretch: 125%; line-height: 1.08; }
 h1 { margin: 0; font-weight: 700; font-size: clamp(34px, 4.4vw, 58px); letter-spacing: -.01em; }
 h2 { margin: 0 0 12px; font-weight: 700; font-size: clamp(30px, 3vw, 38px); }
 section { padding-top: 120px; }
+#opl-engine { padding-top: 56px; }
 .lead { margin: 0 0 32px; color: var(--text2); max-width: 680px; }
 
 /* hero */
@@ -69,6 +70,13 @@ section { padding-top: 120px; }
 .screen canvas { display: block; width: 100%; aspect-ratio: 16 / 9; }
 .caption { display: flex; flex-wrap: wrap; gap: 8px 32px; padding-top: 14px; font: 13px var(--mono); color: var(--mist); }
 .caption > :first-child { margin-right: auto; }
+.preview-credit, .maker-credit {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 7px 14px; border: 1px solid var(--acid); background: var(--panel);
+  color: var(--fg); font: 700 16px/1.5 "Noto Sans Arabic", Tahoma, sans-serif;
+  letter-spacing: 0; white-space: nowrap;
+}
+.maker-credit { margin: 10px 0 0; width: fit-content; max-width: 100%; }
 
 /* ruled table */
 .rules { width: 100%; border-collapse: collapse; }
