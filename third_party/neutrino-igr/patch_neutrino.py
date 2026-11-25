@@ -186,8 +186,11 @@ L = "ee/loader/src/main.c"
 edit(L, '        else if (!strncmp(argv[i], "-igrmenu=", 9))\n',
      '        else if (!strncmp(argv[i], "-ra=", 4)) // ORBIT phase 16b\n'
      '            ra_path = &argv[i][4];\n'
-     '        else if (!strncmp(argv[i], "-igrlang=", 9)) // ORBIT phase 18\n'
-     '            igr_lang = !strcmp(&argv[i][9], "ar") ? 1 : 0;\n'
+     '        else if (!strncmp(argv[i], "-igrlang=", 9)) { // TEa.G3: accept only known IGR languages\n'
+     '            if (!strcmp(&argv[i][9], "ar")) igr_lang = 1;\n'
+     '            else if (!strcmp(&argv[i][9], "en")) igr_lang = 0;\n'
+     '            else printf("Neutrino IGR: unsupported language \'%s\'; using English\\n", &argv[i][9]);\n'
+     '        }\n'
      '        else if (!strncmp(argv[i], "-igrmenu=", 9))\n')
 edit(L, 'static const char *igr_path = "";\n',
      'static const char *igr_path = "";\n'

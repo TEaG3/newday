@@ -72,7 +72,7 @@ static vu32 *const dma_chcr[] = {(vu32 *)0x10008000, (vu32 *)0x10009000, (vu32 *
 
 // Return progress, shown as the screen colour (the GS is reset, so its background is all that is displayed):
 // blue thread awake, magenta RPC up, green IOP reset sent, yellow IOP rebooted, white LoadExecPS2 of the exit ELF,
-// red LoadExecPS2 returned (then the browser)
+// red = kernel unpatch refused or LoadExecPS2 returned (unsafe reboot is stopped)
 #define STAGE(c) (*GS_REG_PMODE = 0, *GS_REG_BGCOLOR = (c))
 
 typedef struct
@@ -224,30 +224,38 @@ static void power_off(void)
         ;
 }
 
-// Undo the two kernel patches of Neutrino's loader (ee/loader/src/patch.c). Left in place, the LoadExecPS2 of
-// OSDSYS / FMCB would start ee_core again instead of EELOAD, and the user memory clear would start at our modules
-static void kernel_unpatch(void)
+// Undo Neutrino's loader patches. If an upstream signature changes, do not silently enter OSDSYS with either
+// patch still active. Find BOTH patch sites first; only then write either site's replacement instructions.
+static int kernel_unpatch(void)
 {
-    u32 *p;
+    u32 *p, *eeload_patch = NULL, *mem_clear_patch = NULL;
     DI();
     ee_kmode_enter();
-    for (p = (u32 *)0x80001000; p < (u32 *)0x80030000; p++) // sbvpp_replace_eeload: lui s2 / ori s2 / li a3, 0
+    for (p = (u32 *)0x80001000; p < (u32 *)0x80030000 - 4; p++) // sbvpp_replace_eeload: lui s2 / ori s2 / li a3, 0
         if (p[0] == 0x8FA30010 && (p[1] >> 16) == 0x3C12 && (p[2] >> 16) == 0x3652 && p[3] == 0x24070000 &&
             p[4] == 0x18E00009) {
-            p[1] = 0x0240302D; // daddu a2, s2, zero
-            p[2] = 0x8FA50014; // lw    a1, 0x0014(sp)
-            p[3] = 0x8C67000C; // lw    a3, 0x000C(v1)
+            eeload_patch = p;
             break;
         }
-    for (p = (u32 *)0x80001000; p < (u32 *)0x80080000; p++) // sbvpp_patch_user_mem_clear: a0 = ModStorageEnd
+    for (p = (u32 *)0x80001000; p < (u32 *)0x80080000 - 2; p++) // sbvpp_patch_user_mem_clear: a0 = ModStorageEnd
         if ((p[0] >> 16) == 0x3C04 && (p[1] & 0xFC000000) == 0x0C000000 && (p[2] >> 16) == 0x3484 &&
             (p[0] << 16 | (p[2] & 0xFFFF)) == (u32)eec.ModStorageEnd) {
-            p[0] = 0x3C040008; // lui a0, 0x0008
-            p[2] = 0x34842000; // ori a0, a0, 0x2000
+            mem_clear_patch = p;
             break;
         }
+    if (eeload_patch == NULL || mem_clear_patch == NULL) {
+        ee_kmode_exit();
+        EI();
+        return 0;
+    }
+    eeload_patch[1] = 0x0240302D; // daddu a2, s2, zero
+    eeload_patch[2] = 0x8FA50014; // lw    a1, 0x0014(sp)
+    eeload_patch[3] = 0x8C67000C; // lw    a3, 0x000C(v1)
+    mem_clear_patch[0] = 0x3C040008; // lui a0, 0x0008
+    mem_clear_patch[2] = 0x34842000; // ori a0, a0, 0x2000
     ee_kmode_exit();
     EI();
+    return 1;
 }
 
 
@@ -326,7 +334,12 @@ static void IGR_Thread(void *arg)
     services_exit();
     // Leave as any program does: LoadExecPS2 drops the game's threads and handlers, and the BIOS's EELOAD loads the
     // exit ELF (rom0:OSDSYS: a reboot, FMCB then autoboots ORBIT). OSDSYS hangs when started by a bare ExecPS2
-    kernel_unpatch();
+    if (!kernel_unpatch()) {
+        // The IOP is reset and the game is paused. Do not reboot through a kernel we failed to restore.
+        STAGE(COLOR_RED);
+        for (;;)
+            ;
+    }
     FlushCache(0);
     FlushCache(2); // the kernel code just changed
     STAGE(COLOR_WHITE);

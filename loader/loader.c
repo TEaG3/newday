@@ -31,7 +31,10 @@ int main(int argc, char *argv[])
 	if (r != 0 || !elf.epc) { SifExitRpc(); return -2; }
 	for (u32 a = 0x100000; a < (u32)GetMemorySize(); a += 16) *(volatile u128 *)a = 0;
 	FlushCache(0);
-	if (!*argv[1]) argv[1] = argv[0]; // "": the program's argv[0] is the file (phase 14, shorter arguments)
+	/* The second-stage contract reserves argv[0] for the ELF path and passes argv[1..] to the target.
+	   An empty first target argument is replaced with the ELF path for the legacy POPStarter convention;
+	   a caller-supplied non-empty value means the target's argv[0] is not necessarily a path. */
+	if (!*argv[1]) argv[1] = argv[0];
 	FlushCache(0);
 	FlushCache(2);
 	return ExecPS2((void *)elf.epc, (void *)elf.gp, argc - 1, argv + 1);

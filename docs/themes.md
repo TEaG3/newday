@@ -1,24 +1,29 @@
-# Making a theme for NULD
+# Making a theme for TEa.G3
 
-Since v1.3 NULD has themes. Twelve are built in; any other is a **folder** you drop on the USB. This page is all you
-need to make one: no compiler, no tools beyond a text editor and, if you want a picture, an image editor.
+TEa.G3 has twelve built-in themes. Any additional theme is a **folder** you copy to the launcher's data directory on
+the USB device or MMCE card. This guide needs no compiler or special tools—only a text editor and, optionally, an
+image editor.
 
 A working example is next to this page: [`themes/ocaso/`](themes/ocaso/) (a `theme.ini` and a `fondo.jpg`).
 
 ## What a theme is
 
 ```
-mass:/nuld/themes/
+mass0:/tea_g3/themes/
 └── ocaso/              the folder's name is what config.ini stores ([ui] tema = ocaso)
     ├── theme.ini       name, base and colours
     └── fondo.jpg       optional: the background picture (or fondo.png)
 ```
 
-- Copy the folder to `nuld/themes/` on the device NULD starts from (the USB stick, or the MMCE card).
-- Start NULD, press **START**, go to **Theme** and move left / right: your theme comes after the built-in ones, and
+- Copy the folder to `tea_g3/themes/` on the device TEa.G3 starts from (USB or MMCE). The home-device prefix may
+  therefore be `mass0:`, `mmce0:` or `mmce1:`.
+- Start TEa.G3, press **START**, go to **Theme** and move left / right: your theme comes after the built-in ones, and
   is shown at once behind the panel. **Save** keeps it.
-- Up to **8** theme folders are read. A folder with the name of a built-in theme (`torres`, `nuld`, ...) is skipped.
-- The folder's name: 31 characters at most, plain letters and digits are the safe choice.
+- Up to **8** custom theme folders are read. This is a code limit, not a design choice: `themes.c` reserves
+  `TH_MAX - TH_N` slots, currently eight after the twelve built-in themes. Folders named after built-in themes
+  (`torres`, `nuld`, etc.) are skipped.
+- Folder names are limited to **31 characters** by the 32-byte key buffers and the explicit length check in
+  `themes.c`; plain letters and digits are the safest choice.
 
 ## theme.ini
 
@@ -104,13 +109,13 @@ colour: two dark colours closer than about 8 steps per channel look the same on 
 
 ## If it does not show up
 
-- The folder must be at `nuld/themes/<name>/theme.ini` on the same device as `nuld/config.ini`.
+- The folder must be at `tea_g3/themes/<name>/theme.ini` on the same home device as `tea_g3/config.ini`.
 - A colour that is not exactly six hex digits is ignored (the base's is used).
 - If the ground is a flat colour instead of your picture, the file could not be decoded (CMYK JPEGs, a file over 4 MB)
   or the console ran out of memory: save it again as a plain RGB JPEG, 1280 x 720.
-- If the theme named in `config.ini` is not there any more, NULD starts with Torres.
+- If the theme named in `config.ini` is not there any more, TEa.G3 starts with Torres.
 
 ## Sharing it
 
-Zip the folder. Whoever gets it unzips it into `nuld/themes/`. If you publish a theme, say which NULD version you made
+Zip the folder. Whoever gets it unzips it into `tea_g3/themes/`. If you publish a theme, say which TEa.G3 version you made
 it on, and do not put artwork in it that is not yours to share.
