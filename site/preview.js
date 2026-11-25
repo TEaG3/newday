@@ -995,7 +995,7 @@ function show(m) { mode = m; tMode = now; lastInput = now; }
 
 // ---- driven by the theme maker (themes.js) ----
 let overlay = null, tour = null, seen = true; // tour: the idle demo also changes view, and says so
-if ('IntersectionObserver' in window) new IntersectionObserver(e => { seen = e[e.length - 1].isIntersecting; }).observe(cv); // drawn over the home, last: the maker's setup panel
+if ('IntersectionObserver' in window) new IntersectionObserver(e => { seen = e[e.length - 1].isIntersecting; if (seen) scheduleFrame(); }).observe(cv); // pause the canvas when it is off screen
 const alphaOf = c => { const m = /rgba\([^)]*,\s*([\d.]+)\)/.exec(c || ''); return m ? +m[1] : 1; };
 const tone = (hex, like) => { const n = parseInt(hex, 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${alphaOf(like)})`; };
 window.TEaG3Preview = {
@@ -1026,9 +1026,21 @@ window.TEaG3Preview = {
 cv.addEventListener('click', e => { if (mode !== 'home') { mode = 'home'; tFade = now; lastInput = now; return; } const r = cv.getBoundingClientRect(); const d = (e.clientX - r.left) / r.width < .5 ? -1 : 1; move(view === 2 ? d : d); lastInput = now; });
 
 // ---- the frame ----
-// Keep the original TEa.G3 animation scheduler: one requestAnimationFrame per frame.
+// Keep one pending animation callback, pause while hidden/off-screen, and cap touch devices
+// at 30 drawn frames per second so the detailed launch-screen effects cannot monopolize Safari.
+let rafPending = false, lastDrawMs = 0;
+const frameInterval = matchMedia('(pointer: coarse), (max-width: 900px)').matches ? 1000 / 30 : 1000 / 60;
+function scheduleFrame() {
+  if (!rafPending && seen && !document.hidden) {
+    rafPending = true;
+    requestAnimationFrame(frame);
+  }
+}
 function frame(ms) {
-  if (!seen) { requestAnimationFrame(frame); return; } // off screen: nothing to draw
+  rafPending = false;
+  if (!seen || document.hidden) return;
+  if (ms - lastDrawMs < frameInterval) { scheduleFrame(); return; }
+  lastDrawMs = ms;
   const t = ms / 1000 + T0, dt = Math.min(.05, Math.max(0, t - now)); now = t;
   for (const o of G) if (!o.blur && o.im[2].complete && o.im[2].naturalWidth) derive(o);
   if (mode === 'home' && !overlay && auto.checked && t - lastInput > 5 && t - Math.max(tMove, tView) > 3.2) {
@@ -1049,7 +1061,7 @@ function frame(ms) {
     const dark = Math.max(u < .45 ? 1 - ease(u / .45) : 0, out > 0 && u < end ? ease(out) : 0);
     if (dark > 0) { g.fillStyle = `rgba(0,0,0,${dark})`; g.fillRect(0, 0, W, H); }
     if (u >= end + (spl ? 0 : 1.3)) { mode = 'home'; tFade = t; if (!spl) tTheme = t; lastInput = Math.max(lastInput, t - 3); }
-    requestAnimationFrame(frame);
+    scheduleFrame();
     return;
   }
   T.bg(t);
@@ -1073,10 +1085,11 @@ function frame(ms) {
   if (T.fx) T.fx(t);
   if (overlay) { g.save(); overlay(g); g.restore(); }
   const fi = (t - tFade) / .35; if (fi < 1) { g.fillStyle = `rgba(0,0,0,${1 - ease(fi)})`; g.fillRect(0, 0, W, H); }
-  requestAnimationFrame(frame);
+  scheduleFrame();
 }
 window.TEaG3Preview.set('nuld', {}, {}, null, false);
 B.forEach((b, i) => Object.assign(b, place(i)));
 tView = -9;
-requestAnimationFrame(frame);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleFrame(); });
+scheduleFrame();
 })();
