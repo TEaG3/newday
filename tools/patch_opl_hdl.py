@@ -68,6 +68,28 @@ hdd = once(
     hdd,
     '''            configGetStrCopy(config, "hdd_partition", name, sizeof(name));
             if (gTEaG3HDDMiniMode) {
+                int valid = name[0] != '\\0' && strlen(name) <= APA_IDMAX;
+                for (const unsigned char *p = (const unsigned char *)name; valid && *p; p++)
+                    if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') ||
+                          (*p >= '0' && *p <= '9') || *p == '.' || *p == '_' ||
+                          *p == '-' || *p == '+'))
+                        valid = 0;
+                if (!valid) {
+                    gOPLPart[0] = '\\0';
+                    configFree(config);
+                    close(fd);
+                    fileXioUmount("pfs0:");
+                    return;
+                }
+            }
+            snprintf(gOPLPart, sizeof(gOPLPart), "hdd0:%s", name);
+
+            configFree(config);
+            close(fd);
+
+            return;''',
+    '''            configGetStrCopy(config, "hdd_partition", name, sizeof(name));
+            if (gTEaG3HDDMiniMode) {
                 int valid = name[0] != '\0' && strlen(name) <= APA_IDMAX;
                 for (const unsigned char *p = (const unsigned char *)name; valid && *p; p++)
                     if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') ||
@@ -84,28 +106,6 @@ hdd = once(
             }
             snprintf(gOPLPart, sizeof(gOPLPart), "hdd0:%s", name);
             APA_TRACE("APA_TRACE hddFindOPLPartition: config selected partition='%s' gOPLPart='%s'\\n", name, gOPLPart);
-
-            configFree(config);
-            close(fd);
-
-            return;''',
-    '''            configGetStrCopy(config, "hdd_partition", name, sizeof(name));
-            if (gTEaG3HDDMiniMode) {
-                int valid = name[0] != '\\0' && strlen(name) <= APA_IDMAX;
-                for (const unsigned char *p = (const unsigned char *)name; valid && *p; p++)
-                    if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z') ||
-                          (*p >= '0' && *p <= '9') || *p == '.' || *p == '_' ||
-                          *p == '-' || *p == '+'))
-                        valid = 0;
-                if (!valid) {
-                    gOPLPart[0] = '\\0';
-                    configFree(config);
-                    close(fd);
-                    fileXioUmount("pfs0:");
-                    return;
-                }
-            }
-            snprintf(gOPLPart, sizeof(gOPLPart), "hdd0:%s", name);
 
             configFree(config);
             close(fd);
