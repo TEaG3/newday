@@ -200,6 +200,7 @@ jobs:
           grep -Fq 'argv[6] = "mini"' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'argv[5] = disc_type' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'run_loader_recover(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader_recover(15, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'run_loader_recover(9, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'strcasecmp(&name[size - 4], ".zso")' src/supportbase.c
           grep -Fq 'IOP_OBJS = isofs.o zso.o lz4.o imports.o' modules/isofs/Makefile
@@ -210,8 +211,13 @@ jobs:
           assert 'char *opl_argv[9]' in bdm
           assert 'opl_argv[8] = (char *)igr_stub_path();' in bdm
           assert 'run_loader_recover(9, opl_argv);' in bdm
+          eth = launcher.split('if (engine == ENGINE_OPL_ETH)', 1)[1].split('if (engine == ENGINE_OPL_HDD)', 1)[0]
+          hdd = launcher.split('if (engine == ENGINE_OPL_HDD)', 1)[1].split('if (cv[i].kind != K_PS2)', 1)[0]
+          assert 'char *opl_argv[15]' in eth and 'run_loader_recover(15, opl_argv);' in eth
+          assert 'char *opl_argv[9]' in hdd and 'run_loader_recover(9, opl_argv);' in hdd
           assert 'HD Loader partition metadata is incomplete' in launcher
-          print('OPL BDM IGR argument and HDD preflight checks passed')
+          assert 'ENGINE_REASON_ENGINE_REMOVED' in Path("../../engine.c").read_text(encoding="utf-8")
+          print('OPL BDM/ETH/HDD IGR handoff and no-fallback checks passed')
           PY
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py"
           grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[13]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py"
