@@ -83,10 +83,10 @@ typedef struct {
     pthread_mutex_t mutex;
 } mutex_context;
 
-static void guard_lock(void *context)
+static int guard_lock(void *context)
 {
     mutex_context *m = (mutex_context *)context;
-    assert(pthread_mutex_lock(&m->mutex) == 0);
+    return pthread_mutex_lock(&m->mutex) == 0;
 }
 
 static void guard_unlock(void *context)

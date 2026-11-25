@@ -9,6 +9,7 @@ static pthread_mutex_t test_sema = PTHREAD_MUTEX_INITIALIZER;
 static int sema_created;
 static int fail_create;
 static int fail_delete;
+static int fail_wait;
 
 int CreateSema(ee_sema_t *sema)
 {
@@ -45,7 +46,7 @@ int DeleteSema(int sema_id)
 
 int WaitSema(int sema_id)
 {
-    if (sema_id != 7 || !sema_created) {
+    if (fail_wait || sema_id != 7 || !sema_created) {
         return -1;
     }
     return pthread_mutex_lock(&test_sema);
@@ -96,6 +97,16 @@ int main(void)
     assert(context.sema_id == 7);
     assert(sema_created);
     assert(!catalog_guard_ps2_init(&guard, &context));
+
+    /* A failed PS2 semaphore wait must fail closed without changing guard state. */
+    fail_wait = 1;
+    assert(!catalog_guard_read_begin(&guard));
+    assert(!catalog_guard_can_scan(&guard));
+    assert(catalog_guard_scan_cancelled(&guard) == -1);
+    assert(guard.readers == 0);
+    assert(!catalog_guard_ps2_destroy(&guard, &context));
+    assert(context.sema_id == 7 && sema_created);
+    fail_wait = 0;
 
     args.guard = &guard;
     args.iterations = ITERATIONS;
