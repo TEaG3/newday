@@ -2684,14 +2684,19 @@ static const char *launch_err; // why the last launch() came back (toast)
 /* run_loader normally transfers control permanently. If validation or ExecPS2
    returns, the old launcher is still resident: restore VBlank so gfx_flip()
    cannot wait forever on the handler removed by gfx_shutdown(). */
+static void handoff_returned(const char *kind)
+{
+	launch_err = L("Could not start");
+	if (gfx_resume())
+		printf("TEa.G3: %s hand-off returned; launcher display resumed\n", kind);
+	else
+		printf("TEa.G3: %s hand-off returned; VBlank handler could not be restored\n", kind);
+}
+
 static void run_loader_recover(int argc, char **argv)
 {
 	run_loader(argc, argv);
-	launch_err = L("Could not start");
-	if (gfx_resume())
-		printf("TEa.G3: ELF hand-off returned; launcher display resumed\n");
-	else
-		printf("TEa.G3: ELF hand-off returned; VBlank handler could not be restored\n");
+	handoff_returned("ELF");
 }
 
 
@@ -2826,6 +2831,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		gfx_shutdown();
 		SifExitRpc();
 		LoadExecPS2(cv[i].disc == D_PS2 ? "rom0:PS2LOGO" : "rom0:PS1DRV", cv[i].disc == D_PS2 ? 1 : 2, a);
+		handoff_returned("BIOS");
 		return;
 	}
 	if (engine == ENGINE_OPL_UL) {
