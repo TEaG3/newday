@@ -181,12 +181,12 @@ curl http://localhost:18290/catalog      # what the PS2 will see</pre>
       <div class="scroll"><table>
         <tr><th>Game format</th><th>Source</th><th>Setting</th><th>Engine</th></tr>
         <tr><td>ISO</td><td>USB / MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL BDM direct boot</td></tr>
-        <tr><td>ISO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
-        <tr><td>ISO</td><td>APA / HD Loader internal HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL HDD mini-launch; existing OPL config required</td></tr>
+        <tr><td>ISO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>Disabled; OPL ETH is not wired to the launcher</td></tr>
+        <tr><td>ISO</td><td>APA / HD Loader internal HDD</td><td><code>auto</code> / <code>opl</code></td><td>Disabled; OPL HDD mini-launch is not wired to the launcher</td></tr>
         <tr><td>ISO/ZSO</td><td>SMB / MMCE / UDPBD / UDPFS / APA</td><td>OPL only</td><td>Disabled; no OPL adapter</td></tr>
         
         <tr><td>ZSO</td><td>USB / MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL BDM direct boot</td></tr>
-        <tr><td>ZSO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
+        <tr><td>ZSO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>Disabled; no enabled OPL ETH adapter</td></tr>
         <tr><td>ZSO</td><td>Any source</td><td>Neutrino</td><td>Rejected; Neutrino is not a runtime engine</td></tr>
         <tr><td>ZSO</td><td>SMB / APA / MMCE / UDP or unavailable OPL route</td><td>OPL only</td><td>Rejected; no fallback engine</td></tr>
         <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td>OPL UL direct boot</td></tr>
