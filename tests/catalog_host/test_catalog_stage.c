@@ -131,6 +131,7 @@ static void test_guard_and_concurrent_reader(void)
     assert(!catalog_guard_can_scan(&guard));
     assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_scan_cancelled(&guard));
+    assert(!catalog_guard_request_apply(&guard)); /* no candidate may be published while scanning */
     assert(!catalog_guard_try_apply(&guard));
     assert(!catalog_guard_scan_end(&guard)); /* a cancelled scan cannot be published */
     assert(catalog_guard_set_activity(&guard, 0, 0));
@@ -140,7 +141,20 @@ static void test_guard_and_concurrent_reader(void)
     assert(!catalog_guard_scan_begin(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_scan_begin(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1)); /* storage I/O becoming busy cancels an active scan */
+    assert(catalog_guard_scan_cancelled(&guard));
+    assert(!catalog_guard_scan_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+    assert(catalog_guard_scan_begin(&guard));
     assert(catalog_guard_scan_end(&guard));
+
+    assert(catalog_guard_set_activity(&guard, 1, 1));
+    assert(catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_can_scan(&guard));
+    assert(!catalog_guard_try_apply(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+    assert(catalog_guard_try_apply(&guard));
+    assert(catalog_guard_finish_apply(&guard));
 
     memset(&reader, 0, sizeof(reader));
     reader.guard = &guard;
