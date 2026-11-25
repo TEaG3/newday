@@ -2609,8 +2609,8 @@ static int launch_source_ready(int i)
     s = (unsigned char)cv[i].src;
     if (s >= (unsigned)nsrc) return 0;
 
-    if (cv[i].kind == K_PS2 && on_catalog(i))
-        return net_ready() >= 0; /* The server-backed catalog has no local ISO path. */
+    if ((cv[i].kind == K_PS2 || cv[i].kind == K_APP) && on_catalog(i))
+        return net_ready() >= 0; /* Server-backed entries have no local file path. */
 
     if (cv[i].kind == K_PS2 && src[s].type == SRC_HDL) {
         DIR *d = opendir("hdd0:");
