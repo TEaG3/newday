@@ -60,6 +60,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ steps.opl-ref.outputs.sha }}"
           git fetch --prune --unshallow
           curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/download_lwNBD.sh -o download_lwNBD.sh
+          chmod +x download_lwNBD.sh
+          test -x download_lwNBD.sh
           bash ./download_lwNBD.sh
           python3 -m py_compile lang_compiler.py check_arabic_translation.py
           python3 -c "import yaml"

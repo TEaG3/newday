@@ -43,6 +43,8 @@ jobs:
           python3 -m unittest tests/test_smb_catalog.py tests/test_nuld_catalog.py tests/test_release_version.py tests/test_launcher_handoff.py tests/test_ee_core_headroom.py tests/test_neutrino_guardrails.py tests/test_teag3_branding.py
           cc -std=c99 -Wall -Wextra -Werror -pthread -I. catalog_stage.c tests/catalog_host/test_catalog_stage.c -o /tmp/catalog_stage_test
           /tmp/catalog_stage_test
+          cc -std=c99 -Wall -Wextra -Werror -pthread -Itests/catalog_host/ps2stub -I. catalog_stage.c catalog_guard_ps2.c tests/catalog_host/test_catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_test
+          /tmp/catalog_guard_ps2_test
           cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST engine.c -o /tmp/engine_selftest
           /tmp/engine_selftest
           node tests/site-opl-demo.test.cjs
@@ -98,6 +100,7 @@ jobs:
               python3 tools/font.py --selftest
               make test
               mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Werror -Wframe-larger-than=8192 -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_stage.c -o /tmp/catalog_stage_ee.o
+              mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Werror -Wframe-larger-than=8192 -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_ee.o
               python3 tools/theme_check.py
               make clean
               bash tools/build_neutrino.sh 2>&1 | tee build.log
@@ -171,6 +174,8 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE/tea-g3/engine/opl"
           apk add --no-cache curl py3-yaml
           curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/download_lwNBD.sh -o download_lwNBD.sh
+          chmod +x download_lwNBD.sh
+          test -x download_lwNBD.sh
           bash ./download_lwNBD.sh
           python3 -m py_compile lang_compiler.py check_arabic_translation.py
           python3 -c "import yaml"
