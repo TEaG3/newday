@@ -227,7 +227,7 @@ int https_get(const char *host, const char *path, char *buf, int max, int *body,
 	freeaddrinfo(ai);
 	if (r < 0) { if (s >= 0) close(s); return NET_ERR_CONNECT; }
 	WOLFSSL *ssl = wolfSSL_new(ctx);
-	int st = NET_ERR_TLS, n = snprintf(buf, max, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: ORBIT\r\nConnection: close\r\n\r\n", path, host);
+	int st = NET_ERR_TLS, n = snprintf(buf, max, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: TEa.G3\r\nConnection: close\r\n\r\n", path, host);
 	snprintf(net_why, sizeof(net_why), "tls %.40s", host); // left as is if the handshake fails or times out
 	if (ssl && wolfSSL_UseSNI(ssl, WOLFSSL_SNI_HOST_NAME, host, strlen(host)) == WOLFSSL_SUCCESS &&
 	    wolfSSL_set_fd(ssl, s) == WOLFSSL_SUCCESS && (wolfSSL_SSLSetIORecv(ssl, tls_recv), wolfSSL_SetIOReadCtx(ssl, &s), 1) &&
