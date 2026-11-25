@@ -27,8 +27,8 @@ eth = replace_once(
 
 eth = replace_once(
     eth,
-    "void ethDisplayErrorStatus(void)\n{\n    switch (gNetworkStartup) {",
-    "void ethDisplayErrorStatus(void)\n{\n    if (ethDirectLaunch) {\n        LOG(\"TEa.G3 OPL SMB startup status: %d\\n\", gNetworkStartup);\n        return;\n    }\n    switch (gNetworkStartup) {",
+    "void ethDisplayErrorStatus(void)\n{\n",
+    "void ethDisplayErrorStatus(void)\n{\n    if (ethDirectLaunch) {\n        LOG(\"TEa.G3 OPL SMB startup status: %d\\n\", gNetworkStartup);\n        return;\n    }\n",
     "non-interactive network errors",
 )
 
@@ -49,9 +49,32 @@ eth = replace_once(
     "VMC prompt suppression",
 )
 
-eth = replace_once(
-    eth,
-    """    if ((result = sbLoadCheats(ethPrefix, game->startup, configSet)) < 0) {
+old_cheats = """    if ((result = sbLoadCheats(ethPrefix, game->startup)) < 0) {
+        switch (result) {
+            case -ENOENT:
+                guiWarning(_l(_STR_NO_CHEATS_FOUND), 10);
+                break;
+            default:
+                guiWarning(_l(_STR_ERR_CHEATS_LOAD_FAILED), 10);
+        }
+    }"""
+new_cheats = """    if ((result = sbLoadCheats(ethPrefix, game->startup)) < 0) {
+        if (ethDirectLaunch)
+            LOG("TEa.G3 OPL SMB: cheats unavailable (%d); continuing\\n", result);
+        else switch (result) {
+            case -ENOENT:
+                guiWarning(_l(_STR_NO_CHEATS_FOUND), 10);
+                break;
+            default:
+                guiWarning(_l(_STR_ERR_CHEATS_LOAD_FAILED), 10);
+        }
+    }"""
+if old_cheats in eth:
+    eth = replace_once(eth, old_cheats, new_cheats, "cheat prompt suppression")
+else:
+    eth = replace_once(
+        eth,
+        """    if ((result = sbLoadCheats(ethPrefix, game->startup, configSet)) < 0) {
         switch (result) {
             case -ENOENT:
                 guiWarning(_l(_STR_NO_CHEATS_FOUND), 10);
@@ -60,7 +83,7 @@ eth = replace_once(
                 guiWarning(_l(_STR_ERR_CHEATS_LOAD_FAILED), 10);
         }
     }""",
-    """    if ((result = sbLoadCheats(ethPrefix, game->startup, configSet)) < 0) {
+        """    if ((result = sbLoadCheats(ethPrefix, game->startup, configSet)) < 0) {
         if (ethDirectLaunch)
             LOG("TEa.G3 OPL SMB: cheats unavailable (%d); continuing\\n", result);
         else switch (result) {
@@ -71,8 +94,8 @@ eth = replace_once(
                 guiWarning(_l(_STR_ERR_CHEATS_LOAD_FAILED), 10);
         }
     }""",
-    "cheat prompt suppression",
-)
+        "cheat prompt suppression",
+    )
 
 helper = r'''
 static int ethParseIPv4(const char *text, int out[4])

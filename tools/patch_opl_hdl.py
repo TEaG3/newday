@@ -68,11 +68,7 @@ hdd = once(
     hdd,
     '''            configGetStrCopy(config, "hdd_partition", name, sizeof(name));
             snprintf(gOPLPart, sizeof(gOPLPart), "hdd0:%s", name);
-
-            configFree(config);
-            close(fd);
-
-            return;''',
+            APA_TRACE("APA_TRACE hddFindOPLPartition: config selected partition='%s' gOPLPart='%s'\\n", name, gOPLPart);''',
     '''            configGetStrCopy(config, "hdd_partition", name, sizeof(name));
             if (gTEaG3HDDMiniMode) {
                 int valid = name[0] != '\\0' && strlen(name) <= APA_IDMAX;
@@ -90,18 +86,14 @@ hdd = once(
                 }
             }
             snprintf(gOPLPart, sizeof(gOPLPart), "hdd0:%s", name);
-
-            configFree(config);
-            close(fd);
-
-            return;''',
+            APA_TRACE("APA_TRACE hddFindOPLPartition: config selected partition='%s' gOPLPart='%s'\\n", name, gOPLPart);''',
     "validate configured OPL partition",
 )
 hdd = once(
     hdd,
     '''        hddCheckOPLFolder(hddPrefix);
 
-        fd = open("pfs0:OPL/conf_hdd.cfg", O_CREAT | O_TRUNC | O_WRONLY);''',
+        fd = open("pfs0:PS2L/conf_hdd.cfg", O_CREAT | O_TRUNC | O_WRONLY);''',
     '''        if (gTEaG3HDDMiniMode) {
             gOPLPart[0] = '\\0';
             fileXioUmount("pfs0:");
@@ -116,6 +108,7 @@ hdd = once(
 hdd = once(
     hdd,
     '''    snprintf(gOPLPart, sizeof(gOPLPart), "hdd0:+OPL");
+    APA_TRACE("APA_TRACE hddFindOPLPartition: default gOPLPart='%s'\\n", gOPLPart);
 
     return;''',
     '''    if (gTEaG3HDDMiniMode) {
@@ -129,25 +122,11 @@ hdd = once(
     "do not guess default OPL partition",
 )
 
-# Do not create a missing PFS partition or OPL folder during mini-launch.
+# Do not create a missing PFS partition or PS2L folder during mini-launch.
 hdd = once(
     hdd,
     '''        if (gOPLPart[0] == '\\0')
-            hddFindOPLPartition();
-
-        fileXioUmount(hddPrefix);
-
-        ret = fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
-        if (ret == -ENOENT) {
-            // Attempt to create the partition.
-            if ((hddCreateOPLPartition(gOPLPart)) >= 0)
-                fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
-        }
-
-        if (gOPLPart[5] != '+') {
-            hddCheckOPLFolder(hddPrefix);
-            gHDDPrefix = "pfs0:OPL/";
-        }''',
+            hddFindOPLPartition();''',
     '''        if (gOPLPart[0] == '\\0')
             hddFindOPLPartition();
 
@@ -155,39 +134,38 @@ hdd = once(
             gTEaG3HDDMiniReady = 0;
             fileXioUmount(hddPrefix);
             return;
-        }
-
-        fileXioUmount(hddPrefix);
-        ret = fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
-        if (ret == -ENOENT && !gTEaG3HDDMiniMode) {
-            // Normal OPL GUI mode retains its upstream partition creation behavior.
-            if ((hddCreateOPLPartition(gOPLPart)) >= 0)
-                ret = fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
-        }
-        if (ret < 0) {
-            gTEaG3HDDMiniReady = 0;
-            if (gTEaG3HDDMiniMode)
-                fileXioUmount(hddPrefix);
-            return;
-        }
-
-        if (gOPLPart[5] != '+') {
+        }''',
+    "require existing configured HDD partition",
+)
+hdd = once(
+    hdd,
+    "if (ret == -ENOENT) {",
+    "if (ret == -ENOENT && !gTEaG3HDDMiniMode) {",
+    "do not create missing HDD partition",
+)
+hdd = once(
+    hdd,
+    '''        if (gOPLPart[5] != '+') {
+            hddCheckOPLFolder(hddPrefix);
+            gHDDPrefix = "pfs0:PS2L/";
+        }''',
+    '''        if (gOPLPart[5] != '+') {
             if (gTEaG3HDDMiniMode) {
-                DIR *dir = opendir("pfs0:OPL");
-                if (!dir) {
+                int dir = fileXioDopen("pfs0:PS2L");
+                if (dir < 0) {
                     gTEaG3HDDMiniReady = 0;
                     fileXioUmount(hddPrefix);
                     return;
                 }
-                closedir(dir);
+                fileXioDclose(dir);
             } else {
                 hddCheckOPLFolder(hddPrefix);
             }
-            gHDDPrefix = "pfs0:OPL/";
+            gHDDPrefix = "pfs0:PS2L/";
         }
         if (gTEaG3HDDMiniMode)
             gTEaG3HDDMiniReady = 1;''',
-    "safe mount existing OPL partition only",
+    "verify existing PS2L folder without creating it",
 )
 
 # The TEa.G3 argument is size_kb, not a partition name. OPL resolves the

@@ -1,0 +1,3 @@
+[submodule "engine/opl"]
+	path = engine/opl
+	url = https://github.com/TEaG3/OPL.git
