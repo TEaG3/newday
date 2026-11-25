@@ -2600,6 +2600,10 @@ static int status_text(char *b, int max)
 
 static const char *launch_problem(int i) // select a viable engine before handing control away
 {
+	if (i < 0 || i >= MAXC || i >= ncv) return L("Invalid game selection");
+	if (cv[i].kind < K_PS2 || cv[i].kind > K_DISC) return L("Invalid game record");
+	if (cv[i].kind != K_DISC && (unsigned char)cv[i].src >= nsrc)
+		return L("Game source is no longer available");
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
 	if (engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this source");
