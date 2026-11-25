@@ -1,6 +1,6 @@
 // TEa.G3 home screen on a canvas, for the theme maker (themes.html): the twelve themes' scenes, selections, splashes and
 // launch screens as the prototype "TEa.G3 live themes" drew them (v1.3's design; the console's are themes.c and
-// torres.c), with real covers. themes.js drives it through window.NULDPreview.
+// torres.c), with real covers. themes.js drives it through window.TEaG3Preview.
 (() => {
 const W = 1280, H = 720, TAU = Math.PI * 2;
 const cv = document.getElementById('preview'), g = cv.getContext('2d');
@@ -336,12 +336,12 @@ const putText = (s, x, y, align = 'left') => {
   g.textAlign = oldAlign; g.direction = oldDirection; g.font = oldFont;
 };
 const ink = () => T.btx || T.tx;
-function mark(cx, cy, r, ringc, slash) { // NULD's mark: a ring and a slash
+function mark(cx, cy, r, ringc, slash) { // TEa.G3 mark: a ring and a slash
   const th = r * .18, d = r * .985; g.lineCap = 'butt';
   g.strokeStyle = ringc; g.lineWidth = th; g.beginPath(); g.arc(cx, cy, r - th / 2, 0, TAU); g.stroke();
   g.strokeStyle = slash; g.beginPath(); g.moveTo(cx - d, cy + d); g.lineTo(cx + d, cy - d); g.stroke();
 }
-function wordmark(cx, cy, cap, inkc, slash, dx = 0) { // the mark and NULD in Michroma, centred on (cx, cy); cap: capital height
+function wordmark(cx, cy, cap, inkc, slash, dx = 0) { // the mark and TEa.G3 in Michroma, centred on (cx, cy); cap: capital height
   font(`400 ${cap * 128 / 96}px Michroma, Archivo, sans-serif`); if ('letterSpacing' in g) g.letterSpacing = cap * .08 + 'px';
   const r = cap * .6875, ww = g.measureText('TEa.G3').width, x = cx - (2 * r + cap * .42 + ww) / 2 + dx;
   g.fillStyle = inkc; g.fillText('TEa.G3', x + 2 * r + cap * .42, cy + cap / 2);
@@ -998,7 +998,7 @@ let overlay = null, tour = null, seen = true; // tour: the idle demo also change
 if ('IntersectionObserver' in window) new IntersectionObserver(e => { seen = e[e.length - 1].isIntersecting; }).observe(cv); // drawn over the home, last: the maker's setup panel
 const alphaOf = c => { const m = /rgba\([^)]*,\s*([\d.]+)\)/.exec(c || ''); return m ? +m[1] : 1; };
 const tone = (hex, like) => { const n = parseInt(hex, 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${alphaOf(like)})`; };
-window.NULDPreview = {
+window.TEaG3Preview = {
   // base: a built-in theme's key; pal / def: the maker's palette and the base's own (RRGGBB by theme.ini key). Only what
   // differs from the base is touched, so an untouched base looks as it does; picture: a canvas, or null
   set(base, pal, def, picture, coverAccent) {
@@ -1026,7 +1026,7 @@ window.NULDPreview = {
 cv.addEventListener('click', e => { if (mode !== 'home') { mode = 'home'; tFade = now; lastInput = now; return; } const r = cv.getBoundingClientRect(); const d = (e.clientX - r.left) / r.width < .5 ? -1 : 1; move(view === 2 ? d : d); lastInput = now; });
 
 // ---- the frame ----
-// Keep the original NULD animation scheduler: one requestAnimationFrame per frame.
+// Keep the original TEa.G3 animation scheduler: one requestAnimationFrame per frame.
 function frame(ms) {
   if (!seen) { requestAnimationFrame(frame); return; } // off screen: nothing to draw
   const t = ms / 1000 + T0, dt = Math.min(.05, Math.max(0, t - now)); now = t;
@@ -1075,7 +1075,7 @@ function frame(ms) {
   const fi = (t - tFade) / .35; if (fi < 1) { g.fillStyle = `rgba(0,0,0,${1 - ease(fi)})`; g.fillRect(0, 0, W, H); }
   requestAnimationFrame(frame);
 }
-window.NULDPreview.set('nuld', {}, {}, null, false);
+window.TEaG3Preview.set('nuld', {}, {}, null, false);
 B.forEach((b, i) => Object.assign(b, place(i)));
 tView = -9;
 requestAnimationFrame(frame);
