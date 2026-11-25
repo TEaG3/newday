@@ -32,6 +32,7 @@ class OplOnlyArchitectureTests(unittest.TestCase):
             self.assertIn(token, self.engine_h)
         self.assertIn("ENGINE_SOURCE_OTHER", self.engine_h)
         self.assertIn("ENGINE_REASON_OPL_RUNTIME_MISSING", self.engine)
+        self.assertIn('else if (st == SRC_ILINK) driver = "ilink";', self.launcher)
         self.assertIn("No OPL adapter is available", self.launcher)
 
     def test_network_game_sources_fail_closed(self):
