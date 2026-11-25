@@ -60,6 +60,8 @@ typedef struct {
     unsigned readers;
     unsigned char playing;
     unsigned char io_busy;
+    unsigned char downloading;
+    unsigned char download_cancelled;
     unsigned char scanning;
     unsigned char scan_cancelled;
     unsigned char apply_pending;
@@ -77,6 +79,11 @@ int catalog_guard_scan_cancelled(catalog_guard *guard);
 /* Returns 1 only for a completed, non-cancelled scan; 0 means discard its candidate. */
 int catalog_guard_scan_end(catalog_guard *guard);
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy);
+/* Downloads are exclusive with scans/applies and must poll cancellation while active. */
+int catalog_guard_can_download(catalog_guard *guard);
+int catalog_guard_download_begin(catalog_guard *guard);
+int catalog_guard_download_cancelled(catalog_guard *guard);
+int catalog_guard_download_end(catalog_guard *guard);
 int catalog_guard_request_apply(catalog_guard *guard);
 int catalog_guard_try_apply(catalog_guard *guard);
 int catalog_guard_finish_apply(catalog_guard *guard);
