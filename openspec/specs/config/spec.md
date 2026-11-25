@@ -7,8 +7,11 @@ TBD - created by archiving change phase-7-config-video. Update Purpose after arc
 At boot the launcher SHALL read `mass0:/orbit/config.ini`. If it is missing, it SHALL write it with the defaults
 and a comment per key:
 - `[juegos] origen = usb`;
+- `[juegos] motor = opl` (OPL first; Neutrino fallback only when no compatible OPL adapter is available);
+- `[juegos] auto = si` (probe supported game sources automatically at boot);
 - `[video] modo = 480p`;
-- `[sonido] volumen = 100`.
+- `[sonido] volumen = 100`;
+- `[portadas] descargar = si` (download missing covers when network access is available).
 
 Unknown keys SHALL be ignored, and a source other than usb SHALL show a notice that it is not available yet.
 
