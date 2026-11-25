@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { execFileSync } = require("node:child_process");
 const { resolveRoute } = require("../site/opl-demo.js");
 
 const runtimeSources = ["i18n.js", "opl-demo.js", "release.js", "themes.js"]
@@ -106,7 +107,9 @@ assert.match(readme, /ZSO is OPL-only in this build/);
 const engineDocs = fs.readFileSync(path.join(__dirname, "../docs/opl-engine-integration.md"), "utf8");
 assert.match(engineDocs, /ZSO is OPL-only in this build/);
 assert.match(engineDocs, /TEaG3\/OPL/);
-assert.match(engineDocs, /395022e266eaea723e3c58dd16b240887b5b0a37/);
+const pinnedOplRevision = execFileSync("git", ["rev-parse", "HEAD:engine/opl"], { encoding: "utf8" }).trim();
+assert.match(pinnedOplRevision, /^[0-9a-f]{40}$/);
+assert.ok(engineDocs.includes(pinnedOplRevision), `OPL integration docs must record the pinned engine/opl gitlink ${pinnedOplRevision}`);
 assert.match(engineDocs, /RTL=1/);
 const formatsDocs = fs.readFileSync(path.join(__dirname, "../docs/game-formats.md"), "utf8");
 assert.match(formatsDocs, /TEaG3\/OPL/);
