@@ -58,49 +58,41 @@ for (const format of formats) {
   for (const source of sources) {
     for (const preference of preferences) {
       let expected;
-      if (format === "ul") {
-        expected = source === "usb" ? "opl-ul" : "unsupported";
+      if (preference === "neutrino") {
+        expected = "engine-removed";
+      } else if (format === "ul") {
+        expected = source === "usb" ? "opl-ul" : "unsupported-source";
       } else if (format === "zso" && source === "hdl") {
         expected = "zso-hdl-unsupported";
-      } else if (format === "zso" && preference === "neutrino") {
-        expected = "zso-requires-opl";
-      } else if (format === "zso" && (source === "usb" || source === "bdm")) {
-        expected = "opl-bdm";
-      } else if (format === "zso" && source === "smb") {
-        expected = "opl-eth";
-      } else if (format === "zso") {
-        expected = "zso-requires-opl";
-      } else if (preference === "neutrino") {
-        expected = "neutrino";
       } else if (source === "usb" || source === "bdm") {
         expected = "opl-bdm";
       } else if (source === "smb") {
         expected = "opl-eth";
       } else if (source === "hdl") {
         expected = "opl-hdd";
+      } else if (format === "zso") {
+        expected = "zso-requires-opl";
       } else {
-        expected = "neutrino";
+        expected = "unsupported-source";
       }
       const input = { format, source, preference };
       const actual = resolveRoute(input);
       assert.equal(actual.id, expected, JSON.stringify(input));
-      const blocked = expected === "unsupported" || expected.startsWith("zso-");
-      assert.equal(actual.ok, !blocked, JSON.stringify(input));
+      assert.equal(actual.ok, expected.startsWith("opl-"), JSON.stringify(input));
       tested += 1;
     }
   }
 }
 assert.equal(resolveRoute({ format: "vcd", source: "usb", preference: "auto" }).ok, false);
 assert.equal(resolveRoute({ format: "iso", source: "ata", preference: "opl" }).ok, false);
-assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "auto", network: "missing" }).id, "neutrino-smb-fallback");
-assert.equal(resolveRoute({ format: "zso", source: "smb", preference: "auto", network: "missing" }).id, "zso-smb-config-invalid");
-assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "auto", oplRuntime: "missing" }).id, "zso-opl-missing");
-assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "neutrino" }).id, "zso-requires-opl");
+assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "auto", network: "missing" }).id, "opl-network-config-invalid");
+assert.equal(resolveRoute({ format: "zso", source: "smb", preference: "opl", network: "missing" }).id, "opl-network-config-invalid");
+assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "auto", oplRuntime: "missing" }).id, "opl-runtime-missing");
 assert.equal(resolveRoute({ format: "zso", source: "hdl", preference: "opl" }).id, "zso-hdl-unsupported");
 assert.equal(resolveRoute({ format: "zso", source: "other", preference: "auto" }).id, "zso-requires-opl");
-assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "neutrino-opl-missing");
+assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "opl-runtime-missing");
 assert.equal(resolveRoute({ format: "ul", source: "usb", preference: "auto", oplRuntime: "missing" }).ok, false);
-assert.equal(resolveRoute({ format: "iso", source: "other", preference: "opl" }).fallback, true);
+assert.equal(resolveRoute({ format: "iso", source: "other", preference: "opl" }).fallback, undefined);
 const readme = fs.readFileSync(path.join(__dirname, "../README.md"), "utf8");
 assert.match(readme, /ZSO is OPL-only in this build/);
 const engineDocs = fs.readFileSync(path.join(__dirname, "../docs/opl-engine-integration.md"), "utf8");
@@ -113,18 +105,20 @@ assert.match(formatsDocs, /TEaG3\/OPL/);
 assert.doesNotMatch(formatsDocs, /checks out Open PS2 Loader at/);
 const smbDocs = fs.readFileSync(path.join(__dirname, "../docs/smb.md"), "utf8");
 assert.match(smbDocs, /OPL ETH direct launch/);
-assert.match(smbDocs, /Neutrino SMB.*ISO-only/s);
-assert.match(smbDocs, /ZSO is never sent to Neutrino/);
+assert.match(smbDocs, /OPL ETH direct launch/);
+assert.doesNotMatch(smbDocs, /Neutrino.*fallback|Neutrino.*ISO-only|ZSO is never sent to Neutrino/);
 assert.match(smbDocs, /USBExtreme UL.*USB-only/);
-assert.doesNotMatch(smbDocs, /USBExtreme\/UL is not implemented/);
-assert.doesNotMatch(smbDocs, /ZSO uses the common\s+Neutrino FHI decoder/);
 assert.match(smbDocs, /dopen.*dclose.*dread/);
 assert.match(smbDocs, /launcher\.c.*TEAG3\.GAMES/);
 assert.doesNotMatch(smbDocs, /does not enumerate directories/);
 const smbPatch = fs.readFileSync(path.join(__dirname, "../tools/patch_smb_ioman.py"), "utf8");
-const neutrinoBuild = fs.readFileSync(path.join(__dirname, "../tools/build_neutrino.sh"), "utf8");
+const smbBuilder = fs.readFileSync(path.join(__dirname, "../tools/build_smb_support.sh"), "utf8");
 const launcherSource = fs.readFileSync(path.join(__dirname, "../launcher.c"), "utf8");
-assert.match(neutrinoBuild, /patch_smb_ioman\.py/);
+assert.match(smbBuilder, /patch_smb_ioman\.py/);
+assert.match(smbBuilder, /make -C iop\/smap/);
+assert.match(smbBuilder, /make -C iop\/ministack/);
+assert.match(smbBuilder, /make -C iop\/smb SMB_IOMAN=1/);
+assert.doesNotMatch(smbBuilder, /make -C ee/);
 assert.match(smbPatch, /static int smb_dev_dopen/);
 assert.match(smbPatch, /static int smb_dev_dclose/);
 assert.match(smbPatch, /static int smb_dev_dread/);
@@ -159,4 +153,4 @@ assert.doesNotMatch(pcsx2Readme, /launcher\.elf|orbit\//i);
 const pcsx2ImageScript = fs.readFileSync(path.join(__dirname, "../tools/pcsx2/mkimg.sh"), "utf8");
 assert.ok(pcsx2ImageScript.includes("-n TEAG3"));
 assert.doesNotMatch(pcsx2ImageScript, /ORBIT/);
-console.log("site OPL route matrix ok: " + tested + " format/source/preference combinations + ZSO fail-closed, ISO fallback and emulator-harness checks");
+console.log("site OPL-only route matrix ok: " + tested + " format/source/preference combinations + SMB/ETH and HDD paths, fail-closed Neutrino legacy settings, and emulator-harness checks");
