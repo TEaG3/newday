@@ -9,7 +9,7 @@
 typedef struct { unsigned long long tex0; } gfx_tex;
 typedef struct { unsigned short u, v; unsigned char w, h; signed char xo, yo; unsigned char adv; } gfx_glyph;
 typedef struct { const gfx_glyph *g; int line_h, asc; } gfx_font;
-// Archivo 700 at 125 % 38 px, Archivo 500 17 px, IBM Plex Mono 14 px, Michroma 60 px ("NULD" only) — font_data.c
+// Archivo 700 at 125 % 38 px, Archivo 500 17 px, IBM Plex Mono 14 px, Michroma 60 px (TEa.G3 wordmark) — font_data.c
 extern const gfx_font gfx_font_title, gfx_font_ui, gfx_font_mono, gfx_font_logo;
 
 int gfx_init(void); // video mode, black screen, atlases, vsync semaphore; returns 0 if VRAM could not hold them
