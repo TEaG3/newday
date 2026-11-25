@@ -37,7 +37,7 @@
     if (source === "hdl")
       return oplReady ? { id: "opl-hdd", engine: "OPL", ok: true, reason: "manual-opl-hdd" } :
         { id: "neutrino-opl-missing", engine: "Neutrino", ok: true, fallback: true, reason: "opl-runtime-missing" };
-    return { id: "neutrino", engine: "Neutrino", ok: true, reason: "opl-fallback-neutrino" };
+    return { id: "neutrino", engine: "Neutrino", ok: true, fallback: true, reason: "opl-source-unavailable" };
   }
 
   const COPY = {
