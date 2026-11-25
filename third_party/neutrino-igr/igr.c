@@ -1,5 +1,5 @@
 /*
-  igr.c - In Game Reset for Neutrino (ORBIT launcher fork, phase 12)
+  igr.c - In Game Reset for Neutrino (TEa.G3 launcher fork, phase 12)
 
   Ported from Open PS2 Loader ee_core/src/padhook.c (commit 3e3f34e):
   Copyright 2009-2010, Ifcaro, jimmikaelkael & Polo
@@ -333,7 +333,7 @@ static void IGR_Thread(void *arg)
     SifExecModuleBuffer(resetspu_irx, size_resetspu_irx, 0, NULL, NULL);
     services_exit();
     // Leave as any program does: LoadExecPS2 drops the game's threads and handlers, and the BIOS's EELOAD loads the
-    // exit ELF (rom0:OSDSYS: a reboot, FMCB then autoboots ORBIT). OSDSYS hangs when started by a bare ExecPS2
+    // exit ELF (rom0:OSDSYS: a reboot, FMCB then autoboots TEa.G3). OSDSYS hangs when started by a bare ExecPS2
     if (!kernel_unpatch()) {
         // The IOP is reset and the game is paused. Do not reboot through a kernel we failed to restore.
         STAGE(COLOR_RED);

@@ -1,5 +1,5 @@
 /*
-  raagent.irx - RetroAchievements agent for the ORBIT fork of Neutrino (phase 16b), on Neutrino's ministack.
+  raagent.irx - RetroAchievements agent for the TEa.G3 fork of Neutrino (phase 16b), on Neutrino's ministack.
 
   Loaded into the game by the launcher's -cfg=ra (smap, ministack ip=<ps2 ip>, raagent srv=<client> me=<ps2 ip>);
   the loader appends mbox=<hex>, the EE mailbox in module storage. At start the agent DMAs the address of its

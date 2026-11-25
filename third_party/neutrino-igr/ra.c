@@ -1,5 +1,5 @@
 /*
-  ra.c - RetroAchievements telemetry for the ORBIT fork of Neutrino (phase 16b).
+  ra.c - RetroAchievements telemetry for the TEa.G3 fork of Neutrino (phase 16b).
 
   Every VBLANK (from the IGR handler, igr.c) the watched addresses are read into the snapshot buffer and the buffer
   is SIF-DMA'd to the IOP agent (raagent.irx), which sends it to xeRAbora's client. Everything lives in the watch
