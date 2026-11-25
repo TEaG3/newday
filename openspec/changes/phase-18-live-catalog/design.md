@@ -1,0 +1,36 @@
+# Design
+
+## Current hazard
+
+launcher.c has one global cv[MAXC] array. load_games() writes records in place and assigns ncv only at the end. The render thread reads cv throughout a frame; cover_thread, icon_thread, the disc thread, achievements, and launch paths also read records. cover_lock protects cover pointers only; it does not protect catalog metadata or the other readers. The disc drive already demonstrates the safer pattern for one record: stage disc_stage, then copy cv[0] on the render thread between frames.
+
+Therefore a monitor thread must never call load_games() against the active cv[].
+
+## Snapshot and identity
+
+- Build a complete candidate snapshot in a separate buffer. A failed or cancelled scan discards the candidate and leaves the active snapshot unchanged.
+- Stable identity is (source_type, source_unit, kind, relative_path). Do not use the current sorted index or title as identity.
+- Content changes are represented separately by size, fingerprint, and flags. The scanner must derive a fingerprint from validated metadata; it must not claim cryptographic identity when it only has size/mtime.
+- Validate capacity, safe relative paths, and duplicate keys before computing a diff.
+- The diff reports added, removed, and changed old/new indices. Reordering alone is not a content change. The caller can restore selection by stable key.
+
+## Reader/apply gate
+
+catalog_guard is a portable state machine whose lock/unlock callbacks must be backed by a real PS2 semaphore in the target build (pthread mutex in host tests).
+
+- Readers acquire a lease before retaining or dereferencing a catalog record and release it immediately after the last access.
+- Requesting an apply closes the reader gate to new readers. The candidate may be swapped only after existing readers drain, scanning has ended, the game is not running, and storage/network I/O is idle.
+- The render thread is the only owner allowed to perform the short pointer/count swap, between completed frames. The apply lease remains held until the swap is complete.
+- Starting a game or marking storage I/O busy cancels an active scan; the scanner checks the cancellation flag between directories and closes all open handles before discarding its candidate.
+- A pending apply can wait while a game is running; it must not block launch or change the visible catalog during gameplay.
+
+## Monitoring policy
+
+- Poll only sources whose mount state can be safely queried. Use a conservative 3–5 second interval after device-specific behavior is verified; do not assume a PS2SDK hotplug event API exists.
+- Scan only when the console is idle and the media-I/O gate is clear. Pause catalog scans, cover downloads, and nonessential network work while a game is launching or running.
+- Source disappearance or read errors do not mean that user data should be deleted. Preserve the last known-good snapshot and report the source as unavailable until a complete replacement scan succeeds.
+- Preserve per-game settings, cover cache, achievements, and the selected item by stable identity. Never reset user state because an entry moved in sort order.
+
+## Activation gates
+
+This change does not activate monitoring. Integration is blocked until all catalog readers in launcher.c are leased, all media workers publish I/O activity, and target-specific lock semantics are verified. Required tests include concurrent readers during apply, cancellation during each source scan, source removal/reinsert, duplicate/path rejection, selection restoration, and real PS2 tests for USB, HDD/APA, SMB, and MMCE.
