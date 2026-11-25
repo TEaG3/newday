@@ -57,7 +57,7 @@ static int safe_destination(const char *s)
     if (!s || !*s || *s == '/' || *s == '\\') return 0;
     for (const char *p = s;; p++) {
         unsigned char c = (unsigned char)*p;
-        if (c == '\\' || c == ':' || c < 0x20 || c == 0x7f) return 0;
+        if (c == '\\' || c == ':' || (c && c < 0x20) || c == 0x7f) return 0;
         if (c == '/' || c == 0) {
             size_t n = (size_t)(p - part);
             if (!n || (n == 1 && part[0] == '.') ||
