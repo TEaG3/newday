@@ -1104,7 +1104,7 @@
     const nav = document.querySelector(".nav .wrap, .runhead");
     if (nav && !document.querySelector("[data-teag3-lang]")) {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "lang-switch"; b.dataset.teaG3Lang = "1";
+      b.type = "button"; b.className = "lang-switch"; b.dataset.teag3Lang = "1";
       b.setAttribute("aria-label", "Switch language");
       b.addEventListener("click", () => { lang = lang === "ar" ? "en" : "ar"; localStorage.setItem("nuld-site-lang", lang); apply(); });
       nav.append(b);
