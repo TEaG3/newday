@@ -195,7 +195,7 @@ static void vmc_file(int i, char *out, int n) // the launcher's path to it
 	snprintf(out, n, "%s/%s", src[(int)cv[i].src].root, name);
 }
 
-static int udpfs_cat; // [juegos] servidor set: udpfs games come from its catalog (phase 17), else udpfs is mounted (#10)
+static int udpfs_cat; // [juegos] servidor set: HTTP app catalogue only; no remote PS2 game streaming
 static int on_catalog(int i) { return src[(int)cv[i].src].type == SRC_UDPFS && udpfs_cat; }
 
 static int net_res;
@@ -738,7 +738,7 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 PO
     return n;
 }
 
-// phase 17: the games of the server's catalog (tools/nuld_catalog.py on [juegos] servidor, HTTP 18290), read with
+// phase 17: downloadable applications from the HTTP catalogue on [juegos] servidor (port 18290), read with
 // the launcher's own network: udpfs is not mounted, so covers and achievements keep working for them
 static int net_ready(void);
 static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4: the SELECT overlay)
@@ -963,7 +963,7 @@ static const char *const config_template[LANG_N] = {
 	"; the server below is only for downloadable applications. Settings, covers and POPS\n"
 	"; and APPS stay on the USB.\norigen = usb\n; OPL is the only PS2 game engine; unsupported sources are refused\nmotor = opl\nauto = si\n"
 	"; udpfs: IP of the game server running the TEa.G3 catalog service (lists the games; covers and achievements keep working).\n"
-	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
+	"; Optional HTTP catalogue for downloadable applications only; leave empty to disable\nservidor =\n"
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
 	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
 	"\n[memorycard]\n; physical memory card in slot 1; virtual memory cards are not enabled in this build.\n"
