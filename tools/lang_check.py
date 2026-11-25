@@ -141,7 +141,7 @@ def main():
             '{"Modified and developed by Iraqi developer TEa.G3", "تعديل وتطوير المطور العراقي TEa.G3"}' in
             (ROOT / "lang_ar.c").read_text(encoding="utf-8"),
         "Arabic settings include the default engine selector": "محرك التشغيل" in launcher and "W_ENGINE" in launcher,
-        "engine preference is loaded from config.ini": 'ini_get(&cfg, "juegos", "motor", "auto")' in launcher,
+        "engine preference is loaded from config.ini": 'ini_get(&cfg, "juegos", "motor", "opl")' in launcher,
         "engine preference is saved to config.ini": 'ini_set(&cfg, "juegos", "motor", w_engine_key[w_val[W_ENGINE]])' in launcher,
         "engine choices preserve auto, Neutrino and OPL": 'w_engine_key[3] = {"auto", "neutrino", "opl"}' in launcher,
         "automatic engine label has an Arabic translation": '{"Automatic", "تلقائي"}' in (ROOT / "lang_ar.c").read_text(encoding="utf-8"),
