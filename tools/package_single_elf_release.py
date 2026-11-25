@@ -31,6 +31,8 @@ def main() -> None:
     elf = ROOT / "TEa.G3.ELF"
     manifest = ROOT / "runtime-manifest.txt"
     opl_license = ROOT / "OPL-LICENSE.txt"
+    opl_diagnostic = ROOT / "runtime-input/OPL.ELF"
+    neutrino_tree = DIST / "neutrino"
     neutrino_license = ROOT / "third_party/neutrino-igr/LICENSE"
     required_files = (
         elf, manifest, ROOT / "INSTALL-AR.txt", ROOT / "INSTALL-EN.txt",
@@ -53,6 +55,13 @@ def main() -> None:
         z.write(ROOT / "LICENSE", "LICENSE")
         z.write(opl_license, "licenses/OPL-GPL-3.0.txt")
         z.write(neutrino_license, "licenses/Neutrino-AFL-3.0.txt")
+        # Optional diagnostics are bundled for completeness; normal installation uses the single embedded ELF.
+        if opl_diagnostic.is_file():
+            z.write(opl_diagnostic, "diagnostics/OPL-standalone.ELF")
+        if neutrino_tree.is_dir():
+            for item in sorted(neutrino_tree.rglob("*")):
+                if item.is_file():
+                    z.write(item, "diagnostics/neutrino/" + item.relative_to(neutrino_tree).as_posix())
         z.writestr("README-AR.txt", "حزمة TEa.G3 الشاملة. انسخ TEa.G3.ELF ومجلدات الألعاب إلى جذر USB. راجع INSTALL-AR.txt.\n")
         z.writestr("QUICKSTART.txt", (ROOT / "INSTALL-AR.txt").read_text(encoding="utf-8"))
         z.writestr("DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب PS2 DVD هنا.\n")
