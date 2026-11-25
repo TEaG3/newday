@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn the built OPL + Neutrino runtime tree into linkable PS2SDK bin2c objects."""
+"""Turn the built OPL and SMB catalog support assets into linkable PS2SDK bin2c objects."""
 from __future__ import annotations
 import hashlib
 from pathlib import Path
