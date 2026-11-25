@@ -4,6 +4,7 @@
 - [x] Add stable-key add/remove/change diff that ignores ordering-only changes.
 - [x] Add reader leases, scan cancellation, and a quiescent apply gate with caller-supplied locking.
 - [x] Add host tests including a real concurrent reader held across an apply request.
+- [x] Cross-compile the inactive core with the PS2 EE compiler and enforce an 8 KiB maximum stack frame.
 - [ ] Wire the guard to PS2 semaphore callbacks and prove target compiler/runtime behavior.
 - [ ] Convert every cv[] reader and every storage/network worker to short-lived leases/activity reporting.
 - [ ] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.

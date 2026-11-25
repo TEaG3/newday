@@ -97,6 +97,7 @@ jobs:
               python3 tools/fetch_arabic_font.py
               python3 tools/font.py --selftest
               make test
+              mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Werror -Wframe-larger-than=8192 -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_stage.c -o /tmp/catalog_stage_ee.o
               python3 tools/theme_check.py
               make clean
               bash tools/build_neutrino.sh 2>&1 | tee build.log
