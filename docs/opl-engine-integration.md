@@ -73,7 +73,7 @@ post-launch return path, not proof that every failed `ExecPS2` can recover.
   pinned downloader and verifies the exact dependency revision before
   `make clean`.
 - The fork carries its own `lang_compiler.py`, complete Arabic translation
-  source and bundled Arabic font. CI verifies all 322 base strings are
+  source and bundled Arabic font. CI verifies all 326 base strings are
   translated, checks placeholder parity, preserves the tracked language
   assets during `make clean`, generates `lng/lang_Arabic.lng`, and checks
   that the compiled pack contains Arabic text.
