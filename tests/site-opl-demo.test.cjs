@@ -29,6 +29,10 @@ for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
   assert.doesNotMatch(html, /arabic-v1\.3\.5|\/releases\/latest/, page + " must not fall back to a stale or stable-only release URL");
 }
 
+const homepage = fs.readFileSync(path.join(__dirname, "../site/index.html"), "utf8");
+assert.ok(homepage.includes('href="https://github.com/TEaG3/newday/releases"'), "homepage must keep a separate link to the complete historical release archive");
+assert.ok(homepage.includes("historical ORBIT/NULD releases"), "archive link must identify the legacy release history");
+
 const siteCss = fs.readFileSync(path.join(__dirname, "../site/site.css"), "utf8");
 assert.match(siteCss, /[.]tea-g3-rtl/);
 assert.doesNotMatch(siteCss, /[.]nuld-rtl/);
