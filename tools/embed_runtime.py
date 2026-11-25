@@ -10,17 +10,9 @@ import zlib
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = (
     "OPL.ELF",
-    "neutrino/neutrino.elf",
-    "neutrino/modules/ee_core.elf",
-    "neutrino/modules/raagent.irx",
-    "neutrino/modules/cdvdman_emu.irx",
-    "neutrino/modules/udpfs_fhi.irx",
-    "neutrino/modules/smap.irx",
-    "neutrino/modules/ministack.irx",
-    "neutrino/modules/smb_ioman.irx",
-    "neutrino/modules/smb_fhi.irx",
-    "neutrino/modules/mmcefhi.irx",
-    "neutrino/config/bsd-smb.toml",
+    "network/modules/smap.irx",
+    "network/modules/ministack.irx",
+    "network/modules/smb_ioman.irx",
 )
 
 def main() -> None:
@@ -32,7 +24,10 @@ def main() -> None:
     if missing:
         raise SystemExit("runtime bundle is incomplete: " + ", ".join(missing))
     assets = sorted(p for p in source.rglob("*") if p.is_file())
-    assets = [p for p in assets if p.name not in {"build.log", "OPL-LICENSE.txt"} and not p.name.endswith(".tmp")]
+    assets = [p for p in assets if p.name not in {"build.log", "OPL-LICENSE.txt", "SMB-LICENSE.txt"} and not p.name.endswith(".tmp")]
+    forbidden = [p.relative_to(source).as_posix() for p in assets if "neutrino" in p.relative_to(source).as_posix().lower()]
+    if forbidden:
+        raise SystemExit("Neutrino game runtime files are forbidden in the OPL-only bundle: " + ", ".join(forbidden))
     digest = hashlib.sha256()
     for path in assets:
         rel = path.relative_to(source).as_posix()
