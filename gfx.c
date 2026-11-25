@@ -546,7 +546,7 @@ int gfx_init(void)
 	vram_hi = 1048576;                          // GS VRAM in words (ps2tek:110)
 	z = (zbuffer_t){ 0 };
 
-	set_mode(0);
+	set_mode(1); // start in interlaced SD so composite AV has a picture from the first frame
 	for (int i = 0; i < 2; i++) { // black in both buffers before output starts: VRAM garbage looked like a crash
 		gfx_begin();
 		gfx_rect(0, 0, GFX_W, GFX_H, 0);

@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "achievements.h"
-#include "third_party/neutrino-igr/raagent/ra_snap.h" // ra_watch.h too
+#include "third_party/rcheevos/ra_snap.h"
 
 #ifdef SELFTEST
 #include <openssl/md5.h>

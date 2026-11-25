@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEa.G3 OPL Integration Lab</title>
-<meta name="description" content="Explore how TEa.G3 embeds OPL and Neutrino in one ELF, compare USB/BDM, SMB and APA/HD Loader launch adapters, and try a browser-only routing simulation.">
+<meta name="description" content="Explore the OPL-only PS2 launch architecture in TEa.G3, source adapters, read-path boundaries and AV-compatible video output.">
 <meta property="og:title" content="TEa.G3 — OPL Integration Lab">
-<meta property="og:description" content="An interactive, source-aligned explanation of the OPL runtime embedded in TEa.G3.">
+<meta property="og:description" content="An interactive, source-aligned explanation of the single OPL runtime embedded in TEa.G3.">
 <meta name="theme-color" content="#06070A">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/noto-sans-arabic-variable.ttf" as="font" type="font/ttf" crossorigin>
@@ -28,23 +28,21 @@
     <a href="changelog.html">Changelog</a>
   </div>
 </nav>
-
 <main class="wrap opl-page">
   <header class="opl-hero">
-    <div class="opl-kicker"><span class="opl-pill">EMBEDDED RUNTIME</span><span class="mono">TEa.G3 / OPL</span></div>
+    <div class="opl-kicker"><span class="opl-pill">SINGLE GAME ENGINE</span><span class="mono">TEa.G3 / OPL</span></div>
     <h1>OPL · TEa.G3</h1>
-    <p class="opl-intro">Select a format, storage source and engine.</p>
+    <p class="opl-intro">OPL is the only PS2 game engine. Select a format and source to preview the adapter path.</p>
     <div class="opl-form-actions" aria-label="TEa.G3 download">
       <a class="btn solid" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.6/TEa.G3-Complete-Package.zip" data-zip data-version="Download v{v}" aria-label="Download the latest TEa.G3 package">Download</a>
       <a class="btn" href="manual.html">Read the manual</a>
       <span class="opl-pill" data-release-status role="status" aria-live="polite">Prerelease · physical-PS2 acceptance is still open</span>
     </div>
   </header>
-
   <section class="opl-section" id="simulator">
     <div class="opl-section-head">
-      <div><span class="opl-kicker mono">01 / ROUTING</span><h2>Engine selector</h2></div>
-      <p>Choose the game format, source and engine preference.</p>
+      <div><span class="opl-kicker mono">01 / ROUTING</span><h2>OPL adapter selector</h2></div>
+      <p>Unsupported sources are blocked. There is no engine fallback.</p>
     </div>
     <div class="opl-widget" data-opl-widget>
       <form class="opl-controls" data-opl-form>
@@ -52,16 +50,10 @@
           <select name="format"><option value="iso" selected>ISO</option><option value="zso">ZSO</option><option value="ul">USBExtreme UL</option></select>
         </label>
         <label>Storage source
-          <select name="source"><option value="usb" selected>USB</option><option value="bdm">MX4SIO / iLink / FAT-exFAT HDD</option><option value="smb">SMB share</option><option value="hdl">APA / HD Loader HDD</option><option value="other">MMCE / UDPBD / UDPFS</option></select>
-        </label>
-        <label>Engine preference
-          <select name="preference"><option value="auto">auto</option><option value="opl" selected>opl</option><option value="neutrino">neutrino</option></select>
+          <select name="source"><option value="usb" selected>USB</option><option value="bdm">MX4SIO / iLink / ATA HDD</option><option value="hdl">APA / HD Loader HDD</option><option value="other">SMB / UDPBD / UDPFS / MMCE (disabled)</option></select>
         </label>
         <label>Embedded OPL runtime
           <select name="oplRuntime"><option value="ready" selected>Available</option><option value="missing">Missing / not verified</option></select>
-        </label>
-        <label data-smb-config hidden>SMB network configuration
-          <select name="network"><option value="ready" selected>Valid</option><option value="missing">Incomplete</option></select>
         </label>
         <div class="opl-form-actions">
           <button class="btn solid" type="submit">Check route</button>
@@ -69,21 +61,23 @@
         </div>
       </form>
       <div class="opl-result is-supported" data-opl-result role="status" aria-live="polite">
-        <div class="opl-result-head"><h3>Embedded OPL · BDM direct boot</h3<span class="opl-status">Current route</span></div>
-        <p class="opl-result-meta">ISO · USB · opl</p>
-        <ol class="opl-route-steps"><li><span class="step-number">01</span><span>Default motor=opl selects OPL BDM for USB ISO; physical-PS2 game testing is still pending.</span></li></ol>
+        <div class="opl-result-head"><h3>OPL · BDM direct boot</h3><span class="opl-status">Adapter exists · physical test pending</span></div>
+        <p class="opl-result-meta">ISO · USB</p>
+        <ol class="opl-route-steps"><li><span class="step-number">01</span><span>TEa.G3 validates the image and passes its source-specific OPL launch arguments.</span></li></ol>
         <p class="opl-sim-note">Browser simulation only; no PS2 game or ELF is executed.</p>
       </div>
     </div>
   </section>
+  <section class="opl-section">
+    <div class="opl-section-head"><div><span class="opl-kicker mono">02 / VIDEO</span><h2>AV-first display mode</h2></div></div>
+    <p>The launcher starts in interlaced 480i (NTSC) or 576i (PAL) for composite AV compatibility. L2+R2 switches the launcher to 720p for compatible Component or HDMI adapters. The console RGB/YPbPr setting remains in the PS2 system menu.</p>
+  </section>
 </main>
-
 <footer class="wrap site">
   <span class="credit" lang="ar" dir="rtl"><strong>تعديل وتطوير المطور العراقي</strong> — <strong>TEa.G3</strong></span>
   <span>TEa.G3 · OPL</span>
   <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
 </footer>
-
 <dialog class="viewer" data-viewer aria-label="OPL technical diagram viewer">
   <header><span class="count" data-count></span><button class="btn small" type="button" data-close>Close</button></header>
   <div class="stage"><img alt=""></div>

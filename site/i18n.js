@@ -5,7 +5,7 @@
     "Covers, 3D save icons, achievements, an in-game menu and games from a server at home. The console fetches and builds all of it; there is nothing to prepare on a PC.":"أغلفة الألعاب وأيقونات الحفظ ثلاثية الأبعاد والإنجازات وقائمة داخل اللعبة وتشغيل الألعاب من خادم منزلي. ينفّذ الجهاز هذه الوظائف مباشرة دون الحاجة إلى تجهيزها على الحاسوب.",
     "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.":"واجهة المشغّل بسماتها الاثنتي عشرة، معروضة داخل المتصفح. اضغط جانبي الغلاف لتغيير اللعبة.",
     "Make your own theme":"أنشئ سمة خاصة بك","What runs on the console":"ما الذي يعمل على الجهاز","Every row happens on the PS2 itself. The numbers were measured on a slim PS2 (SCPH-75001).":"تُنفّذ جميع الوظائف التالية على جهاز PS2 نفسه. القياسات أُخذت على جهاز PS2 Slim طراز SCPH-75001.",
-    "Covers by the console":"الأغلفة بواسطة الجهاز","Three views at 60 fps":"ثلاثة أنماط عرض بمعدل 60 إطاراً/ثانية","3D save icons":"أيقونات حفظ ثلاثية الأبعاد","Virtual memory cards":"بطاقات ذاكرة افتراضية","In-game menu":"قائمة داخل اللعبة","Achievements on hardware":"الإنجازات على الجهاز","Games from a home server":"الألعاب من خادم منزلي","Every source Neutrino reads":"مصادر الألعاب التي يدعمها Neutrino","Per-game options":"إعدادات كل لعبة","Setup and updates on the PS2":"الإعداد والتحديث على PS2","Arabic and English":"العربية والإنجليزية","Twelve themes, and yours":"اثنتا عشرة سمة، وسِمتك الخاصة",
+    "Covers by the console":"الأغلفة بواسطة الجهاز","Three views at 60 fps":"ثلاثة أنماط عرض بمعدل 60 إطاراً/ثانية","3D save icons":"أيقونات حفظ ثلاثية الأبعاد","Physical memory card only":"بطاقة الذاكرة الفعلية فقط","OPL return path":"مسار العودة في OPL","Achievements on hardware":"الإنجازات على الجهاز","Games from a home server":"الألعاب من خادم منزلي","OPL-only source adapters":"محولات مصادر OPL فقط","Per-game options":"إعدادات كل لعبة","Setup and updates on the PS2":"الإعداد والتحديث على PS2","Arabic and English":"العربية والإنجليزية","Twelve themes, and yours":"اثنتا عشرة سمة، وسِمتك الخاصة",
     "More screens":"المزيد من لقطات الشاشة","Captured from the launcher at 1280×720, in the Classic theme. Select one to see it full size.":"لقطات من المشغّل بدقة 1280×720 باستخدام السمة الكلاسيكية. اختر صورة لعرضها بالحجم الكامل.",
     "Previous screens":"اللقطات السابقة","Next screens":"اللقطات التالية","Download":"تنزيل","One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.":"ملف ZIP واحد لنسخه إلى USB. إذا كنت تستخدم ORBIT أو NULD القديم، فسينقل التشغيل الأول إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
     "all releases":"كل الإصدارات","Three steps":"ثلاث خطوات","You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. The":"تحتاج إلى جهاز PS2 يشغّل برامج Homebrew (مثل FreeMcBoot) ووحدة USB. يحتوي",
@@ -112,7 +112,7 @@
   "Launch game": "تشغيل اللعبة",
   "What runs on the console": "ما الذي يعمل على الجهاز",
   "TEa.G3 · PS2 Game Launcher": "TEa.G3 · مشغّل ألعاب PS2",
-  "Embedded OPL and Neutrino. One launcher for PlayStation 2.": "محركا OPL وNeutrino مدمجان في مشغّل واحد لجهاز PlayStation 2.",
+  "OPL only. One Arabic launcher for PlayStation 2.": "OPL فقط. مشغّل عربي واحد لجهاز PlayStation 2.",
   "The launcher's home in its twelve themes, drawn in your browser. Click its sides to change game.": "هذه معاينة للشاشة الرئيسية للمشغّل بسماته الاثنتي عشرة داخل المتصفح. اضغط على جانبي الغلاف للتنقل بين الألعاب.",
   "Make your own theme": "أنشئ سمة خاصة بك",
   "theme maker": "مصمم السمات",
@@ -125,7 +125,7 @@
   "In-game menu": "قائمة داخل اللعبة",
   "Achievements on hardware": "الإنجازات على الجهاز",
   "Games from a home server": "ألعاب من خادم منزلي",
-  "Every source Neutrino reads": "جميع مصادر الألعاب التي يدعمها Neutrino",
+  "OPL-only source adapters": "محولات مصادر OPL فقط",
   "Per-game options": "إعدادات كل لعبة",
   "Setup and updates on the PS2": "الإعداد والتحديث على جهاز PS2",
   "Arabic or English": "العربية أو الإنجليزية",
@@ -143,7 +143,7 @@
   "The setup wizard writes config.ini and FreeMcBoot autoboot settings.": "ينشئ معالج الإعداد ملف config.ini ويضبط إعدادات التشغيل التلقائي عبر FreeMcBoot.",
   "One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.": "ملف ZIP واحد لنسخه إلى وحدة USB. هل تنتقل من ORBIT أو NULD القديم؟ عند التشغيل الأول ينقل TEa.G3 إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
   "TEa.G3 complete package": "حزمة TEa.G3 الشاملة",
-  "TEa.G3.ELF, embedded OPL and Neutrino engines, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحركي OPL وNeutrino المدمجين، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
+  "TEa.G3.ELF, the single embedded OPL engine, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحرك OPL الوحيد المضمّن، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
   "all releases": "جميع الإصدارات",
   "Release notes and SHA-256 checksums. What changed in each: the": "ملاحظات الإصدارات وبصمات التحقق SHA-256. لمعرفة التغييرات في كل إصدار، راجع",
   "jfplay.elf": "ملف jfplay.elf",
@@ -303,7 +303,7 @@
   "press L2+R2 together for 480i.": "اضغط L2+R2 معاً للتبديل إلى 480i.",
   "Logs": "سجلات التشغيل",
   "records each launch.": "يسجل تفاصيل كل عملية تشغيل.",
-  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino المرخّص بموجب AFL-3.0.",
+  "The current TEa.G3 runtime embeds OPL as its only PS2 game engine.": "يضم إصدار TEa.G3 الحالي محرك OPL وحده لتشغيل ألعاب PS2.",
   "TEa.G3 theme maker": "مصمم سمات TEa.G3",
   "Pick the colours, add a picture if you want one, and download a folder for": "اختر ألوان السمة، وأضف صورة خلفية إن رغبت، ثم نزّل المجلد إلى",
   "on your USB drive. Nothing is uploaded: it all happens in this page.": "على وحدة USB. لا تُرفع ملفاتك إلى أي خادم؛ تتم جميع العمليات داخل هذه الصفحة.",
@@ -589,7 +589,7 @@
 
   Object.assign(dict, {
   "TEa.G3 is free software under GPL-3.0. Themes need TEa.G3 v1.3 or newer.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0. يتطلب استخدام السمات الإصدار TEa.G3 v1.3 أو أحدث.",
-  "USB root\n├── TEa.G3.ELF\n├── neutrino/     the TEa.G3 launcher with its in-game menu and achievements agent\n├── DVD/          PS2 DVD ISOs\n├── CD/           PS2 CD ISOs\n├── POPS/         PS1 games (POPStarter .VCD), optional\n├── APPS/         homebrew .ELF files, optional\n├── covers/       written by TEa.G3: the covers it downloads\n└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini": "المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/       ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
+  "USB root\n├── TEa.G3.ELF\n├── tea_g3/runtime/OPL.ELF  extracted from embedded OPL\n├── DVD/          PS2 DVD ISOs\n├── CD/           PS2 CD ISOs\n├── POPS/         PS1 games (POPStarter .VCD), optional\n├── APPS/         homebrew .ELF files, optional\n├── covers/       written by TEa.G3: the covers it downloads\n└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini": "المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── tea_g3/runtime/OPL.ELF  يستخرجه TEa.G3 من محرك OPL المضمّن\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/       ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
   "The theme (": "السمة (",
   "The setup wizard opens on the first boot.": "يظهر معالج الإعداد عند التشغيل الأول.",
   "tools/covers.py": "الأداة tools/covers.py",
@@ -670,7 +670,7 @@
 
   delete dict.to;
   Object.assign(dict, {
-    "USB root ├── TEa.G3.ELF ├── neutrino/ the TEa.G3 launcher with its in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
+    "USB root ├── TEa.G3.ELF ├── tea_g3/runtime/OPL.ELF extracted from embedded OPL ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── tea_g3/runtime/OPL.ELF  يستخرجه TEa.G3 من محرك OPL المضمّن\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
   });
 
   Object.assign(dict, {

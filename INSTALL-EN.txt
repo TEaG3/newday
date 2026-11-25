@@ -1,68 +1,23 @@
-TEa.G3 — USB Drive Setup Guide (English)
-==========================================
+TEa.G3 — Installation
 
-1. USB drive layout
--------------------
-Extract the USB-Template.zip archive and copy its folders directly to the USB
-root. DVD, CD, POPS and APPS must sit beside TEa.G3.ELF, not inside another
-enclosing folder.
+1. Format a USB drive as FAT32 or exFAT.
+2. Copy TEa.G3.ELF to the USB root.
+3. Put PS2 ISO/ZSO images in DVD/ or CD/ as appropriate.
+4. Put USBExtreme UL files, ul.cfg and all ul.* parts in the USB root.
+5. Launch TEa.G3 through FreeMcBoot or a compatible ELF launcher.
 
-USB:/
-├── TEa.G3.ELF
-├── DVD/
-├── CD/
-├── POPS/
-├── APPS/
-├── ul.cfg          (only when using USBExtreme/UL games)
-└── ul.*            (the game's split parts, if present)
+OPL is the only PS2 game engine and is embedded in TEa.G3. Do not install or copy a second runtime.
 
-The folder template contains neither TEa.G3.ELF nor games. Copy the actual
-launcher ELF from a TEa.G3 release to the USB root.
+Video output:
+- The launcher starts in interlaced 480i (NTSC) or 576i (PAL), the broadly compatible mode for composite AV (yellow/red/white) and many Component/HDMI displays.
+- Press L2+R2 to toggle between interlaced mode and 720p.
+- Use 720p only when the display/adapter supports it.
+- Output depends on the PS2 cable, the console RGB/YPbPr setting and the TV input; the software cannot guarantee every mode on every connector simultaneously.
 
-2. Where to put games
----------------------
-- DVD/: PS2 DVD games in ISO or ZSO format.
-- CD/: PS2 CD-based games.
-- POPS/: PS1 game files compatible with POPStarter, prepared using the file
-  format and naming required by the POPStarter setup in use.
-- APPS/: homebrew applications in ELF format.
+Game sources:
+- USB ISO/ZSO and USBExtreme UL use their OPL adapters.
+- HDD, HD Loader, MX4SIO and iLink require the matching OPL adapter and hardware validation.
+- SMB, UDPBD, UDPFS game streaming and MMCE game-source launching are disabled in this build; they are not redirected to another engine.
+- PS1 uses POPStarter; ELF applications use the application loader.
 
-Do not place ISO files directly in the USB root. Do not put DVD games in CD,
-or CD games in DVD.
-
-3. USBExtreme / UL games
-------------------------
-UL games are not ordinary ISO files. Keep ul.cfg and every associated ul.*
-part in the USB root, using their original filenames. Do not rename the parts
-or move them into DVD or CD.
-
-4. Launcher and game engines
------------------------------
-Copy the actual TEa.G3.ELF file to the USB root. You do not need a separate
-OPL.ELF or Neutrino folder: the engines are embedded in the TEa.G3 package,
-and TEa.G3 prepares its runtime files on first boot.
-
-5. USB file system
-------------------
-Use FAT32. If a game image is larger than FAT32's 4 GB file-size limit, use
-exFAT only if your TEa.G3 build, console setup and storage path support it.
-Do not manually split an ISO or rename its extension to work around the limit.
-
-6. First boot
--------------
-Start TEa.G3.ELF from uLaunchELF or FreeMcBoot. On first boot, the launcher
-creates tea_g3/runtime/ and prepares the embedded engine files. Do not unplug
-the USB drive while this setup is running.
-
-7. Important notes
-------------------
-- Do not delete tea_g3/runtime after TEa.G3 creates it; it contains runtime
-  engine files.
-- Keep UL filenames and split parts unchanged.
-- A game appearing in the list does not guarantee that every title will boot.
-  Compatibility can depend on the game, console configuration and storage path.
-- Successful builds and automated tests do not replace testing on real PS2
-  hardware.
-
-Project: https://github.com/TEaG3/newday
-Website: https://teag3.github.io/newday/
+A successful CI build does not prove gameplay. Validate boot and sustained reads on real PS2 hardware before relying on a backend.

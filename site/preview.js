@@ -321,8 +321,8 @@ function ring(s, c, lw, pad, r) { g.globalAlpha = s.f; rr(s.x - pad, s.y - pad, 
 
 // ---- splash and loading screens: a theme may bring its own; the rest get a plain one made from their tokens ----
 let mode = 'home', tMode = 0, tFade = 0, CAM = null;
-const SPL = 6.4, LCH = 4.4, HOW_EN = 'STARTING WITH NEUTRINO';
-const how = () => isArabic() ? 'جارٍ تشغيل NEUTRINO' : HOW_EN;
+const SPL = 6.4, LCH = 4.4, HOW_EN = 'LOADING TEa.G3';
+const how = () => isArabic() ? 'جارٍ تحميل TEa.G3' : HOW_EN;
 const STEPS_EN = [[0, 'STARTING'], [1.1, 'USB MODULES'], [2.2, 'READING GAMES  7 / 16'], [3.3, 'READING GAMES  16 / 16'], [4.4, '16 GAMES · READY']];
 const STEPS_AR = [[0, 'جارٍ البدء'], [1.1, 'وحدات USB'], [2.2, 'جارٍ فحص الألعاب  ٧ / ١٦'], [3.3, 'جارٍ فحص الألعاب  ١٦ / ١٦'], [4.4, '١٦ لعبة · جاهز']];
 const status = u => { const steps = isArabic() ? STEPS_AR : STEPS_EN; let s = steps[0][1]; for (const [a, m] of steps) if (u >= a) s = m; return s; };
