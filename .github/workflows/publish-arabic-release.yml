@@ -6,10 +6,8 @@ on:
       release_tag:
         description: "New GitHub release tag"
         required: true
-        default: "arabic-v1.3.5"
   push:
     branches:
-      - master
       - "arabic-v*"
     tags:
       - "arabic-v*"
@@ -167,12 +165,12 @@ jobs:
         run: sudo chown -R "$(id -u):$(id -g)" dist
 
       - name: Create validated single-ELF Arabic package
-        run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'arabic-v1.3.5' }}"
+        run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || github.ref_name }}"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.release_tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'arabic-v1.3.5' }}
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
           name: "TEa.G3 PS2 — النسخة العربية"
           body: |
             النسخة العربية من TEa.G3، تعديل وتطوير المطور العراقي TEa.G3.
@@ -185,6 +183,7 @@ jobs:
             - تم تضمين CRC-32 لكل ملف runtime والتحقق منه بعد الاستخراج.
 
             This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
+          target_commitish: ${{ github.sha }}
           prerelease: true
           files: |
             dist/TEa.G3-Complete-Package.zip
