@@ -34,4 +34,8 @@ for (const format of formats) {
 
 assert.equal(resolveRoute({ format: "vcd", source: "usb", preference: "auto" }).ok, false);
 assert.equal(resolveRoute({ format: "iso", source: "ata", preference: "opl" }).ok, false);
+assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "opl", network: "missing" }).id, "neutrino-smb-fallback");
+assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "neutrino-opl-missing");
+assert.equal(resolveRoute({ format: "ul", source: "usb", preference: "auto", oplRuntime: "missing" }).ok, false);
+assert.equal(resolveRoute({ format: "iso", source: "other", preference: "opl" }).fallback, true);
 console.log("site OPL route matrix ok: " + tested + " format/source/preference combinations + 2 invalid inputs");
