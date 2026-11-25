@@ -12,6 +12,7 @@ WORK="${WORK:-$HOME/tea-g3-smb-build}"
 BASE=229cf1dc7a8e0e58c2da390c1caa63e2b61795dd
 mkdir -p "$WORK"
 cd "$WORK"
+rm -rf "$REPO/dist/neutrino"
 
 if [ ! -d neutrino-dev/.git ]; then
     git clone -q https://github.com/ps2max32/neutrino.git neutrino-dev
