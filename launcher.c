@@ -1062,7 +1062,7 @@ static const char *const config_template[LANG_N] = {
 	"; liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel. Also chosen in the setup panel (START);\n; or the name of a folder in tea_g3/themes (a theme somebody made: docs/themes.md)\ntema = torres\n"
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs, smb. hdd = internal exFAT disk, or APA with HD Loader partitions. smb is read-only and needs a TEAG3.GAMES index;\n"
-	"; udpfs, the server below. mx4sio and mmce do not go together. Settings, covers, Neutrino, POPS\n"
+	"; udpfs is legacy and disabled. mx4sio and mmce do not go together. Settings, covers, SMB support modules, POPS\n"
 	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL wherever an OPL adapter is available; Neutrino fallback)\nmotor = opl\nauto = si\n"
 	"; udpfs: IP of the game server running the TEa.G3 catalog service (lists the games; covers and achievements keep working).\n"
 	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
@@ -1089,7 +1089,7 @@ static const char *const config_template[LANG_N] = {
 	"; empty = no Jellyfin\nservidor =\nusuario =\nclave =\n"
 	"; subtitles (text, not burned in): languages in order of preference (spa, eng, por...), no = no subtitles;\n"
 	"; during the video, square changes the track\nsubtitulos = spa\n"
-	"\n[smb]\n; SMB read-only source: static IPv4 in [red], then set the server, share and login below.\nserver =\nshare =\nuser = guest\npassword =\n\n[igr]\n; from a game (TEa.G3's Neutrino): menu opens the menu over the paused game; reiniciar (restart) and\n"
+	"\n[smb]\n; SMB read-only catalog source for the OPL ETH adapter: static IPv4 in [red], then set server, share and login.\nserver =\nshare =\nuser = guest\npassword =\n\n[igr]\n; legacy Neutrino IGR keys are retained for config compatibility; OPL uses its own IGR controls.\n"
 	"; apagar (power off) act at once. Restart boots the console as when powered on: FMCB starts TEa.G3 again if\n"
 	"; its autoboot points to mc?:/BOOT/TEa.G3.ELF (the launcher installs it).\n"
 	"; buttons: L1 L2 R1 R2 L3 R3 START SELECT ARRIBA ABAJO IZQUIERDA DERECHA TRIANGULO CIRCULO X CUADRADO\n"
@@ -1101,7 +1101,7 @@ static const char *const config_template[LANG_N] = {
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = opl\nauto = si\n"
-	"; عنوان خادم الألعاب الذي يشغل خدمة فهرسة TEa.G3. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
+	"; عنوان خادم فهرسة TEa.G3 عبر HTTP. لا يتم تفعيل UDPFS/UDPBD في محرك OPL-only\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
 	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
 	"; تنشأ البطاقة الافتراضية عند أول تشغيل. يمكن تغييرها من خيارات اللعبة بزر المثلث\nmodo = juego\n"
@@ -2034,7 +2034,7 @@ static void fit(const gfx_font *f, const char *s, int max_w, char *out, int n) /
 		strcpy(out + len - 4, "...");
 }
 
-static void options_panel(int i, int row) // △ menu: the game's Neutrino options
+static void options_panel(int i, int row) // △ menu: legacy compatibility options; OPL does not consume these
 {
 	char a[96];
 	int x = 300, y = 130, w = 680, h = 70 + 3 * 46 + 34 + 5 * 46 + 16;
@@ -2045,7 +2045,7 @@ static void options_panel(int i, int row) // △ menu: the game's Neutrino optio
 	for (int r = 0; r < OPT_ROWS; r++) {
 		if (r == OPT_GC) { // section label
 			gfx_tracking(3);
-			gfx_text(&gfx_font_mono, x + 28, ry + 8, L("COMPATIBILITY MODES (NEUTRINO -GC)"), LABEL);
+			gfx_text(&gfx_font_mono, x + 28, ry + 8, L("LEGACY COMPATIBILITY MODES (NOT APPLIED BY OPL)"), LABEL);
 			gfx_tracking(0);
 			ry += 34;
 		}
@@ -2426,7 +2426,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		int st = src[(int)cv[sel].src].type;
 		const char *src_txt = cv[sel].kind == K_DISC ? L("DRIVE") : st == SRC_HDL ? "HDL" : src_label[st];
 		x = tag(x, src_txt, cv[sel].kind == K_DISC ? UI_DVD_18 : src_icon[st], ACID, ACID, 0); // the source: acid
-		if (cv[sel].kind == K_PS2) x = tag(x, vid_label[game_video(sel)], UI_CHIP_18, EDGE, TEXT, 0); // what Neutrino forces
+		if (cv[sel].kind == K_PS2) x = tag(x, vid_label[game_video(sel)], UI_CHIP_18, EDGE, TEXT, 0); // legacy display setting; OPL uses its own video config
 		if (ra_game_ok(sel)) { // achievements tag (phase 16): "LOGROS" with a spinner while asking, none without a set
 			if (!ra_state[sel] && ra_sema >= 0) ra_want = sel, SignalSema(ra_sema); // coalesced: max_count 1
 			int st = ra_state[sel];
@@ -2485,7 +2485,7 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 	} else if (ncv) { // "Datos" (not "Datos técnicos"): the filters need the room on the left
 		int logros = ra_game_ok(sel) && ra_state[sel] == RA_SET; // phase 16: its hint takes the room of "Datos" (still on SELECT)
 		int x = hint(logros ? GFX_W - 64 : hint(GFX_W - 64, -1, "SELECT", L("Data")), UI_SQUARE_14, NULL, L("View"));
-		if (cv[sel].kind == K_PS2) x = hint(x, UI_TRIANGLE_14, NULL, L("Options")); // Neutrino options only
+		if (cv[sel].kind == K_PS2) x = hint(x, UI_TRIANGLE_14, NULL, L("Options")); // legacy settings are not applied by OPL
 		if (logros) x = hint(x, UI_CIRCLE_14, NULL, L("Achievements"));
 		hint(x, UI_CROSS_14, NULL, L("Play"));
 	} else hint(GFX_W - 64, -1, "SELECT", L("Data"));
@@ -2575,7 +2575,7 @@ static int status_text(char *b, int max)
 	}
 	const char *ip = ini_get(&cfg, "red", "ip", "dhcp");
 	if (k >= max) return max - 1;
-	if (net_busy) k += snprintf(b + k, max - k, L("NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n"), ip);
+	if (net_busy) k += snprintf(b + k, max - k, L("NETWORK SMB (OPL ETH support), IP %s\n"), ip);
 	else if (net_res == 1) k += snprintf(b + k, max - k, L("NETWORK not used\n"));
 	else if (net_res < 0) k += snprintf(b + k, max - k, L("NETWORK %s\n"), net_err(net_res));
 	else k += snprintf(b + k, max - k, L("NETWORK %s (%s)\n"), net_ip(), strcasecmp(ip, "dhcp") ? L("fixed") : "DHCP");
@@ -2755,7 +2755,7 @@ static const char *app_fetch(int i, char *file, int n)
 	                st == 200 ? file : net_err(st)), why;
 }
 
-static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an app ELF, or the BIOS for discs
+static void launch(int i) // per kind: OPL, POPStarter, an app ELF, or the BIOS for discs
 {
 	launch_err = launch_problem(i);
 	if (launch_err) return;
@@ -2781,9 +2781,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		text_c(&gfx_font_title, 340, cv[i].title, TEXT);
 		gfx_tracking(3);
 		text_c(&gfx_font_mono, 400, cv[i].kind == K_PS2 ? L("STARTING GAME") : how[(int)cv[i].kind], LABEL);
-		if (engine == ENGINE_NEUTRINO && ra_game_ok(i) && neutrino_ra && ra_state[i] <= RA_SET) // phase 16: X does not wait for the achievements
-			text_c(&gfx_font_mono, 430, ra_state[i] == RA_SET ? L("WITH ACHIEVEMENTS") : L("NO ACHIEVEMENTS: NO ANSWER YET"),
-			       ra_state[i] == RA_SET ? ACID : LABEL);
+		
 		gfx_tracking(0);
 		gfx_end();
 		gfx_flip();
@@ -2800,7 +2798,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	static char file[200], arg0[200];
 	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
 	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down(); // ponytail: a cover download in flight keeps it up
-	// no libcdvd call of the disc thread left half-way under the next program (Neutrino's branch: after its checks)
+	// stop the disc worker before handing control to the selected OPL or POPStarter path
 	if (disc_tid >= 0) TerminateThread(disc_tid);
 	if (cv[i].kind == K_DISC) { // the BIOS: PS2LOGO checks and runs the BOOT2 path; PS1DRV takes file name + version
 		char *a[2] = {cv[i].boot, "???"}; // ponytail: version "???", as the OSD libraries fall back to
@@ -3038,7 +3036,7 @@ int main(int argc, char *argv[])
 					if (gicon_state[sel] == 2) gicon_state[sel] = 0, gicon[sel] = NULL; // ponytail: the old icon leaks
 				}
 				if (usb && !ini_save(&games, GAMES_INI, L("; TEa.G3 - per-game options (triangle menu)\n"
-				                     "; video = nativo | 480p | 1080i, compat = 1-3, gc = Neutrino modes (0 2 3 5 7),\n"
+				                     "; video and gc are legacy Neutrino options; OPL applies its own per-game configuration.\n"
 				                     "; mc = juego | compartida | fisica\n")))
 					toast = 180, toast_msg = L("Could not save the options to the USB");
 			}
