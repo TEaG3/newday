@@ -75,6 +75,7 @@ def main() -> None:
             f"TEa.G3 complete package\nVersion: {VERSION}\n"
             "Single user entry point: TEa.G3.ELF\n"
             "OPL and Neutrino runtimes are embedded in the ELF.\n"
+            "Standalone OPL/Neutrino diagnostic copies, if present, are optional and not required for installation.\n"
             "No game images are included.\n"
             "CI success does not replace physical PS2 acceptance testing.\n")
 
