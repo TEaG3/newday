@@ -1065,28 +1065,17 @@ function frame(ms) {
     return;
   }
   T.bg(t);
-  // Clear, theme-aware developer credit on every theme preview (website only).
-  // The panel uses the active theme surface, the text uses its foreground, and the frame
-  // follows its current accent so the credit remains legible across light and dark themes.
-  g.save();
-  g.direction = 'rtl'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.globalAlpha = 1;
-  font('700 26px "Noto Sans Arabic", "Geeza Pro", Tahoma, sans-serif');
-  const watermark = 'تعديل و تطوير - TEa.G3';
-  const watermarkWidth = Math.ceil(g.measureText(watermark).width) + 48;
-  const watermarkX = (W - watermarkWidth) / 2, watermarkY = 650, watermarkHeight = 52;
-  g.fillStyle = T.pn || 'rgba(0,0,0,.86)';
-  g.fillRect(watermarkX, watermarkY, watermarkWidth, watermarkHeight);
-  g.strokeStyle = rgb(A); g.lineWidth = 2;
-  g.strokeRect(watermarkX + 1, watermarkY + 1, watermarkWidth - 2, watermarkHeight - 2);
-  g.fillStyle = T.tx || '#FFFFFF';
-  g.fillText(watermark, W / 2, watermarkY + watermarkHeight / 2);
-  g.restore();
   if (T.glass) snap();
   listRows(t);
   covers(t);
   if (T.mid) T.mid(t);
   header(t); footer(t);
+  const credit = document.getElementById('home-credit');
+  if (credit) {
+    credit.style.color = T.tx || '#FFFFFF';
+    credit.style.backgroundColor = T.pn || '#111111';
+    credit.style.borderColor = rgb(A);
+  }
   if (T.fx) T.fx(t);
   if (overlay) { g.save(); overlay(g); g.restore(); }
   const fi = (t - tFade) / .35; if (fi < 1) { g.fillStyle = `rgba(0,0,0,${1 - ease(fi)})`; g.fillRect(0, 0, W, H); }
