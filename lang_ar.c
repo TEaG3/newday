@@ -28,6 +28,7 @@ static const char *const ar[][2] = {
         {"Invalid game selection", "اختيار اللعبة غير صالح"},
         {"Invalid game record", "سجل اللعبة غير صالح"},
         {"Game source is no longer available", "مصدر اللعبة لم يعد متاحا"},
+        {"The game image is no longer readable from its source", "تعذرت قراءة ملف اللعبة من مصدر التخزين"},
         {"This game format is not supported by this source", "تنسيق هذه اللعبة غير مدعوم من مصدر التخزين هذا"},
         {"STARTING GAME", "جار تشغيل اللعبة"},
         {"No network (%s): the server's game catalog was not read", "لا توجد شبكة (%s): لم تتم قراءة كتالوج ألعاب الخادم"},
