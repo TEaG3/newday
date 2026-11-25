@@ -1,97 +1,113 @@
-# TEa.G3 SMB source setup
+# SMB source setup
 
-The SMB implementation on this branch uses Neutrino's SMB backend. It is a
-read-only source and requires a complete Neutrino build containing:
+SMB discovery and game launch are separate parts of the integration:
 
-- `modules/smap.irx`
-- `modules/ministack.irx`
-- `modules/smb_ioman.irx`
-- `modules/smb_fhi.irx`
-- `config/bsd-smb.toml` (TEa.G3 rewrites the module arguments before launch)
+- **Discovery:** Neutrino's SMB IOMAN/FHI modules read the known file
+  `smb:/TEAG3.GAMES`. They do not enumerate directories, so the host-side
+  `tools/smb_catalog.py` script creates the index.
+- **Launch:** with valid SMB/ETH settings, `motor = auto` and `motor = opl`
+  route ISO and ZSO games to OPL ETH direct launch. Neutrino remains an
+  ISO-only fallback/explicit choice. ZSO is never sent to Neutrino.
 
-## Share contents
+This separation matters: the Neutrino SMB modules are still needed to read the
+index and for the ISO fallback, even when OPL ETH is selected to launch a game.
 
-Make the exported share root contain at least one of these folders:
+## Required configuration
+
+Use a fixed IPv4 address for the PS2. The Neutrino SMB index reader/ministack
+does not use the launcher's DHCP setting, so `red.ip = dhcp` is not a valid
+SMB-source configuration.
+
+Example:
+
+```ini
+[red]
+ip = 192.168.1.50
+mask = 255.255.255.0
+gateway = 192.168.1.1
+
+[smb]
+server = 192.168.1.10
+share = PS2
+user = ps2
+password = change-this
+```
+
+The Neutrino SMB client used for index access uses TCP port 445. OPL ETH has
+its own SMB launch adapter; a successful Neutrino index read does not prove
+that OPL can sustain game reads from the same server.
+
+The runtime configuration hand-off creates
+`neutrino/config/bsd-smb.toml` and includes the SMB credentials. That file
+contains the password in plain text: keep it private and do not commit or share
+it.
+
+## Share layout and index
+
+The share must contain:
 
 ```text
 ShareRoot/
-  DVD/
-    Example Game.iso
-    Compressed Game.zso
-  CD/
-  TEAG3.GAMES
+├── DVD/
+├── CD/
+└── TEAG3.GAMES
 ```
 
-The SMB IOMAN module supports reading a known file but does not implement
-directory enumeration. TEa.G3 therefore reads the `TEAG3.GAMES` index from the
-share root. On the computer hosting the share, run:
+Generate the index on the computer hosting the share:
 
 ```bash
 python tools/smb_catalog.py /path/to/ShareRoot
 ```
 
-The script indexes `.iso` and `.zso` files under `DVD/` and `CD/` (including subfolders).
-Each row in `TEAG3.GAMES` is tab-separated:
+The index uses three tab-separated fields:
+
+```text
+relative-path<TAB>display-title<TAB>serial
+```
+
+For example:
 
 ```text
 DVD/Example Game.iso<TAB>Example Game<TAB>SLUS_213.76
-DVD/Compressed Game.zso<TAB>Compressed Game<TAB>SLUS_213.77
-CD/Another Game.iso<TAB>Another Game<TAB>
+CD/Another Game.zso<TAB>Another Game<TAB>
 ```
 
-The serial field may be empty; for such entries TEa.G3 attempts to read the
-image's `SYSTEM.CNF` to obtain its serial (including through the ZSO reader).
-Paths must be ASCII, relative to the share root,
-and remain under `DVD/` or `CD/`.
+Only ISO and ZSO images below `DVD/` and `CD/` are indexed. Paths must be
+relative, ASCII and remain inside the share; traversal, control characters and
+unsupported path forms are rejected. A serial may be empty. In that case
+TEa.G3 reads `SYSTEM.CNF` from the image to discover it. For ZSO this uses the
+EE-side metadata reader; that reader does not provide Neutrino with a verified
+ZSO game-sector decoder.
 
-## TEa.G3 configuration
+There is no live directory browser. Regenerate `TEAG3.GAMES` after adding,
+removing or renaming games. The current live-monitoring/staged-indexing work is
+not enabled; it remains gated on reader leases, target synchronization tests,
+safe index swapping and cancellation tests.
 
-In `mass0:/tea_g3/config.ini` (or the install's equivalent), enable SMB under
-`[juegos]`:
+## Engine selection
 
-```ini
-[juegos]
-origen = smb
-auto = no
-```
+| Content | Automatic route with valid SMB settings | Explicit Neutrino |
+|---|---|---|
+| ISO | OPL ETH; Neutrino fallback if the OPL runtime/source setup is unavailable | Neutrino SMB |
+| ZSO | OPL ETH only; fail closed if OPL ETH is unavailable | Rejected |
+| USBExtreme UL | Not an SMB format; separate USB/BDM OPL route | Not applicable |
+| APA / HD Loader | Not an SMB format; separate configured OPL HDD mini-launch | Not applicable |
 
-Set a fixed PS2 address in `[red]` and enter the share settings:
+The route matrix and host tests cover the selection policy, catalog parsing and
+build integration. They do **not** prove a game boots or sustains reads on a
+physical PS2. Physical-console testing is still required for SMB ISO/ZSO
+launch, long reads, read-only behavior, VMC handling and return-to-launcher
+behavior.
 
-```ini
-[red]
-ip = 192.168.1.10
-mascara = 255.255.255.0
-puerta = 192.168.1.1
+## Operational constraints
 
-[smb]
-server = 192.168.1.20
-share = PS2GAMES
-user = guest
-password =
-```
-
-Replace these example addresses and names with values from the local network.
-The Neutrino SMB driver uses TCP port 445 and does not use DHCP or a custom
-port. The server must be compatible with Neutrino's SMB client. The current
-handoff accepts an IPv4 address (not a DNS host name), a share name up to 63
-ASCII bytes, and user/password values up to 31 ASCII bytes. Quotes, backslashes
-and control characters are rejected because these values are written into
-Neutrino's TOML module arguments.
-
-Do not configure SMB together with UDPBD or UDPFS in one launcher session.
-Those network sources share the PS2 adapter; when SMB is selected, TEa.G3
-prioritises SMB and disables UDPBD/UDPFS for that session.
-
-## Current limitations
-
-- The SMB catalogue now lists `.iso` and `.zso` files. ZSO uses the common
-  Neutrino FHI decoder; SMB ZSO game launch still needs a real runtime test.
-- USBExtreme/UL is not implemented.
-- The share is read-only. Use the PS2's physical memory card; VMC files cannot
-  be written to the SMB share.
-- SMB has no directory browser in this TEa.G3 integration; regenerate
-  `TEAG3.GAMES` after adding, removing or renaming images.
-- The password is saved in plain text in `config.ini` and in
-  `neutrino/config/bsd-smb.toml`. Keep these files private.
-- Host tests and successful compilation do not prove that a game boots. PCSX2
-  testing and a real-console test are still required.
+- The SMB share is read-only from the launcher. TEa.G3 uses the physical memory
+  card; it does not create a VMC on the SMB share.
+- SMB and UDPBD/UDPFS are mutually exclusive in one TEa.G3 session because they
+  share the PS2 network adapter.
+- USBExtreme/UL belongs to the USB/BDM OPL path, not the SMB catalogue.
+- Internal HDD/APA and HD Loader are handled by the separate OPL HDD adapter.
+  See [OPL runtime integration](opl-engine-integration.md) for its
+  `conf_hdd.cfg` preflight and hardware-validation requirements.
+- Do not mark an SMB, HDD, ISO, ZSO or UL route as gameplay-verified from a
+  green CI build alone.
