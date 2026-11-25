@@ -17,6 +17,7 @@ engine_decision engine_assess(engine_format format, engine_source source,
     engine_decision d = {ENGINE_NEUTRINO, ENGINE_REASON_AUTO_NEUTRINO_BASELINE};
     int force_opl = preference && !strcasecmp(preference, "opl");
     int force_neutrino = preference && !strcasecmp(preference, "neutrino");
+    int automatic = !preference || !*preference || !strcasecmp(preference, "auto");
 
     /* UL is a split USBExtreme container: Neutrino cannot consume this layout. */
     if (format == ENGINE_FORMAT_UL) {
@@ -38,8 +39,8 @@ engine_decision engine_assess(engine_format format, engine_source source,
         return d;
     }
 
-    if (force_opl) {
-        d.reason = ENGINE_REASON_USER_OPL;
+    if (force_opl || automatic) {
+        d.reason = force_opl ? ENGINE_REASON_USER_OPL : ENGINE_REASON_AUTO_OPL_ADAPTER;
         if (source == ENGINE_SOURCE_USB || source == ENGINE_SOURCE_BDM)
             d.engine = ENGINE_OPL_BDM;
         else if (source == ENGINE_SOURCE_SMB) {
@@ -62,7 +63,8 @@ engine_decision engine_assess(engine_format format, engine_source source,
 const char *engine_reason_name(engine_reason reason)
 {
     switch (reason) {
-    case ENGINE_REASON_AUTO_NEUTRINO_BASELINE: return "auto-neutrino-baseline";
+    case ENGINE_REASON_AUTO_NEUTRINO_BASELINE: return "auto-neutrino-fallback";
+    case ENGINE_REASON_AUTO_OPL_ADAPTER: return "auto-opl-adapter";
     case ENGINE_REASON_UL_REQUIRES_OPL: return "ul-requires-opl";
     case ENGINE_REASON_USER_NEUTRINO: return "preference-neutrino";
     case ENGINE_REASON_USER_OPL: return "preference-opl";
@@ -83,9 +85,25 @@ int main(void)
 {
     engine_decision d;
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_USB, "auto", 1, 1);
-    assert(d.engine == ENGINE_NEUTRINO && d.reason == ENGINE_REASON_AUTO_NEUTRINO_BASELINE);
+    assert(d.engine == ENGINE_OPL_BDM && d.reason == ENGINE_REASON_AUTO_OPL_ADAPTER);
     d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_USB, "auto", 1, 1);
-    assert(d.engine == ENGINE_NEUTRINO);
+    assert(d.engine == ENGINE_OPL_BDM);
+    d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_BDM, "auto", 1, 1);
+    assert(d.engine == ENGINE_OPL_BDM);
+    d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_BDM, "auto", 1, 1);
+    assert(d.engine == ENGINE_OPL_BDM);
+    d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "auto", 1, 1);
+    assert(d.engine == ENGINE_OPL_ETH);
+    d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "auto", 1, 1);
+    assert(d.engine == ENGINE_OPL_ETH);
+    d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "auto", 1, 1);
+    assert(d.engine == ENGINE_OPL_HDD);
+    d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "auto", 1, 0);
+    assert(d.engine == ENGINE_NEUTRINO && d.reason == ENGINE_REASON_OPL_NETWORK_CONFIG_INVALID);
+    d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_USB, "auto", 0, 1);
+    assert(d.engine == ENGINE_NEUTRINO && d.reason == ENGINE_REASON_OPL_RUNTIME_MISSING);
+    d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_OTHER, "auto", 1, 1);
+    assert(d.engine == ENGINE_NEUTRINO && d.reason == ENGINE_REASON_AUTO_NEUTRINO_BASELINE);
     d = engine_assess(ENGINE_FORMAT_UL, ENGINE_SOURCE_USB, "auto", 1, 1);
     assert(d.engine == ENGINE_OPL_UL && d.reason == ENGINE_REASON_UL_REQUIRES_OPL);
     d = engine_assess(ENGINE_FORMAT_UL, ENGINE_SOURCE_USB, "neutrino", 1, 1);
