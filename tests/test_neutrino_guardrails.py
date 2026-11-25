@@ -39,6 +39,7 @@ class NeutrinoGuardrailTests(unittest.TestCase):
     def test_unknown_igr_language_does_not_alias_to_a_valid_language(self):
         self.assertIn('else if (!strcmp(&argv[i][9], "en")) igr_lang = 0;', self.patch)
         self.assertIn("unsupported language", self.patch)
+        self.assertIn('if (!strcmp(&argv[i][9], "ar")) igr_lang = 1;', self.patch)
         self.assertNotIn('igr_lang = !strcmp(&argv[i][9], "ar") ? 1 : 0;', self.patch)
 
 

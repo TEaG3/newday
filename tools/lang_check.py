@@ -181,7 +181,8 @@ def main():
     igr_generator = (ROOT / "tools" / "generate_igr_arabic.py").read_text(encoding="utf-8")
     igr_checks = {
         "launcher passes Arabic to the in-game menu": '"-igrlang=ar"' in launcher,
-        "Neutrino patch maps Arabic to language 1": 'igr_lang = !strcmp(&argv[i][9], "ar") ? 1 : 0;' in neutrino_patch,
+        "Neutrino patch maps Arabic to language 1": 'if (!strcmp(&argv[i][9], "ar")) igr_lang = 1;' in neutrino_patch,
+        "Neutrino IGR rejects unknown language identifiers": 'else if (!strcmp(&argv[i][9], "en")) igr_lang = 0;' in neutrino_patch and "unsupported language" in neutrino_patch and 'igr_lang = !strcmp(&argv[i][9], "ar") ? 1 : 0;' not in neutrino_patch,
         "Neutrino in-game menu renders Arabic labels": 'eec.IgrLang == 1' in neutrino_menu and "igr_ar_label_pixels" in neutrino_menu,
         "Neutrino achievement notice has Arabic text": "igr_ar_notice_pixels" in neutrino_menu and "IGR_AR_NOTICE_WIDTH" in neutrino_menu,
         "Arabic IGR bitmap is generated from pinned font": 'NOTICE = "تم فتح الإنجاز"' in igr_generator and 'LABELS = ("إعادة تشغيل", "إيقاف التشغيل", "إلغاء")' in igr_generator,
