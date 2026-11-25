@@ -141,8 +141,8 @@ A feature is complete only after discovery, argument translation, runtime startu
 
 ## Validation status
 
-The latest successful post-merge master run is
-[#843](https://github.com/TEaG3/newday/actions/runs/45709060620),
+The runtime validation baseline recorded here is successful post-merge master
+[run #843](https://github.com/TEaG3/newday/actions/runs/45709060620),
 dated 2026-11-25, at commit
 `9ca5d525ceda67ea41e676749ae641eefe3a37bb`.
 
