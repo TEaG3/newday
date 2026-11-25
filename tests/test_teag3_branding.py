@@ -39,6 +39,8 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertIn("server for online covers, updates and achievements", config)
         self.assertIn("Classic", config)
         self.assertIn('if (!strcasecmp(key, "classic")) return TH_NULD;', self.launcher)
+        self.assertNotIn("nuld vmc remote", self.site_i18n.lower())
+        self.assertIn("TEa.G3 VMC remote", self.site_i18n)
 
     def test_network_identifies_the_current_product(self):
         self.assertIn("User-Agent: TEa.G3", self.net)
