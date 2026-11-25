@@ -176,5 +176,8 @@ if source.count(old_igr) != 1:
     raise SystemExit(f"IGR path anchor mismatch: {source.count(old_igr)}")
 source = source.replace(old_igr, new_igr, 1)
 
+expected_startup = 'snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), "%s", argv[2]);'
+if source.count(expected_startup) != 1:
+    raise SystemExit("OPL startup ID must be copied with a fixed %s format string")
 path.write_text(source, encoding="utf-8")
 print("OPL TEa.G3 direct-launch routes patched: UL + USB/BDM ISO/ZSO")

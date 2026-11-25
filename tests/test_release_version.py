@@ -23,8 +23,8 @@ class ReleaseVersionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid TEa.G3 release version"):
             validate_release_version("arabic-latest", self.SOURCE)
 
-    def test_opl_license_uses_its_actual_afl_archive_label(self) -> None:
-        notice = '\nAcademic Free License ("AFL") v. 3.0\n'
+    def test_opl_license_uses_the_actual_afl_archive_label(self) -> None:
+        notice = '\\nAcademic Free License ("AFL") v. 3.0\\n'
         self.assertEqual(validate_opl_license(notice), "licenses/OPL-AFL-3.0.txt")
 
     def test_rejects_unexpected_opl_license_notice(self) -> None:

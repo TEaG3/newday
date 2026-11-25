@@ -36,11 +36,16 @@ UL games are not ordinary ISO files. Keep ul.cfg and every associated ul.*
 part in the USB root, using their original filenames. Do not rename the parts
 or move them into DVD or CD.
 
-4. Launcher and game engines
------------------------------
-Copy the actual TEa.G3.ELF file to the USB root. You do not need a separate
-OPL.ELF or Neutrino folder: the engines are embedded in the TEa.G3 package,
-and TEa.G3 prepares its runtime files on first boot.
+4. Launcher and game engine
+----------------------------
+OPL is the only PS2 game engine in this build. It is embedded in
+TEa.G3.ELF and extracted automatically on first boot. Do not copy a separate
+Neutrino runtime or expect Neutrino fallback.
+
+The launcher currently wires USB/BDM ISO and ZSO through OPL BDM, and
+USBExtreme UL through OPL's UL direct-boot path. SMB, UDPBD, UDPFS, MMCE and
+APA/HD Loader launch routes are disabled until their OPL adapters are wired
+and validated. A listed game is not proof that its source is launchable.
 
 5. USB file system
 ------------------
@@ -51,13 +56,13 @@ Do not manually split an ISO or rename its extension to work around the limit.
 6. First boot
 -------------
 Start TEa.G3.ELF from uLaunchELF or FreeMcBoot. On first boot, the launcher
-creates tea_g3/runtime/ and prepares the embedded engine files. Do not unplug
+creates tea_g3/runtime/ and extracts the embedded OPL runtime. Do not unplug
 the USB drive while this setup is running.
 
 7. Important notes
 ------------------
-- Do not delete tea_g3/runtime after TEa.G3 creates it; it contains runtime
-  engine files.
+- Do not delete tea_g3/runtime after TEa.G3 creates it; it contains the
+  extracted OPL runtime.
 - Keep UL filenames and split parts unchanged.
 - A game appearing in the list does not guarantee that every title will boot.
   Compatibility can depend on the game, console configuration and storage path.

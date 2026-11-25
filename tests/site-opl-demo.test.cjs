@@ -58,49 +58,32 @@ for (const format of formats) {
   for (const source of sources) {
     for (const preference of preferences) {
       let expected;
-      if (format === "ul") {
-        expected = source === "usb" ? "opl-ul" : "unsupported";
-      } else if (format === "zso" && source === "hdl") {
-        expected = "zso-hdl-unsupported";
-      } else if (format === "zso" && preference === "neutrino") {
-        expected = "zso-requires-opl";
-      } else if (format === "zso" && (source === "usb" || source === "bdm")) {
-        expected = "opl-bdm";
-      } else if (format === "zso" && source === "smb") {
-        expected = "opl-eth";
-      } else if (format === "zso") {
-        expected = "zso-requires-opl";
-      } else if (preference === "neutrino") {
-        expected = "neutrino";
-      } else if (source === "usb" || source === "bdm") {
-        expected = "opl-bdm";
-      } else if (source === "smb") {
-        expected = "opl-eth";
-      } else if (source === "hdl") {
-        expected = "opl-hdd";
-      } else {
-        expected = "neutrino";
-      }
+      if (preference !== "opl") expected = "engine-removed";
+      else if (format === "ul") expected = source === "usb" ? "opl-ul" : "unsupported-source";
+      else if (source === "usb" || source === "bdm") expected = "opl-bdm";
+      else if (format === "zso" && source === "hdl") expected = "zso-hdl-unsupported";
+      else expected = format === "zso" ? "zso-source-unsupported" : "unsupported-source";
       const input = { format, source, preference };
       const actual = resolveRoute(input);
       assert.equal(actual.id, expected, JSON.stringify(input));
-      const blocked = expected === "unsupported" || expected.startsWith("zso-");
-      assert.equal(actual.ok, !blocked, JSON.stringify(input));
+      assert.equal(actual.ok, expected === "opl-ul" || expected === "opl-bdm", JSON.stringify(input));
+      assert.equal(actual.fallback, undefined, JSON.stringify(input));
       tested += 1;
     }
   }
 }
-assert.equal(resolveRoute({ format: "vcd", source: "usb", preference: "auto" }).ok, false);
-assert.equal(resolveRoute({ format: "iso", source: "ata", preference: "opl" }).ok, false);
-assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "auto", network: "missing" }).id, "neutrino-smb-fallback");
-assert.equal(resolveRoute({ format: "zso", source: "smb", preference: "auto", network: "missing" }).id, "zso-smb-config-invalid");
-assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "auto", oplRuntime: "missing" }).id, "zso-opl-missing");
-assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "neutrino" }).id, "zso-requires-opl");
+assert.equal(resolveRoute({ format: "vcd", source: "usb", preference: "opl" }).ok, false);
+assert.equal(resolveRoute({ format: "iso", source: "ata", preference: "opl" }).id, "unsupported");
+assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "auto", network: "missing" }).id, "engine-removed");
+assert.equal(resolveRoute({ format: "iso", source: "smb", preference: "opl", network: "missing" }).id, "unsupported-source");
+assert.equal(resolveRoute({ format: "zso", source: "smb", preference: "opl", network: "missing" }).id, "zso-source-unsupported");
+assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "zso-opl-missing");
+assert.equal(resolveRoute({ format: "zso", source: "usb", preference: "neutrino" }).id, "engine-removed");
 assert.equal(resolveRoute({ format: "zso", source: "hdl", preference: "opl" }).id, "zso-hdl-unsupported");
-assert.equal(resolveRoute({ format: "zso", source: "other", preference: "auto" }).id, "zso-requires-opl");
-assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "neutrino-opl-missing");
-assert.equal(resolveRoute({ format: "ul", source: "usb", preference: "auto", oplRuntime: "missing" }).ok, false);
-assert.equal(resolveRoute({ format: "iso", source: "other", preference: "opl" }).fallback, true);
+assert.equal(resolveRoute({ format: "zso", source: "other", preference: "opl" }).id, "zso-source-unsupported");
+assert.equal(resolveRoute({ format: "iso", source: "usb", preference: "opl", oplRuntime: "missing" }).id, "opl-runtime-missing");
+assert.equal(resolveRoute({ format: "ul", source: "usb", preference: "opl", oplRuntime: "missing" }).ok, false);
+assert.equal(resolveRoute({ format: "iso", source: "other", preference: "opl" }).fallback, undefined);
 const readme = fs.readFileSync(path.join(__dirname, "../README.md"), "utf8");
 assert.match(readme, /ZSO is OPL-only in this build/);
 const engineDocs = fs.readFileSync(path.join(__dirname, "../docs/opl-engine-integration.md"), "utf8");

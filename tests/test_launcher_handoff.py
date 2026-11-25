@@ -13,7 +13,7 @@ class LauncherHandoffTests(unittest.TestCase):
         cls.gfx = (ROOT / "gfx.c").read_text(encoding="utf-8")
         cls.header = (ROOT / "gfx.h").read_text(encoding="utf-8")
         cls.release_workflow = (ROOT / ".github/workflows/publish-arabic-release.yml").read_text(encoding="utf-8")
-        cls.build_workflow = (ROOT / ".github/workflows/build-ps2.yml").read_text(encoding="utf-8")
+        cls.package_script = (ROOT / "tools/package_single_elf_release.py").read_text(encoding="utf-8")
 
     def test_low_level_loader_is_called_only_by_recovery_wrapper(self):
         # Every caller must pass through the VBlank recovery path.
@@ -22,8 +22,8 @@ class LauncherHandoffTests(unittest.TestCase):
 
     def test_every_launcher_handoff_uses_recovery_wrapper(self):
         calls = re.findall(r"\brun_loader_recover\s*\(", self.launcher)
-        # Seven hand-off sites plus the wrapper definition.
-        self.assertEqual(len(calls), 8)
+        # OPL BDM, OPL UL, restart, PS1/app loader and the wrapper definition.
+        self.assertEqual(len(calls), 5)
         self.assertIn("if (gfx_resume())", self.launcher)
 
     def test_resume_reuses_existing_vblank_state(self):
@@ -54,8 +54,8 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("int gfx_resume(void);", self.header)
 
     def test_release_workflow_uses_the_recovery_wrapper(self):
-        self.assertIn("run_loader_recover(8, opl_argv)", self.release_workflow)
-        self.assertNotIn("run_loader(8, opl_argv)", self.release_workflow)
+        self.assertIn("run_loader_recover(8, opl_argv)", self.launcher)
+        self.assertNotIn("run_loader(8, opl_argv)", self.launcher)
         self.assertIn("USBExtreme UL يستخدم OPL فقط", self.release_workflow)
 
     def test_release_workflow_uses_the_ci_pinned_teag3_opl_source(self):
@@ -63,12 +63,13 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("ref: 46bad5a4a469c51e45eb1ed879fe43c100b8cb7b", self.release_workflow)
         self.assertNotIn("repository: ps2homebrew/Open-PS2-Loader", self.release_workflow)
 
-    def test_release_opl_build_flags_match_ci(self):
-        flags = "make NOT_PACKED=1 RTL=1 PADEMU=1"
-        self.assertIn(flags, self.build_workflow)
-        self.assertIn(flags, self.release_workflow)
-        self.assertIn("test -s include/lang_autogen.h", self.release_workflow)
-        self.assertIn("test -s src/lang_internal.c", self.release_workflow)
+    def test_release_and_package_workflows_are_opl_only(self):
+        self.assertNotIn("build_neutrino.sh", self.release_workflow)
+        self.assertNotIn("neutrino/neutrino.elf", self.release_workflow)
+        self.assertIn('! grep -qi neutrino runtime-manifest.txt', self.release_workflow)
+        self.assertIn('REQUIRED = ("OPL.ELF",)', self.package_script)
+        self.assertIn("licenses/OPL-AFL-3.0.txt", self.package_script)
+        self.assertNotIn('"neutrino/neutrino.elf"', self.package_script)
 
 
 if __name__ == "__main__":
