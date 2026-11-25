@@ -21,8 +21,8 @@ class LauncherHandoffTests(unittest.TestCase):
 
     def test_every_launcher_handoff_uses_recovery_wrapper(self):
         calls = re.findall(r"\brun_loader_recover\s*\(", self.launcher)
-        # OPL BDM, OPL UL, restart, PS1/app loader and the wrapper definition.
-        self.assertEqual(len(calls), 5)
+        # Seven hand-off sites plus the wrapper definition.
+        self.assertEqual(len(calls), 8)
         self.assertIn("if (gfx_resume())", self.launcher)
 
     def test_resume_reuses_existing_vblank_state(self):
@@ -56,6 +56,11 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("run_loader_recover(8, opl_argv)", self.release_workflow)
         self.assertNotIn("run_loader(8, opl_argv)", self.release_workflow)
         self.assertIn("USBExtreme UL يستخدم OPL فقط", self.release_workflow)
+
+    def test_release_workflow_uses_the_ci_pinned_teag3_opl_source(self):
+        self.assertIn("repository: TEaG3/OPL", self.release_workflow)
+        self.assertIn("ref: 46bad5a4a469c51e45eb1ed879fe43c100b8cb7b", self.release_workflow)
+        self.assertNotIn("repository: ps2homebrew/Open-PS2-Loader", self.release_workflow)
 
 
 if __name__ == "__main__":
