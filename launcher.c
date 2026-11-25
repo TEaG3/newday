@@ -2571,9 +2571,14 @@ static const char *launch_problem(int i) // select a viable engine before handin
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
 	if (engine == ENGINE_UNSUPPORTED) return L("This game format is not supported by this source");
-	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && !neutrino) return L("Could not install the embedded Neutrino runtime");
+	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO) {
+		if (!neutrino) return L("Could not install the embedded Neutrino runtime");
+		if (!runtime_asset_valid(RUNTIME_DIR, "neutrino/neutrino.elf"))
+			return L("Neutrino runtime failed its integrity check");
+	}
 	if (engine == ENGINE_OPL_UL || engine == ENGINE_OPL_BDM || engine == ENGINE_OPL_ETH || engine == ENGINE_OPL_HDD) {
-		if (!exists(OPL_PATH)) return L("Could not install the embedded OPL runtime");
+		if (!runtime_asset_valid(RUNTIME_DIR, "OPL.ELF"))
+			return L("OPL runtime failed its integrity check");
 		if (stub_port < 0) return stub_install ? L("Preparing the independent return path; try again shortly") : L("A memory-card return stub is required before this launch");
 	}
 	if (engine == ENGINE_OPL_HDD &&
@@ -2668,6 +2673,8 @@ static const char *app_fetch(int i, char *file, int n)
 
 static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an app ELF, or the BIOS for discs
 {
+	launch_err = launch_problem(i);
+	if (launch_err) return;
 	launch_err = NULL;
 	engine_decision decision = engine_for(&cv[i]);
 	int engine = decision.engine;
