@@ -226,7 +226,7 @@
       });
       render(form);
     });
-    document.addEventListener("nuld:languagechange", () => document.querySelectorAll("[data-opl-form]").forEach(render));
+    document.addEventListener("tea-g3:languagechange", () => document.querySelectorAll("[data-opl-form]").forEach(render));
   }
   return { resolveRoute, mount };
 });
