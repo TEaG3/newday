@@ -28,13 +28,13 @@ int iso_find(iso_read_fn read_at, void *f, const char *path, unsigned *lba_out, 
         buf[156 + 32] != 1 || buf[156 + 33] != 0 ||
         !(buf[156 + 25] & 0x02)) return 0;
     lba = le32(buf + 156 + 2), size = le32(buf + 156 + 10);
-    if (!size || (u64)lba + ((u64)size - 1) / SECTOR > 0xffffffffu) return 0;
+    if (!size || (unsigned long long)lba + ((unsigned long long)size - 1) / SECTOR > 0xffffffffu) return 0;
 
     while (*path == '\\' || *path == '/') path++;
     if (!*path) return 0;
     component = path;
     for (;;) {
-        unsigned n = (unsigned)strcspn(component, "\\\\/");
+        unsigned n = (unsigned)strcspn(component, "\\/");
         unsigned off = 0, found_lba = 0, found_size = 0;
         int found = 0, found_dir = 0;
         int more;
@@ -45,7 +45,7 @@ int iso_find(iso_read_fn read_at, void *f, const char *path, unsigned *lba_out, 
             unsigned p = 0;
             if (read_size > SECTOR) read_size = SECTOR;
             memset(buf, 0, sizeof(buf));
-            if ((u64)lba + off / SECTOR > 0xffffffffu ||
+            if ((unsigned long long)lba + off / SECTOR > 0xffffffffu ||
                 !read_at(f, lba + off / SECTOR, buf, read_size)) return 0;
             while (p < read_size && buf[p]) {
                 unsigned record_size = buf[p];
@@ -64,7 +64,7 @@ int iso_find(iso_read_fn read_at, void *f, const char *path, unsigned *lba_out, 
                     found_size = le32(buf + p + 10);
                     found_dir = (buf[p + 25] & 0x02) != 0;
                     if (!found_size ||
-                        (u64)found_lba + ((u64)found_size - 1) / SECTOR > 0xffffffffu) return 0;
+                        (unsigned long long)found_lba + ((unsigned long long)found_size - 1) / SECTOR > 0xffffffffu) return 0;
                     found = 1;
                     break;
                 }
@@ -111,18 +111,18 @@ int cnf_boot(const char *cnf, int ps1, char *file, char *raw, int raw_n)
         const char *line_end;
         int key_len = ps1 ? 4 : 5;
         if (!(b = strstr(b, "BOOT"))) return 0;
-        if (b != cnf && b[-1] != '\\n') { b += 4; continue; }
+        if (b != cnf && b[-1] != '\n') { b += 4; continue; }
         if (ps1) {
-            if (!(b[4] == '=' || b[4] == ' ' || b[4] == '\\t')) { b += 4; continue; }
+            if (!(b[4] == '=' || b[4] == ' ' || b[4] == '\t')) { b += 4; continue; }
         } else {
-            if (b[4] != '2' || !(b[5] == '=' || b[5] == ' ' || b[5] == '\\t')) { b += 4; continue; }
+            if (b[4] != '2' || !(b[5] == '=' || b[5] == ' ' || b[5] == '\t')) { b += 4; continue; }
         }
-        line_end = strpbrk(b, "\\r\\n");
+        line_end = strpbrk(b, "\r\n");
         if (!line_end) line_end = b + strlen(b);
         const char *eq = memchr(b + key_len, '=', (size_t)(line_end - (b + key_len)));
         if (!eq) { b = *line_end ? line_end + 1 : line_end; continue; }
         const char *value = eq + 1;
-        while (value < line_end && (*value == ' ' || *value == '\\t')) value++;
+        while (value < line_end && (*value == ' ' || *value == '\t')) value++;
         while (line_end > value && isspace((unsigned char)line_end[-1])) line_end--;
         if (value >= line_end) return 0;
         if (raw) {
@@ -132,7 +132,7 @@ int cnf_boot(const char *cnf, int ps1, char *file, char *raw, int raw_n)
         }
         const char *name = value;
         for (const char *p = value; p < line_end; p++)
-            if (*p == '\\\\' || *p == '/' || *p == ':') name = p + 1;
+            if (*p == '\\' || *p == '/' || *p == ':') name = p + 1;
         size_t name_len = 0;
         while (name + name_len < line_end && name[name_len] != ';') name_len++;
         if (!name_len || name_len > 15) return 0;
@@ -204,13 +204,13 @@ int main(void)
 	// minimal ISO: PVD at 16, root dir at 18 with SYSTEM.CNF -> sector 20
 	static unsigned char iso[SECTOR * 21];
 	unsigned char *pvd = iso + 16 * SECTOR, *root = iso + 18 * SECTOR, *rec;
-	pvd[0] = 1; memcpy(pvd + 1, "CD001", 5);
+	pvd[0] = 1; memcpy(pvd + 1, "CD001", 5); pvd[6] = 1;
 	pvd[156] = 34; pvd[156 + 2] = 18; pvd[156 + 10] = SECTOR & 255; pvd[156 + 11] = SECTOR >> 8;
     pvd[156 + 25] = 2; pvd[156 + 32] = 1; pvd[156 + 33] = 0;
 	rec = root; rec[0] = 34; rec[32] = 1;                      // "." entry
 	rec = root + 34; rec[0] = 46; rec[2] = 20; rec[10] = 40; rec[32] = 12; memcpy(rec + 33, "SYSTEM.CNF;1", 12);
 	memcpy(iso + 20 * SECTOR, "BOOT2 = cdrom0:\\SLUS_209.46;1\r\nVER = 1.00\r\n", 40);
-	rec = root + 80; rec[0] = 38; rec[2] = 17; rec[11] = SECTOR >> 8; rec[32] = 4; memcpy(rec + 33, "DATA", 4); // dir
+	rec = root + 80; rec[0] = 38; rec[2] = 17; rec[11] = SECTOR >> 8; rec[25] = 2; rec[32] = 4; memcpy(rec + 33, "DATA", 4); // dir
 	rec = iso + 17 * SECTOR; rec[0] = 44; rec[2] = 19; rec[10] = 5; rec[32] = 10; memcpy(rec + 33, "MAIN.ELF;1", 10);
 	FILE *f = tmpfile();
 	fwrite(iso, 1, sizeof(iso), f);
