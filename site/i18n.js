@@ -18,7 +18,7 @@
     "Copy the zip's contents to the root of the drive, put your ISOs in ":"انسخ محتويات ZIP إلى جذر وحدة التخزين، وضع ملفات ISO داخل ",
     "Move through the library":"التنقل بين مكتبة الألعاب","Filter: all, PS2, PS1, apps":"تصفية: الكل، PS2، PS1، التطبيقات","Change view: carousel, grid, list":"تغيير العرض: دائري، شبكة، قائمة","Play":"تشغيل","The setup wizard":"معالج الإعداد","Language of the menus and of the file's comments":"لغة القوائم والتعليقات داخل الملف","The theme (":"السمة (","Where to look for games, comma-separated":"مصادر البحث عن الألعاب، مفصولة بفواصل","The home game server (udpfs)":"خادم الألعاب المنزلي (udpfs)","Video mode of the games":"نمط عرض الألعاب","The menu's own output; 480i for a CRT":"دقة إخراج القائمة؛ 480i لشاشات CRT","Download missing covers at boot":"تنزيل الأغلفة الناقصة عند بدء التشغيل","Look for a new TEa.G3 release at boot":"البحث عن إصدار جديد من TEa.G3 عند بدء التشغيل",
     "Theme maker":"مصمم السمات","Pick the colours, add a picture if you want one, and download a folder for ":"اختر الألوان، وأضف صورة اختيارية، ثم نزّل مجلداً وضعه في ","Nothing is uploaded: it all happens in this page.":"لا يتم رفع أي شيء؛ جميع العمليات تتم داخل هذه الصفحة.",
-    "Name":"الاسم","Base ":"السمة الأساسية ","Colours":"الألوان","Background picture ":"صورة الخلفية ","optional":"اختياري","Choose a picture":"اختر صورة","Remove it":"إزالة الصورة","Screen":"الشاشة","Carousel":"عرض دائري","Grid":"شبكة","List":"قائمة","Setup panel":"لوحة الإعداد","Loading screen":"شاشة التحميل","Preview launch screen":"معاينة شاشة تشغيل اللعبة","The home screen with your theme. Click its sides to change game.":"الشاشة الرئيسية بسمتك. اضغط على جانبيها لتغيير اللعبة.","The loading and launch screens are the base's.":"شاشتا التحميل والتشغيل مأخوذتان من السمة الأساسية.","Download the theme":"تنزيل السمة","Copy theme.ini":"نسخ theme.ini","Copied":"تم النسخ","Troubleshooting":"استكشاف الأخطاء وإصلاحها",
+    "Name":"الاسم","Base ":"السمة الأساسية ","Colours":"الألوان","Background picture ":"صورة الخلفية ","optional":"اختياري","Choose a picture":"اختر صورة","Remove it":"إزالة الصورة","Screen":"الشاشة","Carousel":"عرض دائري","Grid":"شبكة","List":"قائمة","Setup panel":"لوحة الإعداد","Loading screen":"شاشة التحميل","Launch game":"تشغيل اللعبة","The home screen with your theme. Click its sides to change game.":"الشاشة الرئيسية بسمتك. اضغط على جانبيها لتغيير اللعبة.","The loading and launch screens are the base's.":"شاشتا التحميل والتشغيل مأخوذتان من السمة الأساسية.","Download the theme":"تنزيل السمة","Copy theme.ini":"نسخ theme.ini","Copied":"تم النسخ","Troubleshooting":"استكشاف الأخطاء وإصلاحها",
     "What changed, ":"ما الذي تغيّر، ","version by version": "إصداراً بعد إصدار","Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.":"الأحدث أولاً. كان اسم المشروع ORBIT حتى الإصدار v1.1. يتوفر ملف ZIP وبصمات التحقق لكل إصدار في صفحة الإصدار.",
     "New":"جديد","Fixed":"إصلاحات","Known issues":"مشكلات معروفة","Download v{v}":"تنزيل الإصدار {v}","Read the manual":"اقرأ الدليل","All downloads":"كل التنزيلات"
   };
@@ -108,7 +108,7 @@
   "Download": "تنزيل",
   "Read the manual": "اقرأ دليل الاستخدام",
   "Loading screen": "شاشة التحميل",
-  "Preview launch screen": "معاينة شاشة تشغيل اللعبة",
+  "Launch game": "تشغيل اللعبة",
   "What runs on the console": "ما الذي يعمل على الجهاز",
   "A console menu for the PlayStation 2, running on the PlayStation 2.": "واجهة لتشغيل الألعاب وإدارتها، تعمل مباشرة على جهاز PlayStation 2.",
   "Covers, 3D save icons, achievements, an in-game menu and games from a server at home. The console fetches and builds all of it; there is nothing to prepare on a PC.": "يوفّر TEa.G3 أغلفة الألعاب وأيقونات الحفظ ثلاثية الأبعاد والإنجازات وقائمة داخل اللعبة، كما يشغّل الألعاب من خادم منزلي. يتولى جهاز PS2 تنفيذ هذه الوظائف مباشرة، من دون الحاجة إلى تجهيزها على الكمبيوتر.",
@@ -694,7 +694,7 @@
   Object.assign(dict, {
     "Torres":"الأبراج","Cristal":"كريستال","Aurora":"الشفق القطبي","Liquid":"السائل","Onda":"الموجة","Orbit":"المدار",
     "Techstep":"تيك ستيب","Wireframe":"الإطار السلكي","Neuro":"نيورو","Fósforo":"الفوسفور","Papel":"الورق",
-    "Setup panel":"لوحة الإعداد","Loading screen":"شاشة التحميل","Preview launch screen":"معاينة شاشة تشغيل اللعبة",
+    "Setup panel":"لوحة الإعداد","Loading screen":"شاشة التحميل","Launch game":"تشغيل اللعبة",
     "Download the theme":"تنزيل السمة","Copy theme.ini":"نسخ ملف theme.ini","Copied":"تم النسخ",
     "Back to the base's colours":"استعادة ألوان السمة الأساسية",
     "The accent follows the selected cover's colour":"يتغير لون التمييز وفق لون غلاف اللعبة المحددة",
