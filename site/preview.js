@@ -1065,17 +1065,22 @@ function frame(ms) {
     return;
   }
   T.bg(t);
-  // Developer signature on the website's theme backgrounds only; never alters downloaded PS2 assets.
+  // Clear, theme-aware developer credit on every theme preview (website only).
+  // The panel uses the active theme surface, the text uses its foreground, and the frame
+  // follows its current accent so the credit remains legible across light and dark themes.
   g.save();
-  g.direction = 'ltr'; g.textAlign = 'center'; g.globalAlpha = .72;
-  font('500 12px Archivo, "Geeza Pro", "Noto Sans Arabic", Tahoma, sans-serif');
-  const watermark = '( تعديل - وتعريب - TEa.G3 )';
-  const watermarkWidth = Math.ceil(g.measureText(watermark).width) + 22;
-  g.fillStyle = 'rgba(0,0,0,.38)';
-  g.fillRect((W - watermarkWidth) / 2, 690, watermarkWidth, 22);
-  g.strokeStyle = 'rgba(210,225,255,.34)'; g.lineWidth = 1;
-  g.strokeRect((W - watermarkWidth) / 2 + .5, 690.5, watermarkWidth - 1, 21);
-  g.fillStyle = '#F1F4FF'; g.fillText(watermark, W / 2, 705);
+  g.direction = 'rtl'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.globalAlpha = 1;
+  font('700 26px "Noto Sans Arabic", "Geeza Pro", Tahoma, sans-serif');
+  const watermark = 'تعديل و تطوير - TEa.G3';
+  const watermarkWidth = Math.ceil(g.measureText(watermark).width) + 48;
+  const watermarkX = (W - watermarkWidth) / 2, watermarkY = 650, watermarkHeight = 52;
+  g.fillStyle = T.pn || 'rgba(0,0,0,.86)';
+  g.fillRect(watermarkX, watermarkY, watermarkWidth, watermarkHeight);
+  g.strokeStyle = rgb(A); g.lineWidth = 2;
+  g.strokeRect(watermarkX + 1, watermarkY + 1, watermarkWidth - 2, watermarkHeight - 2);
+  g.fillStyle = T.tx || '#FFFFFF';
+  g.fillText(watermark, W / 2, watermarkY + watermarkHeight / 2);
   g.restore();
   if (T.glass) snap();
   listRows(t);
