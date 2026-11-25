@@ -188,7 +188,7 @@ static int dir_get(card *v, unsigned rel, unsigned k, unsigned char *e)
         if (following == 0xffffffffu) return 0;
         rel = following;
     }
-    if (v->alloc > NCL || rel > NCL - v->alloc - 1 || !rd(v, v->alloc + rel, v->b))
+    if (v->alloc >= NCL || rel >= NCL - v->alloc || !rd(v, v->alloc + rel, v->b))
         return -1;
     memcpy(e, v->b + (k & 1) * 512, 512);
     return 1;
@@ -312,6 +312,30 @@ int main(int argc, char **argv)
 	vmc_ent e[8];
 	assert(vmc_list(p, e, 8) == 0); // formatted and empty
 	assert(vmc_list("/tmp/does-not-exist.bin", e, 8) == -1);
+    /* Creating over an existing path must never truncate a user's existing card. */
+    {
+        FILE *keep = fopen("/tmp/vmc_keep.bin", "wb");
+        char check[8] = {0};
+        assert(keep && fwrite("KEEP", 1, 4, keep) == 4 && fclose(keep) == 0);
+        assert(!vmc_create("/tmp/vmc_keep.bin"));
+        keep = fopen("/tmp/vmc_keep.bin", "rb");
+        assert(keep && fread(check, 1, 4, keep) == 4 && fclose(keep) == 0);
+        assert(!memcmp(check, "KEEP", 4));
+        remove("/tmp/vmc_keep.bin");
+    }
+    /* Short and structurally invalid card images are rejected before directory traversal. */
+    {
+        FILE *bad = fopen("/tmp/vmc_short.bin", "wb");
+        assert(bad && fwrite("Sony", 1, 4, bad) == 4 && fclose(bad) == 0);
+        assert(vmc_list("/tmp/vmc_short.bin", e, 8) == -1);
+        remove("/tmp/vmc_short.bin");
+    }
+    {
+        FILE *bad = fopen(p, "r+b");
+        unsigned char word[4] = {0xff, 0xff, 0xff, 0x7f};
+        assert(bad && fseek(bad, 0x34, SEEK_SET) == 0 && fwrite(word, 1, 4, bad) == 4 && fclose(bad) == 0);
+        assert(vmc_list(p, e, 8) == -1);
+    }
 	assert(!vmc_read(p, "BASLUS-21376/icon.sys", &argc));
 	if (argc > 1) {
 		vmc_ent big[64];
