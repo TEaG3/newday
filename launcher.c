@@ -1102,7 +1102,7 @@ static const char *const config_template[LANG_N] = {
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
 	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = opl\nauto = si\n"
-	"; عنوان خادم الألعاب الذي يشغّل خدمة فهرسة TEa.G3. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
+	"; عنوان خادم الألعاب الذي يشغل خدمة فهرسة TEa.G3. اتركه فارغا لاكتشاف خادم udpfs تلقائيا\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
 	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
 	"; تنشأ البطاقة الافتراضية عند أول تشغيل. يمكن تغييرها من خيارات اللعبة بزر المثلث\nmodo = juego\n"
