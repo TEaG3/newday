@@ -1063,9 +1063,9 @@ static const char *const config_template[LANG_N] = {
 	"\n[juegos]\n; where to look for PS2 games (DVD and CD folders), comma-separated: usb, hdd, mx4sio, ilink, mmce,\n"
 	"; udpbd, udpfs, smb. hdd = internal exFAT disk, or APA with HD Loader partitions. smb is read-only and needs a TEAG3.GAMES index;\n"
 	"; udpfs is legacy and disabled. mx4sio and mmce do not go together. Settings, covers, SMB support modules, POPS\n"
-	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL wherever an OPL adapter is available; Neutrino fallback)\nmotor = opl\nauto = si\n"
-	"; udpfs: IP of the game server running the TEa.G3 catalog service (lists the games; covers and achievements keep working).\n"
-	"; Empty = any udpfs server on the network (Server2PS2...), with the fixed IP of [red], no online covers/achievements\nservidor =\n"
+	"; and APPS stay on the USB.\norigen = usb\n; motor = auto (OPL adapter only) or opl (force OPL); legacy neutrino is rejected\nmotor = opl\nauto = si\n"
+	"; IP of the HTTP game catalog server. UDPFS/UDPBD game-launch sources are retired in the OPL-only runtime.\n"
+	"; Empty = use the TEa.G3 HTTP catalog default.\nservidor =\n"
 	"; si = the PlayStation 2 logo before each game, as with a disc (a few seconds more). A game from another\n"
 	"; region than the console (PAL on NTSC or the reverse) may not start this way: keep it at no\nlogo = no\n"
 	"\n[memorycard]\n; memory card for PS2 games: juego = a virtual card per game (VMC/<serial>.bin on the same\n"
@@ -1100,7 +1100,7 @@ static const char *const config_template[LANG_N] = {
 	"; المظهر: torres أو Classic (الكلاسيكية) أو cristal أو aurora أو liquid أو onda أو orbit أو techstep أو wireframe أو neuro أو fosforo أو papel\n"
 	"; يمكن اختيار المظهر من قائمة الإعدادات (START)، أو تحديد اسم مجلد من tea_g3/themes\ntema = torres\n"
 	"\n[juegos]\n; مصادر ألعاب PS2: usb أو hdd أو mx4sio أو ilink أو mmce أو udpbd أو udpfs\n"
-	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وNeutrino وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو neutrino أو opl؛ التلقائي يختار OPL لكل مصدر وصيغة يدعمها محول OPL\nmotor = opl\nauto = si\n"
+	"; hdd يدعم أقراص exFAT الداخلية أو أقسام HD Loader. لا تجمع mx4sio مع mmce. تبقى الإعدادات والأغلفة وملفات الشبكة وPOPS وAPPS على USB\norigen = usb\n; محرك التشغيل: auto أو opl فقط. إعداد neutrino القديم مرفوض ولا يوجد محرك بديل\nmotor = opl\nauto = si\n"
 	"; عنوان خادم فهرسة TEa.G3 عبر HTTP. لا يتم تفعيل UDPFS/UDPBD في محرك OPL-only\nservidor =\n"
 	"; si لعرض شعار PlayStation 2 قبل تشغيل اللعبة. قد لا تعمل بعض الألعاب من منطقة مختلفة عن منطقة الجهاز عند تفعيله\nlogo = no\n"
 	"\n[memorycard]\n; modo = juego لبطاقة افتراضية لكل لعبة، compartida لبطاقة مشتركة، fisica لبطاقة المنفذ الأول\n"
@@ -2215,8 +2215,8 @@ static void wiz_value(int r, char *a, int n) // the row's choice in words
 	case W_LANG: snprintf(a, n, "%s", v == LANG_EN ? "English" : "العربية"); break;
 	case W_THEME: snprintf(a, n, "%s", themes[v].name); break;
 	case W_ENGINE: snprintf(a, n, "%s", v == 1 ? "OPL" : L("Automatic")); break;
-	case W_MC: snprintf(a, n, "%s", v == 0 ? L("Per-game virtual") : v == 1 ? L("Shared virtual") : L("Physical")); break;
-	case W_VIDEO: snprintf(a, n, "%s", v == 0 ? L("Native") : w_vid[v]); break;
+	case W_MC: snprintf(a, n, "%s", L("Managed by OPL")); break;
+	case W_VIDEO: snprintf(a, n, "%s", L("Managed by OPL")); break;
 	case W_NET: snprintf(a, n, "%s", v ? w_ip : "DHCP"); break;
 	case W_CARD: if (v < 0) snprintf(a, n, L("No memory card")); else snprintf(a, n, "MC%d", v + 1); break;
 	case W_FMCB:
@@ -2239,7 +2239,7 @@ static void wiz_change(int d) // left / right on the selected row
 	else if (r == W_THEME) *v = (*v + d + themes_n) % themes_n, theme_set(*v); // shown at once behind the panel, as the language
 	else if (r == W_ENGINE) *v = (*v + d + 2) % 2;
 	else if (r == W_SRC) w_cur = w_cur + d < 0 ? 0 : w_cur + d >= W_NCHIP ? W_NCHIP - 1 : w_cur + d; // the cursor
-	else if (r == W_MC || r == W_VIDEO) *v = (*v + d + 3) % 3;
+	else if (r == W_VIDEO) { /* OPL owns per-game video configuration. */ }
 	else if (r == W_NET) *v = *w_ip ? !*v : 0;
 	else if (r == W_CARD && mcn[0] >= 0 && mcn[1] >= 0) *v = !*v;
 	else if (r == W_FMCB && w_done >= 1 && w_fmcb_card() >= 0) *v = (*v + d + W_NLK + 2) % (W_NLK + 2);
