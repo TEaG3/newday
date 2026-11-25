@@ -88,8 +88,8 @@ int vmc_create(const char *path)
     if (existing) { fclose(existing); return 0; }
     buf = malloc(32 * CSIZE);
     if (!buf) return 0;
-    remove(temp);
-    f = fopen(temp, "wb");
+    /* Exclusive creation preserves a pre-existing .tmp recovery file. */
+    f = fopen(temp, "wbx");
     if (!f) { free(buf); return 0; }
     now(t);
     ok = 1;
@@ -365,6 +365,17 @@ int main(int argc, char **argv)
         assert(keep && fread(check, 1, 4, keep) == 4 && fclose(keep) == 0);
         assert(!memcmp(check, "KEEP", 4));
         remove("/tmp/vmc_keep.bin");
+    }
+    /* A pre-existing staging file may contain a recoverable card: never delete or truncate it. */
+    {
+        FILE *keep = fopen("/tmp/vmc_temp_keep.bin.tmp", "wb");
+        char check[8] = {0};
+        assert(keep && fwrite("KEEP", 1, 4, keep) == 4 && fclose(keep) == 0);
+        assert(!vmc_create("/tmp/vmc_temp_keep.bin"));
+        keep = fopen("/tmp/vmc_temp_keep.bin.tmp", "rb");
+        assert(keep && fread(check, 1, 4, keep) == 4 && fclose(keep) == 0);
+        assert(!memcmp(check, "KEEP", 4));
+        remove("/tmp/vmc_temp_keep.bin.tmp");
     }
     /* Short and structurally invalid card images are rejected before directory traversal. */
     {
