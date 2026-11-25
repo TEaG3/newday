@@ -160,7 +160,7 @@
   "trailer": "المقطع التعريفي",
   "and the": "و",
   "setup guide on a real PS2": "دليل الإعداد على جهاز PS2 حقيقي",
-  ", both recorded when NULD was still ORBIT.": "، وقد سُجّل المقطعان عندما كان اسم TEa.G3 هو ORBIT.",
+  ", both recorded when NULD was still ORBIT.": "، وقد سُجّل المقطعان عندما كان اسم المشروع ORBIT، قبل اعتماد اسم TEa.G3.",
   "Ships a fork of": "يتضمن نسخة متفرعة من مشروع",
   "(AFL-3.0). Covers from": " (بترخيص AFL-3.0). أما أغلفة الألعاب فمن مشروع",
   "PlayStation is a trademark of Sony Interactive Entertainment. NULD is not affiliated with Sony.": "PlayStation علامة تجارية لشركة Sony Interactive Entertainment. مشروع TEa.G3 غير تابع لشركة Sony.",
@@ -370,7 +370,7 @@
   "START, then": "اضغط START ثم",
   ": each theme is shown at once behind the panel. Saved as": ": تُعرض معاينة كل سمة خلف لوحة الإعداد. ويُحفظ الاختيار في",
   "in": "في",
-  "To keep v1.2's look, pick NULD.": "للاحتفاظ بمظهر الإصدار v1.2، اختر سمة TEa.G3.",
+  "To keep v1.2's look, pick NULD.": "للاحتفاظ بمظهر الإصدار v1.2، اختر سمة Classic.",
   "Themes from folders.": "السمات المخصصة من المجلدات.",
   "with a": "ويحتوي على ملف",
   "(a name, a built-in theme as its base and eleven colours) and, optionally, a 1280 x 720": "(يتضمن الاسم والسمة الأساسية المدمجة وأحد عشر لوناً)، ويمكن إضافة صورة اختيارية بأبعاد 1280×720",
@@ -383,7 +383,7 @@
   "Language, theme, memory card and video apply at once; it only starts again when the game sources or the network changed.": "تُطبّق تغييرات اللغة والسمة وبطاقة الذاكرة والفيديو فوراً. ولا يُعاد تشغيل المشغّل إلا عند تغيير مصادر الألعاب أو إعدادات الشبكة.",
   "A loading sound for the new themes": "صوت تحميل للسمات الجديدة",
   "After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.": "كان عنوان اللعبة على الشاشة الرئيسية يبقى باللغة السابقة بعد تغيير اللغة من لوحة الإعداد؛ وقد عولجت هذه المشكلة.",
-  "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.": "قيس معدل الإطارات لسمتي Torres وTEa.G3 فقط على جهاز SCPH-75001، وسجلتا 60 إطاراً في الثانية. أما السمات العشر الأخرى فتم تشغيلها على الجهاز نفسه دون تقطّع ملحوظ، لكن لم يُقَس معدل الإطارات لها.",
+  "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.": "قيس معدل الإطارات لسمتي Torres وClassic فقط على جهاز SCPH-75001، وسجلتا 60 إطاراً في الثانية. أما السمات العشر الأخرى فتم تشغيلها على الجهاز نفسه دون تقطّع ملحوظ، لكن لم يُقَس معدل الإطارات لها.",
   "Covers from your home server, interface language options, and the PlayStation 2 logo before the games.": "تنزيل أغلفة الألعاب من الخادم المنزلي، وإتاحة إعدادات لغة الواجهة، وإظهار شعار PlayStation 2 قبل الألعاب.",
   "Covers from the home server (#19).": "الأغلفة من الخادم المنزلي (#19).",
   "Apps from your home server, OPL's ART folder, and square covers for PS1 games and apps.": "تشغيل التطبيقات من الخادم المنزلي، ودعم مجلد ART الخاص بـ OPL، والأغلفة المربعة لألعاب PS1 والتطبيقات.",
@@ -799,7 +799,7 @@
     "Saving the setup no longer restarts NULD.": "لم يعد حفظ الإعدادات يؤدي إلى إعادة تشغيل TEa.G3.",
     "A loading sound for the new themes": "صوت تحميل للسمات الجديدة",
     "After changing the language in the setup panel, the disc's title on the home screen stayed in the old language.":"بعد تغيير اللغة من لوحة الإعداد، كان عنوان القرص في الشاشة الرئيسية يبقى باللغة السابقة.",
-    "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.":"تم قياس أداء سمتي Torres وTEa.G3 فقط على جهاز حقيقي بمعدل 60 إطاراً في الثانية على SCPH-75001. أما السمات العشر الأخرى فقد عملت على الجهاز نفسه دون تقطع ملحوظ، لكن لم يُقَس معدل إطاراتها."
+    "Only Torres and NULD have been timed on a console (60 frames per second on a SCPH-75001). The other ten ran on the same console without visible stutter, but were not timed.":"تم قياس أداء سمتي Torres وClassic فقط على جهاز حقيقي بمعدل 60 إطاراً في الثانية على SCPH-75001. أما السمات العشر الأخرى فقد عملت على الجهاز نفسه دون تقطع ملحوظ، لكن لم يُقَس معدل إطاراتها."
   });
   Object.assign(dict, {
     "under the picture and where nothing is drawn; the base’s own background keeps its colours":"الخلفية التي تظهر أسفل الصورة وفي المساحات الفارغة؛ تحتفظ خلفية السمة الأساسية بألوانها.",
