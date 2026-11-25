@@ -143,7 +143,7 @@
   "The setup wizard writes config.ini and FreeMcBoot autoboot settings.": "ينشئ معالج الإعداد ملف config.ini ويضبط إعدادات التشغيل التلقائي عبر FreeMcBoot.",
   "One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.": "ملف ZIP واحد لنسخه إلى وحدة USB. هل تنتقل من ORBIT أو NULD القديم؟ عند التشغيل الأول ينقل TEa.G3 إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
   "TEa.G3 complete package": "حزمة TEa.G3 الشاملة",
-  "TEa.G3.ELF, embedded OPL and Neutrino engines, Arabic and English guides, USB folders, licenses and quick start": "تتضمن launcher.elf ومحرك Neutrino مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات، إضافة إلى المجلدات وخادم الألعاب الاختياري ودليل البدء السريع.",
+  "TEa.G3.ELF, embedded OPL and Neutrino engines, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحركي OPL وNeutrino المدمجين، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
   "all releases": "جميع الإصدارات",
   "Release notes and SHA-256 checksums. What changed in each: the": "ملاحظات الإصدارات وبصمات التحقق SHA-256. لمعرفة التغييرات في كل إصدار، راجع",
   "jfplay.elf": "ملف jfplay.elf",
@@ -589,7 +589,7 @@
 
   Object.assign(dict, {
   "TEa.G3 is free software under GPL-3.0. Themes need TEa.G3 v1.3 or newer.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0. يتطلب استخدام السمات الإصدار TEa.G3 v1.3 أو أحدث.",
-  "USB root\n├── launcher.elf\n├── neutrino/     the TEa.G3 launcher with its in-game menu and achievements agent\n├── DVD/          PS2 DVD ISOs\n├── CD/           PS2 CD ISOs\n├── POPS/         PS1 games (POPStarter .VCD), optional\n├── APPS/         homebrew .ELF files, optional\n├── covers/       written by TEa.G3: the covers it downloads\n└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini": "المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/       ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
+  "USB root\n├── TEa.G3.ELF\n├── neutrino/     the TEa.G3 launcher with its in-game menu and achievements agent\n├── DVD/          PS2 DVD ISOs\n├── CD/           PS2 CD ISOs\n├── POPS/         PS1 games (POPStarter .VCD), optional\n├── APPS/         homebrew .ELF files, optional\n├── covers/       written by TEa.G3: the covers it downloads\n└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini": "المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/       ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
   "The theme (": "السمة (",
   "The setup wizard opens on the first boot.": "يظهر معالج الإعداد عند التشغيل الأول.",
   "tools/covers.py": "الأداة tools/covers.py",
@@ -670,7 +670,7 @@
 
   delete dict.to;
   Object.assign(dict, {
-    "USB root ├── launcher.elf ├── neutrino/ the TEa.G3 launcher with its in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── launcher.elf\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
+    "USB root ├── TEa.G3.ELF ├── neutrino/ the TEa.G3 launcher with its in-game menu and achievements agent ├── DVD/ PS2 DVD ISOs ├── CD/ PS2 CD ISOs ├── POPS/ PS1 games (POPStarter .VCD), optional ├── APPS/ homebrew .ELF files, optional ├── covers/ written by TEa.G3: the covers it downloads └── tea_g3/ written by TEa.G3: config.ini, juegos.ini, estado.ini":"المجلد الرئيسي لوحدة USB\n├── TEa.G3.ELF\n├── neutrino/     محرك تشغيل الألعاب، مع قائمة TEa.G3 داخل اللعبة ووكيل الإنجازات\n├── DVD/          ألعاب PS2 بصيغة DVD ISO\n├── CD/           ألعاب PS2 بصيغة CD ISO\n├── POPS/         ألعاب PS1 بصيغة POPStarter VCD (اختياري)\n├── APPS/         تطبيقات Homebrew بصيغة ELF (اختياري)\n├── covers/       ينشئه TEa.G3 لحفظ الأغلفة التي ينزّلها\n└── tea_g3/         ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة"
   });
 
   Object.assign(dict, {
