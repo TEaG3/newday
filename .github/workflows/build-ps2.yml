@@ -40,7 +40,7 @@ jobs:
             tests/zso_host/test_zso_ee.c zso_ee.c \
             -o /tmp/zso_ee_host_test
           /tmp/zso_ee_host_test
-          python3 -m unittest tests/test_smb_catalog.py tests/test_nuld_catalog.py tests/test_release_version.py
+          python3 -m unittest tests/test_smb_catalog.py tests/test_nuld_catalog.py tests/test_release_version.py tests/test_launcher_handoff.py
           cc -std=c99 -Wall -Wextra -Werror -pthread -I. catalog_stage.c tests/catalog_host/test_catalog_stage.c -o /tmp/catalog_stage_test
           /tmp/catalog_stage_test
           cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST engine.c -o /tmp/engine_selftest
@@ -204,8 +204,8 @@ jobs:
           grep -Fq 'argc >= 6 && !strcmp(argv[5], "mini")' src/opl.c
           grep -Fq 'argv[6] = "mini"' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'argv[5] = disc_type' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
-          grep -Fq 'run_loader(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
-          grep -Fq 'run_loader(9, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader_recover(8, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader_recover(9, opl_argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
           grep -Fq 'strcasecmp(&name[size - 4], ".zso")' src/supportbase.c
           grep -Fq 'IOP_OBJS = isofs.o zso.o lz4.o imports.o' modules/isofs/Makefile
           python3 - <<'PY'
@@ -214,7 +214,7 @@ jobs:
           bdm = launcher.split('if (engine == ENGINE_OPL_BDM)', 1)[1].split('if (cv[i].kind != K_PS2)', 1)[0]
           assert 'char *opl_argv[9]' in bdm
           assert 'opl_argv[8] = (char *)igr_stub_path();' in bdm
-          assert 'run_loader(9, opl_argv);' in bdm
+          assert 'run_loader_recover(9, opl_argv);' in bdm
           assert 'HD Loader partition metadata is incomplete' in launcher
           print('OPL BDM IGR argument and HDD preflight checks passed')
           PY

@@ -1072,6 +1072,19 @@ void gfx_shutdown(void) // before launching another ELF: remove the vsync handle
 	vsync_handler_id = -1;
 }
 
+/* ExecPS2 normally does not return. If a hand-off fails, restore the existing
+   VBlank semaphore/handler without reallocating framebuffers or VRAM. */
+int gfx_resume(void)
+{
+	if (vsync_sema < 0) return 0;
+	if (vsync_handler_id < 0) {
+		vsync_handler_id = AddIntcHandler(INTC_VBLANK_S, vsync_handler, 0);
+		if (vsync_handler_id < 0) return 0;
+	}
+	EnableIntc(INTC_VBLANK_S);
+	return 1;
+}
+
 void gfx_flip(void)
 {
 	while (PollSema(vsync_sema) >= 0) {} // drop a vblank that already passed: wait for the next one

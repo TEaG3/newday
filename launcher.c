@@ -2681,6 +2681,20 @@ static const char *launch_problem(int i) // select a viable engine before handin
 
 static const char *launch_err; // why the last launch() came back (toast)
 
+/* run_loader normally transfers control permanently. If validation or ExecPS2
+   returns, the old launcher is still resident: restore VBlank so gfx_flip()
+   cannot wait forever on the handler removed by gfx_shutdown(). */
+static void run_loader_recover(int argc, char **argv)
+{
+	run_loader(argc, argv);
+	launch_err = L("Could not start");
+	if (gfx_resume())
+		printf("TEa.G3: ELF hand-off returned; launcher display resumed\n");
+	else
+		printf("TEa.G3: ELF hand-off returned; VBlank handler could not be restored\n");
+}
+
+
 static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is created now (a few seconds, 8 MB)
 {
 	static vmc_ent existing_entries[MAXDIR];
@@ -2732,7 +2746,7 @@ static void restart_self(void) // the setup wizard saved (#15): start NULD again
 	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down();
 	if (disc_tid >= 0) TerminateThread(disc_tid);
 	gfx_shutdown();
-	run_loader(2, argv);
+	run_loader_recover(2, argv);
 }
 
 // a server app (catalog APPS/): its ELF over HTTP to <home>/nuld/red.elf, run from there like a USB one. NULL or why not
@@ -2823,7 +2837,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		                     cv[i].cd ? "CD" : "DVD", "ul", part_count, (char *)igr_stub_path()};
 		printf("launch OPL UL: %s parts=%s\n", cv[i].boot, part_count);
 		gfx_shutdown();
-		run_loader(8, opl_argv);
+		run_loader_recover(8, opl_argv);
 		printf("OPL UL launch returned\n");
 		return;
 	}
@@ -2850,7 +2864,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		printf("launch OPL HD Loader: %s LBA=%s size_kb=%s disc_type=%s (existing OPL config only)\n",
 		       cv[i].boot, sector, size_kb, disc_type);
 		gfx_shutdown();
-		run_loader(8, opl_argv);
+		run_loader_recover(8, opl_argv);
 		printf("OPL HD Loader launch returned\n");
 		return;
 	}
@@ -2873,7 +2887,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[14] = (char *)igr_stub_path();
 		printf("launch OPL SMB: %s\n", cv[i].boot);
 		gfx_shutdown();
-		run_loader(15, opl_argv);
+		run_loader_recover(15, opl_argv);
 		printf("OPL SMB launch returned\n");
 		return;
 	}
@@ -2899,7 +2913,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		opl_argv[8] = (char *)igr_stub_path();
 		printf("launch OPL BDM: %s driver=%s unit=%s\n", cv[i].boot, driver, unit);
 		gfx_shutdown();
-		run_loader(9, opl_argv);
+		run_loader_recover(9, opl_argv);
 		printf("OPL BDM launch returned\n");
 		return;
 	}
@@ -2917,7 +2931,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		}
 		printf("launch: %s as %s\n", file, arg0);
 		gfx_shutdown();
-		run_loader(2, argv);
+		run_loader_recover(2, argv);
 		printf("launch failed\n");
 		return;
 	}
@@ -2995,7 +3009,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	printf("\n");
 	if (fp) fprintf(fp, "\n"), fclose(fp);
 	gfx_shutdown(); // our vsync handler must not outlive this ELF
-	run_loader(argc, argv);
+	run_loader_recover(argc, argv);
 	printf("launch failed\n"); // only reached if the ELF could not be loaded
 }
 
