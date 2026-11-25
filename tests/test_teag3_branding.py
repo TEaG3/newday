@@ -29,7 +29,9 @@ class TEaG3BrandingTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertNotIn(text, self.launcher)
 
-        config = self.launcher.split("config_template[LANG_N]", 1)[1].split("int lang = LANG_AR", 1)[0]
+        start = self.launcher.index("static const char *const config_template[LANG_N]")
+        end = self.launcher.index("\n};", start)
+        config = self.launcher[start:end]
         self.assertNotIn("nuld", config.lower())
         self.assertIn("TEa.G3 catalog service", config)
         self.assertIn("Classic", config)
