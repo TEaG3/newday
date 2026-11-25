@@ -53,6 +53,11 @@ int RA_OnVblank(void) // interrupt context: no waiting
     struct ra_snap *s = (struct ra_snap *)UNCACHED_SEG(buf);
     u8 *v = (u8 *)UNCACHED_SEG(buf + RA_SNAP_HDR);
     u32 n = eec.RaCount, bytes = eec.RaBytes, off = 0, i, j;
+    if (eec.RaWatch == NULL || n == 0 || n > RA_WATCH_MAX ||
+        bytes == 0 || bytes > RA_SNAP_MAX_BYTES) {
+        fail++;
+        return 0;
+    }
     s->magic = RA_SNAP_MAGIC;
     s->seq = ++seq;
     s->frames = frames;
@@ -64,9 +69,11 @@ int RA_OnVblank(void) // interrupt context: no waiting
         s->game_id[i] = i < sizeof(eec.GameID) ? eec.GameID[i] : 0;
     for (i = 0; i < n; i++) { // uncached reads: RAM as is, without pulling the game's data through the D-cache
         u32 e = eec.RaWatch[i], a = RA_WATCH_ADDR(e), z = RA_WATCH_SIZE(e);
-        if (off + z > bytes)
-            break;
-        if (a < RA_RAM_LOW || a + z > RA_RAM_HIGH) // outside the game's RAM: zero, never read
+        if ((z != 1 && z != 2 && z != 4) || off > bytes || z > bytes - off) {
+            fail++;
+            return 0;
+        }
+        if (a < RA_RAM_LOW || a > RA_RAM_HIGH - z) // outside the game's RAM: zero, never read (subtraction avoids wrap)
             for (j = 0; j < z; j++) v[off++] = 0;
         else if (z == 4 && !(a & 3)) {
             u32 x = *(volatile u32 *)UNCACHED_SEG(a);
@@ -76,6 +83,10 @@ int RA_OnVblank(void) // interrupt context: no waiting
             v[off++] = x, v[off++] = x >> 8;
         } else // a byte, or an unaligned wider value: byte loads (an unaligned word load faults in a handler)
             for (j = 0; j < z; j++) v[off++] = *(volatile u8 *)UNCACHED_SEG(a + j);
+    }
+    if (off != bytes) {
+        fail++;
+        return 0;
     }
     s->read_cycles = ticks() - now;
     s->frame_cycles = frame_ticks;

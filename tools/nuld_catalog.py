@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""nuld-catalog: the game server's list of PS2 games for the NULD launcher (phase 17).
+"""TEa.G3 game catalog service (phase 17; legacy module name retained for existing deployments).
 
 GET  /catalog        one line per ISO under <root>/DVD and <root>/CD, tab-separated:
                      path  size  serial  hash  title   (serial SLUS_213.76 form, hash = rcheevos rc_hash_ps2,
@@ -14,7 +14,7 @@ POST /vmc/<name>     creates <root>/VMC/<name>.bin (empty 8 MB card, the launche
 GET  /vmc/<name>/list               the card's root, one "name<TAB>mode<TAB>modified hex" line per entry
 GET  /vmc/<name>/file/<dir>/<file>  one file of a save (the launcher's save icon, phase 20)
 
-Runs as a user service on nuld next to udpfs_server.py: tools/nuld_catalog.py --root /srv/data/ps2 --port 18290
+Runs beside udpfs_server.py in the existing game-server deployment; keep the historical script/tool/cache names for compatibility: tools/nuld_catalog.py --root /srv/data/ps2 --port 18290
 """
 import argparse, json, os, re, subprocess, threading, time
 from urllib.parse import quote, unquote
@@ -201,7 +201,13 @@ def main():
     ap.add_argument("--port", type=int, default=18290)
     ap.add_argument("--tool", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "nuld_hash"))
     ap.add_argument("--cache", default=os.path.expanduser("~/.cache/nuld-catalog.json"))
-    ap.add_argument("--rescan", type=int, default=60, help="seconds between scans for new ISOs")
+    ap.add_argument(
+        "--rescan",
+        type=int,
+        default=60,
+        help=("seconds between full scans for new, changed and removed ISOs; "
+              "changes become visible after the next completed scan (default: 60)"),
+    )
     a = ap.parse_args()
     os.makedirs(os.path.dirname(a.cache), exist_ok=True)
     cat = Catalog(a.root, a.tool, a.cache)

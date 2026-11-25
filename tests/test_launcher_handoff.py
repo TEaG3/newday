@@ -12,6 +12,7 @@ class LauncherHandoffTests(unittest.TestCase):
         cls.launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
         cls.gfx = (ROOT / "gfx.c").read_text(encoding="utf-8")
         cls.header = (ROOT / "gfx.h").read_text(encoding="utf-8")
+        cls.release_workflow = (ROOT / ".github/workflows/publish-arabic-release.yml").read_text(encoding="utf-8")
 
     def test_low_level_loader_is_called_only_by_recovery_wrapper(self):
         # Every caller must pass through the VBlank recovery path.
@@ -50,6 +51,11 @@ class LauncherHandoffTests(unittest.TestCase):
 
     def test_resume_is_declared_in_public_header(self):
         self.assertIn("int gfx_resume(void);", self.header)
+
+    def test_release_workflow_uses_the_recovery_wrapper(self):
+        self.assertIn("run_loader_recover(8, opl_argv)", self.release_workflow)
+        self.assertNotIn("run_loader(8, opl_argv)", self.release_workflow)
+        self.assertIn("USBExtreme UL يستخدم OPL فقط", self.release_workflow)
 
 
 if __name__ == "__main__":
