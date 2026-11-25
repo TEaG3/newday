@@ -1070,11 +1070,13 @@ function frame(ms) {
   covers(t);
   if (T.mid) T.mid(t);
   header(t); footer(t);
-  const credit = document.getElementById('home-credit');
-  if (credit) {
-    credit.style.color = T.tx || '#FFFFFF';
-    credit.style.backgroundColor = T.pn || '#111111';
-    credit.style.borderColor = rgb(A);
+  for (const id of ['home-credit', 'maker-credit']) {
+    const credit = document.getElementById(id);
+    if (credit) {
+      credit.style.color = T.tx || '#FFFFFF';
+      credit.style.backgroundColor = T.pn || '#111111';
+      credit.style.borderColor = rgb(A); // follows the selected cover when cover-accent is enabled
+    }
   }
   if (T.fx) T.fx(t);
   if (overlay) { g.save(); overlay(g); g.restore(); }
