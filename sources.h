@@ -23,5 +23,5 @@ int src_hdl_scan(void (*add)(void *ctx, const char *part, const char *title, con
 // Network settings must be static IPv4; the driver uses TCP 445. Returns NULL on success or a localized error.
 const char *src_smb_init(const char *ip, const char *mask, const char *gw, const char *server,
                          const char *user, const char *password, const char *share, const char *ndir);
-void src_udpfs_ip(const char *ndir, const char *ip); // bsd-udpfs.toml's ip= (phase 17)
+ // bsd-udpfs.toml's ip= (phase 17)
 void src_mmce_game(const char *startup); // MMCE (SD2PSX, MemCard PRO 2): switch to the game's own card
