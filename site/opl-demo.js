@@ -19,7 +19,7 @@
         !["auto", "neutrino", "opl"].includes(preference)) {
       return { id: "unsupported", engine: "none", ok: false, reason: "invalid" };
     }
-    if (preference !== "opl")
+    if (preference === "neutrino")
       return { id: "engine-removed", engine: "none", ok: false, reason: "engine-removed" };
     if (format === "ul") {
       if (source !== "usb")
@@ -27,6 +27,8 @@
       return oplReady ? { id: "opl-ul", engine: "OPL", ok: true, reason: "ul-usb" } :
         { id: "unsupported", engine: "none", ok: false, reason: "opl-runtime-missing" };
     }
+    if (source === "smb" && input.network === "missing")
+      return { id: "opl-network-config-invalid", engine: "none", ok: false, reason: "opl-network-config-invalid" };
     if (source !== "usb" && source !== "bdm") {
       if (format === "zso" && source === "hdl")
         return { id: "zso-hdl-unsupported", engine: "none", ok: false, reason: "unsupported-format-source" };
@@ -50,7 +52,8 @@
         "zso-hdl-unsupported": "ZSO unsupported · APA / HD Loader",
         "zso-source-unsupported": "ZSO blocked · source has no OPL adapter",
         "unsupported-source": "No OPL adapter for this source",
-        "engine-removed": "OPL only · legacy engine preference rejected",
+        "engine-removed": "OPL only · legacy Neutrino preference rejected",
+        "opl-network-config-invalid": "SMB launch blocked · OPL network configuration is incomplete",
         unsupported: "No launch route for this selection"
       },
       sources: {
@@ -91,14 +94,18 @@
         ],
         "engine-removed": [
           "OPL is the only PS2 game engine in this build.",
-          "Legacy auto/Neutrino preferences are rejected; they do not trigger a fallback."
+          "The retired Neutrino preference is rejected; no fallback exists."
+        ],
+        "opl-network-config-invalid": [
+          "The SMB network settings are incomplete for the OPL route.",
+          "The source remains blocked; no Neutrino fallback is attempted."
         ],
         unsupported: ["Choose ISO, ZSO or USBExtreme UL and a source with an OPL adapter."]
       },
       hardware: "Browser simulation only · no PS2 ELF, emulator or game is executed here.",
       supported: "Route wired · hardware test pending",
       blocked: "Unsupported selection",
-      auto: "Removed", neutrino: "Removed", opl: "OPL",
+      auto: "Automatic OPL", neutrino: "Removed", opl: "OPL",
       iso: "ISO", zso: "ZSO", ul: "USBExtreme UL"
     },
     ar: {
@@ -111,7 +118,8 @@
         "zso-hdl-unsupported": "ZSO غير مدعوم · APA / HD Loader",
         "zso-source-unsupported": "تم حظر ZSO · لا يوجد محول OPL لهذا المصدر",
         "unsupported-source": "لا يوجد محول OPL لهذا المصدر",
-        "engine-removed": "OPL فقط · رفض تفضيل المحرك القديم",
+        "engine-removed": "OPL فقط · تم رفض تفضيل Neutrino القديم",
+        "opl-network-config-invalid": "تم حظر SMB · إعداد شبكة OPL غير مكتمل",
         unsupported: "لا يوجد مسار تشغيل لهذا الاختيار"
       },
       sources: {
@@ -152,14 +160,18 @@
         ],
         "engine-removed": [
           "OPL هو محرك ألعاب PS2 الوحيد في هذا الإصدار.",
-          "يتم رفض تفضيلات auto وNeutrino القديمة ولا تؤدي إلى تشغيل محرك بديل."
+          "يتم رفض تفضيل Neutrino المتقاعد ولا يحدث أي انتقال إلى محرك بديل."
+        ],
+        "opl-network-config-invalid": [
+          "إعدادات شبكة SMB غير مكتملة لمسار OPL.",
+          "يبقى المصدر محظوراً ولا تتم محاولة تشغيل Neutrino."
         ],
         unsupported: ["اختر ISO أو ZSO أو USBExtreme UL ومصدراً يملك محول OPL."]
       },
       hardware: "محاكاة داخل المتصفح فقط · لا يتم تشغيل ELF أو محاكي أو لعبة PS2 هنا.",
       supported: "مسار موصول · اختبار الجهاز الفعلي متبقٍ",
       blocked: "اختيار غير مدعوم",
-      auto: "محذوف", neutrino: "محذوف", opl: "OPL",
+      auto: "تلقائي عبر OPL", neutrino: "محذوف", opl: "OPL",
       iso: "ISO", zso: "ZSO", ul: "USBExtreme UL"
     }
   };
