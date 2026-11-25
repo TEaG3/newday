@@ -7,6 +7,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <strings.h>
 #include "iso.h"
 
 #define SECTOR 2048
@@ -174,25 +176,101 @@ void iso_title(const char *file, char *out, int n) // "SLUS_209.46.God of War.is
 	if (dot && (!strcasecmp(dot, ".iso") || !strcasecmp(dot, ".vcd") || !strcasecmp(dot, ".elf") || !strcasecmp(dot, ".zso"))) *dot = 0;
 }
 
+static int cat_serial_valid(const char *s)
+{
+    if (!s || !strcmp(s, "-")) return 1;
+    if (strlen(s) != 11) return 0;
+    for (int i = 0; i < 11; i++) {
+        unsigned char ch = (unsigned char)s[i];
+        if (i == 4) { if (ch != '_') return 0; }
+        else if (i == 8) { if (ch != '.') return 0; }
+        else if (!isalnum(ch)) return 0;
+    }
+    return 1;
+}
+
+static int cat_hash_valid(const char *s)
+{
+    if (!s || !strcmp(s, "-")) return 1;
+    if (strlen(s) != 32) return 0;
+    for (int i = 0; i < 32; i++)
+        if (!isxdigit((unsigned char)s[i])) return 0;
+    return 1;
+}
+
+static int cat_path_valid(const char *path)
+{
+    const char *part;
+    size_t len;
+    int app;
+    if (!path || !(len = strlen(path)) || len >= 160 || path[0] == '/' ||
+        path[len - 1] == '/' || strstr(path, "\\\\") || strchr(path, ':')) return 0;
+    app = !strncmp(path, "APPS/", 5);
+    if (!app && strncmp(path, "DVD/", 4) && strncmp(path, "CD/", 3)) return 0;
+    for (const unsigned char *p = (const unsigned char *)path; *p; p++) {
+        if (*p < 0x20 || *p > 0x7e || *p == '?' || *p == '#') return 0;
+        if (*p == '%') {
+            int h1, h2;
+            if (!isxdigit(p[1]) || !isxdigit(p[2])) return 0;
+            h1 = isdigit(p[1]) ? p[1] - '0' : tolower(p[1]) - 'a' + 10;
+            h2 = isdigit(p[2]) ? p[2] - '0' : tolower(p[2]) - 'a' + 10;
+            int decoded = (h1 << 4) | h2;
+            if (decoded == '/' || decoded == '\\\\' || decoded == '.' ||
+                decoded == ':' || decoded < 0x20 || decoded == 0x7f) return 0;
+            p += 2;
+        }
+    }
+    part = path;
+    for (const char *p = path;; p++) {
+        if (*p == '/' || !*p) {
+            size_t n = (size_t)(p - part);
+            if (!n || (n == 1 && part[0] == '.') ||
+                (n == 2 && part[0] == '.' && part[1] == '.')) return 0;
+            if (!*p) break;
+            part = p + 1;
+        }
+    }
+    if (app) return len >= 4 && !strcasecmp(path + len - 4, ".elf");
+    return (len >= 4 && !strcasecmp(path + len - 4, ".iso")) ||
+           (len >= 4 && !strcasecmp(path + len - 4, ".zso"));
+}
+
 int catalog_next(char **p, cat_ent *e)
 {
-	while (**p) {
-		char *line = *p, *nl = strchr(line, '\n'), *f[5];
-		*p = nl ? nl + 1 : line + strlen(line);
-		if (nl) *nl = 0;
-		int n = strlen(line), k = 0;
-		if (n && line[n - 1] == '\r') line[n - 1] = 0;
-		for (char *s = line; k < 5;) {
-			f[k++] = s;
-			char *t = strchr(s, '\t');
-			if (!t) break;
-			*t = 0, s = t + 1;
-		}
-		if (k < 5 || !*f[0] || !*f[4]) continue; // short or empty: skipped
-		e->path = f[0], e->size = strtoull(f[1], NULL, 10), e->serial = f[2], e->hash = f[3], e->title = f[4];
-		return 1;
-	}
-	return 0;
+    if (!p || !*p || !e) return 0;
+    while (**p) {
+        char *line = *p, *nl = strpbrk(line, "\\r\\n"), *field[5];
+        char *end;
+        unsigned long long size;
+        int n;
+        if (nl) {
+            *nl = 0;
+            end = nl + 1;
+            while (*end == '\\r' || *end == '\\n') end++;
+            *p = end;
+        } else {
+            *p = line + strlen(line);
+        }
+        n = strlen(line);
+        if (!n || line[0] == '#') continue;
+        field[0] = line;
+        for (int i = 1; i < 5; i++) {
+            char *tab = strchr(field[i - 1], '\\t');
+            if (!tab) { field[0] = NULL; break; }
+            *tab = 0;
+            field[i] = tab + 1;
+        }
+        if (!field[0] || strchr(field[4], '\\t')) continue;
+        if (!*field[0] || !*field[1] || !*field[2] || !*field[3] || !*field[4]) continue;
+        if (!cat_path_valid(field[0]) || strlen(field[4]) >= 64 ||
+            !cat_serial_valid(field[2]) || !cat_hash_valid(field[3])) continue;
+        errno = 0;
+        size = strtoull(field[1], &end, 10);
+        if (errno || end == field[1] || *end || size == 0 || size > 0xffffffffu) continue;
+        e->path = field[0], e->size = size, e->serial = field[2], e->hash = field[3], e->title = field[4];
+        return 1;
+    }
+    return 0;
 }
 
 #if defined(SELFTEST) && !defined(SELFTEST_LIB) // host check: `make test` (SELFTEST_LIB: linked into another's)
@@ -255,6 +333,12 @@ int main(void)
 	assert(!strcmp(t, "God of War"));
 	assert(name_serial("SLUS_209.46.God of War.iso", s) && !strcmp(s, "SLUS_209.46"));
 	assert(!name_serial("God of War.iso", s) && !name_serial("SLUS 209.46.X.iso", s));
+    char bad_cat[] = "DVD/../escape.iso\\t1\\tSLUS_213.76\\t8ee64a784fa9c9ac0a828be9a24f3679\\tBad\\n"
+                        "DVD/Bad.iso\\t-1\\tSLUS_213.76\\t8ee64a784fa9c9ac0a828be9a24f3679\\tBad\\n"
+                        "DVD/Bad.iso\\t1x\\tSLUS_213.76\\t8ee64a784fa9c9ac0a828be9a24f3679\\tBad\\n";
+    char *bp = bad_cat;
+    cat_ent bad_entry;
+    assert(!catalog_next(&bp, &bad_entry));
 	char cat[] = "DVD/Black.iso\t3919609856\tSLUS_213.76\t8ee64a784fa9c9ac0a828be9a24f3679\tBlack\r\n"
 	             "broken line\n\n"
 	             "CD/SLUS_123.45.Café Ñu.iso\t700\t-\t-\tCafé Ñu\n"
