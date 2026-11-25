@@ -35,6 +35,11 @@ engine_decision engine_assess(engine_format format, engine_source source,
     }
 
     if (force_neutrino) {
+        if (format == ENGINE_FORMAT_ZSO) {
+            d.engine = ENGINE_UNSUPPORTED;
+            d.reason = ENGINE_REASON_ZSO_REQUIRES_OPL;
+            return d;
+        }
         d.reason = ENGINE_REASON_USER_NEUTRINO;
         return d;
     }
@@ -53,9 +58,19 @@ engine_decision engine_assess(engine_format format, engine_source source,
                                  : ENGINE_REASON_AUTO_NEUTRINO_BASELINE;
     }
 
+    /* ZSO has an OPL IOP decoder, not a verified Neutrino decoder in this build.
+       Never silently fall back to Neutrino for a ZSO image. */
+    if (format == ENGINE_FORMAT_ZSO && d.engine == ENGINE_NEUTRINO) {
+        d.engine = ENGINE_UNSUPPORTED;
+        if (d.reason == ENGINE_REASON_AUTO_NEUTRINO_BASELINE ||
+            d.reason == ENGINE_REASON_USER_NEUTRINO ||
+            d.reason == ENGINE_REASON_OPL_SOURCE_UNAVAILABLE)
+            d.reason = ENGINE_REASON_ZSO_REQUIRES_OPL;
+    }
+
     /* Never hand off to an OPL adapter that is not present in the embedded runtime. */
     if (is_opl(d.engine) && !opl_runtime) {
-        d.engine = ENGINE_NEUTRINO;
+        d.engine = format == ENGINE_FORMAT_ZSO ? ENGINE_UNSUPPORTED : ENGINE_NEUTRINO;
         d.reason = ENGINE_REASON_OPL_RUNTIME_MISSING;
     }
     return d;
@@ -97,6 +112,16 @@ int main(void)
     assert(d.engine == ENGINE_OPL_ETH);
     d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "auto", 1, 1);
     assert(d.engine == ENGINE_OPL_ETH);
+    d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_USB, "neutrino", 1, 1);
+    assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_ZSO_REQUIRES_OPL);
+    d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_USB, "auto", 0, 1);
+    assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_OPL_RUNTIME_MISSING);
+    d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_SMB, "auto", 1, 0);
+    assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_OPL_NETWORK_CONFIG_INVALID);
+    d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_OTHER, "auto", 1, 1);
+    assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_ZSO_REQUIRES_OPL);
+    d = engine_assess(ENGINE_FORMAT_ZSO, ENGINE_SOURCE_HDL, "auto", 1, 1);
+    assert(d.engine == ENGINE_UNSUPPORTED && d.reason == ENGINE_REASON_ZSO_REQUIRES_OPL);
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_HDL, "auto", 1, 1);
     assert(d.engine == ENGINE_OPL_HDD);
     d = engine_assess(ENGINE_FORMAT_ISO, ENGINE_SOURCE_SMB, "auto", 1, 0);
