@@ -2523,15 +2523,15 @@ static void home(int sel, float s, float k, int toast, int opt, const char *over
 		gfx_alpha(0x80);
 		gfx_text(&gfx_font_mono, 64, 162, overlay, TEXT);
 	}
-	// Small developer credit in the safe footer margin; no panel or background is painted behind it.
+	// Theme-aware TEa.G3 credit: readable on every palette, in the safe footer margin.
 	{
-		const char *credit = "تعديل المطور العراقي";
-		const char *brand = "TEa.G3";
-		int bw = gfx_text_width(&gfx_font_mono, brand), cw = gfx_text_width(&gfx_font_ui, credit);
-		int cx = GFX_W - 64 - bw - 10 - cw;
-		gfx_alpha(0x50);
-		gfx_text(&gfx_font_mono, cx, 690, brand, 0x91A0B2);
-		gfx_text(&gfx_font_ui, cx + bw + 10, 690, credit, 0x91A0B2);
+		const char *credit = "تعديل و تطوير - TEa.G3";
+		int cw = gfx_text_width(&gfx_font_ui, credit);
+		int cx = GFX_W - 64 - cw, x = cx - 12, y = 680, w = cw + 24, h = 30;
+		gfx_alpha(0x80);
+		gfx_rect(x, y, w, h, PANEL);
+		frame1(x, y, w, h, ACID);
+		gfx_text(&gfx_font_ui, cx, 686, credit, TEXT);
 		gfx_alpha(0x80);
 	}
 	if (T->over) T->over();
