@@ -128,8 +128,12 @@ jobs:
             export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
             apk add --no-cache python3 py3-pip make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
             pip3 install --break-system-packages --no-cache-dir fonttools mapbox-earcut
-            python3 -m py_compile tools/make_release.py tools/embed_runtime.py tools/package_single_elf_release.py tools/theme_check.py
+            python3 -m py_compile tools/lang_check.py tools/font.py tools/generate_igr_arabic.py tools/fetch_arabic_font.py tools/embed_runtime.py tools/package_single_elf_release.py tools/theme_check.py
+            python3 tools/lang_check.py
+            python3 tools/fetch_arabic_font.py
+            python3 tools/font.py --selftest
             make test
+            mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Werror -Wframe-larger-than=8192 -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_stage.c -o /tmp/catalog_stage_ee.o
             python3 tools/theme_check.py
             make clean
             test -s runtime-input/OPL.ELF
