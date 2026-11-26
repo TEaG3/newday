@@ -34,7 +34,7 @@ for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
 }
 const homepage = read("site/index.html");
 assert.ok(homepage.includes('href="https://github.com/TEaG3/newday/releases"'));
-assert.ok(homepage.includes("historical ORBIT/NULD releases"));
+assert.ok(homepage.includes("Full release archive (includes earlier versions)"));
 assert.doesNotMatch(homepage, /option value="neutrino"/i);
 const siteCss = read("site/site.css");
 assert.match(siteCss, /[.]tea-g3-rtl/);
