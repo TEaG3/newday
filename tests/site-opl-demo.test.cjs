@@ -14,6 +14,13 @@ assert.ok(releaseSource.includes("The release asset URL is outside the trusted r
 assert.ok(releaseSource.includes("a.href = downloadUrl;"));
 assert.ok(releaseSource.includes("https:\\/\\/github\\.com\\/TEaG3\\/newday\\/releases\\/download"));
 assert.ok(releaseSource.includes("TEa\\.G3-Complete-Package\\.zip$/i"));
+for (const file of fs.readdirSync(path.join(ROOT, "site")).filter(name => name.endsWith(".js"))) {
+  const source = read("site/" + file);
+  assert.ok(!source.includes(".innerHTML"), file + " must not use innerHTML");
+  assert.ok(!source.includes(".outerHTML"), file + " must not use outerHTML");
+  assert.ok(!source.includes("insertAdjacentHTML"), file + " must not inject HTML strings");
+  assert.ok(!source.includes("new Function("), file + " must not construct executable code");
+}
 for (const page of ["index.html", "changelog.html", "manual.html", "opl-lab.html", "themes.html"]) {
   assert.match(read("site/" + page), /http-equiv="Content-Security-Policy"/);
 }
