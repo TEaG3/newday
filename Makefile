@@ -1,6 +1,6 @@
 # make            -> bench.elf
 # make APP=modetest -> modetest.elf
-# make APP=launcher -> TEa.G3.ELF (NULD: gfx.c, splash.c + generated logo_data.c, font_data.c, ui_data.c)
+# make APP=launcher -> TEa.G3.ELF (launcher UI: gfx.c, splash.c + generated logo_data.c, font_data.c, ui_data.c)
 # make APP=boot     -> boot.elf (memory-card stub that runs mass0:/TEa.G3.ELF; embedded in the launcher)
 # Jellyfin (jfplay.elf) lives in its own repo, danielnuld/orbit-jellyfin, installed as mass0:/APPS/Jellyfin
 APP ?= bench
