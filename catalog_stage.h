@@ -126,7 +126,9 @@ int catalog_guard_cancel_apply(catalog_guard *guard);
 int catalog_stage_snapshot_publish(catalog_guard *guard,
                                    catalog_stage_snapshot **active,
                                    catalog_stage_snapshot **candidate);
-/* Atomically publish one complete generation; candidate receives the previous active bundle. */
+/* Atomically publish one complete generation; candidate receives the previous active bundle.
+   If ERR_GUARD is returned after the swap, the guard is fail-closed; do not read either bundle
+   until the guard is reinitialized. */
 int catalog_stage_bundle_publish(catalog_guard *guard,
                                  catalog_stage_bundle *active,
                                  catalog_stage_bundle *candidate);
