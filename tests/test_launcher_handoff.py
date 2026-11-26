@@ -95,7 +95,7 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("background_work_begin(&icon_busy)", body)
         self.assertIn("background_work_end(&icon_busy)", body)
         self.assertIn("SignalSema(icon_sema)", body)
-        self.assertIn("DelayThread(10000)", body)
+        self.assertIn("usleep(10000)", body)
 
         work_start = body.index("if (stub_install == 1)")
         work_end = body.index("background_work_end(&icon_busy)", work_start)
