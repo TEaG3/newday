@@ -9,6 +9,28 @@ const releaseSource = read("site/release.js");
 assert.match(releaseSource, /candidates\.sort\(function \(a, b\)/);
 assert.match(releaseSource, /Date\.parse\(a\.published_at \|\| a\.created_at/);
 assert.match(releaseSource, /Date\.parse\(b\.published_at \|\| b\.created_at/);
+assert.ok(releaseSource.includes("var downloadUrl = String(zip.browser_download_url);"));
+assert.ok(releaseSource.includes("The release asset URL is outside the trusted repository"));
+assert.ok(releaseSource.includes("a.href = downloadUrl;"));
+assert.ok(releaseSource.includes("https:\\/\\/github\\.com\\/TEaG3\\/newday\\/releases\\/download"));
+assert.ok(releaseSource.includes("TEa\\.G3-Complete-Package\\.zip$/i"));
+for (const file of fs.readdirSync(path.join(ROOT, "site")).filter(name => name.endsWith(".js"))) {
+  const source = read("site/" + file);
+  assert.ok(!source.includes(".innerHTML"), file + " must not use innerHTML");
+  assert.ok(!source.includes(".outerHTML"), file + " must not use outerHTML");
+  assert.ok(!source.includes("insertAdjacentHTML"), file + " must not inject HTML strings");
+  assert.ok(!source.includes("new Function("), file + " must not construct executable code");
+}
+for (const page of ["index.html", "changelog.html", "manual.html", "opl-lab.html", "themes.html"]) {
+  assert.match(read("site/" + page), /http-equiv="Content-Security-Policy"/);
+}
+const themeEditorSource = read("site/themes.js");
+assert.ok(!themeEditorSource.includes(".innerHTML ="));
+assert.ok(!themeEditorSource.includes(".outerHTML ="));
+assert.ok(!themeEditorSource.includes("insertAdjacentHTML"));
+assert.match(themeEditorSource, /textContent = label/);
+assert.match(themeEditorSource, /textContent = message/);
+assert.ok(themeEditorSource.includes("list.replaceChildren();"));
 const runtimeSources = ["i18n.js", "opl-demo.js", "release.js", "themes.js"].map(name => read("site/" + name)).join(" ");
 assert.match(runtimeSources, /tea-g3:languagechange/);
 assert.doesNotMatch(runtimeSources, /nuld:languagechange/);
