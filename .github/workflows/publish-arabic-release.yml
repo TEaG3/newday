@@ -199,31 +199,3 @@ jobs:
             dist/SHA256SUMS.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          '
-      - name: Create validated single-ELF Arabic package
-        run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || github.ref_name }}"
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
-          name: "TEa.G3 PS2 — النسخة العربية"
-          body: |
-            النسخة العربية من TEa.G3، تعديل وتطوير المطور العراقي TEa.G3.
-
-            - ملف تشغيل واحد للمستخدم: TEa.G3.ELF.
-            - OPL هو محرك تشغيل ألعاب PS2 الوحيد، ولا توجد ملفات محرك ثانٍ أو مسارات fallback.
-            - USB ISO/ZSO وUSBExtreme UL تمر عبر محولات OPL المدمجة.
-            - HDD/HD Loader وMX4SIO وiLink تتطلب اختبار محول OPL على العتاد.
-            - SMB وUDPBD وUDPFS لتشغيل الألعاب وMMCE كمصدر ألعاب معطلة حتى اكتمال قارئ OPL واختباره.
-            - يبدأ العرض بوضع 480i/576i المتوافق مع AV، ويمكن التبديل إلى 720p للتوصيلات الداعمة.
-            - يتضمن الأرشيف INSTALL-AR.txt وتراخيص OPL وبصمات SHA-256.
-            - تم تضمين CRC-32 لملفات runtime والتحقق منها بعد الاستخراج.
-
-            This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
-          target_commitish: ${{ github.sha }}
-          prerelease: true
-          files: |
-            dist/TEa.G3-Complete-Package.zip
-            dist/SHA256SUMS.txt
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
