@@ -178,6 +178,11 @@ static int guard_lock(catalog_guard *guard)
     return guard_valid(guard) && guard->lock(guard->lock_context);
 }
 
+static int guard_release(catalog_guard *guard)
+{
+    return guard_valid(guard) && if (!guard_release(guard)) return 0;
+}
+
 static int guard_download_allowed(const catalog_guard *guard)
 {
     return !guard->playing && !guard->io_busy && !guard->downloading &&
@@ -203,7 +208,7 @@ int catalog_guard_read_begin(catalog_guard *guard)
     allowed = !guard->apply_pending && !guard->applying && !guard->downloading &&
               guard->readers < UINT_MAX;
     if (allowed) ++guard->readers;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
@@ -212,7 +217,7 @@ int catalog_guard_read_end(catalog_guard *guard)
     int released = 0;
     if (!guard_lock(guard)) return 0;
     if (guard->readers) --guard->readers, released = 1;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return released;
 }
 
@@ -222,7 +227,7 @@ int catalog_guard_can_scan(catalog_guard *guard)
     if (!guard_lock(guard)) return 0;
     allowed = !guard->playing && !guard->io_busy && !guard->downloading && !guard->scanning &&
               !guard->apply_pending && !guard->applying && guard->readers == 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
@@ -233,7 +238,7 @@ int catalog_guard_scan_begin(catalog_guard *guard)
     allowed = !guard->playing && !guard->io_busy && !guard->downloading && !guard->scanning &&
               !guard->apply_pending && !guard->applying && guard->readers == 0;
     if (allowed) guard->scanning = 1, guard->scan_cancelled = 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
@@ -242,7 +247,7 @@ int catalog_guard_scan_cancelled(catalog_guard *guard)
     int cancelled;
     if (!guard_lock(guard)) return -1;
     cancelled = guard->scan_cancelled != 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return -1;
     return cancelled;
 }
 
@@ -255,7 +260,7 @@ int catalog_guard_scan_end(catalog_guard *guard)
         guard->scanning = 0;
         guard->scan_cancelled = 0;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return ended;
 }
 
@@ -264,7 +269,7 @@ int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
     int wait_for_scan_or_download = 0;
     if (!guard_lock(guard)) return 0;
     if (guard->applying) {
-        guard->unlock(guard->lock_context);
+        if (!guard_release(guard)) return 0;
         return 0;
     }
     guard->playing = playing != 0;
@@ -280,7 +285,7 @@ int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
         guard->download_cancelled = 1;
         wait_for_scan_or_download = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     /* Callers starting I/O or gameplay must retry after the cancelled operation ends. */
     return !wait_for_scan_or_download;
 }
@@ -290,7 +295,7 @@ int catalog_guard_can_download(catalog_guard *guard)
     int allowed;
     if (!guard_lock(guard)) return 0;
     allowed = guard_download_allowed(guard);
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
@@ -300,7 +305,7 @@ int catalog_guard_download_begin(catalog_guard *guard)
     if (!guard_lock(guard)) return 0;
     allowed = guard_download_allowed(guard);
     if (allowed) guard->downloading = 1, guard->download_cancelled = 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
@@ -309,7 +314,7 @@ int catalog_guard_download_cancelled(catalog_guard *guard)
     int cancelled;
     if (!guard_lock(guard)) return -1;
     cancelled = guard->downloading && guard->download_cancelled;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return -1;
     return cancelled;
 }
 
@@ -322,7 +327,7 @@ int catalog_guard_download_end(catalog_guard *guard)
         guard->download_cancelled = 0;
         ended = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return ended;
 }
 
@@ -335,7 +340,7 @@ int catalog_guard_request_apply(catalog_guard *guard)
         guard->apply_pending = 1;
         requested = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return requested;
 }
 
@@ -348,7 +353,7 @@ int catalog_guard_try_apply(catalog_guard *guard)
         guard->applying = 1;
         acquired = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return acquired;
 }
 
@@ -361,7 +366,7 @@ int catalog_guard_finish_apply(catalog_guard *guard)
         guard->apply_pending = 0;
         finished = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return finished;
 }
 
@@ -373,6 +378,6 @@ int catalog_guard_cancel_apply(catalog_guard *guard)
         guard->apply_pending = 0;
         cancelled = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return cancelled;
 }
