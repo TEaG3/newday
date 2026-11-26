@@ -10,7 +10,7 @@ RetroAchievements on real hardware. Arabic is the primary and default interface 
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
 **Download:** [latest TEa.G3 release](https://github.com/TEaG3/newday/releases/latest)
 
-Previously named ORBIT and then NULD. Upgrading preserves existing data: the first boot automatically moves `orbit/` or `nuld/` to `tea_g3/`, installs `BOOT/TEa.G3.ELF`, and refreshes existing `BOOT/NULD.ELF` / `BOOT/ORBIT.ELF` entry points so old FreeMcBoot shortcuts continue to work. Existing `VMC/ORBIT.bin` and `VMC/NULD.bin` shared cards are reused; new installs use `VMC/TEa.G3.bin`.
+Upgrading from earlier launcher builds preserves existing data: the first boot migrates legacy `orbit/` or `nuld/` directories to `tea_g3/`, installs `BOOT/TEa.G3.ELF`, and refreshes the legacy `BOOT/NULD.ELF` / `BOOT/ORBIT.ELF` entry points so existing FreeMcBoot shortcuts continue to work. Existing shared cards under `VMC/ORBIT.bin` or `VMC/NULD.bin` are reused; new installs use `VMC/TEa.G3.bin`.
 
 ![Home screen](site/img/home-carousel.jpg)
 
@@ -37,7 +37,7 @@ Previously named ORBIT and then NULD. Upgrading preserves existing data: the fir
   achievements on your profile.
 - **Discs, PS1 and apps**: boots the disc in the drive, PS1 games through POPStarter, and homebrew from `APPS/`.
 - **Arabic by default, with English as the only secondary language** (`config.ini [ui] idioma`); the launcher shapes Arabic letters, joins contextual forms, lays out right-to-left text, and keeps Latin runs and numbers readable. The in-game pause menu and achievement-unlocked heading also have Arabic labels.
-- Companion app: [ORBIT Jellyfin](https://github.com/danielnuld/orbit-jellyfin), your Jellyfin library on the PS2.
+- **Jellyfin companion app**: a separate project for browsing your Jellyfin library on the PS2 ([source repository](https://github.com/danielnuld/orbit-jellyfin)).
 
 ## USB folder template and guides
 
@@ -68,8 +68,7 @@ Optional:
 - **Achievements**: run the xeRAbora client (signed in to your RetroAchievements account) on a PC or server on the
   same network. Use [v0.1.0-alpha.9](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9), the version
   TEa.G3 is tested with: xeRAbora is in active development and newer releases may change the protocol.
-- **Home game server**: on a Linux box, run Neutrino's `udpfs_server.py` and TEa.G3's `tools/nuld_catalog.py`
-  (zip, `server/`) over `<root>/DVD`; set `[juegos] origen = usb, udpfs` and `servidor = <server IP>`. Use a cable.
+- **Home game server**: run Neutrino's UDPFS host and TEa.G3's catalog helper as two separate processes; the source repository does not ship a `server/` directory or prebuilt service units. Follow the [UDPFS server guide](docs/udpfs-server.md) for the pinned host script, ports and PS2 configuration.
   Any other udpfs server (Server2PS2, ...): leave `servidor` empty and set a fixed `[red] ip`; no online covers or
   achievements then.
 - **From an MMCE instead of a USB** (SD2PSX, MemCard PRO 2): copy `TEa.G3.ELF` to the card's SD and start
