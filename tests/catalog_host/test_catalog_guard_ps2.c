@@ -244,6 +244,45 @@ int main(void)
         sema_created = 0;
     }
 
+    /* A failed release after bundle swap must fail closed; no reader may observe the bundle. */
+    {
+        catalog_guard failed_bundle_guard;
+        catalog_guard_ps2_context failed_bundle_context;
+        catalog_stage_snapshot old_snapshot, new_snapshot;
+        int old_items[1] = {1}, new_items[1] = {2};
+        int old_sidecars[1] = {10}, new_sidecars[1] = {20};
+        catalog_stage_bundle active_bundle, candidate_bundle;
+        memset(&old_snapshot, 0, sizeof(old_snapshot));
+        memset(&new_snapshot, 0, sizeof(new_snapshot));
+        old_snapshot.count = 1;
+        old_snapshot.records[0].source_type = 1;
+        old_snapshot.records[0].kind = 1;
+        snprintf(old_snapshot.records[0].path, sizeof(old_snapshot.records[0].path), "DVD/Old.iso");
+        new_snapshot.count = 1;
+        new_snapshot.records[0].source_type = 1;
+        new_snapshot.records[0].kind = 1;
+        snprintf(new_snapshot.records[0].path, sizeof(new_snapshot.records[0].path), "DVD/New.iso");
+        active_bundle.items = old_items;
+        active_bundle.sidecars = old_sidecars;
+        active_bundle.count = 1;
+        active_bundle.snapshot = &old_snapshot;
+        candidate_bundle.items = new_items;
+        candidate_bundle.sidecars = new_sidecars;
+        candidate_bundle.count = 1;
+        candidate_bundle.snapshot = &new_snapshot;
+        catalog_guard_ps2_context_init(&failed_bundle_context);
+        assert(catalog_guard_ps2_init(&failed_bundle_guard, &failed_bundle_context));
+        assert(catalog_guard_request_apply(&failed_bundle_guard));
+        fail_signal = 1;
+        assert(catalog_stage_bundle_publish(&failed_bundle_guard, &active_bundle, &candidate_bundle) == CATALOG_STAGE_ERR_GUARD);
+        assert(failed_bundle_context.faulted);
+        assert(active_bundle.items == new_items && active_bundle.sidecars == new_sidecars);
+        assert(!catalog_guard_read_begin(&failed_bundle_guard));
+        fail_signal = 0;
+        assert(pthread_mutex_unlock(&test_sema) == 0);
+        sema_created = 0;
+    }
+
     /* Destroy must also restore its callbacks and refuse deletion when SignalSema fails. */
     {
         catalog_guard failed_destroy_guard;
