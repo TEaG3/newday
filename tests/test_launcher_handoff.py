@@ -149,11 +149,11 @@ class LauncherHandoffTests(unittest.TestCase):
         evict_end = self.launcher.index("\n}\n\nstatic u8 cover_stack", evict_start) + 2
         evict_body = self.launcher[evict_start:evict_end]
         self.assertIn(wait, evict_body)
-        self.assertLess(wait_index := evict_body.index(wait), evict_body.index("for (int i = 1; i < ncv; i++)"))
+        wait_index = evict_body.index(wait)
+        self.assertLess(wait_index, evict_body.index("for (int i = 1; i < ncv; i++)"))
         self.assertLess(evict_body.index("for (int i = 1; i < ncv; i++)"), evict_body.index("void *b = cv[old].big"))
         self.assertIn("if (SignalSema(cover_lock) < 0) return;", evict_body)
         self.assertGreater(evict_body.index("free(b), free(s), free(h);"), evict_body.index("SignalSema(cover_lock)"))
-        self.assertGreater(wait_index, -1)
 
     def test_background_gate_reopens_only_after_tracked_workers_are_idle(self):
         start = self.launcher.index("static void background_resume_if_idle(void)")
