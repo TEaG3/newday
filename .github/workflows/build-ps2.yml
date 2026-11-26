@@ -292,6 +292,68 @@ jobs:
           name: tea-g3-opl-${{ github.sha }}
           path: bundle
 
+      - name: Verify runtime manifest sizes, CRCs and bundle identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import re
+          import zlib
+          from pathlib import Path
+
+          root = Path("bundle").resolve()
+          manifest = root / "runtime-manifest.txt"
+          if not manifest.is_file() or manifest.is_symlink():
+              raise SystemExit("runtime-manifest.txt is missing or unsafe")
+
+          lines = manifest.read_text(encoding="utf-8").splitlines()
+          if len(lines) < 2 or not lines[0].startswith("bundle=") or not lines[1].startswith("files="):
+              raise SystemExit("runtime manifest header is malformed")
+
+          bundle_id = lines[0].split("=", 1)[1]
+          if not re.fullmatch(r"[0-9a-f]{16}", bundle_id):
+              raise SystemExit("runtime bundle identity is malformed")
+          expected_count = int(lines[1].split("=", 1)[1])
+          if expected_count < 1:
+              raise SystemExit("runtime manifest contains no assets")
+
+          seen = set()
+          digest = hashlib.sha256()
+          for line_number, line in enumerate(lines[2:], start=3):
+              fields = line.split("\t")
+              if len(fields) != 3:
+                  raise SystemExit(f"runtime manifest line {line_number} is malformed")
+              relative, size_text, crc_text = fields
+              parts = relative.split("/")
+              if (not relative or relative.startswith("/") or "\\" in relative or
+                      any(part in ("", ".", "..") for part in parts)):
+                  raise SystemExit(f"unsafe runtime path on line {line_number}: {relative!r}")
+              if relative in seen:
+                  raise SystemExit(f"duplicate runtime path: {relative}")
+              seen.add(relative)
+
+              path = root.joinpath(*parts)
+              resolved = path.resolve()
+              if not resolved.is_relative_to(root) or path.is_symlink() or not path.is_file():
+                  raise SystemExit(f"runtime asset is missing or escapes bundle: {relative}")
+
+              data = path.read_bytes()
+              if len(data) != int(size_text):
+                  raise SystemExit(f"runtime size mismatch: {relative}")
+              if len(crc_text) != 8 or (zlib.crc32(data) & 0xFFFFFFFF) != int(crc_text, 16):
+                  raise SystemExit(f"runtime CRC-32 mismatch: {relative}")
+              digest.update(relative.encode("utf-8") + b"\0" + data)
+
+          if len(seen) != expected_count:
+              raise SystemExit(f"runtime manifest count mismatch: {len(seen)} != {expected_count}")
+          actual_id = digest.hexdigest()[:16]
+          if actual_id != bundle_id:
+              raise SystemExit(f"runtime bundle identity mismatch: {actual_id} != {bundle_id}")
+
+          print(f"Verified {len(seen)} runtime assets; bundle {actual_id} is intact.")
+          PY
+
       - name: Verify and add integration test instructions
         shell: bash
         run: |
