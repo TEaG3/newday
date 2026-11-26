@@ -72,7 +72,12 @@ class TEaG3BrandingTests(unittest.TestCase):
         for rel in ("README.md", "docs/game-formats.md", "docs/opl-engine-integration.md", "site/manual.html", "INSTALL-AR.txt", "INSTALL-EN.txt"):
             text = (ROOT / rel).read_text(encoding="utf-8")
             self.assertNotIn("exFAT", text)
-        self.assertNotIn("Neutrino", self.site_i18n)
+        self.assertIn("Neutrino's in-game overlay design is retained", self.site_i18n)
+        self.assertIn("The Neutrino runtime, ELF, loader and IOP/EE modules are not included.", self.site_i18n)
+        self.assertIn("not linked or active in this build", self.site_i18n)
+        self.assertNotIn("neutrino.elf", self.site_i18n.lower())
+        self.assertNotIn("build_neutrino", self.site_i18n)
+        self.assertNotIn("third_party/neutrino-igr", self.site_i18n)
 
 if __name__ == "__main__":
     unittest.main()
