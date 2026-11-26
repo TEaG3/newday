@@ -44,7 +44,7 @@ for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
 
 const homepage = fs.readFileSync(path.join(__dirname, "../site/index.html"), "utf8");
 assert.ok(homepage.includes('href="https://github.com/TEaG3/newday/releases"'), "homepage must keep a separate link to the complete historical release archive");
-assert.ok(homepage.includes("historical ORBIT/NULD releases"), "archive link must identify the legacy release history");
+assert.ok(homepage.includes("Full release archive (including earlier versions)"), "archive link must remain descriptive without exposing legacy product names");
 
 const siteCss = fs.readFileSync(path.join(__dirname, "../site/site.css"), "utf8");
 assert.match(siteCss, /[.]tea-g3-rtl/);
