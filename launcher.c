@@ -462,11 +462,22 @@ static volatile int vmc_net_want = -1; // a server game's card for the loader th
 static int vmc_net_ask(int i);         // asks for it; 0 if there is no loader thread to ask
 
 static u8 icon_stack[0x10000] __attribute__((aligned(16)));
+static volatile int ra_launching, cover_busy, icon_busy;
+static int background_work_begin(volatile int *busy);
+static void background_work_end(volatile int *busy);
+
 static void icon_thread(void *arg) // the only libmc user after the boot scan; woken by the render thread
 {
 	(void)arg;
 	for (;;) {
 		WaitSema(icon_sema);
+		if (!background_work_begin(&icon_busy)) {
+			if (ra_launching) {
+				SignalSema(icon_sema);
+				DelayThread(10000);
+			}
+			continue;
+		}
 		if (stub_install == 1) { stub_install = 2; install_stub(); stub_install = 0; } // install independent IGR return ELF
 		wiz_job();
 		if (state_dirty && usb) { // the chosen view, for the next boot (phase 10)
@@ -476,16 +487,19 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 			               view_key[view]), fclose(f);
 		}
 		int i = icon_want, port;
-		if (i < 0) continue;
-		if (on_catalog(i) && uses_vmc(i)) { // on the server: the loader thread reads it, the network is its alone
-			if (!vmc_state[i] && !vmc_net_ask(i)) vmc_n[i] = 0, vmc_state[i] = 2; // no worker: no icon
-			continue;
+		if (i >= 0) {
+			if (on_catalog(i) && uses_vmc(i)) { // on the server: the loader thread reads it, the network is its alone
+				if (!vmc_state[i] && !vmc_net_ask(i)) vmc_n[i] = 0, vmc_state[i] = 2; // no worker: no icon
+			} else {
+				if (uses_vmc(i) && !vmc_state[i]) vmc_state[i] = 1, vmc_load(i), vmc_state[i] = 2; // phase 14
+				if (!gicon_state[i] && (!(uses_vmc(i) && vmc_state[i] != 2)) && newest_save(i, &port)) {
+					gicon_state[i] = 1;
+					gicon[i] = load_icon(i);
+					gicon_state[i] = 2;
+				}
+			}
 		}
-		if (uses_vmc(i) && !vmc_state[i]) vmc_state[i] = 1, vmc_load(i), vmc_state[i] = 2; // phase 14
-		if (gicon_state[i] || (uses_vmc(i) && vmc_state[i] != 2) || !newest_save(i, &port)) continue;
-		gicon_state[i] = 1;
-		gicon[i] = load_icon(i);
-		gicon_state[i] = 2;
+		background_work_end(&icon_busy);
 	}
 }
 
@@ -563,7 +577,6 @@ static void load_covers(entry *e) // the disc's: the grid's half from the big on
 static volatile char cover_req[MAXC], cover_done[MAXC]; // sizes asked and not read yet / read (or not on the USB)
 static int cover_seen[MAXC], frame_n; // render thread: the frame each cover was last drawn
 static int cover_sema = -1, cover_lock = -1;
-static volatile int ra_launching, cover_busy;
 static int save_c16(const char *serial, const char *suffix, const void *px, unsigned w, unsigned h);
 
 static void *half_file(const char *serial, int sq, void **big, void **small) // _h.c16, made from the big one the first time
@@ -1529,12 +1542,12 @@ static int background_quiesce(void)
 		if (SignalSema(cover_lock) < 0) return 0;
 	} else ra_launching = 1; // the cover worker is not running
 	ra_abort = 1;
-	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy); t++) usleep(10000);
-	if (ra_busy || art_busy || update_busy) return 0;
+	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy || icon_busy); t++) usleep(10000);
+	if (ra_busy || art_busy || update_busy || icon_busy) return 0;
 	for (int t = 0; t < 500 && (dl_busy || dl_state == 1 || dl_state == 2); t++) usleep(20000);
 	if (dl_busy || dl_state == 1 || dl_state == 2) return 0;
 	for (int t = 0; t < 150 && cover_busy; t++) usleep(10000);
-	return !cover_busy;
+	return !cover_busy && !icon_busy;
 }
 
 static void background_resume_if_idle(void)
@@ -1542,11 +1555,11 @@ static void background_resume_if_idle(void)
 	if (!ra_launching) return;
 	if (cover_lock >= 0) {
 		if (WaitSema(cover_lock) < 0) return;
-		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy &&
+		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy &&
 		           dl_state != 1 && dl_state != 2 && !cover_busy;
 		if (idle) ra_launching = 0, ra_abort = 0;
 		if (SignalSema(cover_lock) < 0 && idle) ra_launching = 1, ra_abort = 1;
-	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy &&
+	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy &&
 	           dl_state != 1 && dl_state != 2 && !cover_busy) ra_launching = 0, ra_abort = 0;
 }
 
@@ -1737,11 +1750,6 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	scan_cards();
 	ee_sema_t sema = { .init_count = 0, .max_count = 1 };
 	icon_sema = CreateSema(&sema);
-	ee_thread_t it = { .func = icon_thread, .stack = icon_stack, .stack_size = sizeof(icon_stack), .gp_reg = &_gp,
-	                   .initial_priority = 0x40 };
-	int itid = icon_sema >= 0 ? CreateThread(&it) : -1;
-	if (itid >= 0) StartThread(itid, NULL);
-	if (itid >= 0 && stub_install) SignalSema(icon_sema); // install the IGR boot stub in the background
 	if (usb && ra_on) ra_sema = CreateSema(&sema);        // selections wait here until the covers are done
 	stage = 2;
 	clock_t c0 = clock();
@@ -1786,6 +1794,11 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	                src_why ? ": " : "", src_why ? src_why : "", net_ip(), net_res, net_why), fclose(lf);
 	stage = 3;
 	cover_lock = CreateSema(&(ee_sema_t){ .init_count = 1, .max_count = 1 });
+	ee_thread_t it = { .func = icon_thread, .stack = icon_stack, .stack_size = sizeof(icon_stack), .gp_reg = &_gp,
+	                   .initial_priority = 0x40 };
+	int itid = cover_lock >= 0 && icon_sema >= 0 ? CreateThread(&it) : -1;
+	if (itid >= 0) StartThread(itid, NULL);
+	if (itid >= 0 && stub_install) SignalSema(icon_sema); // install the IGR boot stub in the background
 	cover_sema = CreateSema(&sema);
 	// above the loader (0x40): equal priorities never time-slice on the EE, and the loader's HTTPS (covers, achievements)
 	// and game hashing kept the covers on screen waiting; it mostly waits on the USB, so it costs the others little
