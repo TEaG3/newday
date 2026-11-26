@@ -124,6 +124,33 @@ static int index_find(const catalog_stage_snapshot *snapshot,
     return -1;
 }
 
+int catalog_stage_snapshot_map(const catalog_stage_snapshot *old_snapshot,
+                               const catalog_stage_snapshot *new_snapshot,
+                               int16_t *old_to_new, size_t map_capacity)
+{
+    uint16_t slots[CATALOG_STAGE_HASH_SLOTS];
+    int16_t staged[CATALOG_STAGE_MAX_ITEMS];
+    size_t i;
+    int status;
+
+    if (!old_snapshot || !new_snapshot || !old_to_new)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (old_snapshot->count > map_capacity)
+        return CATALOG_STAGE_ERR_CAPACITY;
+
+    status = build_index(old_snapshot, slots);
+    if (status != CATALOG_STAGE_OK) return status;
+    status = build_index(new_snapshot, slots);
+    if (status != CATALOG_STAGE_OK) return status;
+
+    for (i = 0; i < old_snapshot->count; ++i)
+        staged[i] = (int16_t)index_find(new_snapshot, slots, &old_snapshot->records[i]);
+
+    /* Commit the map only after both snapshots have passed validation. */
+    memcpy(old_to_new, staged, old_snapshot->count * sizeof(staged[0]));
+    return CATALOG_STAGE_OK;
+}
+
 int catalog_stage_snapshot_diff(const catalog_stage_snapshot *old_snapshot,
                                 const catalog_stage_snapshot *new_snapshot,
                                 catalog_stage_diff *out)

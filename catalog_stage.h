@@ -47,6 +47,10 @@ int catalog_stage_snapshot_validate(const catalog_stage_snapshot *snapshot);
 int catalog_stage_snapshot_append(catalog_stage_snapshot *snapshot,
                                   const catalog_stage_record *record);
 /* out must not alias either snapshot; it remains untouched when validation fails. */
+/* Map each old index to the new index for the same stable key; -1 means removed. */
+int catalog_stage_snapshot_map(const catalog_stage_snapshot *old_snapshot,
+                               const catalog_stage_snapshot *new_snapshot,
+                               int16_t *old_to_new, size_t map_capacity);
 int catalog_stage_snapshot_diff(const catalog_stage_snapshot *old_snapshot,
                                 const catalog_stage_snapshot *new_snapshot,
                                 catalog_stage_diff *out);
