@@ -284,6 +284,36 @@ jobs:
           Disabled sources fail closed. CI success does not prove gameplay.
           Follow PCSX2_SMOKE_TEST.md before reporting runtime compatibility.
           EOF
+          mkdir -p runtime-input
+          cp bundle/OPL.ELF runtime-input/OPL.ELF
+          cp bundle/OPL-LICENSE.txt OPL-LICENSE.txt
+          cp bundle/TEa.G3.ELF TEa.G3.ELF
+          cp bundle/runtime-manifest.txt runtime-manifest.txt
+          python3 tools/package_single_elf_release.py development
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          package = Path("dist/TEa.G3-Complete-Package.zip")
+          with ZipFile(package) as archive:
+              assert archive.testzip() is None
+              names = archive.namelist()
+              assert len(names) == len(set(names)), "duplicate package entries"
+              required = {
+                  "TEa.G3.ELF", "diagnostics/OPL-standalone.ELF",
+                  "licenses/OPL-AFL-3.0.txt", "PACKAGE-MANIFEST.txt",
+                  "INSTALL-AR.txt", "INSTALL-EN.txt",
+              }
+              assert required.issubset(names), sorted(required - set(names))
+              manifest = archive.read("PACKAGE-MANIFEST.txt").decode("utf-8")
+              assert "OPL is the only PS2 game engine" in manifest
+              assert "SMB, UDPBD, UDPFS game streaming" in manifest
+              assert "Neutrino" not in manifest
+          sums = Path("dist/SHA256SUMS.txt").read_text(encoding="utf-8")
+          assert "TEa.G3-Complete-Package.zip" in sums and "TEa.G3.ELF" in sums
+          print(f"release package fixture: PASS ({package.stat().st_size} bytes)")
+          PY
+          mkdir -p bundle/package-test
+          cp dist/TEa.G3-Complete-Package.zip dist/SHA256SUMS.txt bundle/package-test/
       - name: Upload unified integration test bundle
         uses: actions/upload-artifact@v4
         with:
