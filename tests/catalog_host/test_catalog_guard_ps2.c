@@ -10,6 +10,7 @@ static int sema_created;
 static int fail_create;
 static int fail_delete;
 static int fail_wait;
+static int fail_signal;
 
 int CreateSema(ee_sema_t *sema)
 {
@@ -54,7 +55,7 @@ int WaitSema(int sema_id)
 
 int SignalSema(int sema_id)
 {
-    if (sema_id != 7 || !sema_created) {
+    if (fail_signal || sema_id != 7 || !sema_created) {
         return -1;
     }
     return pthread_mutex_unlock(&test_sema);
@@ -146,6 +147,42 @@ int main(void)
     assert(context.sema_id == -1);
     assert(!sema_created);
     assert(!catalog_guard_read_begin(&guard));
+
+    /* A failed SignalSema must be reported to the caller and poison future locks. */
+    {
+        catalog_guard failed_guard;
+        catalog_guard_ps2_context failed_context;
+        catalog_guard_ps2_context_init(&failed_context);
+        assert(catalog_guard_ps2_init(&failed_guard, &failed_context));
+        fail_signal = 1;
+        assert(!catalog_guard_read_begin(&failed_guard));
+        assert(failed_context.faulted);
+        assert(failed_guard.readers == 1); /* state is no longer safely observable */
+        assert(!catalog_guard_read_begin(&failed_guard)); /* no blocking WaitSema after fault */
+        assert(!catalog_guard_ps2_destroy(&failed_guard, &failed_context));
+        fail_signal = 0;
+        /* The simulated kernel failure left the mutex held; clean up the test stub directly. */
+        assert(pthread_mutex_unlock(&test_sema) == 0);
+        sema_created = 0;
+    }
+
+    /* Destroy must also restore its callbacks and refuse deletion when SignalSema fails. */
+    {
+        catalog_guard failed_destroy_guard;
+        catalog_guard_ps2_context failed_destroy_context;
+        catalog_guard_ps2_context_init(&failed_destroy_context);
+        assert(catalog_guard_ps2_init(&failed_destroy_guard, &failed_destroy_context));
+        fail_signal = 1;
+        assert(!catalog_guard_ps2_destroy(&failed_destroy_guard, &failed_destroy_context));
+        assert(failed_destroy_context.faulted);
+        assert(failed_destroy_guard.lock != NULL);
+        assert(failed_destroy_guard.unlock != NULL);
+        assert(failed_destroy_guard.lock_context == &failed_destroy_context);
+        assert(!catalog_guard_read_begin(&failed_destroy_guard));
+        fail_signal = 0;
+        assert(pthread_mutex_unlock(&test_sema) == 0);
+        sema_created = 0;
+    }
 
     puts("catalog PS2 semaphore adapter host concurrency: PASS");
     return 0;
