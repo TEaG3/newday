@@ -8,7 +8,7 @@ RetroAchievements on real hardware. Arabic is the primary and default interface 
 
 **Website:** https://teag3.github.io/newday/ · [OPL Integration Lab](https://teag3.github.io/newday/opl-lab.html) · [Manual](https://teag3.github.io/newday/manual.html) · screenshots and videos in `site/`
 **Videos:** [trailer](https://youtu.be/w4V8aKWTCJw) · [setup guide](https://youtu.be/eqTNBGMIEXo)
-**Download:** [latest TEa.G3 release](https://github.com/TEaG3/newday/releases/latest)
+**Download:** [published TEa.G3 packages (latest is a prerelease)](https://github.com/TEaG3/newday/releases)
 
 Upgrading from earlier launcher builds preserves existing data: the first boot migrates legacy `orbit/` or `nuld/` directories to `tea_g3/`, installs `BOOT/TEa.G3.ELF`, and refreshes the legacy `BOOT/NULD.ELF` / `BOOT/ORBIT.ELF` entry points so existing FreeMcBoot shortcuts continue to work. Existing shared cards under `VMC/ORBIT.bin` or `VMC/NULD.bin` are reused; new installs use `VMC/TEa.G3.bin`.
 
