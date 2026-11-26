@@ -31,8 +31,9 @@ class NeutrinoUiReferenceTests(unittest.TestCase):
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
         workflow = (ROOT / ".github/workflows/build-ps2.yml").read_text(encoding="utf-8")
         self.assertNotIn("ui/neutrino-igr/menu_arabic.h", makefile)
-        self.assertIn("runtime_linked", (ROOT / "ui/neutrino-igr/menu-design.json").read_text(encoding="utf-8"))
-        self.assertIn("third_party/neutrino-igr", workflow) if "third_party/neutrino-igr" in workflow else None
+        self.assertNotIn("neutrino.elf", makefile.lower())
+        self.assertNotIn("build_neutrino", workflow)
+        self.assertNotIn("neutrino.elf", workflow.lower())
 
 
 if __name__ == "__main__":
