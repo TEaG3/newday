@@ -166,6 +166,24 @@ int main(void)
         sema_created = 0;
     }
 
+    /* Destroy must also restore its callbacks and refuse deletion when SignalSema fails. */
+    {
+        catalog_guard failed_destroy_guard;
+        catalog_guard_ps2_context failed_destroy_context;
+        catalog_guard_ps2_context_init(&failed_destroy_context);
+        assert(catalog_guard_ps2_init(&failed_destroy_guard, &failed_destroy_context));
+        fail_signal = 1;
+        assert(!catalog_guard_ps2_destroy(&failed_destroy_guard, &failed_destroy_context));
+        assert(failed_destroy_context.faulted);
+        assert(failed_destroy_guard.lock != NULL);
+        assert(failed_destroy_guard.unlock != NULL);
+        assert(failed_destroy_guard.lock_context == &failed_destroy_context);
+        assert(!catalog_guard_read_begin(&failed_destroy_guard));
+        fail_signal = 0;
+        assert(pthread_mutex_unlock(&test_sema) == 0);
+        sema_created = 0;
+    }
+
     puts("catalog PS2 semaphore adapter host concurrency: PASS");
     return 0;
 }
