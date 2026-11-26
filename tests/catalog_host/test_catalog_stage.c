@@ -817,6 +817,18 @@ static void test_safe_bundle_publish(void)
     assert(active.snapshot == &active_snapshot && active.count == 1);
     assert(!guard.apply_pending && !guard.applying);
 
+    /* An invalid active snapshot also cancels a pending apply without moving the bundle. */
+    set_record(&active_snapshot.records[1], 1, 0, 1, "DVD/Old.iso", 100, 1);
+    active_snapshot.count = 2;
+    active.count = 2;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_DUPLICATE);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(active.snapshot == &active_snapshot && active.count == 2);
+    assert(!guard.apply_pending && !guard.applying);
+    active_snapshot.count = 1;
+    active.count = 1;
+
     /* Mismatched counts and aliased buffers are rejected without touching the guard. */
     candidate_snapshot.count = 1;
     candidate.count = 2;
