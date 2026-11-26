@@ -14,6 +14,8 @@ class TEaG3BrandingTests(unittest.TestCase):
         cls.lang_ar = (ROOT / "lang_ar.c").read_text(encoding="utf-8")
         cls.neutrino_patch = (ROOT / "third_party/neutrino-igr/patch_neutrino.py").read_text(encoding="utf-8")
         cls.site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
+        cls.site_index = (ROOT / "site/index.html").read_text(encoding="utf-8")
+        cls.site_manual = (ROOT / "site/manual.html").read_text(encoding="utf-8")
 
     def test_runtime_messages_and_configuration_use_teag3_branding(self):
         stale_runtime_text = (
@@ -82,6 +84,14 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn('Michroma 60 px ("NULD" only)', self.gfx_header)
         self.assertIn("Michroma 60 px (TEa.G3 wordmark)", self.gfx_header)
         self.assertNotIn("a nuld game", self.neutrino_patch.lower())
+
+
+    def test_current_release_archive_labels_do_not_repeat_legacy_brand_names(self):
+        current_label = "Full release archive (including earlier versions)"
+        for page in (self.site_index, self.site_manual):
+            with self.subTest(page="site page"):
+                self.assertIn(current_label, page)
+                self.assertNotIn("includes historical ORBIT/NULD releases", page)
 
     def test_legacy_boot_and_user_data_paths_are_preserved(self):
         # These names are intentionally retained only to migrate or reuse existing user data.
