@@ -42,7 +42,7 @@
       if (!zip || !zip.browser_download_url) return Promise.reject("The current package asset is missing");
       // Only navigate to this repository's release asset; never trust arbitrary API-provided URLs.
       var downloadUrl = String(zip.browser_download_url);
-      if (!/^https:\/\/github\\.com\/TEaG3\/newday\/releases\/download\/[^/?#]+\/TEa\\.G3-Complete-Package\\.zip$/i.test(downloadUrl)) {
+      if (!/^https:\/\/github\.com\/TEaG3\/newday\/releases\/download\/[^/?#]+\/TEa\.G3-Complete-Package\\.zip$/i.test(downloadUrl)) {
         return Promise.reject("The release asset URL is outside the trusted repository");
       }
 
