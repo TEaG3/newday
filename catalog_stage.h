@@ -94,4 +94,20 @@ int catalog_guard_try_apply(catalog_guard *guard);
 int catalog_guard_finish_apply(catalog_guard *guard);
 int catalog_guard_cancel_apply(catalog_guard *guard);
 
+/* A source callback returns 1 for a record, 0 at end-of-source, and a negative value on I/O error. */
+typedef int (*catalog_stage_scan_next_fn)(void *context, catalog_stage_record *record);
+enum {
+    CATALOG_STAGE_SCAN_OK = 0,
+    CATALOG_STAGE_SCAN_CANCELLED = 1,
+    CATALOG_STAGE_SCAN_ERR_ARGUMENT = -1,
+    CATALOG_STAGE_SCAN_ERR_BUSY = -2,
+    CATALOG_STAGE_SCAN_ERR_SOURCE = -3,
+    CATALOG_STAGE_SCAN_ERR_CAPACITY = -4,
+    CATALOG_STAGE_SCAN_ERR_RECORD = -5,
+    CATALOG_STAGE_SCAN_ERR_GUARD = -6
+};
+/* Builds an inactive candidate. The caller must not publish it unless this returns OK. */
+int catalog_stage_scan(catalog_guard *guard, catalog_stage_scan_next_fn next,
+                       void *context, catalog_stage_snapshot *candidate);
+
 #endif
