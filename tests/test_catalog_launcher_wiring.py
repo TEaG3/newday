@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LAUNCHER = (ROOT / "launcher.c").read_text(encoding="utf-8")
+STAGE = (ROOT / "catalog_stage.c").read_text(encoding="utf-8")
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
 
 
@@ -73,6 +74,11 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         fingerprint = function_body(LAUNCHER, "static uint32_t catalog_entry_fingerprint(", "static int catalog_snapshot_capture(")
         self.assertIn("if (item->engine != ENGINE_OPL_UL)", fingerprint)
         self.assertIn("catalog_stage_snapshot_validate(snapshot)", capture)
+
+    def test_safe_publish_primitive_is_host_tested_but_not_enabled_in_launcher(self):
+        self.assertIn("catalog_stage_snapshot_publish", STAGE)
+        self.assertIn("catalog_guard_try_apply(guard)", STAGE)
+        self.assertNotIn("catalog_stage_snapshot_publish(", LAUNCHER)
 
     def test_live_scan_and_apply_are_still_disabled(self):
         self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
