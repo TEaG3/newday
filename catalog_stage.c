@@ -548,3 +548,40 @@ int catalog_guard_cancel_apply(catalog_guard *guard)
     if (!guard_release(guard)) return 0;
     return cancelled;
 }
+
+int catalog_stage_snapshot_publish(catalog_guard *guard,
+                                   catalog_stage_snapshot **active,
+                                   catalog_stage_snapshot **candidate)
+{
+    catalog_stage_snapshot *previous;
+    int status;
+
+    if (guard == NULL || active == NULL || candidate == NULL ||
+        *active == NULL || *candidate == NULL || *active == *candidate)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+
+    status = catalog_stage_snapshot_validate(*candidate);
+    if (status != CATALOG_STAGE_OK) {
+        if (!catalog_guard_cancel_apply(guard))
+            return CATALOG_STAGE_ERR_GUARD;
+        return status;
+    }
+
+    /* apply_pending blocks new readers; try_apply waits for existing leases to drain. */
+    /* try_apply conflates busy and lock failure; the second guarded read detects the latter. */
+    if (!catalog_guard_try_apply(guard)) {
+        /* try_apply is a boolean gate; probe the guard once more to distinguish
+           an ordinary busy state from a failed lock/semaphore operation. */
+        if (catalog_guard_scan_cancelled(guard) < 0)
+            return CATALOG_STAGE_ERR_GUARD;
+        return CATALOG_STAGE_ERR_BUSY;
+    }
+
+    previous = *active;
+    *active = *candidate;
+    *candidate = previous;
+
+    if (!catalog_guard_finish_apply(guard))
+        return CATALOG_STAGE_ERR_GUARD;
+    return CATALOG_STAGE_OK;
+}

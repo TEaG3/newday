@@ -38,7 +38,9 @@ enum {
     CATALOG_STAGE_ERR_CAPACITY = -2,
     CATALOG_STAGE_ERR_PATH = -3,
     CATALOG_STAGE_ERR_DUPLICATE = -4,
-    CATALOG_STAGE_ERR_INDEX = -5
+    CATALOG_STAGE_ERR_INDEX = -5,
+    CATALOG_STAGE_ERR_BUSY = -6,
+    CATALOG_STAGE_ERR_GUARD = -7
 };
 
 int catalog_stage_path_is_safe(const char *path);
@@ -109,6 +111,12 @@ int catalog_guard_request_apply(catalog_guard *guard);
 int catalog_guard_try_apply(catalog_guard *guard);
 int catalog_guard_finish_apply(catalog_guard *guard);
 int catalog_guard_cancel_apply(catalog_guard *guard);
+/* Swap the validated inactive candidate into the active slot only after a pending
+   apply request reaches a safe point with zero readers. Call from the frame thread
+   between frames. On success, candidate receives the previous active snapshot. */
+int catalog_stage_snapshot_publish(catalog_guard *guard,
+                                   catalog_stage_snapshot **active,
+                                   catalog_stage_snapshot **candidate);
 
 /* A source callback returns 1 for a record, 0 at end-of-source, and a negative value on I/O error.
    It must finish/close its current I/O before returning; cancellation is checked immediately afterward. */
