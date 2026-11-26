@@ -20,6 +20,9 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("-Werror=frame-larger-than=", WORKFLOW)
         self.assertIn("catalog_stage.c -o /tmp/catalog_stage_stack_guard.o", WORKFLOW)
         self.assertIn("catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_stack_guard.o", WORKFLOW)
+        inner = WORKFLOW.split("sh -c '\\n", 1)[1].split("\\n          '", 1)[0]
+        self.assertNotIn("'", inner)
+
 
     def test_ps2_guard_is_linked_into_launcher(self):
         self.assertIn('#include "catalog_guard_ps2.h"', LAUNCHER)
