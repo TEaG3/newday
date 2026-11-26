@@ -7,7 +7,13 @@ from pathlib import Path
 import sys
 import zipfile
 
-from tools.verify_runtime_manifest import verify_runtime_manifest
+try:
+    from tools.verify_runtime_manifest import verify_runtime_manifest
+except ModuleNotFoundError as exc:
+    if exc.name != "tools":
+        raise
+    # Direct script execution puts tools/ (not the repository root) on sys.path.
+    from verify_runtime_manifest import verify_runtime_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
