@@ -317,6 +317,8 @@ jobs:
           PY
           mkdir -p bundle/package-test
           cp dist/TEa.G3-Complete-Package.zip dist/SHA256SUMS.txt bundle/package-test/
+          cp bundle/TEa.G3.ELF bundle/package-test/TEa.G3.ELF
+          (cd bundle/package-test && sha256sum -c SHA256SUMS.txt)
       - name: Upload unified integration test bundle
         uses: actions/upload-artifact@v7
         with:
