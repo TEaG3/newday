@@ -20,7 +20,9 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("-Werror=frame-larger-than=", WORKFLOW)
         self.assertIn("catalog_stage.c -o /tmp/catalog_stage_stack_guard.o", WORKFLOW)
         self.assertIn("catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_stack_guard.o", WORKFLOW)
-        inner = WORKFLOW.split("sh -c '\\n", 1)[1].split("\\n          '", 1)[0]
+        start = WORKFLOW.index("sh -c '") + len("sh -c '")
+        end = WORKFLOW.index("\n          '", start)
+        inner = WORKFLOW[start:end]
         self.assertNotIn("'", inner)
 
 
