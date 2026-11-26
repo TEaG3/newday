@@ -14,6 +14,9 @@ assert.ok(releaseSource.includes("The release asset URL is outside the trusted r
 assert.ok(releaseSource.includes("a.href = downloadUrl;"));
 assert.ok(releaseSource.includes("https:\\/\\/github\\.com\\/TEaG3\\/newday\\/releases\\/download"));
 assert.ok(releaseSource.includes("TEa\\.G3-Complete-Package\\.zip$/i"));
+for (const page of ["index.html", "changelog.html", "manual.html", "opl-lab.html", "themes.html"]) {
+  assert.match(read("site/" + page), /http-equiv="Content-Security-Policy"/);
+}
 const themeEditorSource = read("site/themes.js");
 assert.ok(!themeEditorSource.includes(".innerHTML ="));
 assert.ok(!themeEditorSource.includes(".outerHTML ="));
