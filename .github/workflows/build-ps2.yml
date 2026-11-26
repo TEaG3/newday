@@ -73,7 +73,7 @@ jobs:
         run: |
           set -euo pipefail
           docker run --rm -v "${GITHUB_WORKSPACE}:/src" -w /src ps2dev/ps2dev:latest sh -c '
-            set -eu
+            set -eux
             set -o pipefail
             export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
             export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"
