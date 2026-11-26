@@ -83,9 +83,9 @@ class LauncherHandoffTests(unittest.TestCase):
         start = self.launcher.index("static void cover_thread(void *arg)")
         end = self.launcher.index("static int count_dir(", start)
         body = self.launcher[start:end]
-        self.assertIn("cover_work_begin()", body)
+        self.assertIn("background_work_begin(&cover_busy)", body)
         self.assertIn("i < ncv && !ra_launching", body)
-        self.assertIn("cover_work_end()", body)
+        self.assertIn("background_work_end(&cover_busy)", body)
 
     def test_background_gate_reopens_only_after_tracked_workers_are_idle(self):
         start = self.launcher.index("static void background_resume_if_idle(void)")
@@ -95,7 +95,7 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("art_busy", body)
         self.assertIn("update_busy", body)
         self.assertIn("dl_busy", body)
-        self.assertIn("dl_state == 1 || dl_state == 2", body)
+        self.assertIn("dl_state != 1 && dl_state != 2", body)
         self.assertIn("cover_busy", body)
         self.assertIn("ra_abort = 0", body)
         self.assertIn("Background work is still active; try again", self.launcher)
