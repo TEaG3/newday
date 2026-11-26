@@ -64,7 +64,7 @@ static void theme_set(int id) // render thread; a theme with a backdrop to dithe
 }
 static int theme_of(const char *key)
 {
-	if (!strcasecmp(key, "classic")) return TH_NULD; // display name; keep the legacy "nuld" key readable too
+	if (!strcasecmp(key, "classic") || !strcasecmp(key, "nuld")) return TH_CLASSIC; // migrate old theme settings
 	for (int i = 0; i < themes_n; i++)
 		if (!strcasecmp(key, themes[i].key)) return i;
 	return TH_TORRES;
@@ -204,10 +204,10 @@ static void vmc_name(int i, char *out, int n) // the shared card was VMC/ORBIT.b
 {                                             // catalog server renames its own, tools/nuld_catalog.py)
 	char old[64];
 	if (game_mc(i) != MC_SHARED) { snprintf(out, n, "VMC/%s.bin", cv[i].serial); return; }
-	char nuld[64];
+	char legacy_vmc[64];
 	snprintf(old, sizeof(old), "%s/VMC/ORBIT.bin", src[(int)cv[i].src].root);
-	snprintf(nuld, sizeof(nuld), "%s/VMC/NULD.bin", src[(int)cv[i].src].root);
-	const char *shared = on_catalog(i) ? "TEa.G3" : exists(old) ? "ORBIT" : exists(nuld) ? "NULD" : "TEa.G3";
+	snprintf(legacy_vmc, sizeof(legacy_vmc), "%s/VMC/NULD.bin", src[(int)cv[i].src].root);
+	const char *shared = on_catalog(i) ? "TEa.G3" : exists(old) ? "ORBIT" : exists(legacy_vmc) ? "NULD" : "TEa.G3";
 	snprintf(out, n, "VMC/%s.bin", shared);
 }
 static void vmc_file(int i, char *out, int n) // the launcher's path to it
@@ -1999,7 +1999,7 @@ static int hint(int x, int key_icon, const char *key_text, const char *label) //
 static void generic_cover(int i, int x, int y, int w, int h, int a) // no cover file: a hatched panel with the title
 {
 	gfx_alpha(a);
-	gfx_rect(x, y, w, h, theme_id == TH_NULD ? 0x11141A : PANEL);
+	gfx_rect(x, y, w, h, theme_id == TH_CLASSIC ? 0x11141A : PANEL);
 	gfx_scissor(x, y, x + w - 1, y + h - 1);
 	for (int d = -h; d < w; d += 12) gfx_line(x + d, y + h, x + d + h, y, TEXT, a / 8, a / 8);
 	gfx_scissor(0, 0, GFX_W - 1, GFX_H - 1);
@@ -2042,7 +2042,7 @@ static void panel(int x, int y, int w, int h, int icon, const char *title) // â–
 	gfx_alpha(0x80);
 	gfx_rect(x, y, w, h, PANEL);
 	frame1(x, y, w, h, EDGE);
-	if (theme_id == TH_NULD) splash_hud(x - 6, y - 6, w + 12, h + 12, 22, ACID);
+	if (theme_id == TH_CLASSIC) splash_hud(x - 6, y - 6, w + 12, h + 12, 22, ACID);
 	gfx_icon(icon, x + 24, y + 24, ACID);
 	gfx_text(&gfx_font_ui, x + 52, y + 21, title, TEXT);
 	gfx_rect(x + 24, y + 58, w - 48, 1, EDGE);
@@ -2191,7 +2191,7 @@ static void draw_cover(int i)
 		gfx_image(im[k], iw[k], ih[k], x, y, w, h);
 		gfx_tint(0xFFFFFF);
 	}
-	frame1(x, y, w, h, theme_id != TH_NULD ? EDGE : b->f > 0.5f ? 0x3A4150 : 0x232833);
+	frame1(x, y, w, h, theme_id != TH_CLASSIC ? EDGE : b->f > 0.5f ? 0x3A4150 : 0x232833);
 	if (b->f > 0.01f) T->sel(x, y, w, h, b->f * b->a, 1), gfx_alpha(0x80); // and in front of it
 }
 
@@ -2974,7 +2974,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	}
 	const char *how[4] = {L("STARTING WITH NEUTRINO"), L("STARTING WITH POPSTARTER"), L("STARTING APPLICATION"),
 	                             L("STARTING DISC")};
-	for (int t = 0; t < (theme_id == TH_NULD ? 40 : 64); t++) { // let the confirm sound play while the screen fades to the entry's name
+	for (int t = 0; t < (theme_id == TH_CLASSIC ? 40 : 64); t++) { // let the confirm sound play while the screen fades to the entry's name
 		gfx_begin();
 		T->launch(t / 60.f); // the theme's own way out
 		gfx_alpha((int)(0x80 * span(t, 0, 20)));
