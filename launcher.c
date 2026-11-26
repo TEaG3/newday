@@ -1519,8 +1519,8 @@ static int ach_row = -1; // the panel's cursor, -1 = closed
 // ponytail: HD Loader partitions and the disc drive have no ISO file to hash; a reader over them if wanted
 static int ra_game_ok(int i) { return ra_on && cv[i].kind == K_PS2 && src[(int)cv[i].src].type != SRC_HDL; }
 
-/* Close the background gate before an IOP reset. A timeout is fail-closed:
-   the main loop reopens it only after every worker has actually gone idle. */
+/* Close the shared gate before an IOP reset. A timeout is fail-closed:
+   the main loop reopens it only after every tracked cover/network worker is idle. */
 static int background_quiesce(void)
 {
 	if (cover_lock >= 0) {
