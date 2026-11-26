@@ -180,7 +180,7 @@ static int guard_lock(catalog_guard *guard)
 
 static int guard_release(catalog_guard *guard)
 {
-    return guard_valid(guard) && if (!guard_release(guard)) return 0;
+    return guard_valid(guard) && guard->unlock(guard->lock_context);
 }
 
 static int guard_download_allowed(const catalog_guard *guard)
