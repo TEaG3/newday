@@ -628,6 +628,10 @@ static void *concurrent_scan_worker(void *opaque)
     concurrent_scan_thread_context *context = (concurrent_scan_thread_context *)opaque;
     context->result = catalog_stage_scan(context->guard, concurrent_scan_next,
                                          context->fixture, context->candidate);
+    assert(pthread_mutex_lock(&context->fixture->mutex) == 0);
+    context->fixture->done = 1;
+    assert(pthread_cond_broadcast(&context->fixture->cond) == 0);
+    assert(pthread_mutex_unlock(&context->fixture->mutex) == 0);
     return NULL;
 }
 
