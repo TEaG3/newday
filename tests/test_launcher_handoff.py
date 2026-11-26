@@ -117,7 +117,7 @@ class LauncherHandoffTests(unittest.TestCase):
         end = self.launcher.index("// ---- config", start)
         body = self.launcher[start:end]
         begin = body.index("background_work_begin(&disc_busy)")
-        end_work = body.index("background_work_end(&disc_busy)", begin)
+        end_work = body.rindex("background_work_end(&disc_busy)")
         work = body[begin:end_work]
         for operation in ("disc_state(sceCdGetDiskType())", "sceCdDiskReady(0)",
                           "disc_cnf(cnf, sizeof(cnf))", "cv[i].serial",
