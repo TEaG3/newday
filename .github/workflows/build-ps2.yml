@@ -73,7 +73,7 @@ jobs:
         run: |
           set -euo pipefail
           docker run --rm -v "${GITHUB_WORKSPACE}:/src" -w /src ps2dev/ps2dev:latest sh -c '
-            set -eux
+            set -eu
             set -o pipefail
             export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
             export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"
@@ -87,7 +87,7 @@ jobs:
             python3 tools/fetch_arabic_font.py
             python3 ui/neutrino-igr/generate_arabic_assets.py
             test -s ui/neutrino-igr/menu_arabic.h
-            grep -Fq 'IGR_AR_BOX_WIDTH 216' ui/neutrino-igr/menu_arabic.h
+            grep -Fq "IGR_AR_BOX_WIDTH 216" ui/neutrino-igr/menu_arabic.h
             python3 tools/font.py --selftest
             make test
             python3 tools/theme_check.py
@@ -99,9 +99,9 @@ jobs:
             { make APP=launcher; } 2>&1 | tee build.log
             test -s TEa.G3.ELF
             test -s runtime-manifest.txt
-            grep -q '^OPL.ELF' runtime-manifest.txt
-            test "$(grep -c '^OPL.ELF' runtime-manifest.txt)" -eq 1
-            test "$(grep -c '^files=1$' runtime-manifest.txt)" -eq 1
+            grep -q "^OPL[.]ELF" runtime-manifest.txt
+            test "$(grep -c "^OPL[.]ELF" runtime-manifest.txt)" -eq 1
+            test "$(grep -c "^files=1$" runtime-manifest.txt)" -eq 1
             ls -lh TEa.G3.ELF runtime-manifest.txt
           '
       - name: Upload launcher ELF
