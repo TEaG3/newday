@@ -5,19 +5,27 @@
 static int catalog_guard_ps2_lock(void *opaque)
 {
     catalog_guard_ps2_context *context = (catalog_guard_ps2_context *)opaque;
-    return WaitSema(context->sema_id) >= 0;
+    return context != NULL && !context->faulted && context->sema_id >= 0 &&
+           WaitSema(context->sema_id) >= 0;
 }
 
-static void catalog_guard_ps2_unlock(void *opaque)
+static int catalog_guard_ps2_unlock(void *opaque)
 {
     catalog_guard_ps2_context *context = (catalog_guard_ps2_context *)opaque;
-    (void)SignalSema(context->sema_id);
+    if (context == NULL || context->faulted || context->sema_id < 0) return 0;
+    if (SignalSema(context->sema_id) < 0) {
+        /* Do not let a caller start I/O after a failed release of the guard semaphore. */
+        context->faulted = 1;
+        return 0;
+    }
+    return 1;
 }
 
 void catalog_guard_ps2_context_init(catalog_guard_ps2_context *context)
 {
     if (context != NULL) {
         context->sema_id = -1;
+        context->faulted = 0;
     }
 }
 
@@ -27,7 +35,7 @@ int catalog_guard_ps2_init(catalog_guard *guard,
     ee_sema_t sema;
     int sema_id;
 
-    if (guard == NULL || context == NULL || context->sema_id != -1) {
+    if (guard == NULL || context == NULL || context->sema_id != -1 || context->faulted) {
         return 0;
     }
 
@@ -60,7 +68,7 @@ int catalog_guard_ps2_destroy(catalog_guard *guard,
     int idle;
     int sema_id;
 
-    if (guard == NULL || context == NULL || context->sema_id < 0 ||
+    if (guard == NULL || context == NULL || context->sema_id < 0 || context->faulted ||
         guard->lock != catalog_guard_ps2_lock ||
         guard->unlock != catalog_guard_ps2_unlock ||
         guard->lock_context != context ||
@@ -79,7 +87,15 @@ int catalog_guard_ps2_destroy(catalog_guard *guard,
         guard->unlock = NULL;
         guard->lock_context = NULL;
     }
-    catalog_guard_ps2_unlock(context);
+    if (!catalog_guard_ps2_unlock(context)) {
+        /* Restore the callbacks; the faulted context makes every later lock fail closed. */
+        if (idle) {
+            guard->lock = catalog_guard_ps2_lock;
+            guard->unlock = catalog_guard_ps2_unlock;
+            guard->lock_context = context;
+        }
+        return 0;
+    }
 
     if (!idle) {
         return 0;
@@ -95,5 +111,6 @@ int catalog_guard_ps2_destroy(catalog_guard *guard,
     }
 
     context->sema_id = -1;
+    context->faulted = 0;
     return 1;
 }
