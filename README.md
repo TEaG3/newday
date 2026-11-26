@@ -4,7 +4,7 @@ TEa.G3 واجهة عربية RTL لإدارة ألعاب PlayStation 2 وPS1 و�
 
 ## الإصدار
 
-إصدار المشغّل الحالي في هذا الفرع: `v1.3.12` ([الإصدار العربي المنشور](https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.12)).
+إصدار المشغّل الحالي في هذا الفرع: `v1.3.13` ([الإصدار العربي المنشور](https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.13)).
 
 ## بنية التشغيل
 
