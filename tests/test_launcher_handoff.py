@@ -100,7 +100,7 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("ra_abort = 0", body)
         self.assertIn("Background work is still active; try again", self.launcher)
         self.assertIn(
-            '{"Background work is still active; try again", "لا يزال العمل في الخلفية جارياً؛ حاول مرة أخرى"}',
+            '{"Background work is still active; try again", "العمل في الخلفية لم ينته بعد، حاول مرة أخرى"}',
             self.lang_ar,
         )
 
