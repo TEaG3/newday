@@ -167,7 +167,7 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("if (stale) cover_req[i] = 0", worker)
 
         draw_start = self.launcher.index("static void draw_cover(int i)")
-        draw_end = self.launcher.index("\\n}\\n\\nstatic void list_rows", draw_start) + 2
+        draw_end = self.launcher.index("static void list_rows", draw_start)
         draw = self.launcher[draw_start:draw_end]
         self.assertIn("if (cover_lock >= 0 && WaitSema(cover_lock) >= 0)", draw)
         self.assertLess(draw.index("WaitSema(cover_lock)"), draw.index("im[0] = cv[i].half"))
