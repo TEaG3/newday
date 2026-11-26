@@ -170,7 +170,7 @@ jobs:
             python3 tools/fetch_arabic_font.py
             python3 ui/neutrino-igr/generate_arabic_assets.py
             test -s ui/neutrino-igr/menu_arabic.h
-            grep -Fq 'IGR_AR_BOX_WIDTH 216' ui/neutrino-igr/menu_arabic.h
+            grep -Fq "IGR_AR_BOX_WIDTH 216" ui/neutrino-igr/menu_arabic.h
             python3 tools/font.py --selftest
             python3 -m unittest tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py
             make test
@@ -184,7 +184,7 @@ jobs:
             test -s TEa.G3.ELF
             test -s runtime-manifest.txt
             grep -q "^OPL.ELF" runtime-manifest.txt
-            test "$(grep -c '^files=1$' runtime-manifest.txt)" -eq 1
+            test "$(grep -c "^files=1$" runtime-manifest.txt)" -eq 1
           '
       - name: Create validated single-ELF Arabic package
         run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || github.ref_name }}"
