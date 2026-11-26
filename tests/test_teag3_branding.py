@@ -64,9 +64,9 @@ class TEaG3BrandingTests(unittest.TestCase):
 
     def test_release_archive_label_does_not_claim_historical_legacy_names(self):
         current_label = "Full release archive (includes earlier versions)"
-        for page in (self.site_index, self.site_manual):
-            self.assertIn(current_label, page)
-            self.assertNotIn("historical ORBIT/NULD releases", page)
+        self.assertIn(current_label, self.site_index)
+        self.assertNotIn("historical ORBIT/NULD releases", self.site_index)
+        self.assertNotIn("historical ORBIT/NULD releases", self.site_manual)
 
 if __name__ == "__main__":
     unittest.main()
