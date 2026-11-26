@@ -3,3 +3,5 @@
 This marker exists only on the arabic-v1.3.8 release branch.
 It triggers the repository's existing release workflow to build and publish a prerelease from the already-merged master code.
 Physical PS2 game-boot and sustained-read acceptance remains pending.
+
+Release workflow fix: match the pinned OPL Arabic BACK translation (رجوع).
