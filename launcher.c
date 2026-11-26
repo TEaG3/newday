@@ -2740,8 +2740,9 @@ static const char *app_fetch(int i, char *file, int n)
 	for (int t = 0; t < 500 && (dl_state == 1 || dl_state == 2); t++) usleep(20000); // covers stop (ra_launching)
 	if (dl_state == 1 || dl_state == 2) return L("Covers still downloading: try again");
 	static char why[96];
-	if (!cv[i].size || cv[i].size >= 0x7ffff000u)
-		return snprintf(why, sizeof(why), L("The server did not send the app (%s)"), "invalid catalogue size"), why;
+	s32 memory_size = GetMemorySize();
+	if (!cv[i].size || cv[i].size >= 0x7ffff000u || memory_size <= 0x00100000)
+		return snprintf(why, sizeof(why), L("The server did not send the app (%s)"), "invalid catalogue size or EE memory size"), why;
 	int max = (int)cv[i].size + 4096, body = -1, len = -1, st = 0;
 	char *buf = malloc((size_t)max), path[180];
 	if (!buf) return L("Not enough memory to download the app");
@@ -2749,7 +2750,8 @@ static const char *app_fetch(int i, char *file, int n)
 	st = http_get(ini_get(&cfg, "juegos", "servidor", ""), 18290, path, buf, max, &body, &len);
 	if (st != 200 || body < 0 || len <= 0 || body > max || len > max - body ||
 	    (unsigned)len != cv[i].size ||
-	    !app_payload_is_valid((const unsigned char *)buf + body, (size_t)len, cv[i].size)) {
+	    !app_payload_is_valid((const unsigned char *)buf + body, (size_t)len,
+				  cv[i].size, (unsigned)memory_size)) {
 		free(buf);
 		return snprintf(why, sizeof(why), L("The server did not send the app (%s)"),
 		                st == 200 ? "size or ELF validation failed" : net_err(st)), why;
