@@ -1,35 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
-<title id="title">TEa.G3 embedded runtime installation</title>
-<desc id="desc">OPL and Neutrino assets are embedded into the TEa.G3 ELF. On first boot, TEa.G3 writes temporary files, verifies each asset with CRC-32, renames them into tea_g3/runtime and writes a bundle identifier. Later boots verify the marker and files and skip reinstalling a complete matching bundle.</desc>
-<defs>
- <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#151c2a"/><stop offset="1" stop-color="#05070a"/></linearGradient>
- <marker id="arr" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0L12 6L0 12Z" fill="#c8ff2e"/></marker>
- <style>.t{font-family:Arial,sans-serif;fill:#e8edf4}.m{font-family:Arial,sans-serif;fill:#9ba8b8}.g{font-family:monospace;fill:#c8ff2e}.card{fill:#111b29;stroke:#465368;stroke-width:2}.ok{fill:#111e12;stroke:#c8ff2e;stroke-width:2}.a{fill:none;stroke:#c8ff2e;stroke-width:4;marker-end:url(#arr)}</style>
-</defs>
-<rect width="1440" height="900" fill="url(#bg)"/>
-<text x="72" y="78" class="g" font-size="22">RUNTIME INSTALL / INTEGRITY</text>
-<text x="72" y="136" class="t" font-size="48" font-weight="700">One ELF carries the runtime bundle.</text>
-<text x="72" y="178" class="m" font-size="22">No separate OPL.ELF or neutrino/ folder is required at the USB root.</text>
-<rect x="72" y="255" width="360" height="240" rx="18" class="card"/>
-<text x="112" y="310" class="g" font-size="21">BUILD OUTPUT</text>
-<text x="112" y="364" class="t" font-size="31" font-weight="700">TEa.G3.ELF</text>
-<text x="112" y="414" class="m" font-size="20">OPL.ELF + Neutrino</text>
-<text x="112" y="450" class="m" font-size="20">Modules + runtime manifest</text>
-<path d="M432 375H540" class="a"/>
-<rect x="540" y="255" width="360" height="240" rx="18" class="card"/>
-<text x="580" y="310" class="g" font-size="21">FIRST BOOT</text>
-<text x="580" y="364" class="t" font-size="30" font-weight="700">Install + CRC-32</text>
-<text x="580" y="414" class="m" font-size="20">Write temporary file</text>
-<text x="580" y="450" class="m" font-size="20">Verify bytes, then rename</text>
-<path d="M900 375H1008" class="a"/>
-<rect x="1008" y="255" width="360" height="240" rx="18" class="ok"/>
-<text x="1048" y="310" class="g" font-size="21">RUNTIME HOME</text>
-<text x="1048" y="364" class="t" font-size="29" font-weight="700">tea_g3/runtime/</text>
-<text x="1048" y="414" class="m" font-family="monospace" font-size="18">OPL.ELF</text>
-<text x="1048" y="448" class="m" font-family="monospace" font-size="18">neutrino/ + modules/</text>
-<rect x="230" y="580" width="980" height="190" rx="18" class="card"/>
-<text x="280" y="636" class="g" font-size="22">SUBSEQUENT BOOTS</text>
-<text x="280" y="690" class="t" font-size="31" font-weight="700">Check .bundle-id + each asset CRC</text>
-<text x="280" y="734" class="m" font-size="20">If the bundle matches and every file is valid, skip reinstalling; otherwise repair the runtime files.</text>
-<text x="72" y="846" class="m" font-size="18">This is the runtime installation design from runtime_install.c and embed_runtime.py.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+<title id="title">TEa.G3 single OPL runtime installation</title>
+<desc id="desc">OPL.ELF is embedded in the TEa.G3 executable. On first boot the launcher extracts it to tea_g3/runtime, validates its CRC and then hands off to OPL. Later boots verify the installed runtime before use.</desc>
+<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="#C8FF2E"/></marker></defs>
+<rect width="1280" height="720" fill="#080A0E"/>
+<text x="72" y="82" fill="#C8FF2E" font-family="Arial,sans-serif" font-size="22" letter-spacing="4">TEa.G3 / FIRST BOOT</text>
+<text x="72" y="140" fill="#F4F5F7" font-family="Arial,sans-serif" font-size="44" font-weight="700">One executable. One embedded OPL runtime.</text>
+<g font-family="Arial,sans-serif">
+<rect x="72" y="230" width="300" height="190" rx="18" fill="#171C24" stroke="#59616D" stroke-width="2"/>
+<text x="222" y="290" text-anchor="middle" fill="#F4F5F7" font-size="30" font-weight="700">TEa.G3.ELF</text>
+<text x="222" y="338" text-anchor="middle" fill="#C8FF2E" font-size="23">contains OPL.ELF</text>
+<text x="222" y="376" text-anchor="middle" fill="#AEB7C3" font-size="18">single user entry point</text>
+<path d="M372 325 H445" stroke="#C8FF2E" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="465" y="230" width="300" height="190" rx="18" fill="#171C24" stroke="#59616D" stroke-width="2"/>
+<text x="615" y="290" text-anchor="middle" fill="#F4F5F7" font-size="28" font-weight="700">First boot</text>
+<text x="615" y="338" text-anchor="middle" fill="#AEB7C3" font-size="20">extract to USB storage</text>
+<text x="615" y="376" text-anchor="middle" fill="#AEB7C3" font-size="18">tea_g3/runtime/OPL.ELF</text>
+<path d="M765 325 H838" stroke="#C8FF2E" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="858" y="230" width="350" height="190" rx="18" fill="#1D2A18" stroke="#C8FF2E" stroke-width="3"/>
+<text x="1033" y="290" text-anchor="middle" fill="#C8FF2E" font-size="30" font-weight="700">CRC-32 check</text>
+<text x="1033" y="338" text-anchor="middle" fill="#F4F5F7" font-size="20">verify extracted OPL.ELF</text>
+<text x="1033" y="376" text-anchor="middle" fill="#AEB7C3" font-size="18">fail closed if invalid</text>
+<path d="M1033 420 V500" stroke="#C8FF2E" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="690" y="520" width="518" height="120" rx="18" fill="#151D28" stroke="#6C91B9" stroke-width="2"/>
+<text x="949" y="568" text-anchor="middle" fill="#F4F5F7" font-size="27" font-weight="700">Launch OPL</text>
+<text x="949" y="608" text-anchor="middle" fill="#AEB7C3" font-size="19">OPL reopens the selected device and reads game sectors</text>
+<path d="M465 585 H372" stroke="#C8FF2E" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="72" y="520" width="300" height="120" rx="18" fill="#171C24" stroke="#59616D" stroke-width="2"/>
+<text x="222" y="568" text-anchor="middle" fill="#F4F5F7" font-size="24" font-weight="700">Later boots</text>
+<text x="222" y="608" text-anchor="middle" fill="#AEB7C3" font-size="18">verify marker and file; skip reinstall</text>
+</g>
 </svg>

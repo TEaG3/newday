@@ -1,5 +1,5 @@
 #pragma once
-// Virtual memory cards (phase 14): 8 MB PS2 memory card images without ECC, the format Neutrino's mc_emu serves
+// Virtual memory cards (phase 14): 8 MB PS2 memory card images without ECC, the raw image format accepted by OPL-compatible memory-card emulators
 // (512-byte pages, 16-page blocks; OPL genvmc layout). Plain stdio, so any device path works (mass0:, mmce0:, ...).
 #define VMC_SIZE (8 << 20)
 typedef struct {

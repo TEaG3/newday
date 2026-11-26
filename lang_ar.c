@@ -22,15 +22,15 @@ static const char *const ar[][2] = {
         {"connection failed", "فشل الاتصال"},
         {"bad response", "استجابة غير صالحة"},
         {"the adapter belongs to UDPBD", "المحول مخصص ل UDPBD"},
-        {"Could not install the embedded Neutrino runtime", "تعذر تثبيت محرك Neutrino المضمن"},
-        {"Neutrino runtime failed its integrity check", "فشل التحقق من سلامة محرك Neutrino"},
+        
+        
         {"OPL runtime failed its integrity check", "فشل التحقق من سلامة محرك OPL"},
         {"Invalid game selection", "اختيار اللعبة غير صالح"},
         {"Invalid game record", "سجل اللعبة غير صالح"},
         {"Game source is no longer available", "مصدر اللعبة لم يعد متاحا"},
         {"The game image is no longer readable from its source", "تعذرت قراءة ملف اللعبة من مصدر التخزين"},
-        {"Virtual memory card is corrupt or unreadable", "بطاقة الذاكرة الافتراضية تالفة أو يتعذر قراءتها"},
-        {"This game format is not supported by this source", "تنسيق هذه اللعبة غير مدعوم من مصدر التخزين هذا"},
+        
+        
         {"STARTING GAME", "جار تشغيل اللعبة"},
         {"No network (%s): the server's game catalog was not read", "لا توجد شبكة (%s): لم تتم قراءة كتالوج ألعاب الخادم"},
         {"The catalog at %s:18290 did not answer (%s): is the TEa.G3 catalog service running? (none: empty servidor)",
@@ -49,10 +49,10 @@ static const char *const ar[][2] = {
         {"Starting USB", "بدء USB"},
         {"Reading memory cards", "قراءة بطاقات الذاكرة"},
         {"Loading games  %02d / %02d", "تحميل الألعاب  %02d / %02d"},
-        {"COMPATIBILITY MODES (NEUTRINO -GC)", "أوضاع التوافق (NEUTRINO -GC)"},
+        
         {"Video compatibility", "توافق الفيديو"},
         {"saved", "تم الحفظ"},
-        {"Automatic", "تلقائي"},
+        
         {"ERROR saving", "خطأ في الحفظ"},
         {"menu + TEa.G3", "القائمة + TEa.G3"},
         {"%s: downloading...", "%s: جاري التنزيل..."},
@@ -64,8 +64,8 @@ static const char *const ar[][2] = {
         {"%s: install ERROR (%s.old kept)", "%s: خطأ في التثبيت (%s.old محفوظ)"},
         {"TEa.G3 %s installed", "تم تثبيت TEa.G3 %s"},
         {"Not updated", "غير محدث"},
-        {"Per-game virtual", "افتراضي لكل لعبة"},
-        {"Shared virtual", "افتراضي مشترك"},
+        
+        
         {"Physical", "مادي"},
         {"Native", "أصلي"},
         {"Reading...", "جاري القراءة..."},
@@ -92,7 +92,7 @@ static const char *const ar[][2] = {
         {"Save", "حفظ"},
         {"Data", "بيانات"},
         {"View", "عرض"},
-        {"Options", "خيارات"},
+        
         {"Achievements", "الإنجازات"},
         {"Play", "تشغيل"},
         {"SHOW  %s", "إظهار  %s"},
@@ -116,56 +116,67 @@ static const char *const ar[][2] = {
         {"POPSTARTER.ELF and POPS_IOX.PAK missing in mass0:/POPS/", "POPSTARTER.ELF و POPS_IOX.PAK مفقودان في mass0:/POPS/"},
         {"No disc ready", "لا يوجد قرص جاهز"},
         {"This disc cannot be started", "لا يمكن بدء تشغيل هذا القرص"},
-        {"CREATING VIRTUAL MEMORY CARD (8 MB)", "إنشاء بطاقة ذاكرة افتراضية (8 ميغابايت)"},
+        
         {"Covers still downloading: try again", "الأغلفة لا تزال قيد التنزيل: حاول مرة أخرى"},
-        {"Background work is still active; try again", "العمل في الخلفية لم ينته بعد، حاول مرة أخرى"},
         {"Not enough memory to download the app", "لا توجد ذاكرة كافية لتنزيل التطبيق"},
         {"Could not write %s", "تعذرت كتابة %s"},
         {"The server did not send the app (%s)", "الخادم لم يرسل التطبيق (%s)"},
-        {"STARTING WITH NEUTRINO", "البدء باستخدام NEUTRINO"},
-        {"STARTING WITH POPSTARTER", "البدء باستخدام POPSTARTER"},
-        {"STARTING APPLICATION", "بدء تشغيل التطبيق"},
-        {"STARTING DISC", "بدء تشغيل القرص"},
-        {"WITH ACHIEVEMENTS", "مع الإنجازات"},
-        {"NO ACHIEVEMENTS: NO ANSWER YET", "لا إنجازات: لا استجابة بعد"},
-        {"Could not create the virtual memory card", "تعذر إنشاء بطاقة الذاكرة الافتراضية"},
-        {"ISO name too long for Neutrino: shorten it", "اسم ISO طويل جدا ل Neutrino: اختصره"},
+        
+        
+        
+        
+        
+        
+        
+        
         {"%s  (SELECT: status)", "%s  (SELECT: الحالة)"},
         {"  NO USB", "  لا USB"},
         {"TEa.G3 boot stub installed: BOOT/TEa.G3.ELF", "تم تثبيت ملف إقلاع TEa.G3 في بطاقة الذاكرة: BOOT/TEa.G3.ELF"},
         {"TEa.G3 %s available: START to update", "يتوفر TEa.G3 %s: اضغط START للتحديث"},
         {"Achievements: no network", "الإنجازات: لا شبكة"},
         {"Achievements: no server", "الإنجازات: لا خادم"},
-        {"Could not save the options to the USB", "تعذر حفظ الخيارات على USB"},
+        
         {"Could not start", "تعذر البدء"},
         {"HD Loader partition metadata is incomplete", "بيانات قسم HD Loader غير مكتملة"},
         {"  (SAVED TO USB)", "  (تم الحفظ على USB)"},
         {"  (SAVE ERROR)", "  (خطأ في الحفظ)"},
-        {"Cannot read TEAG3.GAMES from the SMB share", "تعذرت قراءة TEAG3.GAMES من مشاركة SMB"},
-        {"Error while reading the SMB catalog", "حدث خطأ أثناء قراءة فهرس SMB"},
-        {"Install a Neutrino build with the SMB modules first", "ثبت إصدار Neutrino الذي يحتوي على وحدات SMB أولا"},
-        {"Physical (SMB: read-only)", "البطاقة الفعلية (SMB: قراءة فقط)"},
-        {"SMB and UDPBD/UDPFS share the network adapter: SMB takes priority", "مصادر SMB وUDPBD وUDPFS تتشارك محول الشبكة: الأولوية إلى SMB"},
-        {"; TEa.G3 - per-game options (triangle menu)\n; video = nativo | 480p | 1080i, compat = 1-3, gc = Neutrino modes (0 2 3 5 7),\n; mc = juego | compartida | fisica\n", "; TEa.G3 - إعدادات كل لعبة (قائمة المثلث)\n; الفيديو = أصلي | 480p | 1080i، التوافق = 1-3، أوضاع gc = Neutrino (0 2 3 5 7)،\n; بطاقة الذاكرة = لعبة | مشتركة | فعلية\n"},
+        
+        
+        
+        
+        
+        
         {"WINDOW %u (%d FRAMES): MEDIAN %u us  MAX %u us  MISSED VSYNC %u%s\nGOAL: MAX <= 8333 us AND 0 MISSED.  LOAD: %d COVERS IN %d ms\nHANDS OFF FOR 5 s, THE SELECTION MOVES BY ITSELF", "النافذة %u (%d إطارا): الوسيط %u us  الحد الأقصى %u us  تجاوزات المزامنة %u%s\nالهدف: الحد الأقصى <= 8333 us دون تجاوز.  تحميل %d غلافا خلال %d ms\nلا تلمس الأزرار لمدة 5 ثوان، سيتحرك التحديد تلقائيا"},
-        {"NETWORK Neutrino's (UDPBD / UDPFS / SMB), IP %s\n", "شبكة Neutrino (UDPBD / UDPFS / SMB)، IP %s\n"},
+        
         {"A memory-card return stub is required before this launch", "يلزم تثبيت ملف العودة على بطاقة ذاكرة قبل تشغيل اللعبة"},
         {"Preparing the independent return path; try again shortly", "جار تجهيز مسار العودة المستقل، حاول مرة أخرى"},
 		{"Could not load the hard disk driver", "تعذر تحميل برنامج تشغيل القرص الصلب"},
-		{"Hard disk not found (exFAT or HD Loader)", "لم يتم العثور على القرص الصلب (exFAT أو HD Loader)"},
+		
 		{"USB drive not found", "لم يتم العثور على قرص USB"},
-		{"MX4SIO does not go with TEa.G3 on an MMCE", "MX4SIO لا يعمل مع TEa.G3 على MMCE"},
-		{"MX4SIO and MMCE do not go together: using MX4SIO", "MX4SIO و MMCE لا يعملان معا: استخدام MX4SIO"},
+		
+		
 		{"MX4SIO card not found", "لم يتم العثور على بطاقة MX4SIO"},
 		{"iLink disk not found", "لم يتم العثور على قرص iLink"},
-		{"No MMCE found", "لم يتم العثور على MMCE"},
-		{"Could not load the MMCE driver", "تعذر تحميل برنامج تشغيل MMCE"},
-		{"UDPBD / UDPFS without a catalog need a fixed IP in [red] ip", "UDPBD / UDPFS بدون كتالوج يحتاجان إلى IP ثابت في [red] ip"},
-		{"smap / ministack from neutrino/modules did not load", "smap / ministack من neutrino/modules لم يتم تحميلهما"},
-		{"udpbd.irx from neutrino/modules did not load", "udpbd.irx من neutrino/modules لم يتم تحميله"},
-		{"The UDPBD server did not answer (the PS2 is %s, same network?)", "خادم UDPBD لم يستجب (PS2 هو %s، نفس الشبكة؟)"},
-		{"udpfs_ioman.irx from neutrino/modules did not load", "udpfs_ioman.irx من neutrino/modules لم يتم تحميله"},
-		{"The UDPFS server did not answer (the PS2 is %s, same network?)", "خادم UDPFS لم يستجب (PS2 هو %s، نفس الشبكة؟)"},
+		
+		
+		
+		
+		
+		
+		
+		
+        {"AV 480i/576i", "AV ‏480i/576i"},
+        {"HD 720p", "عالي الدقة 720p"},
+        {"Hard disk not found (FAT32 or HD Loader)", "لم يتم العثور على القرص الصلب (FAT32 أو HD Loader)"},
+        {"MMCE game launching is not yet adapted to OPL", "تشغيل ألعاب MMCE غير مهيأ بعد للعمل مع OPL"},
+        {"NETWORK legacy runtime's (UDPBD / UDPFS / SMB), IP %s\n", "مصادر الشبكة القديمة (UDPBD / UDPFS / SMB)، عنوان IP ‏%s\n"},
+        {"No OPL adapter is available for this game source", "لا يوجد محول OPL متاح لمصدر اللعبة هذا"},
+        {"OPL compatibility settings", "إعدادات توافق OPL"},
+        {"SMB discovery is disabled until an OPL-only reader is integrated", "اكتشاف SMB معطل حتى دمج قارئ مستقل يعمل مع OPL"},
+        {"This game format is not supported by the OPL adapter for this source", "تنسيق اللعبة هذا غير مدعوم عبر محول OPL لمصدر التخزين المحدد"},
+        {"UDPBD game launching is not supported by OPL integration", "تشغيل الألعاب عبر UDPBD غير مدعوم في تكامل OPL الحالي"},
+        {"UDPFS game streaming is not supported by the OPL-only launcher", "بث الألعاب عبر UDPFS غير مدعوم في مشغل OPL-only"},
+        {"Background work is still active; try again", "العمل في الخلفية لم ينته بعد، حاول مرة أخرى"},
         {"Modified and developed by Iraqi developer TEa.G3", "تعديل وتطوير المطور العراقي TEa.G3"},
 };
 
