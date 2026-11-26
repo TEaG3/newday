@@ -16,10 +16,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -28,6 +25,8 @@ concurrency:
 jobs:
   validate:
     name: Validate site and OPL browser simulator
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,6 +43,11 @@ jobs:
     name: Deploy GitHub Pages
     if: github.event_name != 'pull_request'
     needs: [validate]
+    permissions:
+      actions: read
+      contents: read
+      pages: write
+      id-token: write
     runs-on: ubuntu-latest
     environment:
       name: github-pages
