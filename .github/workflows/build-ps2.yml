@@ -25,7 +25,7 @@ jobs:
     name: ZSO host decoder fixture
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Compile and run bounded ZSO decoder and scanner fixtures
         run: |
           set -euo pipefail
@@ -56,9 +56,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Download pinned OPL runtime
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tea-g3-opl-${{ github.sha }}
           path: runtime-input
@@ -109,7 +109,7 @@ jobs:
           '
       - name: Upload launcher ELF
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tea-g3-launcher-${{ github.sha }}
           path: |
@@ -119,7 +119,7 @@ jobs:
           if-no-files-found: error
       - name: Upload build log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tea-g3-build-log-${{ github.sha }}
           path: build.log
@@ -131,7 +131,7 @@ jobs:
     container: ghcr.io/ps2homebrew/ps2homebrew:main
     steps:
       - name: Check out TEa.G3 with the complete OPL source submodule
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: tea-g3
           submodules: recursive
@@ -238,7 +238,7 @@ jobs:
           sha256sum "$GITHUB_WORKSPACE/OPL.ELF"
 
       - name: Upload standalone OPL runtime
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tea-g3-opl-${{ github.sha }}
           path: |
@@ -252,14 +252,14 @@ jobs:
     needs: [host-zso-tests, launcher, opl-engine]
     steps:
       - name: Check out integration docs
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Download launcher ELF
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tea-g3-launcher-${{ github.sha }}
           path: bundle
       - name: Download OPL runtime
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tea-g3-opl-${{ github.sha }}
           path: bundle
@@ -318,7 +318,7 @@ jobs:
           mkdir -p bundle/package-test
           cp dist/TEa.G3-Complete-Package.zip dist/SHA256SUMS.txt bundle/package-test/
       - name: Upload unified integration test bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tea-g3-integration-test-bundle-${{ github.sha }}
           path: bundle/
