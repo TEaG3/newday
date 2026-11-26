@@ -133,6 +133,7 @@ class LauncherHandoffTests(unittest.TestCase):
         download_start = self.launcher.index("static void download_covers(void)")
         download_end = self.launcher.index("// ---- achievements", download_start)
         self.assertIn("dl_state == 2 && !ra_launching", self.launcher[download_start:download_end])
+        self.assertIn("NET_ERR_CONNECT && !dl_done && !ra_launching", self.launcher[download_start:download_end])
 
         update_start = self.launcher.index("static void update_check(void)")
         update_end = self.launcher.index("static u8 loader_stack", update_start)
