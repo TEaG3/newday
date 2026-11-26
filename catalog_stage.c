@@ -201,7 +201,7 @@ int catalog_guard_read_begin(catalog_guard *guard)
     int allowed;
     if (!guard_lock(guard)) return 0;
     allowed = !guard->apply_pending && !guard->applying && !guard->downloading &&
-              !guard->scanning && guard->readers < UINT_MAX;
+              guard->readers < UINT_MAX;
     if (allowed) ++guard->readers;
     guard->unlock(guard->lock_context);
     return allowed;
@@ -261,6 +261,7 @@ int catalog_guard_scan_end(catalog_guard *guard)
 
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
 {
+    int wait_for_scan_or_download = 0;
     if (!guard_lock(guard)) return 0;
     if (guard->applying) {
         guard->unlock(guard->lock_context);
@@ -271,12 +272,17 @@ int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
     /* Never leave a pending apply blocking new readers when launch or I/O starts. */
     if (guard->apply_pending && (guard->playing || guard->io_busy))
         guard->apply_pending = 0;
-    if (guard->scanning && (guard->playing || guard->io_busy))
+    if (guard->scanning && (guard->playing || guard->io_busy)) {
         guard->scan_cancelled = 1;
-    if (guard->downloading && (guard->playing || guard->io_busy))
+        wait_for_scan_or_download = 1;
+    }
+    if (guard->downloading && (guard->playing || guard->io_busy)) {
         guard->download_cancelled = 1;
+        wait_for_scan_or_download = 1;
+    }
     guard->unlock(guard->lock_context);
-    return 1;
+    /* Callers starting I/O or gameplay must retry after the cancelled operation ends. */
+    return !wait_for_scan_or_download;
 }
 
 int catalog_guard_can_download(catalog_guard *guard)
