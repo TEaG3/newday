@@ -215,6 +215,8 @@ jobs:
             - يبدأ العرض بوضع 480i/576i المتوافق مع AV، ويمكن التبديل إلى 720p للتوصيلات الداعمة.
             - يتضمن الأرشيف INSTALL-AR.txt وتراخيص OPL وبصمات SHA-256.
             - تم تضمين CRC-32 لملفات runtime والتحقق منها بعد الاستخراج.
+            - تنزيل تطبيقات ELF يتحقق من ELF32/MIPS وجدول PT_LOAD وحدود الملف وذاكرة EE ونقطة الدخول قبل الكتابة.
+            - إصلاح تسليم التشغيل: لا تُصفّر ذاكرة EE بعد SifLoadElf حتى لا تُمحى مقاطع البرنامج المحمّلة.
 
             Software validation is complete for this release scope. Real PS2 hardware acceptance testing is intentionally skipped and is not claimed by this release.
           target_commitish: ${{ github.sha }}
