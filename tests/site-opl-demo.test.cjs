@@ -5,6 +5,10 @@ const { resolveRoute } = require("../site/opl-demo.js");
 const ROOT = path.join(__dirname, "..");
 const read = p => fs.readFileSync(path.join(ROOT, p), "utf8");
 
+const releaseSource = read("site/release.js");
+assert.match(releaseSource, /candidates\.sort\(function \(a, b\)/);
+assert.match(releaseSource, /Date\.parse\(a\.published_at \|\| a\.created_at/);
+assert.match(releaseSource, /Date\.parse\(b\.published_at \|\| b\.created_at/);
 const runtimeSources = ["i18n.js", "opl-demo.js", "release.js", "themes.js"].map(name => read("site/" + name)).join(" ");
 assert.match(runtimeSources, /tea-g3:languagechange/);
 assert.doesNotMatch(runtimeSources, /nuld:languagechange/);
