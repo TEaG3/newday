@@ -343,7 +343,7 @@ jobs:
                   raise SystemExit(f"runtime size mismatch: {relative}")
               if len(crc_text) != 8 or (zlib.crc32(data) & 0xFFFFFFFF) != int(crc_text, 16):
                   raise SystemExit(f"runtime CRC-32 mismatch: {relative}")
-              digest.update(relative.encode("utf-8") + b"\\0" + data)
+              digest.update(relative.encode("utf-8") + b"\0" + data)
 
           if len(seen) != expected_count:
               raise SystemExit(f"runtime manifest count mismatch: {len(seen)} != {expected_count}")
