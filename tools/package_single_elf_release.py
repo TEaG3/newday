@@ -59,7 +59,7 @@ def main() -> None:
     except ValueError as exc:
         raise SystemExit(str(exc))
     try:
-        bundle_id, asset_count = verify_runtime_manifest(ROOT, manifest)
+        bundle_id, asset_count = verify_runtime_manifest(ROOT / "runtime-input", manifest)
     except (OSError, UnicodeError, ValueError) as exc:
         raise SystemExit(f"embedded OPL runtime manifest is invalid: {exc}")
     if asset_count != len(REQUIRED):
