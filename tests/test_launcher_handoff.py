@@ -14,6 +14,7 @@ class LauncherHandoffTests(unittest.TestCase):
         cls.header = (ROOT / "gfx.h").read_text(encoding="utf-8")
         cls.release_workflow = (ROOT / ".github/workflows/publish-arabic-release.yml").read_text(encoding="utf-8")
         cls.build_workflow = (ROOT / ".github/workflows/build-ps2.yml").read_text(encoding="utf-8")
+        cls.lang_ar = (ROOT / "lang_ar.c").read_text(encoding="utf-8")
 
     def test_low_level_loader_is_called_only_by_recovery_wrapper(self):
         # Every caller must pass through the VBlank recovery path.
@@ -49,6 +50,51 @@ class LauncherHandoffTests(unittest.TestCase):
         body = self.launcher[start:end]
         self.assertIn("gfx_resume()", body)
         self.assertIn('L("Could not start")', body)
+
+
+    def test_background_workers_are_quiesced_before_iop_reset(self):
+        start = self.launcher.index("static int background_quiesce(void)")
+        end = self.launcher.index("static void background_resume_if_idle(void)", start)
+        body = self.launcher[start:end]
+        self.assertIn("ra_launching = 1", body)
+        self.assertIn("ra_abort = 1", body)
+        self.assertIn("ra_busy", body)
+        self.assertIn("dl_state == 1 || dl_state == 2", body)
+        self.assertIn("cover_busy", body)
+        self.assertIn("return !cover_busy", body)
+
+        launch_start = self.launcher.index("static void launch(int i)")
+        self.assertLess(
+            self.launcher.index("background_quiesce()", launch_start),
+            self.launcher.index("run_loader_recover", launch_start),
+        )
+        restart_start = self.launcher.index("static int restart_self(void)")
+        self.assertLess(
+            self.launcher.index("background_quiesce()", restart_start),
+            self.launcher.index("run_loader_recover", restart_start),
+        )
+
+    def test_cover_worker_stops_starting_reads_after_launch_gate_closes(self):
+        start = self.launcher.index("static void cover_thread(void *arg)")
+        end = self.launcher.index("static int count_dir(", start)
+        body = self.launcher[start:end]
+        self.assertIn("cover_work_begin()", body)
+        self.assertIn("i < ncv && !ra_launching", body)
+        self.assertIn("cover_work_end()", body)
+
+    def test_background_gate_reopens_only_after_all_workers_are_idle(self):
+        start = self.launcher.index("static void background_resume_if_idle(void)")
+        end = self.launcher.index("static void ra_log(", start)
+        body = self.launcher[start:end]
+        self.assertIn("ra_busy", body)
+        self.assertIn("dl_state == 1 || dl_state == 2", body)
+        self.assertIn("cover_busy", body)
+        self.assertIn("ra_abort = 0", body)
+        self.assertIn("Background work is still active; try again", self.launcher)
+        self.assertIn(
+            '{"Background work is still active; try again", "لا يزال العمل في الخلفية جارياً؛ حاول مرة أخرى"}',
+            self.lang_ar,
+        )
 
     def test_resume_is_declared_in_public_header(self):
         self.assertIn("int gfx_resume(void);", self.header)
