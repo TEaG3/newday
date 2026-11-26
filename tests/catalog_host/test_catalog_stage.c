@@ -304,8 +304,111 @@ static void test_guard_and_concurrent_reader(void)
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
+typedef struct {
+    catalog_guard *guard;
+    catalog_stage_record records[3];
+    size_t count;
+    size_t index;
+    int cancel_at;
+    int error_at;
+} scan_fixture;
+
+static int scan_fixture_next(void *opaque, catalog_stage_record *record)
+{
+    scan_fixture *fixture = (scan_fixture *)opaque;
+    if (fixture->cancel_at >= 0 && (int)fixture->index == fixture->cancel_at) {
+        assert(!catalog_guard_set_activity(fixture->guard, 0, 1));
+        fixture->cancel_at = -1;
+    }
+    if (fixture->error_at >= 0 && (int)fixture->index == fixture->error_at)
+        return -1;
+    if (fixture->index >= fixture->count)
+        return 0;
+    *record = fixture->records[fixture->index++];
+    return 1;
+}
+
+static void test_staged_scan_builder(void)
+{
+    mutex_context mutex;
+    catalog_guard guard;
+    catalog_stage_snapshot candidate;
+    scan_fixture fixture;
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+
+    memset(&candidate, 0, sizeof(candidate));
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = -1;
+    fixture.error_at = -1;
+    fixture.count = 2;
+    set_record(&fixture.records[0], 1, 0, 1, "DVD/First.iso", 10, 11);
+    set_record(&fixture.records[1], 1, 0, 1, "DVD/Second.zso", 20, 22);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_OK);
+    assert(candidate.count == 2);
+    assert(catalog_stage_snapshot_validate(&candidate) == CATALOG_STAGE_OK);
+    assert(!guard.scanning);
+
+    /* A reader prevents scan start; no partial candidate is exposed. */
+    assert(catalog_guard_read_begin(&guard));
+    candidate.count = 9;
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_BUSY);
+    assert(candidate.count == 0);
+    assert(catalog_guard_read_end(&guard));
+
+    /* New storage I/O cancels the scan and must wait until the candidate is discarded. */
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = 1;
+    fixture.error_at = -1;
+    fixture.count = 2;
+    set_record(&fixture.records[0], 1, 0, 1, "DVD/First.iso", 10, 11);
+    set_record(&fixture.records[1], 1, 0, 1, "DVD/Second.iso", 20, 22);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_CANCELLED);
+    assert(candidate.count == 0);
+    assert(!guard.scanning);
+    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    /* Source errors and invalid/duplicate records never leave a partial candidate. */
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = -1;
+    fixture.error_at = 1;
+    fixture.count = 2;
+    set_record(&fixture.records[0], 1, 0, 1, "DVD/First.iso", 10, 11);
+    set_record(&fixture.records[1], 1, 0, 1, "DVD/Second.iso", 20, 22);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_SOURCE);
+    assert(candidate.count == 0);
+
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = -1;
+    fixture.error_at = -1;
+    fixture.count = 1;
+    set_record(&fixture.records[0], 1, 0, 1, "../escape.iso", 10, 11);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_RECORD);
+    assert(candidate.count == 0);
+
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = -1;
+    fixture.error_at = -1;
+    fixture.count = 2;
+    set_record(&fixture.records[0], 1, 0, 1, "DVD/Duplicate.iso", 10, 11);
+    set_record(&fixture.records[1], 1, 0, 1, "DVD/Duplicate.iso", 20, 22);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_RECORD);
+    assert(candidate.count == 0);
+    assert(!guard.scanning);
+
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
+}
+
 int main(void)
 {
+    test_staged_scan_builder();
     test_path_and_validation();
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
