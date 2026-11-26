@@ -17,7 +17,7 @@ def function_body(source: str, start: str, end: str) -> str:
 class CatalogLauncherWiringTests(unittest.TestCase):
     def test_catalog_core_has_an_enforced_ee_stack_frame_budget(self):
         self.assertIn("-Wframe-larger-than=8192", WORKFLOW)
-        self.assertIn("-Werror=frame-larger-than", WORKFLOW)
+        self.assertIn("-Werror -Wframe-larger-than=8192", WORKFLOW)
         self.assertIn("catalog_stage.c -o /tmp/catalog_stage_stack_guard.o", WORKFLOW)
         self.assertIn("catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_stack_guard.o", WORKFLOW)
         start = WORKFLOW.index("sh -c '") + len("sh -c '")
