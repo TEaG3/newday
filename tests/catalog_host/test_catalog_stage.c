@@ -752,11 +752,97 @@ static void test_safe_snapshot_publish(void)
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
+static void test_safe_bundle_publish(void)
+{
+    catalog_guard guard;
+    mutex_context mutex;
+    catalog_stage_snapshot active_snapshot, candidate_snapshot;
+    int active_items[2] = {1, 2}, candidate_items[2] = {3, 4};
+    int active_sidecars[2] = {10, 20}, candidate_sidecars[2] = {30, 40};
+    catalog_stage_bundle active, candidate;
+
+    memset(&active_snapshot, 0, sizeof(active_snapshot));
+    memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
+    set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
+    active_snapshot.count = 1;
+    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/New.iso", 200, 2);
+    candidate_snapshot.count = 1;
+
+    active.items = active_items;
+    active.sidecars = active_sidecars;
+    active.count = 1;
+    active.snapshot = &active_snapshot;
+    candidate.items = candidate_items;
+    candidate.sidecars = candidate_sidecars;
+    candidate.count = 1;
+    candidate.snapshot = &candidate_snapshot;
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+
+    /* The whole bundle stays unchanged until an explicit safe-point request. */
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(candidate.items == candidate_items && candidate.sidecars == candidate_sidecars);
+
+    assert(catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_read_begin(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
+    assert(candidate.items == active_items && candidate.sidecars == active_sidecars);
+    assert(active.count == 1 && candidate.count == 1);
+    assert(active.snapshot == &candidate_snapshot && candidate.snapshot == &active_snapshot);
+    assert(((int *)active.items)[0] == 3 && ((int *)active.sidecars)[0] == 30);
+    assert(((int *)candidate.items)[0] == 1 && ((int *)candidate.sidecars)[0] == 10);
+    assert(!guard.apply_pending && !guard.applying);
+
+    /* Existing readers prevent the entire bundle from moving; retry after drain. */
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
+    assert(active.snapshot == &candidate_snapshot);
+    assert(catalog_guard_read_end(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(active.snapshot == &active_snapshot);
+
+    /* A duplicate candidate is rejected before any part of the active bundle changes. */
+    set_record(&candidate_snapshot.records[1], 1, 0, 1, "DVD/New.iso", 300, 3);
+    candidate_snapshot.count = 2;
+    candidate.count = 2;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_DUPLICATE);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(active.snapshot == &active_snapshot && active.count == 1);
+    assert(!guard.apply_pending && !guard.applying);
+
+    /* Mismatched counts and aliased buffers are rejected without touching the guard. */
+    candidate_snapshot.count = 1;
+    candidate.count = 2;
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    candidate.count = 1;
+    candidate.sidecars = active.sidecars;
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+
+    /* Gameplay/storage activity prevents a bundle apply. */
+    candidate.sidecars = candidate_sidecars;
+    assert(catalog_guard_set_activity(&guard, 1, 0));
+    assert(!catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
+}
+
 int main(void)
 {
     test_staged_scan_builder();
     test_concurrent_scan_cancellation();
     test_safe_snapshot_publish();
+    test_safe_bundle_publish();
     test_path_and_validation();
     test_snapshot_append();
     test_snapshot_index_map();
