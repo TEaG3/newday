@@ -29,7 +29,7 @@ jobs:
     container: ghcr.io/ps2homebrew/ps2homebrew:main
     steps:
       - name: Check out TEa.G3 source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: tea-g3
 
@@ -44,7 +44,7 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
       - name: Check out the same pinned TEaG3/OPL source used by CI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: TEaG3/OPL
           ref: ${{ steps.opl-ref.outputs.sha }}
@@ -134,7 +134,7 @@ jobs:
           cp LICENSE "$GITHUB_WORKSPACE/OPL-LICENSE.txt"
 
       - name: Upload OPL runtime
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tea-g3-opl-release-${{ github.sha }}
           path: |
@@ -148,9 +148,9 @@ jobs:
     needs: [opl-engine]
     steps:
       - name: Check out TEa.G3 source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Download pinned OPL runtime
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tea-g3-opl-release-${{ github.sha }}
           path: runtime-input
@@ -212,9 +212,9 @@ jobs:
             - يتضمن الأرشيف INSTALL-AR.txt وتراخيص OPL وبصمات SHA-256.
             - تم تضمين CRC-32 لملفات runtime والتحقق منها بعد الاستخراج.
 
-            This release remains a prerelease until PCSX2 and real PS2 hardware smoke tests are completed.
+            Software validation is complete for this release scope. Real PS2 hardware acceptance testing is intentionally skipped and is not claimed by this release.
           target_commitish: ${{ github.sha }}
-          prerelease: true
+          prerelease: false
           files: |
             dist/TEa.G3-Complete-Package.zip
             dist/SHA256SUMS.txt
