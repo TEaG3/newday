@@ -109,7 +109,7 @@ def main():
     # Reject malformed UTF-8 and replacement characters in user-visible source files.
     text_paths = [ROOT / name for name in ("launcher.c", "lang_ar.c", "lang.h",
                   "gfx.c", "gfx.h", "sources.c", "tools/font.py",
-                  "tools/generate_igr_arabic.py", "site/i18n.js")]
+                  "tools/generate_igr_arabic.py", "site/i18n.js", "site/manual.html")]
     encoding_failed = False
     for path in text_paths:
         raw = path.read_bytes()
@@ -125,6 +125,19 @@ def main():
     failed |= encoding_failed
 
     launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
+    site_manual = (ROOT / "site/manual.html").read_text(encoding="utf-8")
+    site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
+    site_checks = {
+        "site manual lists only Arabic and English": '<td>[ui] idioma</td><td>ar, en</td>' in site_manual and "ar, en, es, pt" not in site_manual,
+        "site manual marks unverified source adapters as hardware-pending":
+            "SMB/UDPBD/UDPFS/MMCE, HDD, MX4SIO and iLink still require physical-PS2 acceptance" in site_manual,
+        "site source warning has an Arabic translation":
+            "أما SMB/UDPBD/UDPFS/MMCE وHDD وMX4SIO وiLink فما زالت تحتاج اختبار قبول" in site_i18n,
+    }
+    for description, passed in site_checks.items():
+        print(("ok: " if passed else "FAIL: ") + description)
+        failed |= not passed
+
     required = {
         "Arabic must be the initial language": "int lang = LANG_AR;" in launcher,
         "unknown or missing language must fall back to Arabic":
