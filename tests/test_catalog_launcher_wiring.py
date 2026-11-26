@@ -56,8 +56,10 @@ class CatalogLauncherWiringTests(unittest.TestCase):
     def test_handoff_sets_and_clears_gameplay_activity(self):
         quiesce = function_body(LAUNCHER, "static int background_quiesce(void)", "static void background_resume_if_idle(void)")
         resume = function_body(LAUNCHER, "static void background_resume_if_idle(void)", "static void ra_log(")
-        self.assertIn("catalog_activity_update(1)", quiesce)
+        self.assertIn("catalog_activity_wait(1)", quiesce)
         self.assertIn("catalog_activity_update(0)", resume)
+        self.assertIn("for (int t = 0; t < 150; t++)", LAUNCHER)
+        self.assertIn("usleep(10000);", LAUNCHER)
 
     def test_live_scan_and_apply_are_still_disabled(self):
         self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
