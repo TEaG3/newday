@@ -1,7 +1,9 @@
+#define _POSIX_C_SOURCE 200809L
 #include "runtime_install.h"
 #include "runtime_payload.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -34,18 +36,16 @@ static void assert_text(const char *path, const char *expected)
 
 int main(void)
 {
-    const char *root = "/tmp/tea_g3_runtime_install_selftest";
+    char root_template[] = "/tmp/tea_g3_runtime_install_selftest.XXXXXX";
+    char *root = mkdtemp(root_template);
     char asset_tmp[160], marker_tmp[160], asset_path[160], marker_path[160];
     struct stat st;
 
+    assert(root);
     snprintf(asset_tmp, sizeof(asset_tmp), "%s/OPL.ELF.tmp", root);
     snprintf(marker_tmp, sizeof(marker_tmp), "%s/.bundle-id.tmp", root);
     snprintf(asset_path, sizeof(asset_path), "%s/OPL.ELF", root);
     snprintf(marker_path, sizeof(marker_path), "%s/.bundle-id", root);
-
-    remove(asset_tmp); remove(marker_tmp); remove(asset_path);
-    remove(marker_path); rmdir(root);
-    assert(mkdir(root, 0700) == 0);
 
     /* A stale/user-owned asset staging file must not be truncated or removed. */
     write_text(asset_tmp, "KEEP-ASSET-TMP");
