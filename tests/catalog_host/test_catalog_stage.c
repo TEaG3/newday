@@ -557,9 +557,70 @@ static void test_staged_scan_builder(void)
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
+
+static void test_safe_snapshot_publish(void)
+{
+    catalog_guard guard;
+    mutex_context mutex;
+    catalog_stage_snapshot active_snapshot, candidate_snapshot;
+    catalog_stage_snapshot *active = &active_snapshot;
+    catalog_stage_snapshot *candidate = &candidate_snapshot;
+
+    memset(&active_snapshot, 0, sizeof(active_snapshot));
+    memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
+    set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
+    active_snapshot.count = 1;
+    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/New.iso", 200, 2);
+    candidate_snapshot.count = 1;
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+
+    /* Publishing requires an explicit request and never changes pointers while busy. */
+    assert(catalog_stage_snapshot_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(active == &active_snapshot && candidate == &candidate_snapshot);
+
+    /* A pending apply blocks new readers; a safe point swaps the two snapshot slots. */
+    assert(catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_read_begin(&guard));
+    assert(catalog_stage_snapshot_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(active == &candidate_snapshot && candidate == &active_snapshot);
+    assert(strcmp(active->records[0].path, "DVD/New.iso") == 0);
+    assert(strcmp(candidate->records[0].path, "DVD/Old.iso") == 0);
+    assert(!guard.apply_pending && !guard.applying);
+
+    /* Existing readers drain before the pointer changes; the pending request is retryable. */
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_snapshot_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(active == &candidate_snapshot && candidate == &active_snapshot);
+    assert(catalog_guard_read_end(&guard));
+    assert(catalog_stage_snapshot_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(active == &active_snapshot && candidate == &candidate_snapshot);
+
+    /* Invalid candidates cancel the pending apply and leave the active pointer untouched. */
+    set_record(&candidate->records[1], 1, 0, 1, "DVD/New.iso", 300, 3);
+    candidate->count = 2;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_snapshot_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_DUPLICATE);
+    assert(active == &active_snapshot && candidate == &candidate_snapshot);
+    assert(!guard.apply_pending && !guard.applying);
+
+    /* Gameplay/storage activity prevents an apply request and therefore prevents publication. */
+    candidate->count = 1;
+    assert(catalog_guard_set_activity(&guard, 1, 0));
+    assert(!catalog_guard_request_apply(&guard));
+    assert(catalog_stage_snapshot_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(active == &active_snapshot && candidate == &candidate_snapshot);
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
+}
+
 int main(void)
 {
     test_staged_scan_builder();
+    test_safe_snapshot_publish();
     test_path_and_validation();
     test_snapshot_append();
     test_snapshot_index_map();
@@ -567,6 +628,6 @@ int main(void)
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
     test_download_gate();
-    puts("catalog stage: staged scan, append, map, sidecar migration, path, validation, diff, selection, concurrent apply and download gates PASS");
+    puts("catalog stage: staged scan, append, map, sidecar migration, path, validation, diff, selection, safe snapshot publish, concurrent apply and download gates PASS");
     return 0;
 }
