@@ -5,3 +5,5 @@ It triggers the repository's existing release workflow to build and publish a pr
 Physical PS2 game-boot and sustained-read acceptance remains pending.
 
 Release workflow fix: match the pinned OPL Arabic BACK translation (رجوع).
+
+Package validation fix: stage OPL-LICENSE.txt at the path required by tools/package_single_elf_release.py.

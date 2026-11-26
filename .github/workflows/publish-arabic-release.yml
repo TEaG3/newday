@@ -154,6 +154,13 @@ jobs:
         with:
           name: tea-g3-opl-release-${{ github.sha }}
           path: runtime-input
+      - name: Stage OPL license for package validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s runtime-input/OPL-LICENSE.txt
+          cp runtime-input/OPL-LICENSE.txt OPL-LICENSE.txt
+          test -s OPL-LICENSE.txt
       - name: Build TEa.G3 with embedded OPL only
         shell: bash
         run: |
