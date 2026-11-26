@@ -29,7 +29,7 @@ jobs:
     container: ghcr.io/ps2homebrew/ps2homebrew:main
     steps:
       - name: Check out TEa.G3 source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: tea-g3
 
@@ -44,7 +44,7 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
       - name: Check out the same pinned TEaG3/OPL source used by CI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: TEaG3/OPL
           ref: ${{ steps.opl-ref.outputs.sha }}
@@ -128,7 +128,7 @@ jobs:
           cp LICENSE "$GITHUB_WORKSPACE/OPL-LICENSE.txt"
 
       - name: Upload OPL runtime
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tea-g3-opl-release-${{ github.sha }}
           path: |
@@ -142,10 +142,10 @@ jobs:
     needs: [opl-engine]
     steps:
       - name: Check out TEa.G3 source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download pinned OPL runtime
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tea-g3-opl-release-${{ github.sha }}
           path: runtime-input
@@ -193,7 +193,7 @@ jobs:
         run: python3 tools/package_single_elf_release.py "${{ github.event.inputs.release_tag || github.ref_name }}"
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
           name: "TEa.G3 PS2 — النسخة العربية"
