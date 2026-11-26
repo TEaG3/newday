@@ -4,9 +4,9 @@
 
 #include "app_payload.h"
 
-#define TEST_ELF_SIZE 100u
+#define TEST_ELF_SIZE 112u
 #define TEST_PHDR_OFFSET 52u
-#define TEST_DATA_OFFSET 84u
+#define TEST_DATA_OFFSET 96u
 #define TEST_MEMORY_LIMIT 0x02000000u
 
 static void put16(unsigned char *p, unsigned value)
