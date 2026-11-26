@@ -135,6 +135,51 @@ class LauncherHandoffTests(unittest.TestCase):
         worker = self.launcher.index("ee_thread_t dt = { .func = disc_thread", loader_start)
         self.assertLess(lock, worker)
 
+    def test_cover_cache_pointer_access_fails_closed_on_semaphore_errors(self):
+        set_start = self.launcher.index("static void cover_set(")
+        set_end = self.launcher.index("\n}\n\nstatic void cover_evict", set_start) + 2
+        set_body = self.launcher[set_start:set_end]
+        wait = "if (cover_lock < 0 || WaitSema(cover_lock) < 0)"
+        self.assertIn(wait, set_body)
+        self.assertLess(set_body.index(wait), set_body.index("void **slot[3]"))
+        self.assertIn("for (int k = 0; k < 3; k++) free(im[k]);", set_body)
+        self.assertIn("if (SignalSema(cover_lock) < 0)", set_body)
+
+        evict_start = self.launcher.index("static void cover_evict(")
+        evict_end = self.launcher.index("\n}\n\nstatic u8 cover_stack", evict_start) + 2
+        evict_body = self.launcher[evict_start:evict_end]
+        self.assertIn(wait, evict_body)
+        wait_index = evict_body.index(wait)
+        self.assertLess(wait_index, evict_body.index("for (int i = 1; i < ncv; i++)"))
+        self.assertLess(evict_body.index("for (int i = 1; i < ncv; i++)"), evict_body.index("void *b = cv[old].big"))
+        self.assertIn("if (SignalSema(cover_lock) < 0) return;", evict_body)
+        self.assertGreater(evict_body.index("free(b), free(s), free(h);"), evict_body.index("SignalSema(cover_lock)"))
+
+    def test_cover_render_and_worker_serialize_shared_cache_state(self):
+        worker_start = self.launcher.index("static void cover_thread(void *arg)")
+        worker_end = self.launcher.index("static int count_dir(", worker_start)
+        worker = self.launcher[worker_start:worker_end]
+        self.assertIn("if (cover_sema < 0 || WaitSema(cover_sema) < 0)", worker)
+        self.assertIn("if (!background_work_begin(&cover_busy))", worker)
+        self.assertIn("if (ra_launching && cover_sema >= 0) SignalSema(cover_sema)", worker)
+        self.assertLess(worker.index("WaitSema(cover_lock)"), worker.index("int b = cover_req[i]"))
+        self.assertIn("int stale = b && cover_seen[i] < frame_n - 2", worker)
+        self.assertIn("if (stale) cover_req[i] = 0", worker)
+
+        draw_start = self.launcher.index("static void draw_cover(int i)")
+        draw_end = self.launcher.index("static void list_rows", draw_start)
+        draw = self.launcher[draw_start:draw_end]
+        self.assertIn("if (cover_lock >= 0 && WaitSema(cover_lock) >= 0)", draw)
+        self.assertLess(draw.index("WaitSema(cover_lock)"), draw.index("im[0] = cv[i].half"))
+        self.assertLess(draw.index("WaitSema(cover_lock)"), draw.index("cover_req[i] |= request_bit"))
+        self.assertIn("cover_seen[i] = frame_n", draw)
+        self.assertIn("if (request_bit && SignalSema(cover_sema) < 0", draw)
+
+        loop_start = self.launcher.index("for (int f = 0;; f++)")
+        frame_tick = self.launcher[loop_start:self.launcher.index("background_resume_if_idle();", loop_start)]
+        self.assertIn("WaitSema(cover_lock)", frame_tick)
+        self.assertLess(frame_tick.index("WaitSema(cover_lock)"), frame_tick.index("frame_n++"))
+
     def test_background_gate_reopens_only_after_tracked_workers_are_idle(self):
         start = self.launcher.index("static void background_resume_if_idle(void)")
         end = self.launcher.index("static void ra_log(", start)
