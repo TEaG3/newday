@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 static int make_parents(char *path)
 {
@@ -26,6 +27,21 @@ static int make_parents(char *path)
         closedir(d);
     }
     return 1;
+}
+
+/* Create only a new staging file. O_EXCL prevents an interrupted or user-owned
+   .tmp file from being truncated by a later installation attempt. */
+static FILE *open_new_file(const char *path)
+{
+    int fd = open(path, O_WRONLY | O_CREAT | O_EXCL, 0600);
+    FILE *f;
+    if (fd < 0) return NULL;
+    f = fdopen(fd, "wb");
+    if (!f) {
+        close(fd);
+        remove(path); /* this invocation created the file */
+    }
+    return f;
 }
 
 static unsigned int crc32_update(unsigned int crc, const unsigned char *data, size_t size)
@@ -89,8 +105,7 @@ static int write_asset(const char *root, const tea_runtime_asset *asset)
     if (!slash) return 0;
     *slash = 0;
     if (!make_parents(parent)) return 0;
-    remove(tmp);
-    f = fopen(tmp, "wb");
+    f = open_new_file(tmp);
     if (!f) return 0;
     int ok = fwrite(asset->data, 1, *asset->size, f) == *asset->size;
     if (fclose(f) != 0) ok = 0;
@@ -161,7 +176,7 @@ int runtime_install(const char *home)
     }
     char tmp[152];
     snprintf(tmp, sizeof(tmp), "%s.tmp", marker);
-    f = fopen(tmp, "wb");
+    f = open_new_file(tmp);
     if (!f) return 0;
     int ok = fprintf(f, "%s\n", expected) > 0;
     if (fclose(f) != 0) ok = 0;

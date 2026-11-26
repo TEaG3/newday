@@ -64,6 +64,7 @@ test: font
 	cc -std=gnu99 -Wall -DSELFTEST fmcb.c -o /tmp/fmcb_selftest && /tmp/fmcb_selftest
 	cc -std=gnu99 -Wall -DSELFTEST combo.c -o /tmp/combo_selftest && /tmp/combo_selftest
 	cc -std=gnu99 -Wall -DSELFTEST icon.c -lm -o /tmp/icon_selftest && /tmp/icon_selftest $(ICON_CHECK)
+	cc -std=gnu99 -Wall -DSELFTEST -I. -Itests/fixtures runtime_install.c tests/runtime_install_host.c -o /tmp/runtime_install_selftest && /tmp/runtime_install_selftest
 	cc -std=gnu99 -Wall -DSELFTEST -Dmain=gfx_main -c gfx.c -o /tmp/gfx_host.o && cc -std=gnu99 -Wall -DSELFTEST cover.c /tmp/gfx_host.o font_data.c -ljpeg -lpng -lm -o /tmp/cover_selftest && /tmp/cover_selftest $(COVER_CHECK)
 
 nuld_hash: tools/nuld_hash.c achievements.c iso.c vmc.c # the game server's helper (phase 17), static: nuld has no compiler
