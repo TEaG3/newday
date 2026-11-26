@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "catalog_guard_ps2.h"
 #include <kernel.h>
