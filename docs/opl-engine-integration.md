@@ -156,7 +156,7 @@ It validated:
 - PS2 EE compilation of both `catalog_stage.c` and `catalog_guard_ps2.c` with `-Werror` and an 8 KiB frame-size warning limit (compile-only; the adapter is not linked into the launcher);
 - Arabic launcher localization: 161 English texts and 161 Arabic texts, no missing/unused entries, 38 UI codepoints and 18 IGR codepoints covered; the font self-test generated 509 glyphs in a 512x384 atlas;
 - Arabic OPL localization: 326/326 strings, no untranslated or English-only entries, placeholders preserved, and the Arabic font bundled;
-- the pinned TEaG3/OPL source at `395022e266eaea723e3c58dd16b240887b5b0a37`, with the TEa.G3 UL, BDM, ETH and APA/HDL direct-launch patches; `RTL=1` and `PADEMU=1` were used and DS3/DS4 USB/Bluetooth modules compiled;
+- the pinned TEaG3/OPL source at `f53e0c5fcc177dd792453060ff008506b36c0137`, with the TEa.G3 UL, BDM, ETH and APA/HDL direct-launch patches; `RTL=1` and `PADEMU=1` were used and DS3/DS4 USB/Bluetooth modules compiled;
 - the pinned lwNBD dependency at `15f1c14536d662e2e00d38d0aa91ef24149e8b96`, with the upstream downloader and language compiler fetched from pinned commit `b3a2199795fe89ba7e2dd7b843354472dff2c3eb`;
 - Neutrino runtime build from `229cf1dc7a8e0e58c2da390c1caa63e2b61795dd`, including the patched SMB IOMAN directory operations, with EE core headroom of 9,840 bytes against a 1,024-byte minimum;
 - the single TEa.G3.ELF build and 76-file runtime manifest.
