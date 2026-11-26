@@ -72,7 +72,7 @@ typedef struct {
 /* The caller supplies a real mutex/semaphore pair. Every guard API is serialized by it. */
 int catalog_guard_init(catalog_guard *guard, catalog_guard_lock_fn lock,
                        catalog_guard_unlock_fn unlock, void *lock_context);
-/* Scans and active-snapshot readers are mutually exclusive. A scan blocks new readers until scan_end. */
+/* Read-only active-snapshot leases may coexist with an inactive candidate scan. */
 int catalog_guard_read_begin(catalog_guard *guard);
 int catalog_guard_read_end(catalog_guard *guard);
 int catalog_guard_can_scan(catalog_guard *guard);
@@ -80,6 +80,7 @@ int catalog_guard_scan_begin(catalog_guard *guard);
 int catalog_guard_scan_cancelled(catalog_guard *guard);
 /* Returns 1 only for a completed, non-cancelled scan; 0 means discard its candidate. */
 int catalog_guard_scan_end(catalog_guard *guard);
+/* Returns 0 while a cancelled scan/download is still draining; retry before starting activity. */
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy);
 /* Downloads are exclusive with scans/applies and must poll cancellation while active. */
 int catalog_guard_can_download(catalog_guard *guard);
