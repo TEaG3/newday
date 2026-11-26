@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEa.G3 OPL-only manual</title>
-<meta name="description" content="Install and configure TEa.G3, its single OPL PS2 engine, storage adapters and composite AV, Component and HDMI video modes.">
+<meta name="description" content="Install and configure TEa.G3, its single OPL PS2 engine, storage adapters and composite AV, S-Video, RGB SCART, Component and HDMI video modes.">
 <meta name="theme-color" content="#E6E8EC">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/noto-sans-arabic-variable.ttf" as="font" type="font/ttf" crossorigin>
@@ -45,7 +45,7 @@
   <section class="chapter" id="usb">
     <header><b>1</b><h2>USB installation</h2></header>
     <div>
-      <p>Format the USB device as FAT32 or exFAT and copy TEa.G3.ELF to its root. OPL is embedded in this single executable and is extracted automatically into the TEa.G3 runtime folder on first boot.</p>
+      <p>Format the USB device as FAT32 and copy TEa.G3.ELF to its root. OPL is embedded in this single executable and is extracted automatically into the TEa.G3 runtime folder on first boot.</p>
 <pre>USB root
 ├── TEa.G3.ELF
 ├── DVD/          PS2 DVD ISO/ZSO images
@@ -55,7 +55,7 @@
 ├── POPS/         PS1 POPStarter files (optional)
 ├── APPS/         homebrew ELF applications (optional)
 └── tea_g3/       TEa.G3 settings, covers and runtime files</pre>
-      <p>FAT32 cannot store a single file larger than 4 GB. Use exFAT where the selected OPL adapter supports it, or use USBExtreme split files on FAT32. A valid UL entry is listed only when all of its declared parts are present.</p>
+      <p>FAT32 cannot store a single file larger than 4 GB. Use USBExtreme UL split files for larger games; the launcher checks every declared part before passing the game to OPL.</p>
     </div>
   </section>
 
@@ -102,7 +102,7 @@
         <tr><th>Format</th><th>Source</th><th>Route / status</th></tr>
         <tr><td>ISO / ZSO</td><td>USB</td><td>OPL BDM / USB; real-console sustained-read test pending</td></tr>
         <tr><td>USBExtreme UL</td><td>USB</td><td>OPL UL; all split parts checked before launch</td></tr>
-        <tr><td>ISO / ZSO</td><td>ATA FAT/exFAT HDD</td><td>OPL BDM / ATA; hardware test pending</td></tr>
+        <tr><td>ISO / ZSO</td><td>ATA FAT32 HDD</td><td>OPL BDM / ATA; hardware test pending</td></tr>
         <tr><td>ISO</td><td>APA / HD Loader</td><td>OPL HDD mini-launch; metadata validation and hardware test pending</td></tr>
         <tr><td>ISO / ZSO</td><td>MX4SIO / iLink</td><td>OPL BDM adapters; hardware tests pending</td></tr>
         <tr><td>PS2 network images</td><td>SMB / UDPBD / UDPFS</td><td>Disabled until an OPL-only catalogue and sector reader are integrated</td></tr>
