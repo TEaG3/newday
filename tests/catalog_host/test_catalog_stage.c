@@ -143,13 +143,14 @@ static void test_download_gate(void)
     assert(!catalog_guard_request_apply(&guard));
     assert(!catalog_guard_try_apply(&guard));
 
-    /* Entering gameplay cancels an active download; the downloader must stop and end it. */
-    assert(catalog_guard_set_activity(&guard, 1, 0));
+    /* Entering gameplay cancels an active download; the hand-off waits for it to end. */
+    assert(!catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_download_cancelled(&guard));
     assert(!catalog_guard_can_download(&guard));
     assert(!catalog_guard_download_begin(&guard));
     assert(catalog_guard_download_end(&guard));
     assert(!catalog_guard_download_cancelled(&guard));
+    assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_can_download(&guard));
 
