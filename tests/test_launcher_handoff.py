@@ -48,7 +48,7 @@ class OplOnlyArchitectureTests(unittest.TestCase):
         self.assertIn("(unsigned)len != cv[i].size", app_fetch)
         self.assertIn("body < 0", app_fetch)
         self.assertIn("len > max - body", app_fetch)
-        self.assertIn("cv[i].size > 0x7ffff000u", app_fetch)
+        self.assertIn("cv[i].size >= 0x7ffff000u", app_fetch)
         self.assertLess(app_fetch.index("app_payload_is_valid"), app_fetch.index('fopen(file, "wb")'))
 
     def test_only_opl_is_embedded_and_packaged(self):
