@@ -155,8 +155,11 @@ static void test_download_gate(void)
 
     /* A download cannot overlap a scan, a reader, or a pending/applying snapshot. */
     assert(catalog_guard_scan_begin(&guard));
+    assert(!catalog_guard_read_begin(&guard)); /* a scan owns the exclusive storage window */
     assert(!catalog_guard_download_begin(&guard));
     assert(catalog_guard_scan_end(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
 
     /* Storage I/O cancels an active staged scan without leaving the guard busy. */
     assert(catalog_guard_scan_begin(&guard));
@@ -200,6 +203,7 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_read_end(&guard));
     assert(catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_can_scan(&guard));
+    assert(!catalog_guard_read_begin(&guard)); /* no worker may start I/O after the scan gate closes */
     assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_scan_cancelled(&guard));
     assert(!catalog_guard_request_apply(&guard)); /* no candidate may be published while scanning */
