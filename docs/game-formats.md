@@ -62,7 +62,7 @@ See [themes.md](themes.md).
 ## OPL build status
 
 The complete `TEaG3/OPL` source is pinned as the `engine/opl` submodule at
- `f53e0c5fcc177dd792453060ff008506b36c0137`. CI fetches the upstream
+`f53e0c5fcc177dd792453060ff008506b36c0137`. CI fetches the upstream
 `download_lwNBD.sh` helper and `lang_compiler.py` from the fixed upstream
 Open-PS2-Loader commit `b3a2199795fe89ba7e2dd7b843354472dff2c3eb`, checks out
 `lwNBD` at `15f1c14536d662e2e00d38d0aa91ef24149e8b96`, and generates the
