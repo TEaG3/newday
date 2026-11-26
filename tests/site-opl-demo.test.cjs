@@ -37,6 +37,8 @@ assert.match(runtimeSources, /tea-g3:languagechange/);
 assert.doesNotMatch(runtimeSources, /nuld:languagechange/);
 const i18nSource = read("site/i18n.js");
 assert.ok(i18nSource.includes('"[data-teag3-lang]"'));
+assert.ok(i18nSource.includes('"ar, en":"ar, en"'));
+assert.doesNotMatch(i18nSource, /"es, en"/);
 assert.ok(i18nSource.includes("b.dataset.teag3Lang"));
 assert.ok(i18nSource.includes('const languageKey = "tea-g3-site-lang"'));
 assert.ok(i18nSource.includes('localStorage.getItem(languageKey)'));
