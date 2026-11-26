@@ -218,7 +218,7 @@ jobs:
           python3 check_arabic_translation.py
           make languages
           test -s lng/lang_Arabic.lng
-          grep -Fq 'العودة' lng/lang_Arabic.lng
+          grep -Fq 'رجوع' lng/lang_Arabic.lng
           test -s include/lang_autogen.h
           test -s src/lang_internal.c
           grep -Fq 'lngLoadEmbeddedArabic' src/lang.c
