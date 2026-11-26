@@ -5,6 +5,7 @@
 
 typedef struct {
     int sema_id;
+    volatile int faulted;
 } catalog_guard_ps2_context;
 
 /* Call once before init; this makes an uninitialized context explicit. */
