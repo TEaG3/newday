@@ -41,9 +41,23 @@
   for (const [key, label, what] of KEYS) {
     const row = document.createElement('div');
     row.className = 'colour';
-    row.innerHTML = `<input type="color" aria-label="${label}"><input type="text" maxlength="7" spellcheck="false" aria-label="${label}, hex">` +
-      `<span><b>${label}</b> <code>${key}</code><small>${what}</small></span>`;
-    const [pick, hex] = row.querySelectorAll('input');
+    const pick = document.createElement('input');
+    pick.type = 'color';
+    pick.setAttribute('aria-label', label);
+    const hex = document.createElement('input');
+    hex.type = 'text';
+    hex.maxLength = 7;
+    hex.spellcheck = false;
+    hex.setAttribute('aria-label', label + ', hex');
+    const text = document.createElement('span');
+    const title = document.createElement('b');
+    title.textContent = label;
+    const code = document.createElement('code');
+    code.textContent = key;
+    const detail = document.createElement('small');
+    detail.textContent = what;
+    text.append(title, ' ', code, detail);
+    row.append(pick, hex, text);
     pick.oninput = () => { state.pal[key] = pick.value.slice(1).toUpperCase(); sync(); };
     hex.onchange = () => {
       const m = /^#?([0-9a-f]{6})$/i.exec(hex.value.trim());
@@ -150,8 +164,8 @@
     const check = (a, b, min, en, arabic) => {
       const c = contrast(p[a], p[b]);
       if (c < min) w.push(ar
-        ? `<b>${a}</b> مع <b>${b}</b>: التباين ${c.toFixed(1)}، والمستوى المقترح ${min} أو أعلى. ${arabic}.`
-        : `<b>${a}</b> on <b>${b}</b> is hard to read (contrast ${c.toFixed(1)}, aim for ${min} or more): ${en}.`);
+        ? `${a} مع ${b}: التباين ${c.toFixed(1)}، والمستوى المقترح ${min} أو أعلى. ${arabic}.`
+        : `${a} on ${b} is hard to read (contrast ${c.toFixed(1)}, aim for ${min} or more): ${en}.`);
     };
     check('texto', 'panel', 4.5, 'the text of every panel', 'قد يصعب قراءة نصوص اللوحات');
     check('texto2', 'panel', 3, 'the list rows not selected', 'قد يصعب قراءة نصوص الصفوف غير المحددة');
@@ -162,7 +176,13 @@
     if (state.picture) w.push(ar
       ? 'عند إضافة صورة خلفية، راجع وضوح العنوان والتوضيح في المعاينة؛ فاللوحة تظهر خلف القائمة فقط.'
       : 'With a picture, check the title and the legend against it in the preview: only the list gets a pane behind it.');
-    $('warnings').innerHTML = w.map(t => `<li>${t}</li>`).join('');
+    const list = $('warnings');
+    list.replaceChildren();
+    for (const message of w) {
+      const item = document.createElement('li');
+      item.textContent = message;
+      list.append(item);
+    }
   }
   document.addEventListener('tea-g3:languagechange', () => { warnings(); draw(); });
 
