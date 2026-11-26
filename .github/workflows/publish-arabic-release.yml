@@ -122,13 +122,13 @@ jobs:
           grep -Fq 'العودة' lng/lang_Arabic.lng
           test -s include/lang_autogen.h
           test -s src/lang_internal.c
+          grep -Fq 'lngLoadEmbeddedArabic' src/lang.c
+          grep -Fq 'if (langID == -1)' src/opl.c
+          make NOT_PACKED=1 RTL=1 PADEMU=1
           test -s asm/lang_Arabic.c
           test -s asm/font_Arabic.c
           grep -Fq 'lang_Arabic_raw' asm/lang_Arabic.c
           grep -Fq 'font_Arabic_raw' asm/font_Arabic.c
-          grep -Fq 'lngLoadEmbeddedArabic' src/lang.c
-          grep -Fq 'if (langID == -1)' src/opl.c
-          make NOT_PACKED=1 RTL=1 PADEMU=1
           test -s opl.elf
           cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
           cp LICENSE "$GITHUB_WORKSPACE/OPL-LICENSE.txt"
