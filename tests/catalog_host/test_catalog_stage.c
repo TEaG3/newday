@@ -311,6 +311,8 @@ typedef struct {
     size_t index;
     int cancel_at;
     int error_at;
+    int generate;
+    size_t generated_count;
 } scan_fixture;
 
 static int scan_fixture_next(void *opaque, catalog_stage_record *record)
@@ -322,6 +324,19 @@ static int scan_fixture_next(void *opaque, catalog_stage_record *record)
     }
     if (fixture->error_at >= 0 && (int)fixture->index == fixture->error_at)
         return -1;
+    if (fixture->generate) {
+        if (fixture->index >= fixture->generated_count)
+            return 0;
+        memset(record, 0, sizeof(*record));
+        record->source_type = 1;
+        record->kind = 1;
+        snprintf(record->path, sizeof(record->path), "DVD/Game%04u.iso",
+                 (unsigned)fixture->index);
+        record->size = (uint32_t)fixture->index;
+        record->fingerprint = (uint32_t)fixture->index + 1u;
+        ++fixture->index;
+        return 1;
+    }
     if (fixture->index >= fixture->count)
         return 0;
     *record = fixture->records[fixture->index++];
@@ -409,6 +424,16 @@ static void test_staged_scan_builder(void)
     set_record(&fixture.records[0], 1, 0, 1, "DVD/Duplicate.iso", 10, 11);
     set_record(&fixture.records[1], 1, 0, 1, "DVD/Duplicate.iso", 20, 22);
     assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_RECORD);
+    assert(candidate.count == 0);
+    assert(!guard.scanning);
+
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = -1;
+    fixture.error_at = -1;
+    fixture.generate = 1;
+    fixture.generated_count = CATALOG_STAGE_MAX_ITEMS + 1u;
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_CAPACITY);
     assert(candidate.count == 0);
     assert(!guard.scanning);
 
