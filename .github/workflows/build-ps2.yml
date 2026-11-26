@@ -241,15 +241,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -n "${PS2SDK:-}"
+          test -f "$PS2SDK/samples/Makefile.pref"
+          command -v mips64r5900el-ps2-elf-gcc >/dev/null
           make clean
           test -s lng_src/Arabic.yml
           test -s lng_src/thirdparty/font_Arabic.ttf
           python3 check_arabic_translation.py
           make languages
           test -s lng/lang_Arabic.lng
-          grep -Fq 'العودة' lng/lang_Arabic.lng
+          grep -Fq 'رجوع' lng/lang_Arabic.lng
           test -s include/lang_autogen.h
           test -s src/lang_internal.c
+          # Verify the embedded Arabic language loader is part of the pinned OPL source.
+          grep -Fq 'lngLoadEmbeddedArabic' src/lang.c
+          grep -Fq 'if (langID == -1)' src/opl.c
           make NOT_PACKED=1 RTL=1 PADEMU=1
           test -s opl.elf
           cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
