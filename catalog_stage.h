@@ -78,7 +78,7 @@ int catalog_guard_read_end(catalog_guard *guard);
 int catalog_guard_can_scan(catalog_guard *guard);
 int catalog_guard_scan_begin(catalog_guard *guard);
 int catalog_guard_scan_cancelled(catalog_guard *guard);
-/* Returns 1 only for a completed, non-cancelled scan; 0 means discard its candidate. */
+/* Returns 1 on completion, 0 when cancelled/not active, and -1 on guard lock/release failure. */
 int catalog_guard_scan_end(catalog_guard *guard);
 /* Returns 0 while a cancelled scan/download is still draining; retry before starting activity. */
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy);
