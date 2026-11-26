@@ -201,7 +201,7 @@ int catalog_guard_read_begin(catalog_guard *guard)
     int allowed;
     if (!guard_lock(guard)) return 0;
     allowed = !guard->apply_pending && !guard->applying && !guard->downloading &&
-              guard->readers < UINT_MAX;
+              !guard->scanning && guard->readers < UINT_MAX;
     if (allowed) ++guard->readers;
     guard->unlock(guard->lock_context);
     return allowed;
