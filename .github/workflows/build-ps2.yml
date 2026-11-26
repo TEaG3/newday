@@ -92,8 +92,8 @@ jobs:
             make test
             python3 tools/theme_check.py
             # Keep the staged catalogue EE stack frame below 8 KiB before enabling future live scans.
-            mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Wframe-larger-than=8192 -Werror=frame-larger-than -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_stage.c -o /tmp/catalog_stage_stack_guard.o
-            mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Wframe-larger-than=8192 -Werror=frame-larger-than -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_stack_guard.o
+            mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Werror -Wframe-larger-than=8192 -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_stage.c -o /tmp/catalog_stage_stack_guard.o
+            mips64r5900el-ps2-elf-gcc -D_EE -G0 -O2 -Wall -Wextra -Werror -Wframe-larger-than=8192 -I"$PS2SDK/ee/include" -I"$PS2SDK/common/include" -I"$PS2SDK/ports/include" -I. -c catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_stack_guard.o
             make clean
             test -s runtime-input/OPL.ELF
             test -s runtime-input/OPL-LICENSE.txt
