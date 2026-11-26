@@ -1,6 +1,6 @@
 # TEa.G3 engineering and release quality gates
 
-This document records lessons that must remain active during the NULD/ORBIT to TEa.G3 transition.
+This document records historical lessons from the NULD/ORBIT to TEa.G3 transition and the current OPL-only release. Historical references are context, not a statement that those runtimes are still part of the product.
 Historical release notes and phase reports are evidence of what happened at the time; do not rewrite them
 to make old builds appear to have carried current fixes.
 
@@ -20,7 +20,7 @@ storage reads:
 3. Run the full PS2 build and preserve its logs and artifacts; do not skip or weaken a failing check to get
    a green workflow.
 4. Keep a separate physical-console acceptance item for behavior that host CI cannot reproduce. Record the
-   console model/revision, TEa.G3 commit, OPL/Neutrino build IDs, game serial, source, engine, observed result,
+   console model/revision, TEa.G3 commit, pinned OPL build ID, game serial, source, engine, observed result,
    launcher/debug log and a photo or video when a visual symptom matters.
 
 A host fixture proves the tested logic under its fixture assumptions. It does not prove an actual game boot,
@@ -48,8 +48,7 @@ Therefore:
   save/load acceptance is recorded.
 - RetroAchievements agent: phase 16b recorded end-to-end PCSX2 telemetry and explicitly left the console
   pending. Host and emulator checks do not close the hardware gate.
-- IGR and menu: phase 13 had one successful SCPH-75001 Black/480p test, but changes to Neutrino, GSM, stack
-  layout, kernel patching or menu code require rechecking the affected path on hardware.
+- IGR and menu: phase 13 had one successful SCPH-75001 Black/480p test, but changes to OPL IGR, GSM, stack layout, kernel patching or menu code require rechecking the affected path on hardware.
 - Themes/image quality: only report measured performance for themes and modes with raw console data.
   'Ran without visible stutter' is an observation, not a measured frame-rate result.
 
@@ -66,9 +65,17 @@ Therefore:
 
 ## Current status boundary
 
-The CI map guard checks the actual ee_core.map after each Neutrino build and requires at least 1024 bytes
-between _end and the fixed IGR stack base 0x94000. This protects future changes; it does not prove that
-a build with adequate headroom will boot on a physical console.
+The current launcher and release package embed OPL as the only PS2 game engine. The Neutrino runtime,
+ELF, loader and IOP/EE modules are not built or embedded. The ui/neutrino-igr directory is retained only
+as a UI-design and Arabic-asset reference; it is not linked or active.
+
+tools/check_ee_core_headroom.py is a legacy helper for a historical Neutrino ee_core.map.
+tests/test_ee_core_headroom.py unit-tests its parser and threshold logic, but the current OPL-only
+workflows do not build that Neutrino image or run an actual ee_core.map guard. Do not describe this
+unit test as a current runtime memory-headroom check.
+
+The active launcher build verifies the embedded runtime manifest and requires exactly one runtime
+asset: OPL.ELF. This is a build-integrity check, not a physical-console acceptance result.
 
 The final acceptance source remains docs/acceptance-tea-g3.md. A release remains prerelease until its
 physical-PS2 checks and evidence record are complete.

@@ -15,6 +15,7 @@ class TEaG3BrandingTests(unittest.TestCase):
         cls.site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
         cls.site_index = (ROOT / "site/index.html").read_text(encoding="utf-8")
         cls.site_manual = (ROOT / "site/manual.html").read_text(encoding="utf-8")
+        cls.acceptance = (ROOT / "docs/acceptance-tea-g3.md").read_text(encoding="utf-8")
         cls.theme_header = (ROOT / "theme.h").read_text(encoding="utf-8")
         cls.themes = (ROOT / "themes.c").read_text(encoding="utf-8")
         cls.splash_header = (ROOT / "splash.h").read_text(encoding="utf-8")
@@ -92,6 +93,31 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn("neutrino.elf", self.site_i18n.lower())
         self.assertNotIn("build_neutrino", self.site_i18n)
         self.assertNotIn("third_party/neutrino-igr", self.site_i18n)
+
+    def test_current_manual_uses_only_supported_languages_and_translates_opl_sections(self):
+        self.assertIn("<td>ar, en</td>", self.site_manual)
+        self.assertNotIn("<td>ar, en, es, pt</td>", self.site_manual)
+        for key in (
+            "3 Configuration",
+            "4 OPL engine",
+            "5 Video output",
+            "6 Troubleshooting",
+            "OPL engine and source adapters",
+            "OPL is the only PS2 game engine",
+            "OPL BDM / USB; real-console sustained-read test pending",
+            "Unsupported format/source pairs fail closed. TEa.G3 does not silently route them to a different engine. PS1 uses the separate POPStarter path; ELF applications use the application loader.",
+        ):
+            with self.subTest(key=key):
+                self.assertIn(f'"{key}"', self.site_i18n)
+        self.assertIn('"TEa.G3 OPL-only manual"', self.site_i18n)
+
+    def test_acceptance_record_matches_current_opl_only_and_monitoring_state(self):
+        self.assertIn("arabic-v1.3.8", self.acceptance)
+        self.assertIn("OPL هو محرك ألعاب PS2 الوحيد", self.acceptance)
+        self.assertIn("المراقبة الحية غير مفعّلة", self.acceptance)
+        self.assertNotIn("دمج OPL وNeutrino داخل نقطة تشغيل واحدة", self.acceptance)
+        self.assertNotIn("Neutrino يفتح اللعبة", self.acceptance)
+
 
 if __name__ == "__main__":
     unittest.main()
