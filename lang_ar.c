@@ -176,6 +176,7 @@ static const char *const ar[][2] = {
         {"This game format is not supported by the OPL adapter for this source", "تنسيق اللعبة هذا غير مدعوم عبر محول OPL لمصدر التخزين المحدد"},
         {"UDPBD game launching is not supported by OPL integration", "تشغيل الألعاب عبر UDPBD غير مدعوم في تكامل OPL الحالي"},
         {"UDPFS game streaming is not supported by the OPL-only launcher", "بث الألعاب عبر UDPFS غير مدعوم في مشغل OPL-only"}
+        {"Background work is still active; try again", "العمل في الخلفية لم ينته بعد، حاول مرة أخرى"},
         {"Modified and developed by Iraqi developer TEa.G3", "تعديل وتطوير المطور العراقي TEa.G3"},
 };
 

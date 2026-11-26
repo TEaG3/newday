@@ -13,6 +13,8 @@ class TEaG3BrandingTests(unittest.TestCase):
         cls.gfx_header = (ROOT / "gfx.h").read_text(encoding="utf-8")
         cls.lang_ar = (ROOT / "lang_ar.c").read_text(encoding="utf-8")
         cls.site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
+        cls.site_index = (ROOT / "site/index.html").read_text(encoding="utf-8")
+        cls.site_manual = (ROOT / "site/manual.html").read_text(encoding="utf-8")
 
     def test_runtime_messages_and_configuration_use_teag3_branding(self):
         stale = ("nuld vmc remote:", "nuld covers:", "nuld %s\\\\n", "nuld update:",
@@ -59,6 +61,12 @@ class TEaG3BrandingTests(unittest.TestCase):
                      '"%s/nuld"', '"%s/orbit"'):
             with self.subTest(path=path):
                 self.assertIn(path, self.launcher)
+
+    def test_release_archive_label_does_not_claim_historical_legacy_names(self):
+        current_label = "Full release archive (including earlier versions)"
+        for page in (self.site_index, self.site_manual):
+            self.assertIn(current_label, page)
+            self.assertNotIn("historical ORBIT/NULD releases", page)
 
 if __name__ == "__main__":
     unittest.main()

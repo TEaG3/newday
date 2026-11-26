@@ -173,6 +173,16 @@ static int guard_valid(const catalog_guard *guard)
     return guard && guard->lock && guard->unlock;
 }
 
+static int guard_lock(catalog_guard *guard)
+{
+    return guard_valid(guard) && guard->lock(guard->lock_context);
+}
+
+static int guard_release(catalog_guard *guard)
+{
+    return guard_valid(guard) && guard->unlock(guard->lock_context);
+}
+
 static int guard_download_allowed(const catalog_guard *guard)
 {
     return !guard->playing && !guard->io_busy && !guard->downloading &&
@@ -181,7 +191,7 @@ static int guard_download_allowed(const catalog_guard *guard)
 }
 
 int catalog_guard_init(catalog_guard *guard, catalog_guard_lock_fn lock,
-                       catalog_guard_lock_fn unlock, void *lock_context)
+                       catalog_guard_unlock_fn unlock, void *lock_context)
 {
     if (!guard || !lock || !unlock) return 0;
     memset(guard, 0, sizeof(*guard));
@@ -194,78 +204,72 @@ int catalog_guard_init(catalog_guard *guard, catalog_guard_lock_fn lock,
 int catalog_guard_read_begin(catalog_guard *guard)
 {
     int allowed;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     allowed = !guard->apply_pending && !guard->applying && !guard->downloading &&
               guard->readers < UINT_MAX;
     if (allowed) ++guard->readers;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
 int catalog_guard_read_end(catalog_guard *guard)
 {
     int released = 0;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     if (guard->readers) --guard->readers, released = 1;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return released;
 }
 
 int catalog_guard_can_scan(catalog_guard *guard)
 {
     int allowed;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     allowed = !guard->playing && !guard->io_busy && !guard->downloading && !guard->scanning &&
               !guard->apply_pending && !guard->applying && guard->readers == 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
 int catalog_guard_scan_begin(catalog_guard *guard)
 {
     int allowed;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     allowed = !guard->playing && !guard->io_busy && !guard->downloading && !guard->scanning &&
               !guard->apply_pending && !guard->applying && guard->readers == 0;
     if (allowed) guard->scanning = 1, guard->scan_cancelled = 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
 int catalog_guard_scan_cancelled(catalog_guard *guard)
 {
     int cancelled;
-    if (!guard_valid(guard)) return -1;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return -1;
     cancelled = guard->scan_cancelled != 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return -1;
     return cancelled;
 }
 
 int catalog_guard_scan_end(catalog_guard *guard)
 {
     int ended = 0;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     if (guard->scanning) {
         ended = !guard->scan_cancelled;
         guard->scanning = 0;
         guard->scan_cancelled = 0;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return ended;
 }
 
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
 {
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    int wait_for_scan_or_download = 0;
+    if (!guard_lock(guard)) return 0;
     if (guard->applying) {
-        guard->unlock(guard->lock_context);
+        if (!guard_release(guard)) return 0;
         return 0;
     }
     guard->playing = playing != 0;
@@ -273,110 +277,107 @@ int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
     /* Never leave a pending apply blocking new readers when launch or I/O starts. */
     if (guard->apply_pending && (guard->playing || guard->io_busy))
         guard->apply_pending = 0;
-    if (guard->scanning && (guard->playing || guard->io_busy))
+    if (guard->scanning && (guard->playing || guard->io_busy)) {
         guard->scan_cancelled = 1;
-    if (guard->downloading && (guard->playing || guard->io_busy))
+        wait_for_scan_or_download = 1;
+    }
+    if (guard->downloading && (guard->playing || guard->io_busy)) {
         guard->download_cancelled = 1;
-    guard->unlock(guard->lock_context);
-    return 1;
+        wait_for_scan_or_download = 1;
+    }
+    if (!guard_release(guard)) return 0;
+    /* Callers starting I/O or gameplay must retry after the cancelled operation ends. */
+    return !wait_for_scan_or_download;
 }
 
 int catalog_guard_can_download(catalog_guard *guard)
 {
     int allowed;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     allowed = guard_download_allowed(guard);
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
 int catalog_guard_download_begin(catalog_guard *guard)
 {
     int allowed;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     allowed = guard_download_allowed(guard);
     if (allowed) guard->downloading = 1, guard->download_cancelled = 0;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return allowed;
 }
 
 int catalog_guard_download_cancelled(catalog_guard *guard)
 {
     int cancelled;
-    if (!guard_valid(guard)) return -1;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return -1;
     cancelled = guard->downloading && guard->download_cancelled;
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return -1;
     return cancelled;
 }
 
 int catalog_guard_download_end(catalog_guard *guard)
 {
     int ended = 0;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     if (guard->downloading) {
         guard->downloading = 0;
         guard->download_cancelled = 0;
         ended = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return ended;
 }
 
 int catalog_guard_request_apply(catalog_guard *guard)
 {
     int requested = 0;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     if (!guard->applying && !guard->scanning && !guard->downloading &&
         !guard->playing && !guard->io_busy) {
         guard->apply_pending = 1;
         requested = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return requested;
 }
 
 int catalog_guard_try_apply(catalog_guard *guard)
 {
     int acquired = 0;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     if (guard->apply_pending && !guard->applying && !guard->scanning &&
         !guard->playing && !guard->io_busy && !guard->downloading && guard->readers == 0) {
         guard->applying = 1;
         acquired = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return acquired;
 }
 
 int catalog_guard_finish_apply(catalog_guard *guard)
 {
     int finished = 0;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     if (guard->applying) {
         guard->applying = 0;
         guard->apply_pending = 0;
         finished = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return finished;
 }
 
 int catalog_guard_cancel_apply(catalog_guard *guard)
 {
     int cancelled = 0;
-    if (!guard_valid(guard)) return 0;
-    guard->lock(guard->lock_context);
+    if (!guard_lock(guard)) return 0;
     if (!guard->applying) {
         guard->apply_pending = 0;
         cancelled = 1;
     }
-    guard->unlock(guard->lock_context);
+    if (!guard_release(guard)) return 0;
     return cancelled;
 }

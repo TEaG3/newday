@@ -211,11 +211,17 @@ class Catalog:
         return 201 if subprocess.run([self.tool, "vmc", path]).returncode == 0 else 500
 
 
+def default_hash_tool_path():
+    # Makefile's nuld_hash target is emitted at the repository root, not in tools/.
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(repo_root, "nuld_hash")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="/srv/data/ps2")
     ap.add_argument("--port", type=int, default=18290)
-    ap.add_argument("--tool", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "nuld_hash"))
+    ap.add_argument("--tool", default=default_hash_tool_path())
     ap.add_argument("--cache", default=os.path.expanduser("~/.cache/nuld-catalog.json"))
     ap.add_argument(
         "--rescan",

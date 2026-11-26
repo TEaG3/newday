@@ -83,16 +83,16 @@ typedef struct {
     pthread_mutex_t mutex;
 } mutex_context;
 
-static void guard_lock(void *context)
+static int guard_lock(void *context)
 {
     mutex_context *m = (mutex_context *)context;
-    assert(pthread_mutex_lock(&m->mutex) == 0);
+    return pthread_mutex_lock(&m->mutex) == 0;
 }
 
-static void guard_unlock(void *context)
+static int guard_unlock(void *context)
 {
     mutex_context *m = (mutex_context *)context;
-    assert(pthread_mutex_unlock(&m->mutex) == 0);
+    return pthread_mutex_unlock(&m->mutex) == 0;
 }
 
 typedef struct {
@@ -143,26 +143,35 @@ static void test_download_gate(void)
     assert(!catalog_guard_request_apply(&guard));
     assert(!catalog_guard_try_apply(&guard));
 
-    /* Entering gameplay cancels an active download; the downloader must stop and end it. */
-    assert(catalog_guard_set_activity(&guard, 1, 0));
+    /* Entering gameplay cancels an active download; the hand-off waits for it to end. */
+    assert(!catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_download_cancelled(&guard));
     assert(!catalog_guard_can_download(&guard));
     assert(!catalog_guard_download_begin(&guard));
     assert(catalog_guard_download_end(&guard));
     assert(!catalog_guard_download_cancelled(&guard));
+    assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_can_download(&guard));
 
-    /* A download cannot overlap a scan, a reader, or a pending/applying snapshot. */
+    /* A download cannot overlap a scan, a reader, or a pending/applying snapshot.
+       Read-only UI leases may continue while the inactive candidate is being built. */
     assert(catalog_guard_scan_begin(&guard));
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
     assert(!catalog_guard_download_begin(&guard));
-    assert(catalog_guard_scan_end(&guard));
-
-    /* Storage I/O cancels an active staged scan without leaving the guard busy. */
-    assert(catalog_guard_scan_begin(&guard));
-    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(!catalog_guard_set_activity(&guard, 0, 1)); /* new I/O cancels and waits for the scan */
     assert(catalog_guard_scan_cancelled(&guard));
     assert(!catalog_guard_scan_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    /* Storage I/O cancels an active staged scan and waits until its candidate is discarded. */
+    assert(catalog_guard_scan_begin(&guard));
+    assert(!catalog_guard_set_activity(&guard, 0, 1));
+    assert(catalog_guard_scan_cancelled(&guard));
+    assert(!catalog_guard_scan_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
     assert(catalog_guard_set_activity(&guard, 0, 0));
 
     assert(catalog_guard_read_begin(&guard));
@@ -175,9 +184,10 @@ static void test_download_gate(void)
     assert(catalog_guard_finish_apply(&guard));
 
     assert(catalog_guard_download_begin(&guard));
-    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(!catalog_guard_set_activity(&guard, 0, 1)); /* storage I/O waits for the cancelled download */
     assert(catalog_guard_download_cancelled(&guard));
     assert(catalog_guard_download_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
     assert(!catalog_guard_download_begin(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_can_download(&guard));
@@ -200,11 +210,14 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_read_end(&guard));
     assert(catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_can_scan(&guard));
-    assert(catalog_guard_set_activity(&guard, 1, 0));
+    assert(catalog_guard_read_begin(&guard)); /* render may keep reading the active snapshot */
+    assert(catalog_guard_read_end(&guard));
+    assert(!catalog_guard_set_activity(&guard, 1, 0)); /* hand-off cancels and drains the candidate scan */
     assert(catalog_guard_scan_cancelled(&guard));
     assert(!catalog_guard_request_apply(&guard)); /* no candidate may be published while scanning */
     assert(!catalog_guard_try_apply(&guard));
     assert(!catalog_guard_scan_end(&guard)); /* a cancelled scan cannot be published */
+    assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_can_scan(&guard));
 
@@ -212,9 +225,10 @@ static void test_guard_and_concurrent_reader(void)
     assert(!catalog_guard_scan_begin(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_scan_begin(&guard));
-    assert(catalog_guard_set_activity(&guard, 0, 1)); /* storage I/O becoming busy cancels an active scan */
+    assert(!catalog_guard_set_activity(&guard, 0, 1)); /* storage I/O cancels and waits for the active scan */
     assert(catalog_guard_scan_cancelled(&guard));
     assert(!catalog_guard_scan_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_scan_begin(&guard));
     assert(catalog_guard_scan_end(&guard));

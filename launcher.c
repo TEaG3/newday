@@ -41,6 +41,7 @@
 #include "torres.h"
 #include "theme.h"
 #include "runtime_install.h"
+#include "catalog_guard_ps2.h"
 
 #define TEAG3_VERSION "v1.3.6" // must match the published release tag
 #include "lang.h"
@@ -439,11 +440,29 @@ static volatile int vmc_net_want = -1; // a server game's card for the loader th
 static int vmc_net_ask(int i);         // asks for it; 0 if there is no loader thread to ask
 
 static u8 icon_stack[0x10000] __attribute__((aligned(16)));
+static volatile int ra_launching, cover_busy, icon_busy, disc_busy;
+static catalog_guard catalog_live_guard;
+static catalog_guard_ps2_context catalog_live_context;
+static volatile int catalog_live_ready;
+static int background_work_begin(volatile int *busy);
+static void background_work_end(volatile int *busy);
+static int catalog_activity_update(int playing);
+static int catalog_reader_try_begin(void);
+static void catalog_reader_wait_begin(void);
+static void catalog_reader_end(void);
+
 static void icon_thread(void *arg) // the only libmc user after the boot scan; woken by the render thread
 {
 	(void)arg;
 	for (;;) {
 		WaitSema(icon_sema);
+		if (!background_work_begin(&icon_busy)) {
+			if (ra_launching) {
+				SignalSema(icon_sema);
+				usleep(10000);
+			}
+			continue;
+		}
 		if (stub_install == 1) { stub_install = 2; install_stub(); stub_install = 0; } // install independent IGR return ELF
 		wiz_job();
 		if (state_dirty && usb) { // the chosen view, for the next boot (phase 10)
@@ -453,16 +472,19 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 			               view_key[view]), fclose(f);
 		}
 		int i = icon_want, port;
-		if (i < 0) continue;
-		if (on_catalog(i) && uses_vmc(i)) { // on the server: the loader thread reads it, the network is its alone
-			if (!vmc_state[i] && !vmc_net_ask(i)) vmc_n[i] = 0, vmc_state[i] = 2; // no worker: no icon
-			continue;
+		if (i >= 0) {
+			if (on_catalog(i) && uses_vmc(i)) { // on the server: the loader thread reads it, the network is its alone
+				if (!vmc_state[i] && !vmc_net_ask(i)) vmc_n[i] = 0, vmc_state[i] = 2; // no worker: no icon
+			} else {
+				if (uses_vmc(i) && !vmc_state[i]) vmc_state[i] = 1, vmc_load(i), vmc_state[i] = 2; // phase 14
+				if (!gicon_state[i] && (!(uses_vmc(i) && vmc_state[i] != 2)) && newest_save(i, &port)) {
+					gicon_state[i] = 1;
+					gicon[i] = load_icon(i);
+					gicon_state[i] = 2;
+				}
+			}
 		}
-		if (uses_vmc(i) && !vmc_state[i]) vmc_state[i] = 1, vmc_load(i), vmc_state[i] = 2; // phase 14
-		if (gicon_state[i] || (uses_vmc(i) && vmc_state[i] != 2) || !newest_save(i, &port)) continue;
-		gicon_state[i] = 1;
-		gicon[i] = load_icon(i);
-		gicon_state[i] = 2;
+		background_work_end(&icon_busy);
 	}
 }
 
@@ -555,40 +577,99 @@ static void *half_file(const char *serial, int sq, void **big, void **small) // 
 
 static void cover_set(int i, void *im[3], int bits) // cover and download threads; im: half, small, big, taken
 {
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) {
+		for (int k = 0; k < 3; k++) free(im[k]);
+		return;
+	}
 	void **slot[3] = {&cv[i].half, &cv[i].small, &cv[i].big};
-	WaitSema(cover_lock);
 	for (int k = 0; k < 3; k++)
 		if (im[k] && !*slot[k]) *slot[k] = im[k], im[k] = NULL, bits |= 1 << k;
 	cover_done[i] |= bits, cover_req[i] &= ~bits;
-	SignalSema(cover_lock);
+	if (SignalSema(cover_lock) < 0) {
+		for (int k = 0; k < 3; k++) free(im[k]);
+		return;
+	}
 	for (int k = 0; k < 3; k++) free(im[k]);
 }
 
 static void cover_evict(void) // render thread, between frames (the GS is done with the last frame's textures)
 {
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
 	int kb = 0, old = -1;
 	for (int i = 1; i < ncv; i++)
 		if ((cv[i].half || cv[i].small || cv[i].big) &&
 		    (kb += (cv[i].half ? 46 : 0) + (cv[i].small ? 95 : 0) + (cv[i].big ? 184 : 0), cover_seen[i] < frame_n - 1) &&
 		    (old < 0 || cover_seen[i] < cover_seen[old])) old = i;
-	if (kb <= COVER_KB || old < 0) return;
-	WaitSema(cover_lock);
+	if (kb <= COVER_KB || old < 0) {
+		(void)SignalSema(cover_lock);
+		return;
+	}
 	void *b = cv[old].big, *s = cv[old].small, *h = cv[old].half;
 	cv[old].big = NULL, cv[old].small = cv[old].half = NULL, cover_req[old] = cover_done[old] = 0;
-	SignalSema(cover_lock);
+	if (SignalSema(cover_lock) < 0) return; // keep detached buffers allocated if the lock cannot be released
 	free(b), free(s), free(h);
 }
 
 static u8 cover_stack[0x4000] __attribute__((aligned(16)));
+
+static int catalog_reader_try_begin(void)
+{
+	return !catalog_live_ready || catalog_guard_read_begin(&catalog_live_guard);
+}
+
+static void catalog_reader_wait_begin(void)
+{
+	while (!catalog_reader_try_begin()) usleep(1000);
+}
+
+static void catalog_reader_end(void)
+{
+	if (!catalog_live_ready) return;
+	while (!catalog_guard_read_end(&catalog_live_guard)) usleep(1000);
+}
+
+static int background_work_begin(volatile int *busy)
+{
+	catalog_reader_wait_begin();
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) {
+		catalog_reader_end();
+		return 0;
+	}
+	int allowed = !ra_launching;
+	if (allowed) {
+		*busy = 1;
+		while (!catalog_activity_update(0)) usleep(1000);
+	}
+	if (SignalSema(cover_lock) < 0) return 0; // retain the lease and busy state on lock failure
+	if (!allowed) catalog_reader_end();
+	return allowed;
+}
+
+static void background_work_end(volatile int *busy)
+{
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return; // retain the reader lease on failure
+	*busy = 0;
+	while (!catalog_activity_update(ra_launching)) usleep(1000);
+	if (SignalSema(cover_lock) < 0) { *busy = 1; return; }
+	catalog_reader_end();
+}
+
 static void cover_thread(void *arg) // woken by draw_cover
 {
 	(void)arg;
 	for (;;) {
-		WaitSema(cover_sema);
-		for (int i = 1; i < ncv; i++) {
+		if (cover_sema < 0 || WaitSema(cover_sema) < 0) { ExitThread(); return; }
+		if (!background_work_begin(&cover_busy)) {
+			if (ra_launching && cover_sema >= 0) SignalSema(cover_sema), usleep(10000);
+			continue;
+		}
+		for (int i = 1; i < ncv && !ra_launching; i++) {
+			if (cover_lock < 0 || WaitSema(cover_lock) < 0) break;
 			int b = cover_req[i];
-			if (!b) continue;
-			if (cover_seen[i] < frame_n - 2) { cover_req[i] = 0; continue; } // scrolled past: asked again if drawn
+			int stale = b && cover_seen[i] < frame_n - 2;
+			if (stale) cover_req[i] = 0; // scrolled past: asked again if drawn
+			if (SignalSema(cover_lock) < 0) { ExitThread(); return; }
+			if (!b || stale) continue;
 			void *im[3] = {NULL, NULL, NULL};
 			char path[160];
 			const char *id = *cv[i].serial ? cv[i].serial : cv[i].title; // apps: covers/<title>.c16 (no serial)
@@ -600,6 +681,7 @@ static void cover_thread(void *arg) // woken by draw_cover
 			if (b & 4 && !im[2]) im[2] = load_c16(path, LW, COVER_TALL(sq, LW, LH));
 			cover_set(i, im, b);
 		}
+		background_work_end(&cover_busy);
 	}
 }
 
@@ -924,11 +1006,16 @@ static int disc_cnf(char *cnf, int max) // cdrom0:\SYSTEM.CNF;1 through libcdvd 
 static void disc_thread(void *arg)
 {
 	(void)arg;
-	int last = -1, said = -1; // said: the language the title was written in (the setup panel changes it)
-	sceCdInit(SCECdINoD);
-	for (;; sleep(1)) {
+	int last = -1, said = -1, initialized = 0; // said: the language the title was written in (the setup panel changes it)
+	for (;;) {
+		sleep(1);
+		if (!background_work_begin(&disc_busy)) continue;
+		if (!initialized) sceCdInit(SCECdINoD), initialized = 1;
 		int st = disc_state(sceCdGetDiskType());
-		if ((st == last && lang == said) || disc_new) continue;
+		if ((st == last && lang == said) || disc_new) {
+			background_work_end(&disc_busy);
+			continue;
+		}
 		said = lang;
 		entry *d = &disc_stage;
 		memset(d, 0, sizeof(*d));
@@ -948,6 +1035,7 @@ static void disc_thread(void *arg)
 		printf("disc: state %d, %s %s boot %s\n", st, d->serial, d->title, d->boot);
 		last = st;
 		disc_new = 1;
+		background_work_end(&disc_busy);
 	}
 }
 
@@ -1234,7 +1322,8 @@ static int wants_cover(int i) // a PS2 / PS1 game without covers on the USB
 	return *cv[i].serial && (cv[i].kind == K_PS2 || cv[i].kind == K_PS1) && !has_cover(i);
 }
 static volatile int dl_state, dl_done, dl_total, dl_got; // state: 0 idle, 1 connecting, 2 downloading, 3 done, NET_ERR_*
-static volatile int ra_launching; // set by launch() (achievements, below): the cover download stops for a server app
+static volatile int art_busy, dl_busy, update_busy;
+/* ra_launching is declared with the shared background gate above. */
 
 static int save_c16(const char *serial, const char *suffix, const void *px, unsigned w, unsigned h)
 {
@@ -1277,12 +1366,13 @@ static int cover_store(int i, const unsigned char *img, int n) // a JPG / PNG ->
 // lives next to the games); turned into the .c16 pair once, before any download. Loader thread: the network's owner
 static void art_import(void)
 {
+	if (!background_work_begin(&art_busy)) return;
 	char path[300], name[80];
 	int got = 0, max = 1 << 20;
 	char *net = NULL; // the server's answers
 	snprintf(path, sizeof(path), "%s/covers", homedev);
 	mkdir(path, 0777);
-	for (int i = 1; i < ncv; i++) {
+	for (int i = 1; i < ncv && !ra_launching; i++) {
 		if (has_cover(i)) continue;
 		if (*cv[i].serial) // dash form back to OPL's: SLUS-20946 -> SLUS_209.46
 			snprintf(name, sizeof(name), "%.4s_%.3s.%.2s", cv[i].serial, cv[i].serial + 5, cv[i].serial + 8);
@@ -1299,7 +1389,7 @@ static void art_import(void)
 			}
 		if (!f && on_catalog(i) && (net || (net = malloc(max)))) { // the server's ART/ (name URL-quoted for apps)
 			int st = 0, body, len;
-			for (int e = 0; e < 2 && st != 200; e++) {
+			for (int e = 0; e < 2 && st != 200 && !ra_launching; e++) {
 				snprintf(path, sizeof(path), "/art/%s_COV.%s", name, e ? "jpg" : "png");
 				st = http_get(ini_get(&cfg, "juegos", "servidor", ""), 18290, path, net, max, &body, &len);
 			}
@@ -1322,16 +1412,18 @@ static void art_import(void)
 	}
 	free(net);
 	printf("art: %d covers from OPL's ART/\n", got);
+	background_work_end(&art_busy);
 }
 
 static void download_covers(void)
 {
 	if (strcasecmp(ini_get(&cfg, "portadas", "descargar", "si"), "si")) return;
+	if (!background_work_begin(&dl_busy)) return;
 	for (int i = 1; i < ncv; i++) dl_total += wants_cover(i); // not the disc entry: its covers come from the USB
-	if (!dl_total) return;
+	if (!dl_total) { background_work_end(&dl_busy); return; }
 	dl_state = 1;
 	int r = net_ready();
-	if (r < 0) { dl_state = r; return; }
+	if (r < 0) { dl_state = r; background_work_end(&dl_busy); return; }
 	dl_state = 2;
 	int max = 1 << 20; // a JPG + headers; xlenore covers are about 135 KB (SLUS-21376)
 	char *buf = malloc(max);
@@ -1345,7 +1437,7 @@ static void download_covers(void)
 		int body, len;
 		snprintf(path, sizeof(path), COVER_PATH, cv[i].kind == K_PS1 ? "psx-covers" : "ps2-covers", cv[i].serial);
 		int st = https_get(COVER_HOST, path, buf, max, &body, &len);
-		if (st == NET_ERR_CONNECT && !dl_done) // the first connection right after the lease failed once on the console
+		if (st == NET_ERR_CONNECT && !dl_done && !ra_launching) // retry only while the background gate remains open
 			sleep(2), st = https_get(COVER_HOST, path, buf, max, &body, &len);
 		if (st < 0) { dl_state = st; break; } // network or TLS: the rest would fail the same way
 		if (st == 200 && cover_store(i, (unsigned char *)buf + body, len)) dl_got++; // 404: the generic one stays
@@ -1358,12 +1450,30 @@ static void download_covers(void)
 	if (fp) fprintf(fp, "TEa.G3 covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n", dl_got, dl_total,
 	                ms, dl_got ? ms / dl_got : 0, dl_state, net_why, net_ip()), fclose(fp);
 	if (dl_state == 2) dl_state = 3;
+	background_work_end(&dl_busy);
 }
 
 // ---- achievements (phase 16, step 1): the selected PS2 game's RetroAchievements hash, cached in
 // RA_DIR/<serial>.txt with the ISO size, then the client on the home server is asked about it; the loader
 // thread does it after the covers, one game at a time, the latest selection first ----
-static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy, ra_launching; // ra_down: 1 no network, 2 no client (toast once)
+static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy; // ra_down: 1 no network, 2 no client (toast once)
+
+static int catalog_activity_update(int playing)
+{
+	if (!catalog_live_ready) return 1;
+	int io_busy = ra_busy || art_busy || update_busy || dl_busy || icon_busy || disc_busy || cover_busy;
+	return catalog_guard_set_activity(&catalog_live_guard, playing, io_busy);
+}
+
+static int catalog_activity_wait(int playing)
+{
+	for (int t = 0; t < 150; t++) {
+		if (catalog_activity_update(playing)) return 1;
+		usleep(10000);
+	}
+	return catalog_activity_update(playing);
+}
+
 static volatile char ra_state[MAXC];                      // 0 not asked, 1 working, then RA_SET.. (achievements.h)
 static short ra_count[MAXC];
 // the Logros panel (○): one game's list at a time, loaded by the worker. st: 1 loading, 2 ready, -1 failed
@@ -1374,6 +1484,48 @@ static int ra_gid[MAXC]; // RetroAchievements' game id, asked once
 static int ach_row = -1; // the panel's cursor, -1 = closed
 // ponytail: HD Loader partitions and the disc drive have no ISO file to hash; a reader over them if wanted
 static int ra_game_ok(int i) { return ra_on && cv[i].kind == K_PS2 && src[(int)cv[i].src].type != SRC_HDL; }
+
+/* Close the shared gate before an IOP reset. A timeout is fail-closed:
+   the main loop reopens it only after every tracked cover/network worker is idle. */
+static int background_quiesce(void)
+{
+	if (cover_lock >= 0) {
+		if (WaitSema(cover_lock) < 0) return 0;
+		ra_launching = 1;
+		int unlocked = SignalSema(cover_lock) >= 0;
+		if (!catalog_activity_wait(1) || !unlocked) return 0;
+	} else {
+		ra_launching = 1; // the cover worker is not running
+		if (!catalog_activity_wait(1)) return 0;
+	}
+	ra_abort = 1;
+	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy || icon_busy || disc_busy); t++) usleep(10000);
+	if (ra_busy || art_busy || update_busy || icon_busy || disc_busy) return 0;
+	for (int t = 0; t < 500 && (dl_busy || dl_state == 1 || dl_state == 2); t++) usleep(20000);
+	if (dl_busy || dl_state == 1 || dl_state == 2) return 0;
+	for (int t = 0; t < 150 && cover_busy; t++) usleep(10000);
+	return !cover_busy && !icon_busy && !disc_busy;
+}
+
+static void background_resume_if_idle(void)
+{
+	if (!ra_launching) return;
+	if (cover_lock >= 0) {
+		if (WaitSema(cover_lock) < 0) return;
+		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy && !disc_busy &&
+		           dl_state != 1 && dl_state != 2 && !cover_busy;
+		int activity_ok = !idle || catalog_activity_update(0);
+		if (idle && activity_ok) ra_launching = 0, ra_abort = 0;
+		if (idle && !activity_ok) ra_launching = 1, ra_abort = 1;
+		if (SignalSema(cover_lock) < 0 && idle) {
+			ra_launching = 1, ra_abort = 1;
+			(void)catalog_activity_update(1);
+		}
+	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy && !disc_busy &&
+	           dl_state != 1 && dl_state != 2 && !cover_busy) {
+		if (catalog_activity_update(0)) ra_launching = 0, ra_abort = 0;
+	}
+}
 
 static void ra_log(const char *fmt, ...) // the console has no printf: launcher.txt, for the gate
 {
@@ -1454,13 +1606,17 @@ static char upd_base[160];
 
 static void update_check(void) // loader thread; the network is up for the covers anyway
 {
-	if (strcasecmp(ini_get(&cfg, "actualizaciones", "buscar", "si"), "si") || net_busy || net_ready() < 0) return;
+	if (!background_work_begin(&update_busy)) return;
+	if (strcasecmp(ini_get(&cfg, "actualizaciones", "buscar", "si"), "si") || net_busy || net_ready() < 0) {
+		background_work_end(&update_busy);
+		return;
+	}
 	snprintf(upd_base, sizeof(upd_base), "%s", ini_get(&cfg, "actualizaciones", "url", UPD_URL)); // url: tests only
 	int max = 16 << 10, body, len, sbody, slen, st, ss = 0, sig = 0;
 	char *t = malloc(max), *g = malloc(max), url[200];
 	snprintf(url, sizeof(url), "%supdate.txt", upd_base);
 	st = t && g ? net_fetch(url, t, max - 1, &body, &len) : NET_ERR_PROTO;
-	if (st == 200) {
+	if (st == 200 && !ra_launching) {
 		t[body + len] = 0;
 		snprintf(url, sizeof(url), "%supdate.sig", upd_base);
 		ss = net_fetch(url, g, max, &sbody, &slen);
@@ -1471,6 +1627,7 @@ static void update_check(void) // loader thread; the network is up for the cover
 	if (lf) fprintf(lf, "TEa.G3 update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
 	                sig ? upd.version : "?", TEAG3_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
 	free(t), free(g);
+	background_work_end(&update_busy);
 }
 
 static u8 loader_stack[0x20000] __attribute__((aligned(16)));
@@ -1490,11 +1647,6 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	scan_cards();
 	ee_sema_t sema = { .init_count = 0, .max_count = 1 };
 	icon_sema = CreateSema(&sema);
-	ee_thread_t it = { .func = icon_thread, .stack = icon_stack, .stack_size = sizeof(icon_stack), .gp_reg = &_gp,
-	                   .initial_priority = 0x40 };
-	int itid = icon_sema >= 0 ? CreateThread(&it) : -1;
-	if (itid >= 0) StartThread(itid, NULL);
-	if (itid >= 0 && stub_install) SignalSema(icon_sema); // install the IGR boot stub in the background
 	if (usb && ra_on) ra_sema = CreateSema(&sema);        // selections wait here until the covers are done
 	stage = 2;
 	clock_t c0 = clock();
@@ -1510,8 +1662,18 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	FILE *lf = usb ? fopen(LOG_TXT, "a") : NULL; // the toast is gone after a few seconds
 	if (lf) fprintf(lf, "TEa.G3 games: %d in %d ms, sources %d%s%s (me %s, net %d %s)\n", ncv, load_ms, nsrc,
 	                src_why ? ": " : "", src_why ? src_why : "", net_ip(), net_res, net_why), fclose(lf);
-	stage = 3;
 	cover_lock = CreateSema(&(ee_sema_t){ .init_count = 1, .max_count = 1 });
+	catalog_guard_ps2_context_init(&catalog_live_context);
+	if (catalog_guard_ps2_init(&catalog_live_guard, &catalog_live_context)) {
+		catalog_live_ready = 1;
+		printf("catalog guard: reader/activity gate ready; live monitor remains disabled\n");
+	} else printf("catalog guard: unavailable; live monitor remains disabled\n");
+	stage = 3;
+	ee_thread_t it = { .func = icon_thread, .stack = icon_stack, .stack_size = sizeof(icon_stack), .gp_reg = &_gp,
+	                   .initial_priority = 0x40 };
+	int itid = cover_lock >= 0 && icon_sema >= 0 ? CreateThread(&it) : -1;
+	if (itid >= 0) StartThread(itid, NULL);
+	if (itid >= 0 && stub_install) SignalSema(icon_sema); // install the IGR boot stub in the background
 	cover_sema = CreateSema(&sema);
 	// above the loader (0x40): equal priorities never time-slice on the EE, and the loader's HTTPS (covers, achievements)
 	// and game hashing kept the covers on screen waiting; it mostly waits on the USB, so it costs the others little
@@ -1531,15 +1693,21 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 		if (!upd_left) WaitSema(ra_sema);
 		else if (PollSema(ra_sema) < 0) { upd_left = 0, update_check(); continue; } // nothing asked: check now
 		int v = vmc_net_want, port; // a server game's card and save icon (phase 20)
-		if (v >= 0 && !ra_launching) {
-			vmc_net_want = -1, ra_busy = 1, vmc_load(v), vmc_state[v] = 2;
+		if (v >= 0 && background_work_begin(&ra_busy)) {
+			vmc_net_want = -1, vmc_load(v), vmc_state[v] = 2;
 			if (newest_save(v, &port)) gicon_state[v] = 1, gicon[v] = load_icon(v), gicon_state[v] = 2;
-			ra_busy = 0;
+			background_work_end(&ra_busy);
 		}
 		int l = ra_list_want; // the Logros panel first: the user is looking at it
-		if (l >= 0 && !ra_abort && !ra_launching) ra_list_want = -1, ra_busy = 1, ra_load_list(l), ra_busy = 0;
+		if (l >= 0 && !ra_abort && background_work_begin(&ra_busy)) {
+			ra_list_want = -1, ra_load_list(l);
+			background_work_end(&ra_busy);
+		}
 		int i = ra_want;
-		if (i >= 0 && !ra_state[i] && !ra_abort && !ra_launching) ra_busy = 1, ra_state[i] = 1, ra_state[i] = ra_game(i), ra_busy = 0;
+		if (i >= 0 && !ra_state[i] && !ra_abort && background_work_begin(&ra_busy)) {
+			ra_state[i] = 1, ra_state[i] = ra_game(i);
+			background_work_end(&ra_busy);
+		}
 	}
 	ExitThread();
 }
@@ -1778,14 +1946,24 @@ static void draw_cover(int i)
 	if (b->a < 0.01f || w < 8 || x + w + 60 < 0 || x - 60 > GFX_W || y > GFX_H || y + h < 0) return;
 	if (b->f > 0.01f) T->sel(x, y, w, h, b->f * b->a, 0); // what the theme puts behind the cover in focus
 	gfx_alpha((int)(0x80 * b->a));
-	cover_seen[i] = frame_n;
-	void *im[3] = {cv[i].half, cv[i].small, cv[i].big};
+	void *im[3] = {NULL, NULL, NULL};
 	int sq = sq_e(&cv[i]);
 	const short iw[3] = {COVER_HW, SW, LW}, ih[3] = {COVER_TALL(sq, COVER_HW, COVER_HH), COVER_TALL(sq, SW, SH), COVER_TALL(sq, LW, LH)};
 	// the smallest image not below the size: pixel-exact at rest, bilinear moving (no mipmaps: never minify past 2x)
-	int k = w > SW ? 2 : w > COVER_HW ? 1 : 0;
-	if (i && cover_sema >= 0 && !im[k] && !((cover_done[i] | cover_req[i]) & 1 << k))
-		cover_req[i] |= 1 << k, SignalSema(cover_sema); // coalesced: max_count 1
+	int k = w > SW ? 2 : w > COVER_HW ? 1 : 0, request_bit = 0;
+	if (cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
+		cover_seen[i] = frame_n;
+		im[0] = cv[i].half, im[1] = cv[i].small, im[2] = cv[i].big;
+		if (i && cover_sema >= 0 && !im[k] && !((cover_done[i] | cover_req[i]) & 1 << k)) {
+			request_bit = 1 << k;
+			cover_req[i] |= request_bit;
+		}
+		if (SignalSema(cover_lock) < 0) im[0] = im[1] = im[2] = NULL, request_bit = 0;
+	}
+	if (request_bit && SignalSema(cover_sema) < 0 && cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
+		cover_req[i] &= ~request_bit;
+		(void)SignalSema(cover_lock);
+	}
 	for (int j = 2; !im[k] && j >= 0; j--) k = j; // not read (yet): the biggest one there is
 	if (!im[k]) generic_cover(i, x, y, w, h, (int)(0x80 * b->a));
 	else {
@@ -2463,15 +2641,15 @@ static void run_loader_recover(int argc, char **argv)
 
 static char self_path[128]; // this ELF as it was started (argv[0]), for restart_self
 
-static void restart_self(void) // the setup wizard saved (#15): start TEa.G3 again, as launch() leaves for an app
+static int restart_self(void) // the setup wizard saved (#15): start TEa.G3 again, as launch() leaves for an app
 {
 	char *argv[2] = {self_path, ""};
-	ra_launching = 1, ra_abort = 1;
-	for (int t = 0; t < 150 && ra_busy; t++) usleep(10000);
-	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down();
+	if (!background_quiesce()) return 0;
+	net_down();
 	if (disc_tid >= 0) TerminateThread(disc_tid);
 	gfx_shutdown();
 	run_loader_recover(2, argv);
+	return 1;
 }
 
 // a server app (catalog APPS/): its ELF is fetched over HTTP into the current data folder as red.elf. NULL or why not
@@ -2520,11 +2698,10 @@ static void launch(int i)
         gfx_tracking(3); text_c(&gfx_font_mono, 400, L("STARTING GAME"), LABEL); gfx_tracking(0);
         gfx_end(); gfx_flip();
     }
-    ra_launching = 1; ra_abort = 1;
-    for (int t = 0; t < 150 && ra_busy; t++) usleep(10000);
     static char file[200], arg0[200];
     if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
-    if (dl_state != 1 && dl_state != 2) net_down();
+    if (!background_quiesce()) { launch_err = L("Background work is still active; try again"); return; }
+    net_down();
     if (disc_tid >= 0) TerminateThread(disc_tid);
     if (cv[i].kind == K_DISC) {
         char *a[2] = {cv[i].boot, "???"};
@@ -2637,9 +2814,15 @@ int main(int argc, char *argv[])
 	char text[1536];
 
 	for (int f = 0;; f++) {
+		/* A future candidate apply belongs here, before this frame's reader lease. */
+		if (!catalog_reader_try_begin()) { usleep(1000); continue; }
 		unsigned b = pad_buttons(), pressed = b & ~prev;
 		prev = b;
-		frame_n++;
+		if (cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
+			frame_n++;
+			(void)SignalSema(cover_lock);
+		}
+		background_resume_if_idle();
 		if (pressed & (PAD_L2 | PAD_R2) && (b & (PAD_L2 | PAD_R2)) == (PAD_L2 | PAD_R2)) { // blind fallback: 720p <-> 480i/576i for composite AV and legacy TVs
 			gfx_crt(crt ^= 1);
 			ini_set(&cfg, "video", "pantalla", crt ? "480i" : "720p");
@@ -2668,7 +2851,11 @@ int main(int argc, char *argv[])
 		if (wiz >= 0) { // setup wizard owns the pad until ○ / Save (#15)
 			if (w_done == 2) { // saved: TEa.G3 starts again only if the sources or the network changed
 				if (w_quiet) wiz = -1, toast = 180, toast_msg = L("Setup saved");
-				else if (pressed & PAD_CROSS) { if (w_restart) restart_self(); else wiz = -1, play(S_PANEL, 70); }
+				else if (pressed & PAD_CROSS) {
+					if (w_restart) {
+						if (!restart_self()) toast = 180, toast_msg = L("Background work is still active; try again");
+					} else wiz = -1, play(S_PANEL, 70);
+				}
 			}
 			else if (w_job != 2) {
 				if (pressed & PAD_DOWN) { if (wiz < W_ROWS - 1) wiz++, play(S_MOVE, 70); else play(S_EDGE, 80); }
@@ -2775,6 +2962,7 @@ int main(int argc, char *argv[])
 		build[n] = to_us(cycles() - t0);
 
 		gfx_flip();
+		catalog_reader_end();
 		u32 now = cycles();
 		if (n > 0 && to_us(now - last_vsync) > FRAME_US * 3 / 2) missed++; // n == 0: gap includes the file write
 		last_vsync = now;

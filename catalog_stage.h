@@ -51,11 +51,12 @@ int catalog_stage_snapshot_find(const catalog_stage_snapshot *snapshot,
                                 uint8_t source_type, uint8_t source_unit,
                                 uint8_t kind, const char *path);
 
-typedef void (*catalog_guard_lock_fn)(void *context);
+typedef int (*catalog_guard_lock_fn)(void *context); /* nonzero only when the lock was acquired */
+typedef int (*catalog_guard_unlock_fn)(void *context); /* nonzero only when unlocked */
 
 typedef struct {
     catalog_guard_lock_fn lock;
-    catalog_guard_lock_fn unlock;
+    catalog_guard_unlock_fn unlock;
     void *lock_context;
     unsigned readers;
     unsigned char playing;
@@ -70,7 +71,8 @@ typedef struct {
 
 /* The caller supplies a real mutex/semaphore pair. Every guard API is serialized by it. */
 int catalog_guard_init(catalog_guard *guard, catalog_guard_lock_fn lock,
-                       catalog_guard_lock_fn unlock, void *lock_context);
+                       catalog_guard_unlock_fn unlock, void *lock_context);
+/* Read-only active-snapshot leases may coexist with an inactive candidate scan. */
 int catalog_guard_read_begin(catalog_guard *guard);
 int catalog_guard_read_end(catalog_guard *guard);
 int catalog_guard_can_scan(catalog_guard *guard);
@@ -78,6 +80,7 @@ int catalog_guard_scan_begin(catalog_guard *guard);
 int catalog_guard_scan_cancelled(catalog_guard *guard);
 /* Returns 1 only for a completed, non-cancelled scan; 0 means discard its candidate. */
 int catalog_guard_scan_end(catalog_guard *guard);
+/* Returns 0 while a cancelled scan/download is still draining; retry before starting activity. */
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy);
 /* Downloads are exclusive with scans/applies and must poll cancellation while active. */
 int catalog_guard_can_download(catalog_guard *guard);

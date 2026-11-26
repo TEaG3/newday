@@ -59,5 +59,18 @@ class OplOnlyArchitectureTests(unittest.TestCase):
         self.assertIn("GRAPH_MODE_INTERLACED", self.gfx)
         self.assertIn("GRAPH_MODE_HDTV_720P", self.gfx)
 
+    def test_catalog_readers_and_background_workers_are_quiesced_before_iop_reset(self):
+        self.assertIn('#include "catalog_guard_ps2.h"', self.launcher)
+        self.assertIn("catalog_reader_try_begin()", self.launcher)
+        self.assertIn("catalog_reader_end();", self.launcher)
+        self.assertIn("static int background_quiesce(void)", self.launcher)
+        self.assertIn("background_work_begin(&cover_busy)", self.launcher)
+        self.assertIn("background_work_begin(&art_busy)", self.launcher)
+        self.assertIn("background_work_begin(&dl_busy)", self.launcher)
+        launch_start = self.launcher.index("static void launch(int i)")
+        gate = self.launcher.index("background_quiesce()", launch_start)
+        handoff = self.launcher.index("run_loader_recover", launch_start)
+        self.assertLess(gate, handoff)
+
 if __name__ == "__main__":
     unittest.main()
