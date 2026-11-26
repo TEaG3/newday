@@ -2740,7 +2740,7 @@ static const char *app_fetch(int i, char *file, int n)
 	for (int t = 0; t < 500 && (dl_state == 1 || dl_state == 2); t++) usleep(20000); // covers stop (ra_launching)
 	if (dl_state == 1 || dl_state == 2) return L("Covers still downloading: try again");
 	static char why[96];
-	if (!cv[i].size || cv[i].size > 0x7ffff000u)
+	if (!cv[i].size || cv[i].size >= 0x7ffff000u)
 		return snprintf(why, sizeof(why), L("The server did not send the app (%s)"), "invalid catalogue size"), why;
 	int max = (int)cv[i].size + 4096, body = -1, len = -1, st = 0;
 	char *buf = malloc((size_t)max), path[180];
