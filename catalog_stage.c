@@ -568,6 +568,7 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
     }
 
     /* apply_pending blocks new readers; try_apply waits for existing leases to drain. */
+    /* try_apply conflates busy and lock failure; the second guarded read detects the latter. */
     if (!catalog_guard_try_apply(guard)) {
         /* try_apply is a boolean gate; probe the guard once more to distinguish
            an ordinary busy state from a failed lock/semaphore operation. */
