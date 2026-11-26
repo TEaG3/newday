@@ -396,6 +396,15 @@ static void test_staged_scan_builder(void)
     fixture.guard = &guard;
     fixture.cancel_at = -1;
     fixture.error_at = -1;
+    fixture.count = 1;
+    memset(fixture.records[0].path, 'X', sizeof(fixture.records[0].path)); /* no terminator */
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_RECORD);
+    assert(candidate.count == 0);
+
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = -1;
+    fixture.error_at = -1;
     fixture.count = 2;
     set_record(&fixture.records[0], 1, 0, 1, "DVD/Duplicate.iso", 10, 11);
     set_record(&fixture.records[1], 1, 0, 1, "DVD/Duplicate.iso", 20, 22);
