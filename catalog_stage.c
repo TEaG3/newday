@@ -568,8 +568,13 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
     }
 
     /* apply_pending blocks new readers; try_apply waits for existing leases to drain. */
-    if (!catalog_guard_try_apply(guard))
+    if (!catalog_guard_try_apply(guard)) {
+        /* try_apply is a boolean gate; probe the guard once more to distinguish
+           an ordinary busy state from a failed lock/semaphore operation. */
+        if (catalog_guard_scan_cancelled(guard) < 0)
+            return CATALOG_STAGE_ERR_GUARD;
         return CATALOG_STAGE_ERR_BUSY;
+    }
 
     previous = *active;
     *active = *candidate;

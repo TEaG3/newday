@@ -154,6 +154,30 @@ int main(void)
     assert(!catalog_guard_ps2_destroy(&guard, &context));
     assert(catalog_guard_cancel_apply(&guard));
 
+    /* The snapshot pointer swap must work through the real PS2 semaphore adapter. */
+    {
+        catalog_stage_snapshot active_snapshot, candidate_snapshot;
+        catalog_stage_snapshot *active = &active_snapshot;
+        catalog_stage_snapshot *candidate = &candidate_snapshot;
+        memset(&active_snapshot, 0, sizeof(active_snapshot));
+        memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
+        active_snapshot.count = 1;
+        active_snapshot.records[0].source_type = 1;
+        active_snapshot.records[0].kind = 1;
+        snprintf(active_snapshot.records[0].path,
+                 sizeof(active_snapshot.records[0].path), "DVD/Old.iso");
+        candidate_snapshot.count = 1;
+        candidate_snapshot.records[0].source_type = 1;
+        candidate_snapshot.records[0].kind = 1;
+        snprintf(candidate_snapshot.records[0].path,
+                 sizeof(candidate_snapshot.records[0].path), "DVD/New.iso");
+        assert(catalog_guard_request_apply(&guard));
+        assert(catalog_stage_snapshot_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+        assert(active == &candidate_snapshot && candidate == &active_snapshot);
+        assert(strcmp(active->records[0].path, "DVD/New.iso") == 0);
+        assert(strcmp(candidate->records[0].path, "DVD/Old.iso") == 0);
+    }
+
     assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(!catalog_guard_ps2_destroy(&guard, &context));
     assert(catalog_guard_set_activity(&guard, 0, 0));
