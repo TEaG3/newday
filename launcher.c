@@ -1072,7 +1072,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 		printf("catalog snapshot: rejected (%d); live refresh remains disabled\n", snapshot_status);
 	} else {
 		printf("catalog snapshot: %u stable source keys captured; live refresh remains disabled\n",
-		       (unsigned)catalog_active_snapshot.count);
+		       (unsigned)snapshot->count);
 	}
 	return n;
 }
