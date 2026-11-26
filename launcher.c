@@ -646,12 +646,18 @@ static void cover_thread(void *arg) // woken by draw_cover
 {
 	(void)arg;
 	for (;;) {
-		WaitSema(cover_sema);
-		if (!background_work_begin(&cover_busy)) continue;
+		if (cover_sema < 0 || WaitSema(cover_sema) < 0) { ExitThread(); return; }
+		if (!background_work_begin(&cover_busy)) {
+			if (ra_launching && cover_sema >= 0) SignalSema(cover_sema), usleep(10000);
+			continue;
+		}
 		for (int i = 1; i < ncv && !ra_launching; i++) {
+			if (cover_lock < 0 || WaitSema(cover_lock) < 0) break;
 			int b = cover_req[i];
-			if (!b) continue;
-			if (cover_seen[i] < frame_n - 2) { cover_req[i] = 0; continue; } // scrolled past: asked again if drawn
+			int stale = b && cover_seen[i] < frame_n - 2;
+			if (stale) cover_req[i] = 0; // scrolled past: asked again if drawn
+			if (SignalSema(cover_lock) < 0) { ExitThread(); return; }
+			if (!b || stale) continue;
 			void *im[3] = {NULL, NULL, NULL};
 			char path[160];
 			const char *id = *cv[i].serial ? cv[i].serial : cv[i].title; // apps: covers/<title>.c16 (no serial)
@@ -2086,14 +2092,24 @@ static void draw_cover(int i)
 	if (b->a < 0.01f || w < 8 || x + w + 60 < 0 || x - 60 > GFX_W || y > GFX_H || y + h < 0) return;
 	if (b->f > 0.01f) T->sel(x, y, w, h, b->f * b->a, 0); // what the theme puts behind the cover in focus
 	gfx_alpha((int)(0x80 * b->a));
-	cover_seen[i] = frame_n;
-	void *im[3] = {cv[i].half, cv[i].small, cv[i].big};
+	void *im[3] = {NULL, NULL, NULL};
 	int sq = sq_e(&cv[i]);
 	const short iw[3] = {COVER_HW, SW, LW}, ih[3] = {COVER_TALL(sq, COVER_HW, COVER_HH), COVER_TALL(sq, SW, SH), COVER_TALL(sq, LW, LH)};
 	// the smallest image not below the size: pixel-exact at rest, bilinear moving (no mipmaps: never minify past 2x)
-	int k = w > SW ? 2 : w > COVER_HW ? 1 : 0;
-	if (i && cover_sema >= 0 && !im[k] && !((cover_done[i] | cover_req[i]) & 1 << k))
-		cover_req[i] |= 1 << k, SignalSema(cover_sema); // coalesced: max_count 1
+	int k = w > SW ? 2 : w > COVER_HW ? 1 : 0, request_bit = 0;
+	if (cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
+		cover_seen[i] = frame_n;
+		im[0] = cv[i].half, im[1] = cv[i].small, im[2] = cv[i].big;
+		if (i && cover_sema >= 0 && !im[k] && !((cover_done[i] | cover_req[i]) & 1 << k)) {
+			request_bit = 1 << k;
+			cover_req[i] |= request_bit;
+		}
+		if (SignalSema(cover_lock) < 0) im[0] = im[1] = im[2] = NULL, request_bit = 0;
+	}
+	if (request_bit && SignalSema(cover_sema) < 0 && cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
+		cover_req[i] &= ~request_bit;
+		(void)SignalSema(cover_lock);
+	}
 	for (int j = 2; !im[k] && j >= 0; j--) k = j; // not read (yet): the biggest one there is
 	if (!im[k]) generic_cover(i, x, y, w, h, (int)(0x80 * b->a));
 	else {
@@ -3172,7 +3188,10 @@ int main(int argc, char *argv[])
 	for (int f = 0;; f++) {
 		unsigned b = pad_buttons(), pressed = b & ~prev;
 		prev = b;
-		frame_n++;
+		if (cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
+			frame_n++;
+			(void)SignalSema(cover_lock);
+		}
 		background_resume_if_idle();
 		if (pressed & (PAD_L2 | PAD_R2) && (b & (PAD_L2 | PAD_R2)) == (PAD_L2 | PAD_R2)) { // blind: 720p <-> 480i
 			gfx_crt(crt ^= 1);
