@@ -69,6 +69,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("src[source_index].type", capture)
         self.assertIn("src[source_index].unit", capture)
         self.assertIn("ul_name_crc32(item->ul_name)", capture)
+        self.assertIn("if (item->engine != ENGINE_OPL_UL)", capture)
         self.assertIn("catalog_stage_snapshot_append(snapshot, &record)", capture)
         self.assertIn("catalog_stage_snapshot_validate(snapshot)", capture)
 

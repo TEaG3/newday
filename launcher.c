@@ -743,7 +743,8 @@ static int ul_part_exists(void *context, const char *filename)
     s64 size = fileXioLseek64(fd, 0, FIO_SEEK_END);
     int closed = fileXioClose(fd);
     if (size <= 0 || closed < 0) return 0;
-    if (parts->total_size > 0xffffffffULL - (unsigned long long)size)
+    if ((unsigned long long)size > 0xffffffffULL ||
+        parts->total_size > 0xffffffffULL - (unsigned long long)size)
         parts->total_size = 0xffffffffULL;
     else
         parts->total_size += (unsigned long long)size;
@@ -1053,7 +1054,8 @@ static uint32_t catalog_entry_fingerprint(const entry *item)
     uint32_t hash = 2166136261u;
     hash = catalog_fingerprint_bytes(hash, item->title, strlen(item->title) + 1u);
     hash = catalog_fingerprint_bytes(hash, item->serial, strlen(item->serial) + 1u);
-    hash = catalog_fingerprint_bytes(hash, item->path, strlen(item->path) + 1u);
+    if (item->engine != ENGINE_OPL_UL)
+        hash = catalog_fingerprint_bytes(hash, item->path, strlen(item->path) + 1u);
     hash = catalog_fingerprint_bytes(hash, item->boot, strlen(item->boot) + 1u);
     hash = catalog_fingerprint_bytes(hash, item->hash, strlen(item->hash) + 1u);
     hash = catalog_fingerprint_bytes(hash, item->ul_name, sizeof(item->ul_name));
