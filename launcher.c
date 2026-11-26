@@ -111,7 +111,8 @@ typedef struct {
 	char hash[33];
 	char ul_name[UL_NAME_SIZE + 1];                   // exact fixed-width UL name used by OPL's CRC
 	char kind, cd, disc, src, engine, parts;
-	unsigned size;
+	unsigned size; /* downloadable application size */
+	uint64_t catalog_size; /* validated local image size in bytes */
 	u32 hdl_start_sector, hdl_size_kb, hdl_disc_type;
 	void *big, *small, *half;
 } entry;
@@ -824,6 +825,7 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 PO
         item->kind = ps1 ? K_PS1 : K_PS2;
         item->cd = k == 1;
         item->src = s;
+        item->catalog_size = (uint64_t)bytes;
         n++;
     }
     closedir(d);
@@ -973,7 +975,7 @@ static int catalog_snapshot_capture(const entry *items, int count,
         record.kind = (uint8_t)item->kind;
         record.flags = (uint8_t)((item->cd ? 1u : 0u) |
                                  ((unsigned char)item->engine << 1));
-        record.size = item->size;
+        record.size = item->catalog_size ? item->catalog_size : item->size;
         record.fingerprint = catalog_entry_fingerprint(item);
 
         if (item->kind == K_DISC) {
@@ -985,8 +987,11 @@ static int catalog_snapshot_capture(const entry *items, int count,
                 return CATALOG_STAGE_ERR_ARGUMENT;
             record.source_type = (uint8_t)src[source_index].type;
             record.source_unit = (uint8_t)src[source_index].unit;
-            if (src[source_index].type == SRC_HDL) record.flags |= 0x40u; /* size is KiB */
-            if (!item->size) record.flags |= 0x80u; /* size unavailable: compare validated metadata */
+            if (src[source_index].type == SRC_HDL) {
+                record.flags |= 0x40u; /* size is KiB */
+                record.size = item->hdl_size_kb;
+            }
+            if (!record.size) record.flags |= 0x80u; /* size unavailable: compare validated metadata */
             if (item->engine == ENGINE_OPL_UL) {
                 /* ul.cfg row numbers move when records are reordered; the OPL name CRC + startup is stable. */
                 path_length = snprintf(record.path, sizeof(record.path), "UL/%08X/%s",
