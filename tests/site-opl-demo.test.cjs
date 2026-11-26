@@ -18,7 +18,7 @@ const themeEditorSource = read("site/themes.js");
 assert.doesNotMatch(themeEditorSource, /\\.innerHTML\\s*=|\\.outerHTML\\s*=|insertAdjacentHTML/);
 assert.match(themeEditorSource, /textContent = label/);
 assert.match(themeEditorSource, /textContent = message/);
-assert.match(themeEditorSource, /replaceChildren\\(\\)/);
+assert.ok(themeEditorSource.includes("list.replaceChildren();"));
 const runtimeSources = ["i18n.js", "opl-demo.js", "release.js", "themes.js"].map(name => read("site/" + name)).join(" ");
 assert.match(runtimeSources, /tea-g3:languagechange/);
 assert.doesNotMatch(runtimeSources, /nuld:languagechange/);
