@@ -184,9 +184,10 @@ static void test_download_gate(void)
     assert(catalog_guard_finish_apply(&guard));
 
     assert(catalog_guard_download_begin(&guard));
-    assert(catalog_guard_set_activity(&guard, 0, 1));
+    assert(!catalog_guard_set_activity(&guard, 0, 1)); /* storage I/O waits for the cancelled download */
     assert(catalog_guard_download_cancelled(&guard));
     assert(catalog_guard_download_end(&guard));
+    assert(catalog_guard_set_activity(&guard, 0, 1));
     assert(!catalog_guard_download_begin(&guard));
     assert(catalog_guard_set_activity(&guard, 0, 0));
     assert(catalog_guard_can_download(&guard));
