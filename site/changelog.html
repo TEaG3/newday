@@ -28,6 +28,21 @@
     <p>Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.</p>
   </header>
 
+  <section class="chapter" id="current-opl-only">
+    <header><b>Current</b><h2 class="mono">OPL-only integration state · 2026-11-26 · unreleased</h2></header>
+    <div>
+      <p>The following is the current integration state; it is not a published release.</p>
+      <ul>
+        <li>OPL is the only PS2 game engine. The Neutrino runtime, ELF, loader and IOP/EE modules are not included.</li>
+        <li>The Neutrino IGR overlay's visual design and Arabic bitmap generator are preserved under <code>ui/neutrino-igr/</code> as a UI-only reference. They are not linked or active; OPL IGR uses START+SELECT to return to TEa.G3 and R3+L3 to power off.</li>
+        <li>USB ISO/ZSO and USBExtreme UL have automated route tests. Real PS2 game boot and sustained-read tests are still pending.</li>
+        <li>ATA HDD, HD Loader, MX4SIO and iLink require hardware acceptance. SMB/UDPBD/UDPFS game streaming and MMCE game launching remain disabled; the optional server is only for downloadable apps and cover metadata.</li>
+        <li>The current build uses the physical memory card only. The old VMC panel and in-game achievement notifications are not enabled.</li>
+        <li>CI validates OPL compilation, the embedded runtime manifest, package integrity and host-side source tests; it does not prove game playback.</li>
+      </ul>
+    </div>
+  </section>
+
   <section class="chapter" id="v1.3.3">
     <header><b>1.3.3</b><h2 class="mono">2026-11-24 · <a href="https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.3">candidate package</a></h2></header>
     <div>
