@@ -119,7 +119,7 @@ class LauncherHandoffTests(unittest.TestCase):
         begin = body.index("background_work_begin(&disc_busy)")
         end_work = body.rindex("background_work_end(&disc_busy)")
         work = body[begin:end_work]
-        for operation in ("disc_state(sceCdGetDiskType())", "sceCdDiskReady(0)",
+        for operation in ("sceCdInit(SCECdINoD)", "disc_state(sceCdGetDiskType())", "sceCdDiskReady(0)",
                           "disc_cnf(cnf, sizeof(cnf))", "cv[i].serial",
                           "cv[i].title", "load_covers(d)"):
             self.assertIn(operation, work)
