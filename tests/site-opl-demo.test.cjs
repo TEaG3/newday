@@ -14,6 +14,11 @@ assert.ok(releaseSource.includes("The release asset URL is outside the trusted r
 assert.ok(releaseSource.includes("a.href = downloadUrl;"));
 assert.ok(releaseSource.includes("https:\\/\\/github\\.com\\/TEaG3\\/newday\\/releases\\/download"));
 assert.ok(releaseSource.includes("TEa\\.G3-Complete-Package\\.zip$/i"));
+const themeEditorSource = read("site/themes.js");
+assert.doesNotMatch(themeEditorSource, /\\.innerHTML\\s*=|\\.outerHTML\\s*=|insertAdjacentHTML/);
+assert.match(themeEditorSource, /textContent = label/);
+assert.match(themeEditorSource, /textContent = message/);
+assert.match(themeEditorSource, /replaceChildren\\(\\)/);
 const runtimeSources = ["i18n.js", "opl-demo.js", "release.js", "themes.js"].map(name => read("site/" + name)).join(" ");
 assert.match(runtimeSources, /tea-g3:languagechange/);
 assert.doesNotMatch(runtimeSources, /nuld:languagechange/);
