@@ -178,6 +178,37 @@ int main(void)
         assert(strcmp(candidate->records[0].path, "DVD/Old.iso") == 0);
     }
 
+    /* Item, sidecar, count and snapshot slots move together through the PS2 semaphore adapter. */
+    {
+        catalog_stage_snapshot old_snapshot, new_snapshot;
+        int old_items[1] = {1}, new_items[1] = {2};
+        int old_sidecars[1] = {10}, new_sidecars[1] = {20};
+        catalog_stage_bundle active_bundle, candidate_bundle;
+        memset(&old_snapshot, 0, sizeof(old_snapshot));
+        memset(&new_snapshot, 0, sizeof(new_snapshot));
+        old_snapshot.count = 1;
+        old_snapshot.records[0].source_type = 1;
+        old_snapshot.records[0].kind = 1;
+        snprintf(old_snapshot.records[0].path, sizeof(old_snapshot.records[0].path), "DVD/Old.iso");
+        new_snapshot.count = 1;
+        new_snapshot.records[0].source_type = 1;
+        new_snapshot.records[0].kind = 1;
+        snprintf(new_snapshot.records[0].path, sizeof(new_snapshot.records[0].path), "DVD/New.iso");
+        active_bundle.items = old_items;
+        active_bundle.sidecars = old_sidecars;
+        active_bundle.count = 1;
+        active_bundle.snapshot = &old_snapshot;
+        candidate_bundle.items = new_items;
+        candidate_bundle.sidecars = new_sidecars;
+        candidate_bundle.count = 1;
+        candidate_bundle.snapshot = &new_snapshot;
+        assert(catalog_guard_request_apply(&guard));
+        assert(catalog_stage_bundle_publish(&guard, &active_bundle, &candidate_bundle) == CATALOG_STAGE_OK);
+        assert(active_bundle.items == new_items && active_bundle.sidecars == new_sidecars);
+        assert(candidate_bundle.items == old_items && candidate_bundle.sidecars == old_sidecars);
+        assert(active_bundle.snapshot == &new_snapshot && candidate_bundle.snapshot == &old_snapshot);
+    }
+
     assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(!catalog_guard_ps2_destroy(&guard, &context));
     assert(catalog_guard_set_activity(&guard, 0, 0));
