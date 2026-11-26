@@ -35,7 +35,7 @@ assert.ok(pagesWorkflow.includes("GITHUB_RUN_ID}/artifacts?per_page=100"));
 assert.ok(pagesWorkflow.includes("sleep 5"), "Pages deploy must wait for artifact metadata propagation");
 assert.ok(pagesWorkflow.includes("Archive site for GitHub Pages"));
 assert.doesNotMatch(pagesWorkflow, /upload-pages-artifact/);
-const releaseFallback = "https://github.com/TEaG3/newday/releases/download/arabic-v1.3.6/TEa.G3-Complete-Package.zip";
+const releaseFallback = "https://github.com/TEaG3/newday/releases/download/arabic-v1.3.7/TEa.G3-Complete-Package.zip";
 for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
   const html = fs.readFileSync(path.join(__dirname, "../site", page), "utf8");
   assert.ok(html.includes(releaseFallback), page + " must have the current verified package as its no-JS fallback");
