@@ -40,6 +40,11 @@
         return /^TEa\.G3-Complete-Package\.zip$/i.test(asset.name || "");
       });
       if (!zip || !zip.browser_download_url) return Promise.reject("The current package asset is missing");
+      // Only navigate to this repository's release asset; never trust arbitrary API-provided URLs.
+      var downloadUrl = String(zip.browser_download_url);
+      if (!/^https:\/\/github\\.com\/TEaG3\/newday\/releases\/download\/[^/?#]+\/TEa\\.G3-Complete-Package\\.zip$/i.test(downloadUrl)) {
+        return Promise.reject("The release asset URL is outside the trusted repository");
+      }
 
       var v = String(rel.tag_name || "").replace(/^(arabic-)?v?/i, "");
       document.querySelectorAll("[data-version]").forEach(function (el) {
@@ -47,7 +52,7 @@
         if (v && template) el.textContent = template.replace("{v}", v);
       });
       document.querySelectorAll("[data-zip]").forEach(function (a) {
-        a.href = zip.browser_download_url;
+        a.href = downloadUrl;
         a.setAttribute("download", zip.name);
       });
       document.querySelectorAll("[data-zip-name]").forEach(function (el) { el.textContent = zip.name; });
