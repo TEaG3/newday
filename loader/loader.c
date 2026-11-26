@@ -29,7 +29,9 @@ int main(int argc, char *argv[])
 	// Crucial: do not erase the launcher's main memory until the target ELF has loaded successfully.
 	// A missing/corrupt ELF therefore fails before the destructive hand-off boundary.
 	if (r != 0 || !elf.epc) { SifExitRpc(); return -2; }
-	for (u32 a = 0x100000; a < (u32)GetMemorySize(); a += 16) *(volatile u128 *)a = 0;
+	/* SifLoadElf has already copied the target PT_LOAD segments into EE user RAM,
+	   normally starting at 0x00100000. Clearing this range now would erase the
+	   executable we just loaded. Leave the target image intact for ExecPS2. */
 	FlushCache(0);
 	/* The second-stage contract reserves argv[0] for the ELF path and passes argv[1..] to the target.
 	   An empty first target argument is replaced with the ELF path for the legacy POPStarter convention;
