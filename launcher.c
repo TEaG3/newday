@@ -851,13 +851,6 @@ static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4
 static ini cfg;               // tentative: defined with the config below
 static const char *src_why;
 
-static int ipv4_text(const char *s)
-{
-	unsigned a, b, c, d;
-	char tail;
-	return s && sscanf(s, "%u.%u.%u.%u%c", &a, &b, &c, &d, &tail) == 4 &&
-	       a <= 255 && b <= 255 && c <= 255 && d <= 255;
-}
 
 static int exists(const char *path);
 
@@ -1333,26 +1326,6 @@ static int game_mc(int i) { (void)i; return MC_REAL; }
 static int game_compat(int i) { return atoi(ini_get(&games, cv[i].serial, "compat", "0")) & 3; }
 static int game_gc(int i, int k) { return strchr(ini_get(&games, cv[i].serial, "gc", ""), gc_modes[k]) != NULL; }
 
-static void opt_change(int i, int row, int dir)
-{
-	const char *s = cv[i].serial;
-	char v[8];
-	if (row == OPT_VIDEO) ini_set(&games, s, "video", vid_key[(game_vid(i) + dir + 4) % 4]); // NULL = default
-	else if (row == OPT_MC) {
-		if (src[(int)cv[i].src].type != SRC_HDL) ini_set(&games, s, "mc", mc_key[(game_mcv(i) + dir + MC_N) % MC_N]);
-	}
-	else if (row == OPT_COMPAT) {
-		int c = (game_compat(i) + dir + 4) % 4;
-		snprintf(v, sizeof(v), "%d", c);
-		ini_set(&games, s, "compat", c ? v : NULL);
-	} else {
-		int n = 0;
-		for (int k = 0; k < 5; k++)
-			if (game_gc(i, k) != (k == row - OPT_GC)) v[n++] = gc_modes[k];
-		v[n] = 0;
-		ini_set(&games, s, "gc", n ? v : NULL);
-	}
-}
 
 static void opt_value(int i, int row, char *out, int n)
 {
@@ -2174,7 +2147,7 @@ static int w_fmcb_card(void) // the FREEMCB.CNF to edit: the chosen card's, else
 static void wiz_open(void)
 {
 	const char *o = ini_get(&cfg, "juegos", "origen", "usb"), *ip = ini_get(&cfg, "red", "ip", "dhcp");
-	const char *motor = ini_get(&cfg, "juegos", "motor", "opl");
+
 	memset(w_val, 0, sizeof(w_val));
 	w_val[W_LANG] = lang, w_val[W_THEME] = theme_id, w_val[W_SRC] = src_mask(o), w_val[W_VIDEO] = 0, w_val[W_MC] = 0, w_val[W_CARD] = mcn[0] >= 0 ? 0 : mcn[1] >= 0 ? 1 : -1;
 	w_val[W_ENGINE] = 0;
@@ -2906,7 +2879,7 @@ int main(int argc, char *argv[])
 
 	static u32 build[WINDOW];
 	u32 med = 0, max = 0, missed = 0, win_missed = 0, windows = 0, last_vsync = 0;
-	int sel = 0, n = 0, idle = 0, overlay = 0, toast = 0, opt = -1, opt_mc = 0, switching = 0, booted = 0;
+	int sel = 0, n = 0, idle = 0, overlay = 0, toast = 0, opt = -1, switching = 0, booted = 0;
 	static char why_sel[160];
 	if (src_why) toast = 300, toast_msg = why_sel, // a source that did not come up (phase 14); SELECT lists them all (#4)
 		snprintf(why_sel, sizeof(why_sel), L("%s  (SELECT: status)"), src_why);
