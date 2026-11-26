@@ -1539,14 +1539,15 @@ static int background_quiesce(void)
 
 static void background_resume_if_idle(void)
 {
-	if (!ra_launching || ra_busy || art_busy || update_busy || dl_busy || dl_state == 1 || dl_state == 2) return;
+	if (!ra_launching) return;
 	if (cover_lock >= 0) {
 		if (WaitSema(cover_lock) < 0) return;
-		if (cover_busy) { SignalSema(cover_lock); return; }
-		ra_launching = 0;
-		ra_abort = 0;
-		if (SignalSema(cover_lock) < 0) ra_launching = 1, ra_abort = 1;
-	} else ra_launching = 0, ra_abort = 0;
+		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy &&
+		           dl_state != 1 && dl_state != 2 && !cover_busy;
+		if (idle) ra_launching = 0, ra_abort = 0;
+		if (SignalSema(cover_lock) < 0 && idle) ra_launching = 1, ra_abort = 1;
+	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy &&
+	           dl_state != 1 && dl_state != 2 && !cover_busy) ra_launching = 0, ra_abort = 0;
 }
 
 static void ra_log(const char *fmt, ...) // the console has no printf: launcher.txt, for the gate
