@@ -1,7 +1,7 @@
 // Virtual memory cards (phase 14). Layout of a fresh 8 MB card as OPL's genvmc writes it (modules/vmc/genvmc/genvmc.c,
 // reference only, docs/sources.md): 1 KB clusters of 2 pages, 16-page blocks, 8192 clusters; superblock in cluster 0,
 // the one indirect FAT cluster at 8 (blocksize / 2), 32 FAT clusters at 9..40, root directory at 41 = alloc_offset;
-// the last two blocks are the backup blocks, everything unused is erased (0xFF). Neutrino's mc_emu computes the ECC
+// the last two blocks are the backup blocks, everything unused is erased (0xFF). the PS2-side memory-card emulator supplies ECC at runtime
 // itself, so the image has none (8 388 608 bytes).
 // Reading: superblock -> ifc_list -> FAT chains; directory entries are 512 bytes, counted by the directory's entry in
 // its parent (the root's by its own ".").
@@ -58,7 +58,7 @@ static void cluster(unsigned c, unsigned char *b, const unsigned char *t)
 		put32(b + 0x30, NCL), put32(b + 0x34, ALLOC), put32(b + 0x38, ALLOC_END), put32(b + 0x3C, 0);
 		put32(b + 0x40, NCL / 8 - 1), put32(b + 0x44, NCL / 8 - 2);
 		for (int i = 0; i < 32; i++) put32(b + 0x50 + 4 * i, i ? 0xFFFFFFFF : IFC), put32(b + 0xD0 + 4 * i, 0xFFFFFFFF);
-		b[0x150] = 2, b[0x151] = 0x2B; // PS2 card; the flags genvmc and Neutrino's mc_emu report
+		b[0x150] = 2, b[0x151] = 0x2B; // PS2 card; the flags genvmc and OPL-compatible memory-card emulators report
 		put32(b + 0x154, CSIZE), put32(b + 0x158, PER), put32(b + 0x15C, 8), put32(b + 0x160, 1);
 		put32(b + 0x170, NCL / 1000 * 1000 + 1); // max_allocatable_clusters as genvmc computes it (8001)
 		put32(b + 0x17C, 0xFFFFFFFF);

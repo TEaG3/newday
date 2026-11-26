@@ -40,9 +40,8 @@
 .opl-matrix tr:last-child td { border-bottom: 0; }
 .opl-matrix td { color: var(--text2); }
 .opl-matrix code { color: var(--fg); }
-.route-opl, .route-neutrino, .route-blocked { display: inline-flex; padding: 4px 8px; font: 12px var(--mono); border: 1px solid var(--edge2); }
+.route-opl, .route-blocked { display: inline-flex; padding: 4px 8px; font: 12px var(--mono); border: 1px solid var(--edge2); }
 .route-opl { border-color: #8cad3a; color: var(--acid); }
-.route-neutrino { border-color: #4779a0; color: #8ecbff; }
 .route-blocked { border-color: #987342; color: #e3b36f; }
 .opl-note { margin: 14px 0 0; color: var(--mist); font-size: 14px; }
 .opl-gallery { grid-auto-columns: min(82%, 820px); }

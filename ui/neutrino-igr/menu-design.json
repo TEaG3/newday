@@ -1,0 +1,46 @@
+{
+  "component": "Neutrino IGR menu visual layer",
+  "status": "reference-only",
+  "runtime_linked": false,
+  "game_engine": "OPL",
+  "panel": {
+    "width_english_px": 144,
+    "width_arabic_px": 216,
+    "height_px": 54,
+    "border_px": 1,
+    "arabic_glyph_height_px": 16,
+    "right_margin_px": 12
+  },
+  "palette_rgb": {
+    "panel": [12, 14, 18],
+    "accent": [200, 255, 46],
+    "item": [138, 145, 156],
+    "selected": [230, 232, 236]
+  },
+  "items": [
+    {"id": "restart", "en": "Restart", "ar": "إعادة تشغيل"},
+    {"id": "power_off", "en": "Power Off", "ar": "إيقاف التشغيل"},
+    {"id": "cancel", "en": "Cancel", "ar": "إلغاء"}
+  ],
+  "achievement_notice": {
+    "ar": "تم فتح الإنجاز",
+    "duration_ms": 2500
+  },
+  "font": {
+    "family": "Noto Sans Arabic UI",
+    "license": "SIL Open Font License",
+    "shaping": "Arabic Presentation Forms-B, pre-shaped and emitted in visual left-to-right bitmap order"
+  },
+  "controls": {
+    "navigate_up": "UP",
+    "navigate_down": "DOWN",
+    "confirm": "CROSS",
+    "cancel": "CIRCLE"
+  },
+  "port_requirements": [
+    "Port the visual layer into OPL's IGR path without linking Neutrino loader or kernel patches.",
+    "Keep the overlay disabled until pause/resume, GS-idle and VBlank hand-off are verified on a real PS2.",
+    "Preserve the selected Arabic/English interface language and the NULD-derived TEa.G3 accent palette.",
+    "Add tests for menu state transitions, cancellation, restart and power-off before enabling."
+  ]
+}
