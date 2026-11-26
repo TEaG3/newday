@@ -48,6 +48,15 @@ int catalog_stage_snapshot_append(catalog_stage_snapshot *snapshot,
                                   const catalog_stage_record *record);
 /* out must not alias either snapshot; it remains untouched when validation fails. */
 /* Map each old index to the new index for the same stable key; -1 means removed. */
+/* Copy per-entry state only for stable keys whose size/metadata are unchanged.
+ * State buffers must not overlap (overlap is rejected); capacities are entry counts, not byte counts.
+ * Changed/added entries are zeroed; removed entries have no destination.
+ */
+int catalog_stage_sidecar_migrate(const catalog_stage_snapshot *old_snapshot,
+                                  const catalog_stage_snapshot *new_snapshot,
+                                  const void *old_state, size_t old_state_capacity,
+                                  void *new_state, size_t new_state_capacity,
+                                  size_t state_size);
 int catalog_stage_snapshot_map(const catalog_stage_snapshot *old_snapshot,
                                const catalog_stage_snapshot *new_snapshot,
                                int16_t *old_to_new, size_t map_capacity);
