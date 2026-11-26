@@ -28,21 +28,36 @@
     <p>Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.</p>
   </header>
 
+  <section class="chapter" id="current-opl-only">
+    <header><b>Current</b><h2 class="mono">OPL-only integration state · 2026-11-26 · unreleased</h2></header>
+    <div>
+      <p>The following is the current integration state; it is not a published release.</p>
+      <ul>
+        <li>OPL is the only PS2 game engine. The Neutrino runtime, ELF, loader and IOP/EE modules are not included.</li>
+        <li>The Neutrino IGR overlay's visual design and Arabic bitmap generator are preserved under ui/neutrino-igr/ as a UI-only reference. They are not linked or active; OPL IGR uses START+SELECT to return to TEa.G3 and R3+L3 to power off.</li>
+        <li>USB ISO/ZSO and USBExtreme UL have automated route tests. Real PS2 game boot and sustained-read tests are still pending.</li>
+        <li>ATA HDD, HD Loader, MX4SIO and iLink require hardware acceptance. SMB/UDPBD/UDPFS game streaming and MMCE game launching remain disabled; the optional server is only for downloadable apps and cover metadata.</li>
+        <li>The current build uses the physical memory card only. The old VMC panel and in-game achievement notifications are not enabled.</li>
+        <li>CI validates OPL compilation, the embedded runtime manifest, package integrity and host-side source tests; it does not prove game playback.</li>
+      </ul>
+    </div>
+  </section>
+
   <section class="chapter" id="v1.3.3">
     <header><b>1.3.3</b><h2 class="mono">2026-11-24 · <a href="https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.3">candidate package</a></h2></header>
     <div>
       <p>The embedded OPL runtime and its current TEa.G3 launch routes are documented in a dedicated interactive lab.</p>
       <h3>New</h3>
       <ul>
-        <li><b>Embedded OPL integration.</b> The pinned upstream OPL build, its pinned lwNBD dependency and the TEa.G3 USBExtreme UL direct-boot patch are built in CI and embedded alongside Neutrino in the single <code>TEa.G3.ELF</code>.</li>
+        <li><b>Embedded OPL integration.</b> The pinned upstream OPL build, its pinned lwNBD dependency and the TEa.G3 USBExtreme UL direct-boot patch are built in CI and embedded as the only PS2 game engine in the single <code>TEa.G3.ELF</code>.</li>
         <li><b>USBExtreme UL direct boot.</b> TEa.G3 reads <code>ul.cfg</code>, validates records and verifies every required split part before handing a valid UL game to the embedded OPL route.</li>
-        <li><b>Explicit engine policy.</b> Auto keeps ISO/ZSO on Neutrino and routes USBExtreme UL to OPL. Setting <code>[juegos] motor = opl</code> selects the manual OPL direct-boot route for USB ISO/ZSO. Other OPL backends are not claimed as integrated until their own adapters are implemented and tested.</li>
+        <li><b>Explicit engine policy.</b> The OPL-only policy routes supported ISO/ZSO and USBExtreme UL formats through their source-specific OPL adapters. Setting <code>[juegos] motor = opl</code> selects the manual OPL direct-boot route for USB ISO/ZSO. Other OPL backends are not claimed as integrated until their own adapters are implemented and tested.</li>
         <li><b>OPL Integration Lab.</b> The site now includes a browser-only route simulator, the routing matrix, and full-size technical diagrams for the embedded runtime, UL split-part validation and runtime installation.</li>
         <li><b>Site checks.</b> GitHub Pages validates the simulator route matrix, local asset links and SVG diagrams before deployment.</li>
       </ul>
       <h3>Verification boundary</h3>
       <ul>
-        <li>CI builds the pinned OPL runtime, Neutrino and the combined ELF; host-side ZSO, UL, engine-selection and other test suites run separately.</li>
+        <li>CI builds the pinned OPL runtime and combined ELF; host-side ZSO, UL, OPL-only engine-selection and other test suites run separately.</li>
         <li>The browser simulator explains the current route logic only. It does not run an ELF, emulate a console, mount an image or start a game.</li>
         <li>This remains a prerelease candidate until the USB ISO, ZSO, UL, controller, memory-card and in-game tests are recorded on physical PS2 hardware.</li>
       </ul>
@@ -246,7 +261,7 @@
   </section>
   <footer class="site">
     <span>التعديل والتطوير العربي: المطور العراقي - <a href="https://github.com/TEaG3" rel="noopener">TEa.G3</a></span>
-    <span>TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).</span>
+    <span>The current TEa.G3 runtime embeds OPL as its only PS2 game engine. Earlier archived releases may describe older architectures.</span>
     <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
   </footer>
 </div>

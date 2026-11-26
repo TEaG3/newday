@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TEa.G3 manual</title>
-<meta name="description" content="How to install and set up TEa.G3, the PlayStation 2 game launcher: the USB drive, the buttons, config.ini, covers, achievements, the home game server and every game source.">
+<title>TEa.G3 OPL-only manual</title>
+<meta name="description" content="Install and configure TEa.G3, its single OPL PS2 engine, storage adapters and composite AV, S-Video, RGB SCART, Component and HDMI video modes.">
 <meta name="theme-color" content="#E6E8EC">
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/noto-sans-arabic-variable.ttf" as="font" type="font/ttf" crossorigin>
@@ -12,268 +12,135 @@
 <link rel="stylesheet" href="opl-lab.css">
 <script src="splash.js" defer></script>
 <script src="release.js" defer></script>
- <script src="i18n.js" defer></script>
+<script src="i18n.js" defer></script>
 </head>
 <body class="paper">
 <div class="wrap">
   <nav class="runhead" aria-label="Manual">
-    <a href="./">TEa.G3 instruction manual, <span data-version="version {v}">version 1.3</span></a>
-    <a href="#usb">1 The USB drive</a>
+    <a href="./">TEa.G3 instruction manual</a>
+    <a href="#usb">1 USB installation</a>
     <a href="#buttons">2 Buttons</a>
-    <a href="#config">3 config.ini</a>
-    <a href="#opl">OPL integration</a>
+    <a href="#config">3 Configuration</a>
+    <a href="#opl">4 OPL engine</a>
+    <a href="#video">5 Video output</a>
+    <a href="#help">6 Troubleshooting</a>
     <a href="opl-lab.html">OPL Integration Lab</a>
-    <a href="#server">8 Home server</a>
-    <a href="#themes">11 Themes</a>
     <a href="themes.html">Theme maker</a>
-    <a href="#help">12 Troubleshooting</a>
   </nav>
-
   <header class="cover">
     <div>
       <div class="logo">
         <svg width="88" height="88" viewBox="0 0 88 88" aria-hidden="true"><circle cx="44" cy="44" r="36" fill="none" stroke="#06070A" stroke-width="11"/><line x1="3" y1="85" x2="85" y2="3" stroke="#06070A" stroke-width="11"/><line x1="3" y1="85" x2="85" y2="3" stroke="#C8FF2E" stroke-width="5"/></svg>
         <span>TEa.G3</span>
       </div>
-      <h1>A game launcher that runs on the PlayStation&nbsp;2 and does its own <span class="mark">homework</span>.</h1>
+      <h1>One Arabic launcher. <span class="mark">One PS2 game engine: OPL.</span></h1>
     </div>
-    <p>Everything TEa.G3 can do, and how to turn it on. You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. <br><br><a class="btn ink" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.7/TEa.G3-Complete-Package.zip" data-zip data-version="Download v{v}">Download</a> <a class="btn" href="INSTALL-AR.txt" download>دليل التثبيت العربي</a></p>
+    <p>Install TEa.G3 on a homebrew-enabled PlayStation 2 using FreeMcBoot or a compatible ELF launcher. <a class="btn ink" href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.6/TEa.G3-Complete-Package.zip" data-zip data-version="Download v{v}">Download</a> <a class="btn" href="INSTALL-AR.txt" download>دليل التثبيت العربي</a></p>
     <figure class="fig">
-      <div class="frame"><canvas data-teag3-splash data-version="1.2" role="img" aria-label="TEa.G3's loading screen, animated: a wire sphere over a perspective floor and the four logo variants taking turns"></canvas></div>
-      <figcaption>Fig. 1, the loading screen at every boot, while the console starts the USB, reads the memory cards and loads the covers.</figcaption>
+      <div class="frame"><canvas data-teag3-splash data-version="1.2" role="img" aria-label="TEa.G3 loading screen"></canvas></div>
+      <figcaption>The launcher starts in interlaced SD video mode for broad composite AV compatibility.</figcaption>
     </figure>
   </header>
 
   <section class="chapter" id="usb">
-    <header><b>1</b><h2>The USB drive</h2></header>
+    <header><b>1</b><h2>USB installation</h2></header>
     <div>
-      <p>Copy <code>TEa.G3.ELF</code> and the game folders to the USB root. OPL, Neutrino and their modules are embedded in the ELF and extracted automatically on first boot. Put DVD ISOs in <code>DVD/</code> and CD games in <code>CD/</code>, then start <code>mass0:/TEa.G3.ELF</code> from uLaunchELF. The setup wizard opens on the first boot.</p>
+      <p>Format the USB device as FAT32 and copy TEa.G3.ELF to its root. OPL is embedded in this single executable and is extracted automatically into the TEa.G3 runtime folder on first boot.</p>
 <pre>USB root
 ├── TEa.G3.ELF
-├── DVD/          PS2 DVD ISOs
-├── CD/           PS2 CD ISOs
-├── POPS/         PS1 games (POPStarter .VCD), optional
-├── APPS/         homebrew .ELF files, optional
-├── covers/       written by TEa.G3: the covers it downloads
-└── tea_g3/       written by TEa.G3: config.ini, juegos.ini, estado.ini, runtime/ (engines installed automatically)</pre>
-      <p>FAT32 cannot hold a single file over 4 GB: use a supported exFAT OPL/Neutrino path for large ISO files, or USBExtreme UL split files on FAT32. Keep <code>ul.cfg</code> and all <code>ul.*</code> parts on the USB. Virtual memory cards live in <code>VMC/</code> on the game's own device.</p>
+├── DVD/          PS2 DVD ISO/ZSO images
+├── CD/           PS2 CD ISO/ZSO images
+├── ul.cfg        USBExtreme index (optional)
+├── ul.*          USBExtreme split parts (optional)
+├── POPS/         PS1 POPStarter files (optional)
+├── APPS/         homebrew ELF applications (optional)
+└── tea_g3/       TEa.G3 settings, covers and runtime files</pre>
+      <p>FAT32 cannot store a single file larger than 4 GB. Use USBExtreme UL split files for larger games; the launcher checks every declared part before passing the game to OPL.</p>
     </div>
   </section>
 
   <section class="chapter" id="buttons">
     <header><b>2</b><h2>Buttons</h2></header>
     <div>
-      <figure class="fig" style="margin: 0 0 28px">
-        <div class="frame"><img src="img/home-carousel.jpg" alt="Carousel view: Beyond Good and Evil selected, its tags at the top and the button hints at the bottom" width="1280" height="720" loading="lazy"></div>
-        <figcaption>Fig. 2, the home screen. The hints at the bottom right change with what the selected game allows.</figcaption>
-      </figure>
       <div class="scroll"><table>
         <tr><td>← → ↑ ↓</td><td>Move through the library</td></tr>
         <tr><td>L1 / R1</td><td>Filter: all, PS2, PS1, apps</td></tr>
         <tr><td>□</td><td>Change view: carousel, grid, list</td></tr>
-        <tr><td>△</td><td>Per-game options: video mode, compatibility, memory card</td></tr>
-        <tr><td>○</td><td>The game's achievements, when it has a set</td></tr>
-        <tr><td>✕</td><td>Play</td></tr>
-        <tr><td>START</td><td>The setup wizard</td></tr>
-        <tr><td>SELECT</td><td>Status: each game source (games found, or why it failed), the network, frame times</td></tr>
-        <tr><td>L2 + R2</td><td>Switch the menu between 720p and 480i for a CRT TV. It works blind, and is remembered</td></tr>
+        <tr><td>○</td><td>Open the achievements list when a game set is available</td></tr>
+        <tr><td>✕</td><td>Play / launch selected item</td></tr>
+        <tr><td>START</td><td>Open the setup wizard</td></tr>
+        <tr><td>SELECT</td><td>Show source status, network status and frame timings</td></tr>
+        <tr><td>L2 + R2</td><td>Toggle the launcher between interlaced 480i/576i and 720p</td></tr>
       </table></div>
-      <p>Configuration selectors and embedded modules are not proof of working game sources. USB ISO/ZSO/UL have automated host checks; SMB/UDPBD/UDPFS/MMCE, HDD, MX4SIO and iLink still require physical-PS2 acceptance before they can be called verified.</p>
+      <p>The old per-game options panel and virtual-memory-card controls are not part of this OPL-only build. OPL owns game-specific compatibility settings after hand-off.</p>
     </div>
   </section>
 
   <section class="chapter" id="config">
-    <header><b>3</b><h2>config.ini</h2></header>
+    <header><b>3</b><h2>Configuration</h2></header>
     <div>
-      <p>TEa.G3 writes <code>mass0:/tea_g3/config.ini</code> on its first boot, and the setup wizard (START) edits the main keys for you. Each key is explained in the file. The main ones:</p>
+      <p>TEa.G3 writes its configuration on first boot. The START setup wizard changes the main settings. The OPL engine preference is fixed; legacy engine values in an older config file cannot select a different PS2 game engine.</p>
       <div class="scroll"><table>
-        <tr><th>Section and key</th><th>Values</th><th>What it does</th></tr>
-        <tr><td>[ui] idioma</td><td>ar, en</td><td>Language of the menus and of the file's comments; Arabic is the default on a fresh install</td></tr>
-        <tr><td>[ui] tema</td><td>torres, nuld, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes</td><td>The theme; the legacy config key `nuld` remains accepted and is displayed as Classic. Change it live in the START setup panel (<a href="#themes">chapter 11</a>)</td></tr>
-        <tr><td>[juegos] origen</td><td>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</td><td>Available source selectors; the validation status below determines what may be treated as supported</td></tr>
-        <tr><td>[juegos] servidor</td><td>an IP</td><td>The Neutrino UDPFS game server; physical-PS2 acceptance is still pending</td></tr>
-        <tr><td>[juegos] motor</td><td>auto, neutrino, opl</td><td>Engine policy: the fresh configuration defaults to `motor = opl`; OPL is selected for ISO/ZSO sources with a ready BDM/ETH adapter and OPL HDD for APA/HDL. Supported ISO paths without an OPL hand-off use Neutrino. ZSO is OPL-only and is rejected if its required OPL route is unavailable. UL always uses OPL.</td></tr>
-        <tr><td>[memorycard] modo</td><td>juego, compartida, fisica</td><td>A virtual card per game, one shared, or the physical one</td></tr>
-        <tr><td>[video] modo</td><td>nativo, 480p, 1080i</td><td>Video mode of the games</td></tr>
-        <tr><td>[video] pantalla</td><td>720p, 480i</td><td>The menu's own output; 480i for a CRT</td></tr>
-        <tr><td>[red] ip</td><td>dhcp or an IP</td><td>DHCP, or a fixed IP with mascara, puerta and dns</td></tr>
-        <tr><td>[portadas] descargar</td><td>si, no</td><td>Download missing covers at boot</td></tr>
-        <tr><td>[logros] activos</td><td>si, no</td><td>RetroAchievements through the xeRAbora client</td></tr>
-        <tr><td>[actualizaciones] buscar</td><td>si, no</td><td>Look for a new TEa.G3 release at boot</td></tr>
-        <tr><td>[igr] menu</td><td>a button combo</td><td>The in-game menu's combo; also reiniciar and apagar</td></tr>
+        <tr><th>Section and key</th><th>Values</th><th>Purpose</th></tr>
+        <tr><td>[ui] idioma</td><td>ar, en, es, pt</td><td>Interface language; Arabic is the fresh-install default</td></tr>
+        <tr><td>[ui] tema</td><td>Built-in themes or a custom theme folder</td><td>Launcher appearance</td></tr>
+        <tr><td>[juegos] origen</td><td>usb, hdd, mx4sio, ilink</td><td>Enabled local source probes</td></tr>
+        <tr><td>[juegos] motor</td><td>opl</td><td>OPL is the only PS2 game engine</td></tr>
+        <tr><td>[juegos] servidor</td><td>Optional server address</td><td>Downloadable application catalogue only; not a remote PS2 game filesystem</td></tr>
+        <tr><td>[video] pantalla</td><td>480i, 720p</td><td>Launcher display mode; default is 480i/576i by console region</td></tr>
+        <tr><td>[red] ip</td><td>dhcp or a fixed IP</td><td>Network for covers, updates and the application catalogue</td></tr>
+        <tr><td>[logros] activos</td><td>si, no</td><td>Enable the achievements list and progress lookup</td></tr>
       </table></div>
-    </div>
-  </section>
-
-  <section class="chapter" id="covers">
-    <header><b>4</b><h2>Covers</h2></header>
-    <div>
-      <p>Plug in the network cable (built in on slim PS2s, the network adapter on fat ones). At boot TEa.G3 downloads the covers it is missing from xlenore/ps2-covers and keeps them on the USB, so later boots work offline.</p>
-      <p>Your own covers: <code>tools/covers.py</code> in the zip turns PNG or JPG files named by serial (<code>SLUS-21376.png</code>) into the pair of files for <code>mass0:/covers/</code>.</p>
-    </div>
-  </section>
-
-  <section class="chapter" id="back">
-    <header><b>5</b><h2>Back from a game</h2></header>
-    <div>
-      <p>TEa.G3 installs <code>BOOT/TEa.G3.ELF</code> on your memory card, and the setup wizard can set FreeMcBoot to start it (autoboot, a button, or an item in FMCB's menu). Then <b>Restart</b> in the in-game menu (L1+L2+R1+R2+START+SELECT) reboots the console straight into TEa.G3. L1+L2+R1+R2+L3+R3 powers it off.</p>
-    </div>
-  </section>
-
-  <section class="chapter" id="options">
-    <header><b>6</b><h2>Per-game options</h2></header>
-    <div>
-      <figure class="fig" style="margin: 0 0 28px">
-        <div class="frame"><img src="img/options.jpg" alt="Per-game options panel over the dimmed home screen" width="1280" height="720" loading="lazy"></div>
-        <figcaption>Fig. 3, △ on a PS2 game.</figcaption>
-      </figure>
-      <p>The card at the top right shows the game's newest save and its 3D icon: from the virtual card, or from the physical one in slot 1 when you choose it here.</p>
-      <p>Video mode (480p or 1080i, forced), Neutrino's compatibility modes for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in <code>tea_g3/juegos.ini</code>.</p>
-    </div>
-  </section>
-
-  <section class="chapter" id="achievements">
-    <header><b>7</b><h2>RetroAchievements</h2></header>
-    <div>
-      <figure class="fig" style="margin: 0 0 28px">
-        <div class="frame"><img src="img/achievements.jpg" alt="Achievements panel for Black: 0 of 56, 0 of 600 points" width="1280" height="720" loading="lazy"></div>
-        <figcaption>Fig. 4, ○ on Black: 56 achievements, with points and progress.</figcaption>
-      </figure>
-      <ol>
-        <li>On a PC or server on your network, run the <a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.9">xeRAbora v0.1.0-alpha.9</a> client and sign in to your RetroAchievements account.</li>
-        <li>On the PS2, keep <code>[logros] activos = si</code>. Leave <code>servidor</code> empty to find the client on the network, or set its IP.</li>
-        <li>Games with a set show the achievements tag, and ○ lists them with your progress. Press ✕ any time: TEa.G3 does not wait for the answer.</li>
-        <li>While you play, the agent inside the game sends its memory to the client, which unlocks achievements on your profile.</li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="chapter" id="server">
-    <header><b>8</b><h2>Home game server</h2></header>
-    <div>
-      <p>Keep the games on a Linux machine and run two separate host processes: Neutrino's UDPFS file server (UDP 62966) and TEa.G3's catalog helper (HTTP 18290). This repository does not contain the previously documented <code>server/</code> archive or ready-made systemd units; use the <a href="https://github.com/TEaG3/newday/blob/master/docs/udpfs-server.md" rel="noopener">UDPFS server setup guide</a> for the pinned Neutrino script, dependencies and exact commands.</p>
-      <p>The guide uses a new <code>tea-g3</code> working directory and cache for fresh deployments. Existing server installations may keep their historical <code>nuld-catalog</code> service and cache paths; do not rename those in place without updating their service files.</p>
-      <p>Allow UDP 62966 and TCP 18290 in the firewall. On the PS2 set <code>[juegos] origen = usb, udpfs</code> and <code>servidor = &lt;server IP&gt;</code>. Use wired Ethernet on both ends; UDPFS is sensitive to packet loss.</p>
-    </div>
-  </section>
-
-  <section class="chapter" id="sources">
-    <header><b>9</b><h2>Other sources</h2></header>
-    <div>
-      <p>At startup TEa.G3 automatically probes the configured sources and scans the game folders; the default configuration enables <code>usb, hdd, mx4sio, ilink, mmce, udpbd, udpfs</code>. Games are listed as each source scan completes; no separate Discover or Show Games action is required. Automatic probing is controlled by <code>[juegos] auto = si</code> (default); set it to <code>no</code> to use only the comma-separated devices in <code>[juegos] origen</code>. <code>hdd</code> covers the internal exFAT disk or HD Loader partitions; <code>mmce</code> and <code>mx4sio</code> share the SIO2 path and cannot be used together. <code>udpbd</code> and catalog-less <code>udpfs</code> need a fixed IP in <code>[red]</code>. TEa.G3 can also run from an MMCE's SD card with no USB drive at all.</p>
-      <p>A MemCard PRO 2 or SD2PSX switches to the game's own card when a game starts, whatever its source. To save there instead of a virtual card, set the game's memory card to <code>fisica</code> with △.</p>
-      <p><b>OPL compatibility boundary:</b> TEa.G3 has source-specific OPL direct-boot adapters for BDM devices (USB, MX4SIO, iLink and ATA-backed FAT/exFAT HDD), SMB/ETH, APA/HD Loader and USBExtreme UL. Neutrino remains available for supported ISO paths on MMCE/UDPBD/UDPFS or when an ISO OPL hand-off/configuration is unavailable. ZSO is OPL-only and is rejected when no ready BDM/ETH decoder path exists; it is never sent to Neutrino. Every adapter still needs physical-PS2 game and sustained-read testing.</p>
     </div>
   </section>
 
   <section class="chapter" id="opl">
-    <header><b>OPL</b><h2>Integrated OPL engine</h2></header>
+    <header><b>4</b><h2>OPL engine and source adapters</h2></header>
     <div>
-      <p>TEa.G3 ships one user-facing executable: <code>TEa.G3.ELF</code>. The build pins the upstream OPL source, fetches its pinned <code>lwNBD</code> dependency, applies the TEa.G3 UL, BDM, SMB/ETH and guarded APA/HD Loader direct-launch patches, builds OPL, and embeds it beside Neutrino and the required runtime modules.</p>
-      <p>On first boot, TEa.G3 installs the embedded files under <code>tea_g3/runtime/</code>. Each file is written to a temporary path and checked with CRC-32 before it is renamed into place. A bundle identifier and per-file checks let later boots skip a complete, matching runtime or repair missing/corrupt assets.</p>
-      <h3>What is routed today</h3>
+      <p>TEa.G3 scans the selected device and validates the image metadata. After hand-off, OPL must independently reopen that exact device and perform all game-sector reads. A successful scan or CI build does not prove playback.</p>
       <div class="scroll"><table>
-        <tr><th>Game format</th><th>Source</th><th>Setting</th><th>Engine</th></tr>
-        <tr><td>ISO</td><td>USB / MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL BDM direct boot</td></tr>
-        <tr><td>ISO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
-        <tr><td>ISO</td><td>APA / HD Loader internal HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL HDD mini-launch; existing OPL config required</td></tr>
-        <tr><td>ISO</td><td>MMCE / UDPBD / UDPFS</td><td><code>auto</code> / <code>opl</code></td><td>Neutrino fallback</td></tr>
-        <tr><td>ISO</td><td>Any configured source</td><td><code>neutrino</code></td><td>Neutrino</td></tr>
-        <tr><td>ZSO</td><td>USB / MX4SIO / iLink / FAT-exFAT HDD</td><td><code>auto</code> / <code>opl</code></td><td>OPL BDM direct boot</td></tr>
-        <tr><td>ZSO</td><td>SMB share with valid network configuration</td><td><code>auto</code> / <code>opl</code></td><td>OPL ETH direct launch</td></tr>
-        <tr><td>ZSO</td><td>Any source</td><td><code>neutrino</code></td><td>Rejected; Neutrino ZSO decoding is not verified</td></tr>
-        <tr><td>ZSO</td><td>APA / HD Loader, MMCE / UDP, or unavailable OPL route</td><td>Any preference</td><td>Rejected; no Neutrino fallback</td></tr>
-        <tr><td>USBExtreme UL</td><td>USB</td><td>Any preference</td><td>OPL UL direct boot</td></tr>
-        <tr><td>USBExtreme UL</td><td>Non-USB source</td><td>Any preference</td><td>Unsupported by current adapter</td></tr>
+        <tr><th>Format</th><th>Source</th><th>Route / status</th></tr>
+        <tr><td>ISO / ZSO</td><td>USB</td><td>OPL BDM / USB; real-console sustained-read test pending</td></tr>
+        <tr><td>USBExtreme UL</td><td>USB</td><td>OPL UL; all split parts checked before launch</td></tr>
+        <tr><td>ISO / ZSO</td><td>ATA FAT32 HDD</td><td>OPL BDM / ATA; hardware test pending</td></tr>
+        <tr><td>ISO</td><td>APA / HD Loader</td><td>OPL HDD mini-launch; metadata validation and hardware test pending</td></tr>
+        <tr><td>ISO / ZSO</td><td>MX4SIO / iLink</td><td>OPL BDM adapters; hardware tests pending</td></tr>
+        <tr><td>PS2 network images</td><td>SMB / UDPBD / UDPFS</td><td>Disabled until an OPL-only catalogue and sector reader are integrated</td></tr>
+        <tr><td>PS2 game source</td><td>MMCE</td><td>Disabled; MMCE remains available only as a possible launcher boot medium</td></tr>
       </table></div>
-      <h3>USBExtreme UL safety checks</h3>
-      <p>The TEa.G3 scanner reads <code>ul.cfg</code>, validates the fixed-size records, and checks that every declared <code>ul.*</code> split part is present. A record with missing or invalid parts is skipped instead of being offered as a working game. A valid entry receives the OPL UL route with its title, startup ID, media type and part count.</p>
-      <h3>Important limits</h3>
-      <p>Embedding upstream OPL does not mean every standalone OPL feature is connected. TEa.G3 has source-specific adapters for BDM devices, SMB/ETH and APA/HD Loader, in addition to USBExtreme UL. MMCE and UDPBD/UDPFS use Neutrino for supported ISO images; ZSO is rejected on those sources. The adapters have passed source/build checks but still require physical-PS2 game, sustained-read, VMC and return-to-launcher testing.</p>
-      <p><a class="btn ink" href="opl-lab.html">Open the interactive OPL Integration Lab</a> — its browser simulation mirrors the route selector; it does not execute an ELF, emulate a console or launch a game.</p>
+      <p>Unsupported format/source pairs fail closed. TEa.G3 does not silently route them to a different engine. PS1 uses the separate POPStarter path; ELF applications use the application loader.</p>
+      <p>The achievements panel can display a game's set and progress, but in-game unlock notifications are not enabled in this build.</p>
+      <p>OPL IGR uses START+SELECT to return to TEa.G3 and R3+L3 to power off. The Neutrino in-game overlay's visual design and Arabic bitmap generator are retained under ui/neutrino-igr/ as a UI-only reference; they are not linked or active in this build. A future OPL port must pass pause/resume, GS-idle and controller tests on a real PS2 before activation.</p>
     </div>
   </section>
 
-  <section class="chapter" id="updates">
-    <header><b>10</b><h2>Updates</h2></header>
+  <section class="chapter" id="video">
+    <header><b>5</b><h2>AV, S-Video, SCART, Component and HDMI video</h2></header>
     <div>
-      <p>With the cable in, TEa.G3 looks for a newer release at boot and says so; START installs it. Every file is checked against a manifest signed with the release key before anything is replaced, and the old files stay as <code>.old</code>.</p>
-      <p>Upgrading from earlier launcher versions: the first boot automatically migrates the legacy <code>nuld/</code> or <code>orbit/</code> data directory to <code>tea_g3/</code>, preserves settings and theme files, and installs <code>BOOT/TEa.G3.ELF</code>. The legacy <code>BOOT/NULD.ELF</code> entry remains supported.</p>
-    </div>
-  </section>
-
-  <section class="chapter" id="themes">
-    <header><b>11</b><h2>Themes</h2></header>
-    <div>
-      <p>Since v1.3 TEa.G3 has twelve themes: START, then <b>Theme</b>, and move left or right. Each one is shown at once behind the panel; <b>Save</b> keeps it. A theme has its own colours, background, loading screen and way of marking the selected game; the layout is the same in all of them.</p>
-      <figure class="fig" style="margin: 0 0 28px">
-        <div class="frame"><img src="img/theme-ocaso.jpg" alt="Carousel with the example theme Ocaso: a dusk sky behind the covers, orange accent" width="1280" height="720" loading="lazy"></div>
-        <figcaption>Fig. 5, Ocaso, the example theme: eleven colours and one picture.</figcaption>
-      </figure>
-      <h3>Make your own</h3>
-      <p>A theme is a folder with a text file and, if you want, a picture. The <a href="themes.html">theme maker</a> builds one in the browser, with a preview; or write it by hand:</p>
-<pre>mass0:/tea_g3/themes/
-└── ocaso/           the folder's name is the theme's key
-    ├── theme.ini    name, base and colours
-    └── fondo.jpg    optional background, 1280 x 720 (or fondo.png)</pre>
-<pre>nombre = Ocaso       ; the name in the setup panel
-base = nuld          ; legacy key displayed as Classic
-
-[colores]            ; RRGGBB; what you leave out keeps the base's
-fondo = 0E0714
-panel = 1A0F22
-fila = 3A2140
-borde = 6A4A66
-tenue = 5A4458
-texto = FFF4E8
-texto2 = E8D2C4
-etiqueta = C9A9A0
-acento = FF8A3C
-acero = 2A1830
-inverso = 0E0714</pre>
-      <div class="scroll"><table>
-        <tr><th>Key</th><th>Used for</th></tr>
-        <tr><td>base</td><td>One of the twelve built-in themes. Yours takes from it the loading screen, the launch screen, what is drawn round the selected cover and, without a picture, the animated background. <code>nuld</code> (displayed as Classic) is the most neutral</td></tr>
-        <tr><td>fondo</td><td>The ground where nothing else is drawn</td></tr>
-        <tr><td>panel</td><td>Panels, the detail card, the pane behind the list</td></tr>
-        <tr><td>fila</td><td>The selected row; the frame of the options that are off</td></tr>
-        <tr><td>borde</td><td>1-px edges and rules</td></tr>
-        <tr><td>tenue</td><td>What is off: unchecked options, trophies not earned</td></tr>
-        <tr><td>texto, texto2</td><td>Main and secondary text</td></tr>
-        <tr><td>etiqueta</td><td>Small labels: serials, counters, the status line</td></tr>
-        <tr><td>acento</td><td>The selection. <code>acento = portada</code> follows the selected cover's colour</td></tr>
-        <tr><td>acero</td><td>Quiet fills: options that are on, the empty part of bars</td></tr>
-        <tr><td>inverso</td><td>Text drawn on an acento or texto fill</td></tr>
-      </table></div>
+      <p>The launcher initializes interlaced SD output first: 480i on NTSC-region consoles or 576i on PAL-region consoles. This is the safest default for composite AV cables (yellow video, red/white audio) and is accepted by many Component and HDMI adapters.</p>
       <ul>
-        <li><b>The picture</b> takes the place of the base's animated background. Make it 1280 x 720, RGB, under 4 MB, and calm where the text goes (top left, the left half, the bottom edge). The console turns it into 15-bit colour, so film grain becomes dots.</li>
-        <li><b>A theme cannot change</b> positions and sizes, fonts, icons, sounds, or add animations of its own.</li>
-        <li>Up to 8 folders are read. If yours does not show up, check that <code>theme.ini</code> is at <code>tea_g3/themes/&lt;name&gt;/</code> on the drive TEa.G3 starts from; a colour that is not six hex digits is ignored.</li>
-      </ul>
-      <p>The full guide and the example folder: <a href="https://github.com/TEaG3/newday/blob/master/docs/themes.md">docs/themes.md</a>, <a href="https://github.com/TEaG3/newday/tree/master/docs/themes/ocaso">docs/themes/ocaso</a>.</p>
-    </div>
-  </section>
-
-  <section class="chapter" id="help" style="border-bottom: 0">
-    <header><b>12</b><h2>Troubleshooting</h2></header>
-    <div>
-      <ul>
-        <li><b>No covers</b>: check the cable and <code>[portadas] descargar = si</code>. The line after the loading screen says which step failed; for "no DNS", set <code>[red] dns = 1.1.1.1</code>.</li>
-        <li><b>A source shows no games</b>: SELECT lists every source and why it failed.</li>
-        <li><b>"Achievements: no server"</b>: the xeRAbora client did not answer; set its IP in <code>[logros] servidor</code>.</li>
-        <li><b>Black screen with a game</b>: try 480p instead of nativo with △, or a compatibility mode.</li>
-        <li><b>Black screen on a CRT</b>: press L2+R2 together for 480i.</li>
-        <li><b>Logs</b>: <code>mass0:/launcher.txt</code> records each launch.</li>
+        <li>Use the yellow RCA video connector for composite AV; red and white carry audio.</li>
+        <li>S-Video uses the S-Video cable and the same 480i/576i standard-definition output.</li>
+        <li>RGB SCART uses the RGB option in the PS2 system menu and the same 480i/576i output.</li>
+        <li>Component YPbPr uses the component cable and a display that accepts the selected resolution.</li>
+        <li>HDMI requires a compatible PS2 HDMI adapter; support for 480i/576i and 720p varies by adapter.</li>
+        <li>Press L2+R2 to switch the launcher between interlaced SD and 720p. Do not select 720p for a composite-only CRT.</li>
+        <li>The console's RGB/YPbPr colour setting is configured in the PS2 system menu. The launcher cannot force every physical connector to output separate signals simultaneously.</li>
+        <li>A game may change its own resolution after OPL starts; the launcher setting does not override every game's video mode.</li>
       </ul>
     </div>
   </section>
 
-  <footer class="site">
-    <span>التعديل والتطوير العربي: المطور العراقي - <a href="https://github.com/TEaG3" rel="noopener">TEa.G3</a></span>
-    <span>TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).</span>
-    <span><a href="https://github.com/TEaG3/newday/releases" rel="noopener">سجل الإصدارات الكامل · Full release archive (including earlier versions)</a></span>
-    <span>PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.</span>
-  </footer>
+  <section class="chapter" id="help">
+    <header><b>6</b><h2>Troubleshooting and validation</h2></header>
+    <div>
+      <p>If a composite AV television shows a black screen, power off and reconnect the yellow RCA video lead, then restart with the default 480i/576i mode. If using Component or HDMI, check the TV input and the adapter's supported modes before switching to 720p.</p>
+      <p>If a game is refused, check the source type, format, startup ID, file readability and OPL runtime integrity. SMB, UDPBD, UDPFS game streaming and MMCE game launching are intentionally disabled rather than routed elsewhere.</p>
+      <p>CI verifies source-policy tests, OPL compilation, embedded runtime integrity and package creation. It cannot validate a real device's enumeration, game boot, sustained reads, return-to-launcher behaviour or the picture on a physical AV/S-Video/SCART/Component/HDMI chain. Those checks remain hardware acceptance tests.</p>
+      <p><a class="btn ink" href="opl-lab.html">Open the OPL Integration Lab</a> for a browser-only route simulation.</p>
+    </div>
+  </section>
+  <footer class="site"><span>TEa.G3 · OPL-only PS2 engine</span><span>تعديل وتطوير المطور العراقي — TEa.G3</span></footer>
 </div>
 </body>
 </html>

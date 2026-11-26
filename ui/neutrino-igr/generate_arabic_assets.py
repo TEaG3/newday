@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Generate compact Arabic labels for Neutrino's in-game menu from the pinned Noto font."""
+"""Generate retained Neutrino IGR UI bitmap assets for a future OPL port."""
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 FONT_PATH = ROOT / "tools" / "fonts" / "NotoSansArabicUI.ttf"
-OUTPUT = ROOT / "third_party" / "neutrino-igr" / "menu_arabic.h"
+OUTPUT = ROOT / "ui" / "neutrino-igr" / "menu_arabic.h"
 HEIGHT = 16
 BOX_WIDTH = 216
 RIGHT_MARGIN = 12
@@ -145,6 +145,7 @@ def main() -> None:
     for row in notice_packed:
         out.append("    {" + ", ".join(f"0x{value:02X}" for value in row) + "},")
     out += ["};", ""]
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text("\n".join(out), encoding="utf-8", newline="\n")
     print(f"{OUTPUT}: labels {widths}px; Arabic achievement notice {notice.width}px; {HEIGHT}px high")
 
