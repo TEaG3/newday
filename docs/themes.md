@@ -21,7 +21,7 @@ mass0:/tea_g3/themes/
   is shown at once behind the panel. **Save** keeps it.
 - Up to **8** custom theme folders are read. This is a code limit, not a design choice: `themes.c` reserves
   `TH_MAX - TH_N` slots, currently eight after the twelve built-in themes. Folders named after built-in themes
-  (`torres`, `nuld`, etc.) are skipped.
+  (`torres`, `classic`, and the reserved legacy alias `nuld`) are skipped.
 - Folder names are limited to **31 characters** by the 32-byte key buffers and the explicit length check in
   `themes.c`; plain letters and digits are the safest choice.
 
@@ -29,7 +29,7 @@ mass0:/tea_g3/themes/
 
 ```ini
 nombre = Ocaso        ; the name shown in the setup panel (the folder's name if missing)
-base = nuld           ; the built-in theme this one starts from (nuld if missing)
+base = classic        ; the built-in theme this one starts from (classic if missing; legacy nuld is accepted)
 
 [colores]             ; RRGGBB, no "#". Any colour you leave out keeps the base's
 fondo = 0E0714
@@ -50,18 +50,18 @@ Lines starting with `;` or `#` are comments. The keys are in Spanish, as in `con
 ### base
 
 A theme is a built-in theme with another name, palette and, maybe, background. `base` picks which one:
-`torres`, `nuld`, `cristal`, `aurora`, `liquid`, `onda`, `orbit`, `techstep`, `wireframe`, `neuro`, `fosforo`, `papel`.
+`torres`, `classic`, `cristal`, `aurora`, `liquid`, `onda`, `orbit`, `techstep`, `wireframe`, `neuro`, `fosforo`, `papel`.
 
 From its base your theme takes everything that is not a colour of the palette:
 
 - the **splash** and the **launch screen** (and the splash's sound),
-- what is drawn **round the selected cover** (NULD's corners, Torres's orbs, Papel's shadow...),
+- what is drawn **round the selected cover** (Classic's corners, Torres's orbs, Papel's shadow...),
 - the **animated background**, unless you give a picture,
-- how the title is drawn (chrome in `liquid` and `orbit`, a magenta ghost in `wireframe`), scanlines (`nuld`,
+- how the title is drawn (chrome in `liquid` and `orbit`, a magenta ghost in `wireframe`), scanlines (`classic`,
   `fosforo`), covers out of focus in one colour (`fosforo`).
 
 The base's own lights keep their colours (Torres's orbs stay blue-white whatever your palette says), so pick a base
-that goes with your colours. `nuld` is the most neutral one: its corners follow your `acento`.
+that goes with your colours. `classic` is the most neutral one: its corners follow your `acento`. Existing `config.ini` and `theme.ini` values of `nuld` remain accepted as a legacy alias.
 
 ### The colours
 
@@ -97,7 +97,7 @@ colour: two dark colours closer than about 8 steps per channel look the same on 
 - Keep it calm where the text goes: the title at the top left, the list on the left half, the legend along the bottom.
   The list always gets a translucent `panel` pane behind its rows over a picture.
 - A full-screen picture costs the console about 3 ms of each frame. That is fine over the bases that draw little
-  (`nuld`, `papel`, `neuro`, `techstep`); it has not been measured over the heavy ones.
+  (`classic`, `papel`, `neuro`, `techstep`); it has not been measured over the heavy ones.
 
 ## What a theme cannot change
 
