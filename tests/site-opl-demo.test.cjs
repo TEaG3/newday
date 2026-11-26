@@ -31,7 +31,7 @@ assert.match(manual, /OPL IGR uses START\+SELECT to return to TEa.G3 and R3\+L3 
 assert.match(manual, /ui\/neutrino-igr\//);
 assert.match(manual, /not linked or active in this build/);
 const changelog = read("site/changelog.html");
-assert.match(changelog, /Current integration state/);
+assert.match(changelog, /OPL-only integration state/);
 assert.match(changelog, /SMB\/UDPBD\/UDPFS game streaming and MMCE game launching remain disabled/);
 const pagesWorkflow = read(".github/workflows/pages.yml");
 assert.ok(pagesWorkflow.includes("name: github-pages"));
