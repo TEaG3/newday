@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 import zipfile
 
+from tools.verify_runtime_manifest import verify_runtime_manifest
+
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 NAME = "TEa.G3-Complete-Package"
@@ -56,10 +58,12 @@ def main() -> None:
         license_path = validate_opl_license(opl_license.read_text(encoding="utf-8"))
     except ValueError as exc:
         raise SystemExit(str(exc))
-    embedded = manifest.read_text(encoding="utf-8")
-    for item in REQUIRED:
-        if item not in embedded:
-            raise SystemExit("embedded OPL runtime manifest is incomplete: " + item)
+    try:
+        bundle_id, asset_count = verify_runtime_manifest(ROOT, manifest)
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise SystemExit(f"embedded OPL runtime manifest is invalid: {exc}")
+    if asset_count != len(REQUIRED):
+        raise SystemExit(f"embedded OPL runtime has {asset_count} assets, expected {len(REQUIRED)}")
     DIST.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for src, dest in ((elf, "TEa.G3.ELF"), (ROOT / "INSTALL-AR.txt", "INSTALL-AR.txt"),
