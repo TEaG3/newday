@@ -29,8 +29,13 @@
       });
       if (!candidates.length) return Promise.reject("No published TEa.G3 package with the expected asset");
 
-      // GitHub's release list is newest-first; use its first eligible package,
-      // regardless of prerelease status, so the site never silently links an older stable build.
+      // The API collection is not guaranteed to be sorted by publication time.
+      // Sort explicitly so a stale older prerelease can never win by array position.
+      candidates.sort(function (a, b) {
+        var aTime = Date.parse(a.published_at || a.created_at || "") || 0;
+        var bTime = Date.parse(b.published_at || b.created_at || "") || 0;
+        return bTime - aTime;
+      });
       var rel = candidates[0], assets = rel.assets || [], zip = assets.find(function (asset) {
         return /^TEa\.G3-Complete-Package\.zip$/i.test(asset.name || "");
       });
