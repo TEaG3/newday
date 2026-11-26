@@ -11,6 +11,10 @@ class TEaG3BrandingTests(unittest.TestCase):
         cls.net = (ROOT / "net.c").read_text(encoding="utf-8")
         cls.sources = (ROOT / "sources.c").read_text(encoding="utf-8")
         cls.gfx_header = (ROOT / "gfx.h").read_text(encoding="utf-8")
+        cls.theme_header = (ROOT / "theme.h").read_text(encoding="utf-8")
+        cls.themes = (ROOT / "themes.c").read_text(encoding="utf-8")
+        cls.splash_header = (ROOT / "splash.h").read_text(encoding="utf-8")
+        cls.torres = (ROOT / "torres.c").read_text(encoding="utf-8")
         cls.lang_ar = (ROOT / "lang_ar.c").read_text(encoding="utf-8")
         cls.neutrino_patch = (ROOT / "third_party/neutrino-igr/patch_neutrino.py").read_text(encoding="utf-8")
         cls.site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
@@ -44,7 +48,17 @@ class TEaG3BrandingTests(unittest.TestCase):
     def test_site_vmc_diagnostic_uses_current_branding(self):
         self.assertNotIn("nuld vmc remote", self.site_i18n.lower())
         self.assertIn("TEa.G3 VMC remote", self.site_i18n)
-        self.assertIn('if (!strcasecmp(key, "classic")) return TH_NULD;', self.launcher)
+        self.assertIn('if (!strcasecmp(key, "classic") || !strcasecmp(key, "nuld")) return TH_CLASSIC;', self.launcher)
+
+    def test_classic_theme_key_migrates_legacy_nuld_without_losing_custom_theme_compatibility(self):
+        self.assertIn("TH_CLASSIC", self.theme_header)
+        self.assertNotIn("TH_NULD", self.theme_header)
+        self.assertIn('{"classic", "Classic"', self.themes)
+        self.assertIn('if (!strcasecmp(base_key, "nuld")) base_key = "classic";', self.themes)
+        self.assertIn('(i == TH_CLASSIC && !strcasecmp(e->d_name, "nuld"))', self.themes)
+        self.assertNotIn("NULD_", self.splash_header)
+        self.assertNotIn("nuld_bg", self.themes)
+        self.assertNotIn('Temas NULD en vivo', self.torres)
 
     def test_network_identifies_the_current_product(self):
         self.assertIn("User-Agent: TEa.G3", self.net)
