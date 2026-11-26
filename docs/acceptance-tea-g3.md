@@ -4,7 +4,28 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
-## 1. الأدلة الآلية الحالية — 26 نوفمبر 2026
+## 1. الأدلة الآلية الحالية — 26 نوفمبر 2026 (بعد دمج PR #127)
+
+### الإصدار المنشور arabic-v1.3.12
+
+- [x] الإصدار منشور وغير مسودة وغير تجريبي منذ 2026-11-26 17:05:32 UTC: [arabic-v1.3.12](https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.12).
+- [x] الحزمة `TEa.G3-Complete-Package.zip`: 6,701,973 بايت، وبصمة GitHub SHA-256: `83ad0a3d8b633b534c5d6f107d5c13cf49f088404cbf3ba78faec99cd1a2e986`.
+- [x] ملف `SHA256SUMS.txt`: 171 بايت، وبصمة GitHub SHA-256: `69784f8a39cfb03bfc50530fc2c7ef3b0fb4c6ee3c79afbc65526cffe3d836d8`.
+- [x] وسم الإصدار يشير إلى commit `4c84e7e8471ab080833086e3909dfab9ffbea314`. مقارنة الوسم مع master الحالي لا تُظهر اختلافات في مصدر المشغّل أو محرك OPL؛ الاختلافات المسجلة تخص ملفات الموقع وسجل الإصدار والترجمة واختباراته.
+- [x] دمج PR #127 لترجمة ملاحظات الإصدار العربية في master بالالتزام `5e762e281478e8f062d251f6474647ac0b122cc9`، بعد نجاح فحوص PR.
+- [x] اكتمل CI على master للالتزام نفسه: [PS2 launcher build #45868145126](https://github.com/TEaG3/newday/actions/runs/45868145126)، [Website #45868144963](https://github.com/TEaG3/newday/actions/runs/45868144963)، و[CodeQL #45868145039](https://github.com/TEaG3/newday/actions/runs/45868145039) — جميعها `success`.
+- [x] بناء PS2 أنشأ artifacts غير منتهية الصلاحية، مع بصمات SHA-256 المسجلة من GitHub:
+  - OPL runtime — artifact `15140099701`, الحجم 2,539,789 بايت، digest `af88bb577a8a0b566959b710060aeaef1e86dc3179a76b99877be5f70bb5735d`.
+  - TEa.G3 launcher — artifact `15142070275`, الحجم 4,279,459 بايت، digest `b753617ff2b881a0a60d0dce84fbf9a684f1b37cb0f2e2e4bdf7751fbc759e82`.
+  - Integration test bundle — artifact `15140379941`, الحجم 13,485,203 بايت، digest `21ddd6bd44bc335aff18014180951dd8914f07c6305c9d9e911b1925426ff52c` (تنتهي صلاحيته في 2026-12-26).
+  - Build log — artifact `15142170204`, الحجم 1,836 بايت، digest `467ab4d30bf9b5b6129070427eade22ea3f827ebe60ea4b678a5a755774fefeb`.
+- [x] سجل الاختبارات في CI: `Ran 71 tests`؛ نجح ZSO host fixture (raw/compressed/header/bounds/I/O/allocation failures)، ومحول ZSO الخاص بـ EE، واختبارات catalog stage وPS2 semaphore adapter والتزامن، واختبارات ISO وUL واختيار OPL-only، وفحوص اللغة العربية والخط وRTL.
+- [x] حزمة الاختبار المجمعة تحققت من وجود `TEa.G3.ELF` و`OPL.ELF` وبيان runtime، وسجلت `package_crc=PASS` و`release package fixture: PASS`.
+
+**حدود هذه الأدلة:** نجاح البناء والاختبارات الآلية لا يثبت إقلاع الألعاب أو استمرار قراءة القطاعات على جهاز PS2 حقيقي. تبقى ISO/ZSO/UL وHDD/APA وغيرها غير معتمدة عتادياً حتى اختبارك الفعلي. SMB/UDPBD/UDPFS وMMCE كمصادر ألعاب تبقى معطّلة وتفشل مغلقاً.
+
+### سجل تاريخي: v1.3.11 وما قبله
+
 - [x] نُشر الإصدار التجريبي `arabic-v1.3.11` بنجاح في run 45840046904 من الالتزام `9f9cec61b33ce78fb768eaab53a068e5374fa63c`، ووسم Git يشير إلى الالتزام نفسه. حجم `TEa.G3-Complete-Package.zip` هو 6,701,894 بايت وبصمة SHA-256 هي `15abea06367f436498452e23baf5ecd08d4e420bb888833abda30e7b209357a9`. ملف `SHA256SUMS.txt` مرفوع وبصمته `sha256:678e77634b05e0827c7d5bcea61521b8e7b9e9f8e1fedba897a9636d6ca974c0`.
 
 - [x] دُمج PR #29، الفرع safety/io-and-runtime-guards، في master بالالتزام c99ac8695293cf6eaeeb9d2a51247748a0c000db. حُذف الفرع بعد الدمج.
@@ -18,7 +39,7 @@
 - [x] بُني OPL من المصدر المثبّت؛ فحص الترجمة العربية سجّل 326/326 سلسلة، دون سلاسل غير مترجمة، مع RTL=1 وخط عربي مضمن. جرى بناء وحدات PADEMU؛ الاقتران الفعلي بوحدة تحكم يحتاج جهازاً.
 - [x] تحقق بناء TEa.G3.ELF من أن بيان runtime يحتوي مورداً واحداً فقط هو OPL.ELF، وأن ملف التشغيل وبيان runtime موجودان.
 - [x] دُمج PR #120 لتحديث روابط fallback في الصفحة الرئيسية والدليل ومختبر OPL إلى الحزمة المنشورة `arabic-v1.3.11`. نجح فحص الموقع ونشر GitHub Pages في run [45842046763](https://github.com/TEaG3/newday/actions/runs/45842046763) على commit `279e2fab7f505def2de7ee0bff00fd66467957cb`؛ نجحت وظيفتا التحقق والنشر.
-- [x] نُشر الإصدار التجريبي arabic-v1.3.10 سابقاً؛ الإصدار الأحدث الذي يجب اختباره الآن هو arabic-v1.3.11 أعلاه.
+- [x] نُشر الإصدار التجريبي arabic-v1.3.10 سابقاً؛ هذه الملاحظة تاريخية، وقد حل محلها الإصدار المنشور arabic-v1.3.12 المسجل أعلاه.
 
 **مطابقة المصدر والإصدار:** أُنشئ وسم arabic-v1.3.11 مباشرةً من الالتزام `9f9cec61b33ce78fb768eaab53a068e5374fa63c`، ثم دُمج PR #119 إلى master عبر الالتزام `507370f0167af8d5a3afe1b087163734bfb44a4d`؛ لذلك يبقى الالتزام المعلّم جزءاً من تاريخ master دون تحريك الوسم أو إعادة كتابة التاريخ. يختار `release.js` أحدث حزمة منشورة تلقائياً، بما فيها الإصدارات التجريبية.
 
