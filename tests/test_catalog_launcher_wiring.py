@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LAUNCHER = (ROOT / "launcher.c").read_text(encoding="utf-8")
 STAGE = (ROOT / "catalog_stage.c").read_text(encoding="utf-8")
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
+WORKFLOW = (ROOT / ".github" / "workflows" / "build-ps2.yml").read_text(encoding="utf-8")
 
 
 def function_body(source: str, start: str, end: str) -> str:
@@ -14,6 +15,17 @@ def function_body(source: str, start: str, end: str) -> str:
 
 
 class CatalogLauncherWiringTests(unittest.TestCase):
+    def test_catalog_core_has_an_enforced_ee_stack_frame_budget(self):
+        self.assertIn("-Wframe-larger-than=8192", WORKFLOW)
+        self.assertIn("-Werror -Wframe-larger-than=8192", WORKFLOW)
+        self.assertIn("catalog_stage.c -o /tmp/catalog_stage_stack_guard.o", WORKFLOW)
+        self.assertIn("catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_stack_guard.o", WORKFLOW)
+        start = WORKFLOW.index("sh -c '") + len("sh -c '")
+        end = WORKFLOW.index("\n          '", start)
+        inner = WORKFLOW[start:end]
+        self.assertNotIn("'", inner)
+
+
     def test_ps2_guard_is_linked_into_launcher(self):
         self.assertIn('#include "catalog_guard_ps2.h"', LAUNCHER)
         objects = next(line for line in MAKEFILE.splitlines() if line.startswith("EE_OBJS ="))
