@@ -581,10 +581,10 @@ static void test_staged_scan_builder(void)
 
 
 typedef struct {
-    catalog_guard *guard;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int entered;
+    int done;
     int release;
     int handle_open;
     int handle_closed;
@@ -643,7 +643,6 @@ static void test_concurrent_scan_cancellation(void)
     memset(&fixture, 0, sizeof(fixture));
     memset(&candidate, 0, sizeof(candidate));
     memset(&worker, 0, sizeof(worker));
-    fixture.guard = &guard;
 
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
@@ -658,9 +657,9 @@ static void test_concurrent_scan_cancellation(void)
 
     /* Wait until the source callback has opened its handle and is blocked in I/O. */
     assert(pthread_mutex_lock(&fixture.mutex) == 0);
-    while (!fixture.entered)
+    while (!fixture.entered && !fixture.done)
         assert(pthread_cond_wait(&fixture.cond, &fixture.mutex) == 0);
-    assert(fixture.handle_open && !fixture.handle_closed);
+    assert(fixture.entered && fixture.handle_open && !fixture.handle_closed);
     assert(pthread_mutex_unlock(&fixture.mutex) == 0);
 
     /* Gameplay cancels the scan, but must wait for the callback to close its handle. */
