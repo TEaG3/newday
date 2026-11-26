@@ -839,6 +839,17 @@
       "Screenshot viewer":"عارض لقطات الشاشة"
     }
   };
+  Object.assign(dict, {
+    "Current integration state (unreleased)": "حالة التكامل الحالية (غير منشورة)",
+    "OPL-only integration state · 2026-11-26 · unreleased": "حالة تكامل OPL فقط · 2026-11-26 · غير منشور",
+    "The following is the current integration state; it is not a published release.": "فيما يلي حالة التكامل الحالية؛ وهي ليست إصداراً منشوراً.",
+    "OPL is the only PS2 game engine. The Neutrino runtime, ELF, loader and IOP/EE modules are not included.": "OPL هو محرك ألعاب PS2 الوحيد. لا يتضمن المشروع محرك Neutrino أو ملف ELF أو محمّله أو وحدات IOP/EE الخاصة به.",
+    "The Neutrino IGR overlay's visual design and Arabic bitmap generator are preserved under ui/neutrino-igr/ as a UI-only reference. They are not linked or active; OPL IGR uses START+SELECT to return to TEa.G3 and R3+L3 to power off.": "حُفظ التصميم المرئي لواجهة Neutrino IGR ومولّد صورها العربية داخل ui/neutrino-igr/ كمرجع للواجهة فقط. لم تُربط ولم تُفعّل؛ ويستخدم OPL IGR الاختصار START+SELECT للعودة إلى TEa.G3 وR3+L3 لإيقاف الجهاز.",
+    "USB ISO/ZSO and USBExtreme UL have automated route tests. Real PS2 game boot and sustained-read tests are still pending.": "توجد اختبارات آلية لمسارات USB ISO/ZSO وUSBExtreme UL. وما زالت اختبارات إقلاع الألعاب والقراءة المستمرة على جهاز PS2 الحقيقي مطلوبة.",
+    "ATA HDD, HD Loader, MX4SIO and iLink require hardware acceptance. SMB/UDPBD/UDPFS game streaming and MMCE game launching remain disabled; the optional server is only for downloadable apps and cover metadata.": "تحتاج مصادر ATA HDD وHD Loader وMX4SIO وiLink إلى اعتماد على العتاد الحقيقي. يظل بث الألعاب عبر SMB/UDPBD/UDPFS وتشغيل الألعاب من MMCE معطّلين؛ ويُستخدم الخادم الاختياري للتطبيقات القابلة للتنزيل وبيانات الأغلفة فقط.",
+    "The current build uses the physical memory card only. The old VMC panel and in-game achievement notifications are not enabled.": "يستخدم البناء الحالي بطاقة الذاكرة الفعلية فقط. لوحة VMC القديمة وإشعارات الإنجازات داخل اللعبة غير مفعّلتين.",
+    "CI validates OPL compilation, the embedded runtime manifest, package integrity and host-side source tests; it does not prove game playback.": "يتحقق CI من ترجمة OPL وبيان المحرك المضمّن وسلامة الحزمة واختبارات المصادر على الحاسوب؛ لكنه لا يثبت تشغيل الألعاب."
+  });
   const pageTitles = {
     "TEa.G3, a game launcher for the PlayStation 2":"TEa.G3 — مشغّل ألعاب لجهاز PlayStation 2",
     "TEa.G3 manual":"دليل TEa.G3",
