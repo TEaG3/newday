@@ -1,9 +1,9 @@
 // Fill every download control from the newest published TEa.G3 package.
-// Prefer the newest release, including a prerelease: the project intentionally remains prerelease
-// until physical-PS2 acceptance tests have been recorded.
+// Stable publication is a software-release status, not a claim of physical-PS2 acceptance.
+// Release notes state the exact hardware-validation boundary for each package.
 (function () {
   var statusCopy = {
-    stable: { en: "Stable release", ar: "إصدار مستقر" },
+    stable: { en: "Stable software release · PS2 hardware acceptance not claimed", ar: "إصدار برمجي مستقر · لم يُدّعَ اجتياز اختبار PS2 الحقيقي" },
     pre: { en: "Prerelease · physical-PS2 acceptance is still open", ar: "إصدار تجريبي · اختبار القبول على جهاز PS2 الحقيقي لم يكتمل بعد" },
     fallback: { en: "Release information is temporarily unavailable; open all releases.", ar: "تعذرت قراءة بيانات الإصدار مؤقتاً؛ افتح صفحة جميع الإصدارات." }
   };
