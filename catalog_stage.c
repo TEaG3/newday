@@ -55,6 +55,17 @@ int catalog_stage_path_is_safe(const char *path)
     }
 }
 
+int catalog_stage_snapshot_append(catalog_stage_snapshot *snapshot,
+                                  const catalog_stage_record *record)
+{
+    if (snapshot == NULL || record == NULL) return CATALOG_STAGE_ERR_ARGUMENT;
+    if (snapshot->count >= CATALOG_STAGE_MAX_ITEMS) return CATALOG_STAGE_ERR_CAPACITY;
+    if (memchr(record->path, 0, sizeof(record->path)) == NULL ||
+        !catalog_stage_path_is_safe(record->path)) return CATALOG_STAGE_ERR_PATH;
+    snapshot->records[snapshot->count++] = *record;
+    return CATALOG_STAGE_OK;
+}
+
 static int build_index(const catalog_stage_snapshot *snapshot,
                        uint16_t slots[CATALOG_STAGE_HASH_SLOTS])
 {
@@ -111,6 +122,89 @@ static int index_find(const catalog_stage_snapshot *snapshot,
         slot = (slot + 1u) & CATALOG_STAGE_HASH_MASK;
     }
     return -1;
+}
+
+int catalog_stage_sidecar_migrate(const catalog_stage_snapshot *old_snapshot,
+                                  const catalog_stage_snapshot *new_snapshot,
+                                  const void *old_state, size_t old_state_capacity,
+                                  void *new_state, size_t new_state_capacity,
+                                  size_t state_size)
+{
+    uint16_t slots[CATALOG_STAGE_HASH_SLOTS];
+    const unsigned char *old_bytes = (const unsigned char *)old_state;
+    unsigned char *new_bytes = (unsigned char *)new_state;
+    size_t i;
+    size_t old_state_bytes, new_state_bytes;
+    uintptr_t old_begin, new_begin;
+    int status;
+
+    if (!old_snapshot || !new_snapshot || !state_size ||
+        (old_snapshot->count && !old_state) || (new_snapshot->count && !new_state))
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (old_snapshot->count > old_state_capacity ||
+        new_snapshot->count > new_state_capacity)
+        return CATALOG_STAGE_ERR_CAPACITY;
+    if (old_snapshot->count > (size_t)-1 / state_size ||
+        new_snapshot->count > (size_t)-1 / state_size)
+        return CATALOG_STAGE_ERR_CAPACITY;
+    old_state_bytes = old_snapshot->count * state_size;
+    new_state_bytes = new_snapshot->count * state_size;
+    old_begin = (uintptr_t)old_state;
+    new_begin = (uintptr_t)new_state;
+    if (old_state_bytes && new_state_bytes) {
+        if ((old_begin <= new_begin && new_begin - old_begin < old_state_bytes) ||
+            (new_begin < old_begin && old_begin - new_begin < new_state_bytes))
+            return CATALOG_STAGE_ERR_ARGUMENT;
+    }
+
+    /* Validate both snapshots before touching candidate state. */
+    status = build_index(new_snapshot, slots);
+    if (status != CATALOG_STAGE_OK) return status;
+    status = build_index(old_snapshot, slots);
+    if (status != CATALOG_STAGE_OK) return status;
+
+    for (i = 0; i < new_snapshot->count; ++i) {
+        const catalog_stage_record *next = &new_snapshot->records[i];
+        unsigned char *destination = new_bytes + i * state_size;
+        int old_index = index_find(old_snapshot, slots, next);
+
+        memset(destination, 0, state_size);
+        if (old_index >= 0) {
+            const catalog_stage_record *previous = &old_snapshot->records[old_index];
+            if (previous->flags == next->flags && previous->size == next->size &&
+                previous->fingerprint == next->fingerprint) {
+                memcpy(destination, old_bytes + (size_t)old_index * state_size, state_size);
+            }
+        }
+    }
+    return CATALOG_STAGE_OK;
+}
+
+int catalog_stage_snapshot_map(const catalog_stage_snapshot *old_snapshot,
+                               const catalog_stage_snapshot *new_snapshot,
+                               int16_t *old_to_new, size_t map_capacity)
+{
+    uint16_t slots[CATALOG_STAGE_HASH_SLOTS];
+    int16_t staged[CATALOG_STAGE_MAX_ITEMS];
+    size_t i;
+    int status;
+
+    if (!old_snapshot || !new_snapshot || !old_to_new)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (old_snapshot->count > map_capacity)
+        return CATALOG_STAGE_ERR_CAPACITY;
+
+    status = build_index(old_snapshot, slots);
+    if (status != CATALOG_STAGE_OK) return status;
+    status = build_index(new_snapshot, slots);
+    if (status != CATALOG_STAGE_OK) return status;
+
+    for (i = 0; i < old_snapshot->count; ++i)
+        staged[i] = (int16_t)index_find(new_snapshot, slots, &old_snapshot->records[i]);
+
+    /* Commit the map only after both snapshots have passed validation. */
+    memcpy(old_to_new, staged, old_snapshot->count * sizeof(staged[0]));
+    return CATALOG_STAGE_OK;
 }
 
 int catalog_stage_snapshot_diff(const catalog_stage_snapshot *old_snapshot,

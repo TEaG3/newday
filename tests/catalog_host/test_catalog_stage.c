@@ -49,6 +49,123 @@ static void test_path_and_validation(void)
     assert(catalog_stage_snapshot_find(&snapshot, 1, 0, 0, "DVD/Game.iso") == -1);
 }
 
+static void test_snapshot_append(void)
+{
+    catalog_stage_snapshot snapshot;
+    catalog_stage_record record;
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    set_record(&record, 1, 0, 0, "DVD/First.iso", 100, 11);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_OK);
+    assert(snapshot.count == 1);
+    assert(strcmp(snapshot.records[0].path, "DVD/First.iso") == 0);
+
+    set_record(&record, 1, 0, 0, "../escape.iso", 100, 11);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_ERR_PATH);
+    assert(snapshot.count == 1); /* invalid records never partially append */
+
+    set_record(&record, 1, 0, 0, "DVD/First.iso", 200, 22);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_OK);
+    assert(snapshot.count == 2);
+    assert(catalog_stage_snapshot_validate(&snapshot) == CATALOG_STAGE_ERR_DUPLICATE);
+
+    snapshot.count = CATALOG_STAGE_MAX_ITEMS;
+    set_record(&record, 1, 0, 0, "DVD/Overflow.iso", 1, 1);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_ERR_CAPACITY);
+    assert(snapshot.count == CATALOG_STAGE_MAX_ITEMS);
+
+    snapshot.count = 0;
+    memset(record.path, 'X', sizeof(record.path)); /* missing NUL is rejected before copying */
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_ERR_PATH);
+    assert(snapshot.count == 0);
+}
+
+static void test_snapshot_index_map(void)
+{
+    catalog_stage_snapshot old_snapshot;
+    catalog_stage_snapshot new_snapshot;
+    int16_t old_to_new[3] = {77, 77, 77};
+
+    memset(&old_snapshot, 0, sizeof(old_snapshot));
+    memset(&new_snapshot, 0, sizeof(new_snapshot));
+    old_snapshot.count = 3;
+    set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Alpha.iso", 100, 11);
+    set_record(&old_snapshot.records[1], 8, 0, 0, "DVD/Beta.iso", 200, 22);
+    set_record(&old_snapshot.records[2], 2, 0, 0, "HDL/Gone", 300, 33);
+
+    new_snapshot.count = 3;
+    set_record(&new_snapshot.records[0], 8, 0, 0, "DVD/Beta.iso", 201, 23); /* changed but same identity */
+    set_record(&new_snapshot.records[1], 1, 0, 0, "DVD/Alpha.iso", 100, 11);
+    set_record(&new_snapshot.records[2], 1, 0, 0, "DVD/Gamma.iso", 400, 44);
+
+    assert(catalog_stage_snapshot_map(&old_snapshot, &new_snapshot, old_to_new, 3) == CATALOG_STAGE_OK);
+    assert(old_to_new[0] == 1);
+    assert(old_to_new[1] == 0);
+    assert(old_to_new[2] == -1);
+
+    old_to_new[0] = old_to_new[1] = old_to_new[2] = 77;
+    assert(catalog_stage_snapshot_map(&old_snapshot, &new_snapshot, old_to_new, 2) == CATALOG_STAGE_ERR_CAPACITY);
+    assert(old_to_new[0] == 77 && old_to_new[1] == 77 && old_to_new[2] == 77);
+
+    set_record(&new_snapshot.records[2], 1, 0, 0, "DVD/Alpha.iso", 999, 99);
+    assert(catalog_stage_snapshot_map(&old_snapshot, &new_snapshot, old_to_new, 3) == CATALOG_STAGE_ERR_DUPLICATE);
+    assert(old_to_new[0] == 77 && old_to_new[1] == 77 && old_to_new[2] == 77);
+}
+
+typedef struct {
+    unsigned cover_token;
+    unsigned vmc_token;
+    unsigned achievement_token;
+} test_sidecar_state;
+
+static void test_sidecar_migration(void)
+{
+    catalog_stage_snapshot old_snapshot;
+    catalog_stage_snapshot new_snapshot;
+    test_sidecar_state old_state[3] = {{11, 12, 13}, {21, 22, 23}, {31, 32, 33}};
+    test_sidecar_state new_state[3] = {{99, 99, 99}, {99, 99, 99}, {99, 99, 99}};
+
+    memset(&old_snapshot, 0, sizeof(old_snapshot));
+    memset(&new_snapshot, 0, sizeof(new_snapshot));
+    old_snapshot.count = 3;
+    set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Alpha.iso", 100, 11);
+    set_record(&old_snapshot.records[1], 8, 0, 0, "DVD/Beta.iso", 200, 22);
+    set_record(&old_snapshot.records[2], 2, 0, 0, "HDL/Removed", 300, 33);
+
+    new_snapshot.count = 3;
+    set_record(&new_snapshot.records[0], 8, 0, 0, "DVD/Beta.iso", 201, 23); /* changed: reset */
+    set_record(&new_snapshot.records[1], 1, 0, 0, "DVD/Alpha.iso", 100, 11); /* unchanged: preserve */
+    set_record(&new_snapshot.records[2], 1, 0, 0, "DVD/Added.iso", 400, 44); /* new: zero */
+
+    assert(catalog_stage_sidecar_migrate(&old_snapshot, &new_snapshot,
+                                         old_state, 3, new_state, 3,
+                                         sizeof(test_sidecar_state)) == CATALOG_STAGE_OK);
+    assert(new_state[0].cover_token == 0 && new_state[0].vmc_token == 0 && new_state[0].achievement_token == 0);
+    assert(new_state[1].cover_token == 11 && new_state[1].vmc_token == 12 && new_state[1].achievement_token == 13);
+    assert(new_state[2].cover_token == 0 && new_state[2].vmc_token == 0 && new_state[2].achievement_token == 0);
+
+    new_state[0].cover_token = new_state[1].cover_token = new_state[2].cover_token = 77;
+    assert(catalog_stage_sidecar_migrate(&old_snapshot, &new_snapshot,
+                                         old_state, 2, new_state, 3,
+                                         sizeof(test_sidecar_state)) == CATALOG_STAGE_ERR_CAPACITY);
+    assert(new_state[0].cover_token == 77 && new_state[1].cover_token == 77 && new_state[2].cover_token == 77);
+
+    {
+        unsigned char overlapping[sizeof(test_sidecar_state) * 3 + 1];
+        memset(overlapping, 0x5a, sizeof(overlapping));
+        assert(catalog_stage_sidecar_migrate(&old_snapshot, &new_snapshot,
+                                             overlapping, 3, overlapping + 1, 3,
+                                             sizeof(test_sidecar_state)) == CATALOG_STAGE_ERR_ARGUMENT);
+        for (size_t i = 0; i < sizeof(overlapping); i++) assert(overlapping[i] == 0x5a);
+    }
+
+    set_record(&new_snapshot.records[2], 1, 0, 0, "DVD/Alpha.iso", 999, 99);
+    assert(catalog_stage_sidecar_migrate(&old_snapshot, &new_snapshot,
+                                         old_state, 3, new_state, 3,
+                                         sizeof(test_sidecar_state)) == CATALOG_STAGE_ERR_DUPLICATE);
+    assert(new_state[0].cover_token == 77 && new_state[1].cover_token == 77 && new_state[2].cover_token == 77);
+}
+
 static void test_diff_and_stable_selection(void)
 {
     catalog_stage_diff diff;
@@ -444,9 +561,12 @@ int main(void)
 {
     test_staged_scan_builder();
     test_path_and_validation();
+    test_snapshot_append();
+    test_snapshot_index_map();
+    test_sidecar_migration();
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
     test_download_gate();
-    puts("catalog stage: staged scan, path, validation, diff, selection, concurrent apply and download gates PASS");
+    puts("catalog stage: staged scan, append, map, sidecar migration, path, validation, diff, selection, concurrent apply and download gates PASS");
     return 0;
 }
