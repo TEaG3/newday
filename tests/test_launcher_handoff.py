@@ -155,6 +155,31 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("if (SignalSema(cover_lock) < 0) return;", evict_body)
         self.assertGreater(evict_body.index("free(b), free(s), free(h);"), evict_body.index("SignalSema(cover_lock)"))
 
+    def test_cover_render_and_worker_serialize_shared_cache_state(self):
+        worker_start = self.launcher.index("static void cover_thread(void *arg)")
+        worker_end = self.launcher.index("static int count_dir(", worker_start)
+        worker = self.launcher[worker_start:worker_end]
+        self.assertIn("if (cover_sema < 0 || WaitSema(cover_sema) < 0)", worker)
+        self.assertIn("if (!background_work_begin(&cover_busy))", worker)
+        self.assertIn("if (ra_launching && cover_sema >= 0) SignalSema(cover_sema)", worker)
+        self.assertLess(worker.index("WaitSema(cover_lock)"), worker.index("int b = cover_req[i]"))
+        self.assertIn("int stale = b && cover_seen[i] < frame_n - 2", worker)
+        self.assertIn("if (stale) cover_req[i] = 0", worker)
+
+        draw_start = self.launcher.index("static void draw_cover(int i)")
+        draw_end = self.launcher.index("\\n}\\n\\nstatic void list_rows", draw_start) + 2
+        draw = self.launcher[draw_start:draw_end]
+        self.assertIn("if (cover_lock >= 0 && WaitSema(cover_lock) >= 0)", draw)
+        self.assertLess(draw.index("WaitSema(cover_lock)"), draw.index("im[0] = cv[i].half"))
+        self.assertLess(draw.index("WaitSema(cover_lock)"), draw.index("cover_req[i] |= request_bit"))
+        self.assertIn("cover_seen[i] = frame_n", draw)
+        self.assertIn("if (request_bit && SignalSema(cover_sema) < 0", draw)
+
+        loop_start = self.launcher.index("for (int f = 0;; f++)")
+        frame_tick = self.launcher[loop_start:self.launcher.index("background_resume_if_idle();", loop_start)]
+        self.assertIn("WaitSema(cover_lock)", frame_tick)
+        self.assertLess(frame_tick.index("WaitSema(cover_lock)"), frame_tick.index("frame_n++"))
+
     def test_background_gate_reopens_only_after_tracked_workers_are_idle(self):
         start = self.launcher.index("static void background_resume_if_idle(void)")
         end = self.launcher.index("static void ra_log(", start)
