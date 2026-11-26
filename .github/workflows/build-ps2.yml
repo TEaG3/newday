@@ -241,6 +241,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          set -x
+          trap 'status=$?; printf "PS2SDK=%s PS2DEV=%s\\n" "${PS2SDK:-<unset>}" "${PS2DEV:-<unset>}"; ls -l opl.elf asm/lang_Arabic.c asm/font_Arabic.c 2>/dev/null || true; exit "$status"' ERR
+          printf 'PS2SDK=%s\\nPS2DEV=%s\\n' "${PS2SDK:-<unset>}" "${PS2DEV:-<unset>}"
+          test -n "${PS2SDK:-}"
+          test -f "$PS2SDK/samples/Makefile.pref"
           make clean
           test -s lng_src/Arabic.yml
           test -s lng_src/thirdparty/font_Arabic.ttf
