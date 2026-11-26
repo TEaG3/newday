@@ -118,6 +118,7 @@ static const char *const ar[][2] = {
         {"This disc cannot be started", "لا يمكن بدء تشغيل هذا القرص"},
         {"CREATING VIRTUAL MEMORY CARD (8 MB)", "إنشاء بطاقة ذاكرة افتراضية (8 ميغابايت)"},
         {"Covers still downloading: try again", "الأغلفة لا تزال قيد التنزيل: حاول مرة أخرى"},
+        {"Background work is still active; try again", "لا يزال العمل في الخلفية جارياً؛ حاول مرة أخرى"},
         {"Not enough memory to download the app", "لا توجد ذاكرة كافية لتنزيل التطبيق"},
         {"Could not write %s", "تعذرت كتابة %s"},
         {"The server did not send the app (%s)", "الخادم لم يرسل التطبيق (%s)"},
