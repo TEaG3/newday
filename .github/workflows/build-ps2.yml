@@ -41,7 +41,7 @@ jobs:
             tests/zso_host/test_zso_ee.c zso_ee.c \
             -o /tmp/zso_ee_host_test
           /tmp/zso_ee_host_test
-          python3 -m unittest tests/test_nuld_catalog.py tests/test_release_version.py tests/test_launcher_handoff.py tests/test_catalog_launcher_wiring.py tests/test_ee_core_headroom.py tests/test_teag3_branding.py tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py
+          python3 -m unittest tests/test_nuld_catalog.py tests/test_release_version.py tests/test_launcher_handoff.py tests/test_catalog_launcher_wiring.py tests/test_ee_core_headroom.py tests/test_teag3_branding.py tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py tests/test_opl_source_policy.py
           cc -std=c99 -Wall -Wextra -Werror -pthread -I. catalog_stage.c tests/catalog_host/test_catalog_stage.c -o /tmp/catalog_stage_test
           /tmp/catalog_stage_test
           cc -std=c99 -Wall -Wextra -Werror -pthread -Itests/catalog_host/ps2stub -I. catalog_stage.c catalog_guard_ps2.c tests/catalog_host/test_catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_test
