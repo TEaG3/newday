@@ -16,12 +16,15 @@ class PageParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.references: list[tuple[str, str]] = []
+        self.download_links: list[str] = []
         self.ids: set[str] = set()
 
     def handle_starttag(self, tag: str, attrs) -> None:
         values = dict(attrs)
         if "id" in values:
             self.ids.add(values["id"])
+        if "data-zip" in values:
+            self.download_links.append(values.get("href", ""))
         for key in ("href", "src"):
             value = values.get(key)
             if value:
@@ -106,10 +109,28 @@ def check_required_opl_files() -> None:
         fail("site/index.html: OPL route simulator missing from home page")
 
 
+def check_release_download_links() -> None:
+    expected = (
+        "https://github.com/TEaG3/newday/releases/download/"
+        "arabic-v1.3.12/TEa.G3-Complete-Package.zip"
+    )
+    for rel in ("index.html", "manual.html", "opl-lab.html"):
+        path = SITE / rel
+        if not path.is_file():
+            fail(f"site/{rel}: page with a download control is missing")
+            continue
+        parser = PageParser()
+        parser.feed(path.read_text(encoding="utf-8"))
+        parser.close()
+        if parser.download_links != [expected]:
+            fail(f"site/{rel}: data-zip fallback must point to the verified v1.3.12 package")
+
+
 def main() -> int:
     check_html()
     check_svg()
     check_required_opl_files()
+    check_release_download_links()
     if ERRORS:
         for item in ERRORS:
             print("FAIL:", item)
