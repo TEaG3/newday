@@ -49,7 +49,17 @@ class OplOnlyArchitectureTests(unittest.TestCase):
         self.assertIn("body < 0", app_fetch)
         self.assertIn("len > max - body", app_fetch)
         self.assertIn("cv[i].size >= 0x7ffff000u", app_fetch)
+        self.assertIn("GetMemorySize()", app_fetch)
+        self.assertIn("(unsigned)memory_size", app_fetch)
         self.assertLess(app_fetch.index("app_payload_is_valid"), app_fetch.index('fopen(file, "wb")'))
+
+    def test_second_stage_preserves_the_loaded_target_elf(self):
+        loader = (ROOT / "loader/loader.c").read_text(encoding="utf-8")
+        load = loader.index("SifLoadElf(argv[0], &elf)")
+        handoff = loader.index("ExecPS2(", load)
+        self.assertLess(load, handoff)
+        self.assertNotIn("GetMemorySize()", loader)
+        self.assertNotIn("*(volatile u128 *)a = 0", loader)
 
     def test_only_opl_is_embedded_and_packaged(self):
         self.assertIn('REQUIRED = ("OPL.ELF",)', self.embed)
