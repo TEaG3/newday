@@ -112,7 +112,7 @@ def check_required_opl_files() -> None:
 
 def check_release_download_links() -> None:
     launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
-    version_match = re.search(r'^#define TEAG3_VERSION "v([0-9]+(?:\\.[0-9]+)*)"', launcher, re.MULTILINE)
+    version_match = re.search(r'^#define TEAG3_VERSION "v([0-9]+(?:[.][0-9]+)*)"', launcher, re.MULTILINE)
     if not version_match:
         fail("launcher.c: TEAG3_VERSION is missing or malformed")
         return
