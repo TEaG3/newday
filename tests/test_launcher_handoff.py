@@ -272,7 +272,7 @@ class LauncherHandoffTests(unittest.TestCase):
             self.assertIn("check_arabic_translation.py", workflow)
             self.assertIn("make languages", workflow)
             self.assertIn("test -s lng/lang_Arabic.lng", workflow)
-            self.assertIn("grep -Fq 'العودة' lng/lang_Arabic.lng", workflow)
+            self.assertIn("grep -Fq 'رجوع' lng/lang_Arabic.lng", workflow)
             self.assertIn("test -s lng_src/thirdparty/font_Arabic.ttf", workflow)
 
     def test_lwnbd_script_is_executable_before_make_clean(self):
