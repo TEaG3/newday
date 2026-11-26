@@ -593,8 +593,9 @@ int catalog_stage_bundle_publish(catalog_guard *guard,
     catalog_stage_bundle previous;
     int status;
 
-    if (guard == NULL || active == NULL || candidate == NULL || active == candidate ||
-        active->items == NULL || candidate->items == NULL || active->items == candidate->items ||
+    if (guard == NULL || active == NULL || candidate == NULL || active == candidate)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (active->items == NULL || candidate->items == NULL || active->items == candidate->items ||
         active->sidecars == NULL || candidate->sidecars == NULL ||
         active->sidecars == candidate->sidecars ||
         active->snapshot == NULL || candidate->snapshot == NULL ||
@@ -602,8 +603,11 @@ int catalog_stage_bundle_publish(catalog_guard *guard,
         active->count > CATALOG_STAGE_MAX_ITEMS ||
         candidate->count > CATALOG_STAGE_MAX_ITEMS ||
         active->count != active->snapshot->count ||
-        candidate->count != candidate->snapshot->count)
+        candidate->count != candidate->snapshot->count) {
+        if (!catalog_guard_cancel_apply(guard))
+            return CATALOG_STAGE_ERR_GUARD;
         return CATALOG_STAGE_ERR_ARGUMENT;
+    }
 
     status = catalog_stage_snapshot_validate(active->snapshot);
     if (status != CATALOG_STAGE_OK) {
