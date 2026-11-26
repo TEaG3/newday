@@ -276,7 +276,8 @@ int catalog_stage_scan(catalog_guard *guard, catalog_stage_scan_next_fn next,
 
     candidate->count = 0;
     if (!catalog_guard_scan_begin(guard))
-        return CATALOG_STAGE_SCAN_ERR_BUSY;
+        return catalog_guard_scan_cancelled(guard) < 0 ?
+               CATALOG_STAGE_SCAN_ERR_GUARD : CATALOG_STAGE_SCAN_ERR_BUSY;
 
     for (;;) {
         int cancelled = catalog_guard_scan_cancelled(guard);
