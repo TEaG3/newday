@@ -20,3 +20,11 @@
 - [ ] Add source polling with cancellation and source-specific mount checks; never assume hotplug notifications.
 - [ ] Add target concurrency, USB removal/reinsert, HDD/APA, SMB and MMCE tests before enabling the monitor.
 - [ ] Keep the feature disabled until all target and hardware gates pass.
+
+
+## Stage 2 — isolated source-scan output
+
+- [x] Refactor ISO/ZSO, UL, HDL, remote-app and local-app source adapters to populate a caller-owned candidate entry buffer instead of writing directly to the active cv[] array.
+- [x] Build and validate the initial stable-key snapshot from that candidate, copy the complete initial catalog to cv[], and publish ncv only after the copy; retain a boot-only low-memory fallback before the render stage.
+- [ ] Add cancellation checks and guaranteed handle closure to each source adapter before reusing the candidate builder for live scans.
+- [ ] Migrate all index-keyed sidecars and add end-to-end candidate/apply tests before enabling live monitoring.

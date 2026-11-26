@@ -81,7 +81,9 @@ assert.ok(pagesWorkflow.includes("Wait for GitHub Pages artifact metadata"));
 assert.ok(pagesWorkflow.includes("Archive site for GitHub Pages"));
 assert.doesNotMatch(pagesWorkflow, /upload-pages-artifact/);
 
-const fallback = "https://github.com/TEaG3/newday/releases/download/arabic-v1.3.13/TEa.G3-Complete-Package.zip";
+const versionMatch = read("launcher.c").match(/^#define TEAG3_VERSION "v([^"]+)"/m);
+assert.ok(versionMatch, "launcher.c must declare TEAG3_VERSION");
+const fallback = `https://github.com/TEaG3/newday/releases/download/arabic-v${versionMatch[1]}/TEa.G3-Complete-Package.zip`;
 for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
   const html = read("site/" + page);
   assert.ok(html.includes(fallback), page + " needs the last verified package as no-JS fallback");
