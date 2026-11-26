@@ -17,8 +17,9 @@ int catalog_guard_ps2_init(catalog_guard *guard,
 /*
  * Destroy only after all callers have stopped using the guard. The function
  * also refuses while readers, scans, downloads, applies, gameplay or storage
- * I/O remain active. This adapter is compile/test-only until launcher wiring
- * and device-removal tests are complete.
+ * I/O remain active. The launcher uses it for render-frame and worker leases
+ * plus activity reporting; staged scanning/apply remain disabled until the
+ * candidate builder and device-removal tests are complete.
  */
 int catalog_guard_ps2_destroy(catalog_guard *guard,
                               catalog_guard_ps2_context *context);
