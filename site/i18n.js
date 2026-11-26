@@ -852,6 +852,28 @@
     "The current build uses the physical memory card only. The old VMC panel and in-game achievement notifications are not enabled.": "يستخدم البناء الحالي بطاقة الذاكرة الفعلية فقط. لوحة VMC القديمة وإشعارات الإنجازات داخل اللعبة غير مفعّلتين.",
     "CI validates OPL compilation, the embedded runtime manifest, package integrity and host-side source tests; it does not prove game playback.": "يتحقق CI من ترجمة OPL وبيان المحرك المضمّن وسلامة الحزمة واختبارات المصادر على الحاسوب؛ لكنه لا يثبت تشغيل الألعاب."
   });
+  Object.assign(dict, {
+    "stable software release": "إصدار برمجي مستقر",
+    "Included": "المحتويات",
+    "A single-file Arabic TEa.G3 package with OPL as its only PS2 game engine. Software validation passed for the stated scope; physical PS2 acceptance is intentionally not claimed.": "حزمة TEa.G3 عربية بملف تشغيل واحد، وتستخدم OPL محركاً وحيداً لألعاب PS2. اجتازت الحزمة التحقق البرمجي ضمن النطاق الموضح؛ ولا ندّعي اجتياز اختبارات القبول على جهاز PS2 حقيقي.",
+    "One user entry point.": "ملف تشغيل واحد للمستخدم.",
+    "Copy": "انسخ",
+    "; the embedded OPL runtime is verified by its manifest and CRC before installation and hand-off. No Neutrino game runtime or engine fallback is included.": "؛ ويُتحقق من محرك OPL المضمّن عبر بيان الملفات وCRC قبل تثبيته وتسليم التشغيل إليه. لا يتضمن الإصدار محرك Neutrino أو مسار تشغيل بديل.",
+    "Arabic OPL.": "OPL باللغة العربية.",
+    "The Arabic translation and RTL font assets are generated, checked and embedded in the pinned OPL build. The Neutrino IGR visual design remains only as an inactive UI reference.": "تُولّد ترجمة OPL العربية وأصول الخط واتجاه RTL، ثم تُفحص وتُدمج في بناء OPL المثبّت. ويظل التصميم المرئي لواجهة Neutrino IGR مرجعاً بصرياً غير مفعّل فقط.",
+    "USB game paths.": "مسارات ألعاب USB.",
+    "ISO, ZSO and USBExtreme UL have automated host fixtures and OPL route checks. These tests validate parsing and hand-off preparation, not game playback.": "تتوفر اختبارات آلية على الحاسوب لصيغ ISO وZSO وUSBExtreme UL، مع فحص مسارات OPL. تتحقق هذه الاختبارات من التحليل وتجهيز تسليم التشغيل، ولا تثبت تشغيل اللعبة.",
+    "Package integrity.": "سلامة الحزمة.",
+    "The release includes Arabic and English installation guides, the OPL license, a package manifest and SHA-256 checksums.": "يتضمن الإصدار دليلي تثبيت بالعربية والإنجليزية، وترخيص OPL، وبيان محتويات الحزمة، وبصمات SHA-256.",
+    "Software CI.": "التحقق البرمجي عبر CI.",
+    "The pinned OPL source, launcher ELF, runtime package, host tests and CodeQL checks completed successfully.": "اكتمل بنجاح بناء مصدر OPL المثبّت وملف المشغّل ELF وحزمة المحرك واختبارات الحاسوب وفحوص CodeQL.",
+    "Hardware and source boundaries": "حدود العتاد ومصادر الألعاب",
+    "Physical PS2 acceptance testing is not included in this release. No successful game boot or hardware compatibility is claimed; console testing remains for the user.": "لا يتضمن هذا الإصدار اختبارات القبول على جهاز PS2 حقيقي. ولا ندّعي نجاح إقلاع أي لعبة أو توافق أي عتاد؛ ويظل اختبار الجهاز الفعلي من مسؤولية المستخدم.",
+    "HDD/HD Loader, MX4SIO and iLink adapters remain hardware-test pending.": "ما زالت محولات HDD/HD Loader وMX4SIO وiLink بحاجة إلى اختبار على الجهاز الحقيقي.",
+    "SMB, UDPBD and UDPFS game streaming, plus MMCE game launching, remain disabled until their OPL readers pass validation.": "يظل بث الألعاب عبر SMB وUDPBD وUDPFS، وتشغيل الألعاب من MMCE، معطّلاً حتى تجتاز قارئات OPL الخاصة بها التحقق.",
+    "The launcher starts at 480i NTSC / 576i PAL for composite AV compatibility. L2+R2 switches to 720p on compatible display chains; output also depends on the cable and the PS2 RGB/YPbPr setting.": "يبدأ المشغّل بدقة 480i في NTSC أو 576i في PAL للتوافق مع خرج Composite AV. ويبدّل L2+R2 إلى 720p عند استخدام سلسلة عرض متوافقة؛ كما يعتمد الخرج على الكابل وإعداد RGB/YPbPr في جهاز PS2.",
+    "Live catalogue monitoring and staged snapshot/diff publication remain disabled. The launcher keeps its boot-time catalogue until the remaining concurrency and target tests are complete.": "تظل مراقبة فهرس الألعاب الحية ونشر اللقطات والفروقات المرحلية معطّلة. ويحتفظ المشغّل بفهرس بدء التشغيل حتى اكتمال اختبارات التزامن والاختبارات على الجهاز المستهدف."
+  });
   const pageTitles = {
     "TEa.G3, a game launcher for the PlayStation 2":"TEa.G3 — مشغّل ألعاب لجهاز PlayStation 2",
     "TEa.G3 manual":"دليل TEa.G3",
