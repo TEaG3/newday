@@ -1059,11 +1059,11 @@ static int disc_cnf(char *cnf, int max) // cdrom0:\SYSTEM.CNF;1 through libcdvd 
 static void disc_thread(void *arg)
 {
 	(void)arg;
-	int last = -1, said = -1; // said: the language the title was written in (the setup panel changes it)
-	sceCdInit(SCECdINoD);
+	int last = -1, said = -1, initialized = 0; // said: the language the title was written in (the setup panel changes it)
 	for (;;) {
 		sleep(1);
 		if (!background_work_begin(&disc_busy)) continue;
+		if (!initialized) sceCdInit(SCECdINoD), initialized = 1;
 		int st = disc_state(sceCdGetDiskType());
 		if ((st == last && lang == said) || disc_new) {
 			background_work_end(&disc_busy);
