@@ -606,8 +606,11 @@ int catalog_stage_bundle_publish(catalog_guard *guard,
         return CATALOG_STAGE_ERR_ARGUMENT;
 
     status = catalog_stage_snapshot_validate(active->snapshot);
-    if (status != CATALOG_STAGE_OK)
+    if (status != CATALOG_STAGE_OK) {
+        if (!catalog_guard_cancel_apply(guard))
+            return CATALOG_STAGE_ERR_GUARD;
         return status;
+    }
     status = catalog_stage_snapshot_validate(candidate->snapshot);
     if (status != CATALOG_STAGE_OK) {
         if (!catalog_guard_cancel_apply(guard))
