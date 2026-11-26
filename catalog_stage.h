@@ -12,7 +12,7 @@ typedef struct {
     uint8_t source_unit;
     uint8_t kind;
     uint8_t flags;
-    uint32_t size;
+    uint64_t size; /* bytes, or KiB when the HDL-size flag is set */
     uint32_t fingerprint;
     char path[CATALOG_STAGE_PATH_MAX];
 } catalog_stage_record;

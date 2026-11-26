@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LAUNCHER = (ROOT / "launcher.c").read_text(encoding="utf-8")
 STAGE = (ROOT / "catalog_stage.c").read_text(encoding="utf-8")
+STAGE_HEADER = (ROOT / "catalog_stage.h").read_text(encoding="utf-8")
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github" / "workflows" / "build-ps2.yml").read_text(encoding="utf-8")
 
@@ -86,6 +87,17 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         fingerprint = function_body(LAUNCHER, "static uint32_t catalog_entry_fingerprint(", "static int catalog_snapshot_capture(")
         self.assertIn("if (item->engine != ENGINE_OPL_UL)", fingerprint)
         self.assertIn("catalog_stage_snapshot_validate(snapshot)", capture)
+
+
+    def test_validated_iso_and_zso_sizes_reach_the_stable_snapshot(self):
+        scan = function_body(LAUNCHER, "static int scan_dir(", "// phase 17:")
+        capture = function_body(LAUNCHER, "static int catalog_snapshot_capture(", "static int by_title(")
+        self.assertIn("uint64_t catalog_size;", LAUNCHER)
+        self.assertIn("item->catalog_size = (uint64_t)bytes;", scan)
+        self.assertIn("uint64_t size;", STAGE_HEADER)
+        self.assertIn("record.size = item->catalog_size ? item->catalog_size : item->size;", capture)
+        self.assertIn("record.size = item->hdl_size_kb;", capture)
+        self.assertIn("if (!record.size) record.flags |= 0x80u;", capture)
 
     def test_safe_publish_primitive_is_host_tested_but_not_enabled_in_launcher(self):
         self.assertIn("catalog_stage_snapshot_publish", STAGE)

@@ -10,7 +10,7 @@ static catalog_stage_snapshot new_snapshot;
 
 static void set_record(catalog_stage_record *record, uint8_t source,
                        uint8_t unit, uint8_t kind, const char *path,
-                       uint32_t size, uint32_t fingerprint)
+                       uint64_t size, uint32_t fingerprint)
 {
     memset(record, 0, sizeof(*record));
     record->source_type = source;
@@ -164,6 +164,28 @@ static void test_sidecar_migration(void)
                                          old_state, 3, new_state, 3,
                                          sizeof(test_sidecar_state)) == CATALOG_STAGE_ERR_DUPLICATE);
     assert(new_state[0].cover_token == 77 && new_state[1].cover_token == 77 && new_state[2].cover_token == 77);
+}
+
+static void test_diff_detects_large_file_size_changes(void)
+{
+    catalog_stage_snapshot old_snapshot;
+    catalog_stage_snapshot new_snapshot;
+    catalog_stage_diff diff;
+
+    memset(&old_snapshot, 0, sizeof(old_snapshot));
+    memset(&new_snapshot, 0, sizeof(new_snapshot));
+    old_snapshot.count = 1;
+    new_snapshot.count = 1;
+    set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Large.iso",
+               UINT64_C(0x100000000), 7);
+    set_record(&new_snapshot.records[0], 1, 0, 0, "DVD/Large.iso",
+               UINT64_C(0x100000001), 7);
+
+    memset(&diff, 0, sizeof(diff));
+    assert(catalog_stage_snapshot_diff(&old_snapshot, &new_snapshot, &diff) == CATALOG_STAGE_OK);
+    assert(diff.added_count == 0 && diff.removed_count == 0);
+    assert(diff.changed_count == 1);
+    assert(diff.changed_old[0] == 0 && diff.changed_new[0] == 0);
 }
 
 static void test_diff_and_stable_selection(void)
@@ -625,6 +647,7 @@ int main(void)
     test_snapshot_append();
     test_snapshot_index_map();
     test_sidecar_migration();
+    test_diff_detects_large_file_size_changes();
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
     test_download_gate();
