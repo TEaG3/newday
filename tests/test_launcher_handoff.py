@@ -41,6 +41,16 @@ class OplOnlyArchitectureTests(unittest.TestCase):
         self.assertIn("SMB discovery is disabled", self.sources)
         self.assertIn("UDPFS game streaming is not supported", self.sources)
 
+    def test_remote_catalog_apps_are_validated_before_write(self):
+        app_fetch = self.launcher.split("static const char *app_fetch", 1)[1].split("static void launch", 1)[0]
+        self.assertIn('#include "app_payload.h"', self.launcher)
+        self.assertIn("app_payload_is_valid", app_fetch)
+        self.assertIn("(unsigned)len != cv[i].size", app_fetch)
+        self.assertIn("body < 0", app_fetch)
+        self.assertIn("len > max - body", app_fetch)
+        self.assertIn("cv[i].size > 0x7ffff000u", app_fetch)
+        self.assertLess(app_fetch.index("app_payload_is_valid"), app_fetch.index('fopen(file, "wb")'))
+
     def test_only_opl_is_embedded_and_packaged(self):
         self.assertIn('REQUIRED = ("OPL.ELF",)', self.embed)
         self.assertIn('REQUIRED = ("OPL.ELF",)', self.package)
