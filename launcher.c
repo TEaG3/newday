@@ -45,7 +45,7 @@
 #include "catalog_stage.h"
 #include "app_payload.h"
 
-#define TEAG3_VERSION "v1.3.12" // tag: arabic-v1.3.12
+#define TEAG3_VERSION "v1.3.13" // tag: arabic-v1.3.13
 #include "lang.h"
 #include "achievements.h"
 #include <sys/stat.h>
