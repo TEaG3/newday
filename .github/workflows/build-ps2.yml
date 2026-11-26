@@ -92,7 +92,7 @@ jobs:
             test -s runtime-input/OPL.ELF
             test -s runtime-input/OPL-LICENSE.txt
             python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
-            python3 tools/verify_runtime_manifest.py . runtime-manifest.txt
+            python3 tools/verify_runtime_manifest.py runtime-input ../runtime-manifest.txt
             { make APP=launcher; } 2>&1 | tee build.log
             test -s TEa.G3.ELF
             test -s runtime-manifest.txt
@@ -218,6 +218,12 @@ jobs:
           grep -Fq 'العودة' lng/lang_Arabic.lng
           test -s include/lang_autogen.h
           test -s src/lang_internal.c
+          test -s asm/lang_Arabic.c
+          test -s asm/font_Arabic.c
+          grep -Fq 'lang_Arabic_raw' asm/lang_Arabic.c
+          grep -Fq 'font_Arabic_raw' asm/font_Arabic.c
+          grep -Fq 'lngLoadEmbeddedArabic' src/lang.c
+          grep -Fq 'if (langID == -1)' src/opl.c
           make NOT_PACKED=1 RTL=1 PADEMU=1
           test -s opl.elf
           cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
