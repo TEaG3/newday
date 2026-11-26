@@ -592,27 +592,36 @@ static void *half_file(const char *serial, int sq, void **big, void **small) // 
 
 static void cover_set(int i, void *im[3], int bits) // cover and download threads; im: half, small, big, taken
 {
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) {
+		for (int k = 0; k < 3; k++) free(im[k]);
+		return;
+	}
 	void **slot[3] = {&cv[i].half, &cv[i].small, &cv[i].big};
-	WaitSema(cover_lock);
 	for (int k = 0; k < 3; k++)
 		if (im[k] && !*slot[k]) *slot[k] = im[k], im[k] = NULL, bits |= 1 << k;
 	cover_done[i] |= bits, cover_req[i] &= ~bits;
-	SignalSema(cover_lock);
+	if (SignalSema(cover_lock) < 0) {
+		for (int k = 0; k < 3; k++) free(im[k]);
+		return;
+	}
 	for (int k = 0; k < 3; k++) free(im[k]);
 }
 
 static void cover_evict(void) // render thread, between frames (the GS is done with the last frame's textures)
 {
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
 	int kb = 0, old = -1;
 	for (int i = 1; i < ncv; i++)
 		if ((cv[i].half || cv[i].small || cv[i].big) &&
 		    (kb += (cv[i].half ? 46 : 0) + (cv[i].small ? 95 : 0) + (cv[i].big ? 184 : 0), cover_seen[i] < frame_n - 1) &&
 		    (old < 0 || cover_seen[i] < cover_seen[old])) old = i;
-	if (kb <= COVER_KB || old < 0) return;
-	WaitSema(cover_lock);
+	if (kb <= COVER_KB || old < 0) {
+		(void)SignalSema(cover_lock);
+		return;
+	}
 	void *b = cv[old].big, *s = cv[old].small, *h = cv[old].half;
 	cv[old].big = NULL, cv[old].small = cv[old].half = NULL, cover_req[old] = cover_done[old] = 0;
-	SignalSema(cover_lock);
+	if (SignalSema(cover_lock) < 0) return; // keep detached buffers allocated if the lock cannot be released
 	free(b), free(s), free(h);
 }
 
