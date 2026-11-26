@@ -1,6 +1,6 @@
 TEa.G3 — تعليمات التثبيت
 
-1) هيّئ USB بنظام FAT32 أو exFAT.
+1) هيّئ USB بنظام FAT32.
 2) انسخ TEa.G3.ELF إلى جذر USB.
 3) ضع ألعاب PS2 بصيغة ISO أو ZSO داخل DVD أو CD حسب نوع القرص.
 4) ضع ملفات USBExtreme UL وملف ul.cfg وجميع أجزاء ul.* في جذر USB.

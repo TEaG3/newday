@@ -167,7 +167,7 @@ static const char *const ar[][2] = {
 		
         {"AV 480i/576i", "AV ‏480i/576i"},
         {"HD 720p", "عالي الدقة 720p"},
-        {"Hard disk not found (FAT/exFAT or HD Loader)", "لم يتم العثور على القرص الصلب (FAT/exFAT أو HD Loader)"},
+        {"Hard disk not found (FAT32 or HD Loader)", "لم يتم العثور على القرص الصلب (FAT32 أو HD Loader)"},
         {"MMCE game launching is not yet adapted to OPL", "تشغيل ألعاب MMCE غير مهيأ بعد للعمل مع OPL"},
         {"NETWORK legacy runtime's (UDPBD / UDPFS / SMB), IP %s\n", "مصادر الشبكة القديمة (UDPBD / UDPFS / SMB)، عنوان IP ‏%s\n"},
         {"No OPL adapter is available for this game source", "لا يوجد محول OPL متاح لمصدر اللعبة هذا"},
@@ -175,7 +175,7 @@ static const char *const ar[][2] = {
         {"SMB discovery is disabled until an OPL-only reader is integrated", "اكتشاف SMB معطل حتى دمج قارئ مستقل يعمل مع OPL"},
         {"This game format is not supported by the OPL adapter for this source", "تنسيق اللعبة هذا غير مدعوم عبر محول OPL لمصدر التخزين المحدد"},
         {"UDPBD game launching is not supported by OPL integration", "تشغيل الألعاب عبر UDPBD غير مدعوم في تكامل OPL الحالي"},
-        {"UDPFS game streaming is not supported by the OPL-only launcher", "بث الألعاب عبر UDPFS غير مدعوم في مشغل OPL-only"}
+        {"UDPFS game streaming is not supported by the OPL-only launcher", "بث الألعاب عبر UDPFS غير مدعوم في مشغل OPL-only"},
         {"Background work is still active; try again", "العمل في الخلفية لم ينته بعد، حاول مرة أخرى"},
         {"Modified and developed by Iraqi developer TEa.G3", "تعديل وتطوير المطور العراقي TEa.G3"},
 };

@@ -1,6 +1,6 @@
 TEa.G3 — Installation
 
-1. Format a USB drive as FAT32 or exFAT.
+1. Format a USB drive as FAT32.
 2. Copy TEa.G3.ELF to the USB root.
 3. Put PS2 ISO/ZSO images in DVD/ or CD/ as appropriate.
 4. Put USBExtreme UL files, ul.cfg and all ul.* parts in the USB root.

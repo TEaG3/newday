@@ -7,7 +7,7 @@ TEa.G3 واجهة عربية RTL لإدارة ألعاب PlayStation 2 وPS1 و�
 - واجهة TEa.G3 تتولى الفهرسة والأغلفة والإعدادات.
 - OPL المضمّن يتولى قراءة أقراص PS2 وتشغيلها.
 - USB ISO/ZSO وUSBExtreme UL لها مسارات OPL مباشرة.
-- HDD FAT/exFAT وHD Loader وMX4SIO وiLink لا تُعرض كمسارات مضمونة إلا بقدر ما ينجح محول OPL المحدد واختباراته.
+- HDD FAT32 وHD Loader وMX4SIO وiLink لا تُعرض كمسارات مضمونة إلا بقدر ما ينجح محول OPL المحدد واختباراته.
 - SMB وUDPBD وUDPFS لتشغيل صور الألعاب وMMCE كمصدر ألعاب معطلة حالياً. لا تُمرر هذه المصادر إلى محرك آخر.
 - ملفات PS1 عبر POPStarter منفصلة عن محرك PS2، وملفات ELF عبر مشغّل التطبيقات.
 
@@ -18,7 +18,7 @@ TEa.G3 واجهة عربية RTL لإدارة ألعاب PlayStation 2 وPS1 و�
 ## التثبيت
 
 1. نزّل TEa.G3.ELF من GitHub Release.
-2. انسخه إلى جذر USB بنظام FAT32 أو exFAT.
+2. انسخه إلى جذر USB بنظام FAT32.
 3. ضع ألعاب DVD في DVD/ وألعاب CD في CD/، بصيغة ISO أو ZSO حيث يدعمها المحول.
 4. ضع ملفات USBExtreme UL وul.cfg وأجزاء ul.* في جذر USB.
 5. شغّل TEa.G3 من FreeMcBoot أو بطاقة ذاكرة متوافقة.

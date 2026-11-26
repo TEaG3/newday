@@ -68,5 +68,11 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn("historical ORBIT/NULD releases", self.site_index)
         self.assertNotIn("historical ORBIT/NULD releases", self.site_manual)
 
+    def test_active_docs_claim_only_supported_fat32_storage(self):
+        for rel in ("README.md", "docs/game-formats.md", "docs/opl-engine-integration.md", "site/manual.html", "INSTALL-AR.txt", "INSTALL-EN.txt"):
+            text = (ROOT / rel).read_text(encoding="utf-8")
+            self.assertNotIn("exFAT", text)
+        self.assertNotIn("Neutrino", self.site_i18n)
+
 if __name__ == "__main__":
     unittest.main()

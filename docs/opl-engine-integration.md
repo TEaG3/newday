@@ -13,7 +13,7 @@ At boot, the launcher loads its own PS2SDK IOP drivers for supported local sourc
 | ISO | USB mass storage | OPL BDM / USB | Integrated; hardware test pending |
 | ZSO | USB mass storage | OPL BDM / USB | Decoder present in pinned OPL build; hardware test pending |
 | USBExtreme UL | USB mass storage | OPL UL | Split-part validation and direct-boot adapter integrated; hardware test pending |
-| ISO/ZSO | ATA FAT/exFAT HDD | OPL BDM / ATA | Adapter path integrated; hardware test pending |
+| ISO/ZSO | ATA FAT32 HDD | OPL BDM / ATA | Adapter path integrated; hardware test pending |
 | ISO | APA / HD Loader HDD | OPL HDD mini-launch | Metadata scan and direct-launch adapter integrated; hardware test pending |
 | ISO/ZSO | MX4SIO | OPL BDM / SDC | Adapter path integrated; hardware test pending |
 | ISO/ZSO | iLink | OPL BDM / SD | Adapter path integrated; hardware test pending |

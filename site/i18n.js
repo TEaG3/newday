@@ -10,7 +10,7 @@
     "Previous screens":"اللقطات السابقة","Next screens":"اللقطات التالية","Download":"تنزيل","One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.":"ملف ZIP واحد لنسخه إلى USB. إذا كنت تستخدم ORBIT أو NULD القديم، فسينقل التشغيل الأول إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
     "all releases":"كل الإصدارات","Three steps":"ثلاث خطوات","You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. The":"تحتاج إلى جهاز PS2 يشغّل برامج Homebrew (مثل FreeMcBoot) ووحدة USB. يحتوي",
     "manual":"الدليل","The manual has the rest.":"الدليل على بقية التفاصيل.",
-    "Copy the zip's contents to the root of a FAT32 or exFAT drive. Put PS2 ISOs in":"انسخ محتويات ملف ZIP إلى جذر وحدة FAT32 أو exFAT، وضع ملفات ألعاب PS2 بصيغة ISO داخل",
+    "Copy the zip's contents to the root of a FAT32 or FAT32 drive. Put PS2 ISOs in":"انسخ محتويات ملف ZIP إلى جذر وحدة FAT32 أو FAT32، وضع ملفات ألعاب PS2 بصيغة ISO داخل",
     "Start":"ابدأ","Pick a game and press ✕. The first boot writes":"اختر لعبة واضغط ✕. عند التشغيل الأول سيُنشئ المشغّل الملف",
     "TEa.G3 instruction manual, ":"دليل استخدام TEa.G3، ","The USB drive":"وحدة USB","Arabic installation guide":"دليل التثبيت العربي","Buttons":"الأزرار","config.ini":"ملف config.ini","Home server":"الخادم المنزلي","Themes":"السمات","Troubleshooting":"استكشاف الأخطاء وإصلاحها",
     "A game launcher that runs on the PlayStation&nbsp;2 and does its own ":"مشغّل ألعاب يعمل على PlayStation 2 وينفّذ مهامه ","homework":"بنفسه",
@@ -32,15 +32,15 @@
     "L1+L2+R1+R2+START+SELECT pauses any game and offers restart or power off. Restart returns to TEa.G3.":"الضغط على L1+L2+R1+R2+START+SELECT يوقف اللعبة مؤقتاً ويعرض إعادة التشغيل أو إيقاف الجهاز. تعود إعادة التشغيل إلى TEa.G3.",
     "Each game is identified with the rcheevos hash. While you play, an agent inside the game sends its memory to the xeRAbora client, which unlocks them on your profile.":"يُعرّف كل لعبة باستخدام بصمة rcheevos. أثناء اللعب يرسل وكيل داخل اللعبة بيانات الذاكرة إلى عميل xeRAbora لفتح الإنجازات في حسابك.",
     "ISOs on a Linux box list instantly and load over the cable, with the same covers, cards and achievements as the USB.":"تظهر ملفات ISO الموجودة على خادم Linux فوراً، وتُحمّل عبر الشبكة مع دعم الأغلفة وبطاقات الذاكرة والإنجازات كما في USB.",
-    "USB, internal HDD (exFAT or HD Loader), MX4SIO, i.Link, MMCE, UDPBD and udpfs, mixed in one list. Discs, PS1 games through POPStarter, and homebrew from APPS/ too.":"USB والقرص الداخلي (exFAT أو HD Loader) وMX4SIO وi.Link وMMCE وUDPBD وudpfs في قائمة واحدة. كما يدعم الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من APPS/.",
-    "Force 480p or 1080i, Neutrino's compatibility modes, which memory card. Remembered per game.":"فرض دقة 480p أو 1080i، وأنماط التوافق في Neutrino، واختيار بطاقة الذاكرة. تُحفظ الإعدادات لكل لعبة.",
+    "USB FAT32, ATA FAT32 HDD, HD Loader, MX4SIO and i.Link. Discs, PS1 games through POPStarter and homebrew from APPS/ are also listed. MMCE game launching and SMB/UDPBD/UDPFS game streaming are disabled in this OPL-only build.":"USB FAT32 وقرص ATA بنظام FAT32 وHD Loader وMX4SIO وi.Link. كما تظهر الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من APPS/. تشغيل الألعاب من MMCE وبث الألعاب عبر SMB/UDPBD/UDPFS معطل في إصدار OPL-only.",
+    "Force 480p or 1080i, OPL compatibility settings, which memory card. Remembered per game.":"فرض دقة 480p أو 1080i، وخيارات توافق OPL، واختيار بطاقة الذاكرة. تُحفظ الإعدادات لكل لعبة.",
     "A wizard writes config.ini and FreeMcBoot's autoboot. With the cable in, TEa.G3 installs a new release only after every file matches a signed manifest.":"ينشئ المعالج ملف config.ini وإعداد التشغيل التلقائي في FreeMcBoot. وعند الاتصال بالشبكة، لا يثبت TEa.G3 إصداراً جديداً إلا بعد مطابقة الملفات لبيان موثّق.",
     "One setting changes the menus, the in-game menu and the comments in the config file.":"يغيّر إعداد واحد لغة القوائم وقائمة داخل اللعبة والتعليقات في ملف الإعداد.",
     "Each theme has its own colours, animated background, loading screen and launch screen. A folder with eleven colours and a picture is a new one: the":"لكل سمة ألوانها وخلفيتها المتحركة وشاشة التحميل وشاشة تشغيل اللعبة. ويمكن إنشاء سمة جديدة بمجلد يحتوي على أحد عشر لوناً وصورة عبر",
-    "FAT32 cannot hold files over 4 GB: format the drive as exFAT for big ISOs. Virtual memory cards live in":"لا يدعم FAT32 الملفات التي يزيد حجمها على 4 GB؛ استخدم exFAT لملفات ISO الكبيرة. توجد بطاقات الذاكرة الافتراضية في",
+    "FAT32 cannot hold files over 4 GB: format the drive as FAT32 for big ISOs. Virtual memory cards live in":"لا يدعم FAT32 الملفات التي يزيد حجمها على 4 GB؛ استخدم FAT32 لملفات ISO الكبيرة. توجد بطاقات الذاكرة الافتراضية في",
     "Plug in the network cable (built in on slim PS2s, the network adapter on fat ones). At boot TEa.G3 downloads the covers it is missing from xlenore/ps2-covers and keeps them on the USB, so later boots work offline.":"صل كابل الشبكة (مدمج في أجهزة PS2 Slim، أو عبر محول الشبكة في الأجهزة السميكة). عند بدء التشغيل ينزّل TEa.G3 الأغلفة الناقصة من xlenore/ps2-covers ويحفظها على USB لتعمل لاحقاً دون إنترنت.",
     "Your own covers: ":"لإضافة أغلفتك الخاصة: ","Back from a game":"العودة من اللعبة","TEa.G3 installs ":"يثبّت TEa.G3 الملف ","on your memory card, and the setup wizard can set FreeMcBoot to start it (autoboot, a button, or an item in FMCB's menu). Then ":"على بطاقة الذاكرة، ويمكن لمعالج الإعداد ضبط FreeMcBoot لتشغيله تلقائياً أو بزر أو من القائمة. بعد ذلك فإن خيار ",
-    "Video mode (480p or 1080i, forced), Neutrino's compatibility modes for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in ":"نمط الفيديو (480p أو 1080i)، وأنماط التوافق في Neutrino للألعاب التي تحتاج إليها، وبطاقة الذاكرة: الخاصة باللعبة أو المشتركة أو الفعلية. تُحفظ الاختيارات في ",
+    "Video output defaults to 480i/576i for AV, S-Video, RGB SCART and Component. L2+R2 switches to 720p for compatible Component/HDMI displays; OPL handles game compatibility. The launcher uses physical memory cards. The choices are saved in ":"نمط الفيديو (480p أو 1080i)، وخيارات توافق OPL للألعاب التي تحتاج إليها، وبطاقة الذاكرة: الخاصة باللعبة أو المشتركة أو الفعلية. تُحفظ الاختيارات في ",
     "On a PC or server on your network, run the ":"على حاسوب أو خادم متصل بالشبكة، شغّل "," client and sign in to your RetroAchievements account.":" وسجّل الدخول إلى حساب RetroAchievements.",
     "On the PS2, keep ":"على PS2، اترك الخيار ",". Leave ":" على القيمة "," empty to find the client on the network, or set its IP.":" فارغاً ليبحث عن العميل على الشبكة، أو أدخل عنوان IP الخاص به.",
     "Games with a set show the achievements tag, and ○ lists them with your progress. Press ✕ any time: TEa.G3 does not wait for the answer.":"تظهر علامة الإنجازات للألعاب المدعومة، ويعرض الزر ○ الإنجازات مع تقدمك. يمكنك الضغط على ✕ في أي وقت؛ لا ينتظر TEa.G3 استجابة العميل.",
@@ -85,7 +85,7 @@
     "Make your own":"أنشئ سمتك الخاصة","A theme is a folder with a text file and, if you want, a picture. The":"السمة عبارة عن مجلد يحتوي على ملف نصي وصورة اختيارية. يقوم",
     "Themes: twelve looks for the launcher, a selector in the setup panel, and themes anybody can make.":"اثنتا عشرة هيئة للمشغّل، ومحدد للسمات في لوحة الإعداد، وإمكانية إنشاء سمات مخصصة.",
     "Twelve themes.":"اثنتا عشرة سمة.","Theme selector.":"محدد السمات.","Themes from folders.":"السمات من المجلدات.","Theme maker.":"مصمم السمات.","Saving the setup no longer restarts TEa.G3.":"حفظ الإعدادات لم يعد يعيد تشغيل TEa.G3.","A loading sound for the new themes":"صوت تحميل للسمات الجديدة",
-    "Arabic-first interface with English as the secondary language.":"واجهة عربية أساسية، والإنجليزية لغة ثانوية.","PlayStation 2 logo before the games.":"إظهار شعار PlayStation 2 قبل الألعاب.","Apps from your home server.":"تشغيل التطبيقات من الخادم المنزلي.","OPL's ART folder (#16).":"مجلد ART الخاص بـ OPL (#16).","Square covers for PS1 games and apps (#27).":"أغلفة مربعة لألعاب PS1 والتطبيقات (#27).","Games on a udpfs server reconnect after a lost link.":"تُعيد الألعاب الموجودة على خادم udpfs الاتصال بعد انقطاع الرابط.",
+    "Arabic-first interface with English as the secondary language.":"واجهة عربية أساسية، والإنجليزية لغة ثانوية.","PlayStation 2 logo before the games.":"إظهار شعار PlayStation 2 قبل الألعاب.","Apps from your home server.":"تشغيل التطبيقات من الخادم المنزلي.","OPL's ART folder (#16).":"مجلد ART الخاص بـ OPL (#16).","Square covers for PS1 games and apps (#27).":"أغلفة مربعة لألعاب PS1 والتطبيقات (#27).","The application catalogue retries after a lost network link.":"تُعيد الألعاب الموجودة على خادم udpfs الاتصال بعد انقطاع الرابط.",
     "The splash counts the games on your home server.":"شاشة البداية تحصي الألعاب الموجودة على الخادم المنزلي.","Fixes a black screen after the splash.":"إصلاح مشكلة الشاشة السوداء بعد شاشة البداية.","New since v1.2.5":"الجديد منذ v1.2.5","Faster covers and achievements":"تسريع تحميل الأغلفة والإنجازات","Covers for apps.":"أغلفة التطبيقات.","Save icons for the games on your home server":"أيقونات الحفظ لألعاب الخادم المنزلي","Achievement unlocks show up in the game.":"ظهور إشعارات فتح الإنجازات داخل اللعبة.","The in-game menu can no longer leave a game frozen.":"قائمة اللعبة لم تعد تترك اللعبة متوقفة.","Achievements work again.":"عادت الإنجازات للعمل.","Fix for a freeze with achievements on.":"إصلاح التجمّد عند تفعيل الإنجازات."
   });
 
@@ -152,7 +152,7 @@
   "Three steps": "ثلاث خطوات للتشغيل",
   "You need a PS2 that runs homebrew (FreeMcBoot or similar) and a USB drive. The": "تحتاج إلى جهاز PS2 يدعم تشغيل برامج Homebrew، مثل FreeMcBoot، وإلى وحدة USB. تجد بقية التفاصيل في",
   "has the rest.": "الذي يشرح بقية خطوات الإعداد.",
-  "Copy the zip's contents to the root of a FAT32 or exFAT drive. Put PS2 ISOs in": "انسخ محتويات ملف ZIP إلى المجلد الرئيسي لوحدة تخزين مهيأة بنظام FAT32 أو exFAT، وضع ألعاب PS2 بصيغة ISO داخل",
+  "Copy the zip's contents to the root of a FAT32 or FAT32 drive. Put PS2 ISOs in": "انسخ محتويات ملف ZIP إلى المجلد الرئيسي لوحدة تخزين مهيأة بنظام FAT32 أو FAT32، وضع ألعاب PS2 بصيغة ISO داخل",
   "Start": "ابدأ",
   "from uLaunchELF, or let the setup wizard make it FreeMcBoot's autoboot.": "من خلال uLaunchELF، أو دع معالج الإعداد يضيفه إلى التشغيل التلقائي في FreeMcBoot.",
   "Pick a game and press ✕. The first boot writes": "اختر لعبة واضغط ✕ للتشغيل. عند بدء التشغيل لأول مرة، ينشئ TEa.G3 الملف",
@@ -163,7 +163,7 @@
   "setup guide on a real PS2": "دليل الإعداد على جهاز PS2 حقيقي",
   ", both recorded when NULD was still ORBIT.": "، وقد سُجّل المقطعان عندما كان اسم المشروع ORBIT، قبل اعتماد اسم TEa.G3.",
   "Ships a fork of": "يتضمن نسخة متفرعة من مشروع",
-  "(AFL-3.0). Covers from": " (بترخيص AFL-3.0). أما أغلفة الألعاب فمن مشروع",
+  "(GPL-3.0). Covers from": " (بترخيص GPL-3.0). أما أغلفة الألعاب فمن مشروع",
   "PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.": "PlayStation علامة تجارية لشركة Sony Interactive Entertainment. مشروع TEa.G3 غير تابع لشركة Sony.",
   "TEa.G3's home screen, animated: covers in a carousel, a grid or a list, in the theme picked below": "الشاشة الرئيسية لمشغّل TEa.G3، مع معاينة متحركة للأغلفة في العرض الدائري أو الشبكة أو القائمة، وفق السمة المحددة أدناه.",
   "Theme": "السمة",
@@ -195,7 +195,7 @@
   "homebrew .ELF files, optional": "ملفات تطبيقات Homebrew بصيغة ELF (اختياري)",
   "written by TEa.G3: the covers it downloads": "ينشئه TEa.G3 لحفظ أغلفة الألعاب التي ينزّلها",
   "written by TEa.G3: config.ini, juegos.ini, estado.ini": "ينشئه TEa.G3 لحفظ ملفات الإعداد والحالة",
-  "FAT32 cannot hold files over 4 GB: format the drive as exFAT for big ISOs. Virtual memory cards live in": "لا يدعم FAT32 الملفات التي يزيد حجمها على 4 GB؛ استخدم exFAT للألعاب الكبيرة. تُحفظ بطاقات الذاكرة الافتراضية داخل",
+  "FAT32 cannot hold files over 4 GB: format the drive as FAT32 for big ISOs. Virtual memory cards live in": "لا يدعم FAT32 الملفات التي يزيد حجمها على 4 GB؛ استخدم FAT32 للألعاب الكبيرة. تُحفظ بطاقات الذاكرة الافتراضية داخل",
   "on the game's own device.": "على وحدة التخزين التي توجد عليها اللعبة.",
   "Buttons": "أزرار التحكم",
   "Fig. 2, the home screen. The hints at the bottom right change with what the selected game allows.": "الشكل 2: الشاشة الرئيسية. تتغير تلميحات الأزرار في الأسفل وفق الوظائف المتاحة للعبة المحددة.",
@@ -236,7 +236,7 @@
   "Back from a game": "العودة من اللعبة",
   "TEa.G3 installs": "يثبّت TEa.G3 الملف",
   "Restart": "إعادة التشغيل",
-  "Video mode (480p or 1080i, forced), Neutrino's compatibility modes for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in": "يمكنك فرض دقة 480p أو 1080i، واختيار أنماط التوافق في Neutrino للألعاب التي تحتاج إليها، وتحديد بطاقة الذاكرة: الخاصة باللعبة أو المشتركة أو الفعلية. تُحفظ هذه الاختيارات في",
+  "Video mode (480p or 1080i, forced), OPL compatibility settings for games that need them, and the memory card: the game's own, the shared one or the physical one. The choices are saved in": "يبدأ إخراج الفيديو بدقة 480i/576i لمخارج AV وS-Video وRGB SCART وComponent. يبدل L2+R2 إلى 720p للشاشات المتوافقة عبر Component/HDMI، ويتولى OPL خيارات توافق الألعاب. يستخدم المشغل بطاقات الذاكرة الفعلية. تُحفظ الاختيارات في",
   "RetroAchievements": "إنجازات RetroAchievements",
   "On a PC or server on your network, run the": "على كمبيوتر أو خادم متصل بشبكتك، شغّل",
   "On the PS2, keep": "على جهاز PS2، اترك الإعداد",
@@ -244,13 +244,13 @@
   "empty to find the client on the network, or set its IP.": "فارغاً ليبحث المشغّل عن العميل في الشبكة، أو أدخل عنوان IP الخاص به.",
   "Home game server": "خادم الألعاب المنزلي",
   "Keep your ISOs on a Linux machine and play them over the cable. The zip's": "احتفظ بملفات ISO على جهاز Linux وشغّلها عبر كابل الشبكة. يحتوي ملف ZIP على مجلد",
-  "# on the server, with the ISOs in /srv/data/ps2/DVD cp -r server ~/nuld && cd ~/nuld mkdir -p ~/.config/systemd/user && cp *.service ~/.config/systemd/user/ systemctl --user daemon-reload systemctl --user enable --now udpfs nuld-catalog loginctl enable-linger $USER curl http://localhost:18290/catalog # what the PS2 will see": "أوامر إعداد الخادم وتشغيل خدماته. نفّذها على جهاز Linux بعد وضع ملفات الألعاب في مجلدها المحدد.",
+  "Legacy UDPFS game-server setup is not used by the OPL-only launcher. The optional server address is for downloadable applications only.": "إعداد خادم UDPFS القديم غير مستخدم في مشغل OPL-only. عنوان الخادم الاختياري مخصص لتنزيل التطبيقات فقط.",
   "and": "و",
   "Use a cable on both ends: udpfs does not survive WiFi packet loss.": "استخدم كابل شبكة سلكياً عند الطرفين؛ لأن udpfs لا يتحمل فقدان الحزم عبر Wi‑Fi.",
   "Other sources": "مصادر أخرى",
   "Add them to": "أضف هذه المصادر إلى",
   "or tick them in the setup wizard:": "أو حدّدها من معالج الإعداد:",
-  "(internal exFAT disk, or HD Loader partitions),": "(قرص داخلي بنظام exFAT أو أقسام HD Loader)،",
+  "(internal FAT32 disk, or HD Loader partitions),": "(قرص داخلي بنظام FAT32 أو أقسام HD Loader)،",
   "(not together with mx4sio),": "(لا تستخدمه مع mx4sio في الوقت نفسه)،",
   "(needs a fixed IP in": "(يتطلب عنوان IP ثابتاً في",
   " ). TEa.G3 can also run from an MMCE's SD card with no USB drive at all.": " ). كما يمكن تشغيل TEa.G3 من بطاقة SD في MMCE دون الحاجة إلى وحدة USB.",
@@ -391,7 +391,7 @@
   "Apps from the home server.": "التطبيقات من الخادم المنزلي.",
   "OPL's ART folder (#16).": "مجلد ART الخاص بـ OPL (#16).",
   "Square covers for PS1 games and apps (#27).": "أغلفة مربعة لألعاب PS1 والتطبيقات (#27).",
-  "Games on a udpfs server reconnect after a lost link.": "تُعيد الألعاب الموجودة على خادم udpfs الاتصال بعد انقطاع الشبكة.",
+  "The application catalogue retries after a lost network link.": "يعيد فهرس التطبيقات محاولة الاتصال بعد انقطاع الشبكة.",
   "The splash counts the games on your home server.": "شاشة البداية تحصي الألعاب الموجودة على الخادم المنزلي.",
   "Fixes a black screen after the splash.": "إصلاح مشكلة ظهور شاشة سوداء بعد شاشة البداية.",
   "Faster covers and achievements in the launcher, covers for apps.": "تسريع تحميل الأغلفة والإنجازات في المشغّل، وإضافة أغلفة للتطبيقات.",
@@ -427,8 +427,8 @@
 
   Object.assign(dict, {
   ") and start": " )، ثم شغّل",
-  " . Use a cable on both ends: udpfs does not survive WiFi packet loss.": " . استخدم كابل شبكة سلكياً عند الطرفين؛ لأن udpfs لا يتحمل فقدان الحزم عبر Wi‑Fi.",
-  ". Use a cable on both ends: udpfs does not survive WiFi packet loss.": ". استخدم كابل شبكة سلكياً عند الطرفين؛ لأن udpfs لا يتحمل فقدان الحزم عبر Wi‑Fi.",
+  " . UDPFS game streaming is disabled in the OPL-only build.": " . استخدم كابل شبكة سلكياً عند الطرفين؛ لأن udpfs لا يتحمل فقدان الحزم عبر Wi‑Fi.",
+  ". UDPFS game streaming is disabled in the OPL-only build.": ". استخدم كابل شبكة سلكياً عند الطرفين؛ لأن udpfs لا يتحمل فقدان الحزم عبر Wi‑Fi.",
   ", or tick them in the setup wizard:": "، أو حدّدها من معالج الإعداد:",
   "). TEa.G3 can also run from an MMCE's SD card with no USB drive at all.": "). كما يمكن تشغيل TEa.G3 من بطاقة SD في MMCE دون الحاجة إلى USB.",
   "Quiet fills: options that are on, the empty part of bars": "ألوان هادئة للخلفيات الخاصة بالخيارات المفعّلة والمساحات غير الممتلئة في أشرطة التقدم",
@@ -474,7 +474,7 @@
   "PS1 covers are no longer squashed into the DVD case shape: they are drawn square, like a CD case, and so are app covers. PS1 covers downloaded by earlier versions are downloaded again in the new shape.": "لم تعد أغلفة ألعاب PS1 تُضغط لتأخذ شكل غلاف DVD؛ بل أصبحت مربعة مثل أغلفة الأقراص المدمجة، وكذلك أغلفة التطبيقات. ويُعاد تنزيل أغلفة PS1 التي جرى الحصول عليها في الإصدارات السابقة بالشكل الجديد.",
   "makes square covers by hand; app covers made earlier with": "ينشئ الأغلفة المربعة يدوياً؛ أما أغلفة التطبيقات التي أُنشئت سابقاً باستخدام",
   "have to be made again with": "فيجب إنشاؤها مجدداً باستخدام الخيار",
-  "Before, once udpfs gave up on the server, every later read failed and the game crashed at its next load. Now it finds the server again (for up to about a minute) and retries the read. Not tested on a console yet.": "في السابق، إذا فقد udpfs الاتصال بالخادم، كانت جميع محاولات القراءة اللاحقة تفشل وتتوقف اللعبة عند تحميل المرحلة التالية. أصبح الآن يعيد البحث عن الخادم لمدة تصل إلى دقيقة تقريباً ويكرر محاولة القراءة. لم يُختبر هذا الإصلاح على جهاز فعلي بعد.",
+  "The former remote game-streaming path has been removed. This OPL-only build reads games from local supported storage adapters.": "أزيل مسار بث الألعاب البعيد من هذا الإصدار؛ ويقرأ OPL الألعاب من محولات التخزين المحلية المدعومة فقط.",
   "1.2.12": "الإصدار 1.2.12",
   "2026-11-08 ·": "8 نوفمبر 2026 ·",
   "The splash stopped at \"00 / 01\"": "كانت شاشة البداية تتوقف عند ظهور \"00 / 01\"",
@@ -508,7 +508,7 @@
   "1.2.4": "الإصدار 1.2.4",
   "(an 8BitDo adapter, #11). With no new press for 10 seconds the menu now closes by itself and the game goes on. The 8BitDo still cannot pick an option in the menu.": "(عند استخدام محول 8BitDo، البلاغ #11). إذا لم تُقرأ أي ضغطة جديدة لمدة 10 ثوانٍ، تُغلق القائمة تلقائياً وتستمر اللعبة. لا يزال محول 8BitDo غير قادر على تحديد خيار من القائمة.",
   "1.2.3": "الإصدار 1.2.3",
-  "The launcher handed Neutrino the agent's config file instead of the game's watch list, so the console never sent the game's memory to the achievements client. The list of achievements on ○ was not affected.": "كان المشغّل يمرر إلى Neutrino ملف إعدادات الوكيل بدلاً من قائمة مراقبة اللعبة؛ لذلك لم يرسل الجهاز بيانات ذاكرة اللعبة إلى عميل الإنجازات. لم تتأثر قائمة الإنجازات التي تظهر عند الضغط على ○.",
+  "An earlier launcher build passed the agent config instead of the game's watch list, so the console did not send the game's memory to the achievements client. The achievement list shown with ○ was unaffected.": "في إصدار سابق مرر المشغل ملف إعدادات الوكيل بدلاً من قائمة مراقبة اللعبة؛ لذلك لم يرسل الجهاز بيانات ذاكرة اللعبة إلى عميل الإنجازات. لم تتأثر قائمة الإنجازات التي تظهر عند الضغط على ○.",
   "Games froze at scene loads with achievements on": "كانت الألعاب تتجمد أثناء تحميل المشاهد عند تفعيل الإنجازات",
   "(Tekken 5 from the home server). The agent kept about 25 KB of the IOP's 2 MB for snapshots it never sends; it now keeps 4 KB, one packet's worth.": "(لعبة Tekken 5 من الخادم المنزلي). كان الوكيل يحتفظ بنحو 25 KB من ذاكرة IOP البالغة 2 MB لنسخ لا يرسلها؛ وقد خُفّض الاستهلاك إلى 4 KB، أي ما يعادل حزمة واحدة.",
   "1.2.2": "الإصدار 1.2.2",
@@ -522,7 +522,7 @@
   "Black, steel and one acid accent: a loading screen with the four TEa.G3 logos taking turns over a wire sphere, 1 px frames and HUD corners on the selection, and the Archivo, IBM Plex Mono and Michroma typefaces. The in-game menu follows the same palette.": "تصميم يجمع الأسود والرمادي المعدني ولون تمييز بارز. تتناوب شعارات TEa.G3 الأربعة في شاشة التحميل فوق كرة شبكية، مع إطارات بسماكة بكسل واحد وزوايا HUD حول العنصر المحدد، واستخدام خطوط Archivo وIBM Plex Mono وMichroma. وتتبع قائمة اللعبة الألوان نفسها.",
   "with the loading screen running in the browser, every screenshot in a full-size viewer, and the setup guide as a manual of its own.": "يضم شاشة تحميل تعمل داخل المتصفح، ولقطات شاشة يمكن عرضها بالحجم الكامل، ودليل إعداد مستقل.",
   "\"Native\" video mode can give a black screen on some HDTV setups: there, keep the default 480p.": "قد يؤدي نمط الفيديو \"Native\" إلى شاشة سوداء في بعض أجهزة HDTV؛ استخدم الدقة الافتراضية 480p في هذه الحالة.",
-  "Loading over udpfs needs a wired network on both ends.": "يتطلب تشغيل الألعاب عبر udpfs اتصالاً سلكياً بالشبكة عند الطرفين.",
+  "Loading over udpfs needs a wired network on both ends.": "بث الألعاب عبر UDPFS معطل في إصدار OPL-only.",
   "1.1": "الإصدار 1.1",
   "2026-10-12 ·": "12 أكتوبر 2026 ·",
   "Setup without a PC, updates without a PC, and CRT TVs.": "إعداد وتحديث دون الحاجة إلى كمبيوتر، مع دعم أجهزة تلفاز CRT.",
@@ -535,15 +535,15 @@
   "together (it works blind) to switch the menu to 480i (576i on PAL consoles) and back; it is saved as": "معاً (يمكن تنفيذ الاختصار دون رؤية الشاشة) للتبديل إلى دقة 480i (أو 576i على أجهزة PAL) والعودة إلى الدقة السابقة. يُحفظ الاختيار في",
   ". In 480i the games default to their native video mode too.": ". عند استخدام 480i، تعمل الألعاب أيضاً بنمط الفيديو الأصلي الخاص بها.",
   "Run ORBIT from an MMCE SD card, no USB drive needed": "تشغيل ORBIT من بطاقة SD في MMCE دون الحاجة إلى وحدة USB",
-  "(#8). Settings, covers, apps and Neutrino live on the SD card; a USB drive becomes an optional extra game source.": "(#8). تُحفظ الإعدادات والأغلفة والتطبيقات وملفات Neutrino على بطاقة SD، وتصبح وحدة USB مصدراً إضافياً اختيارياً للألعاب.",
+  "(#8). Settings, covers, apps and launcher files live on the SD card; a USB drive becomes an optional extra game source.": "(#8). تُحفظ الإعدادات والأغلفة والتطبيقات وملفات OPL على بطاقة SD، وتصبح وحدة USB مصدراً إضافياً اختيارياً للألعاب.",
   "udpfs without ORBIT's catalog": "تشغيل udpfs دون فهرس ORBIT",
   "(#10): with": "(#10): عند ترك",
-  "empty, any udpfs server (Server2PS2...) works, and its DVD/CD folders are listed like any other source.": "فارغاً، يمكن استخدام أي خادم udpfs (مثل Server2PS2...)، وتظهر مجلدات DVD وCD الخاصة به مثل بقية المصادر.",
+  "not used: remote game folders are not exposed by the OPL-only launcher.": "غير مستخدم: لا يعرض مشغل OPL-only مجلدات الألعاب البعيدة.",
   "SELECT shows every game source's status": "يعرض زر SELECT حالة جميع مصادر الألعاب",
   "(#4): how many games each one found, or why it failed.": "(#4): عدد الألعاب التي عثر عليها كل مصدر، أو سبب تعذّر عمله.",
   "The in-game menu ignored the controller on an 8BitDo adapter": "كانت قائمة اللعبة تتجاهل وحدة التحكم عند استخدام محول 8BitDo",
   "(#11): it read only one of the two copies of the pad data that the driver writes in turn.": "(#11): إذ كانت تقرأ نسخة واحدة فقط من نسختَي بيانات وحدة التحكم اللتين يكتبهما برنامج التشغيل بالتناوب.",
-  "Loading over udpfs needs a wired network on both ends; Neutrino's UDP transport does not recover from WiFi packet loss.": "يتطلب تشغيل الألعاب عبر udpfs شبكة سلكية عند الطرفين؛ لأن نقل UDP في Neutrino لا يعالج فقدان الحزم عبر Wi‑Fi.",
+  "UDPFS game streaming is disabled in the OPL-only build. Use a wired network for the optional application catalogue and updates.": "بث الألعاب عبر UDPFS معطل في إصدار OPL-only. استخدم شبكة سلكية لفهرس التطبيقات الاختياري والتحديثات.",
   "1.0.2": "الإصدار 1.0.2",
   "2026-10-05 ·": "5 أكتوبر 2026 ·",
   "A small one: covers show up right away again.": "تحديث صغير يعيد ظهور الأغلفة فوراً.",
@@ -580,8 +580,8 @@
   "(△): 480p / 1080i, compatibility modes, memory card.": "(△): اختيار 480p أو 1080i وأنماط التوافق وبطاقة الذاكرة.",
   "(L1+L2+R1+R2+START+SELECT): restart into ORBIT or power off; direct combos too.": "(L1+L2+R1+R2+START+SELECT): إعادة تشغيل الجهاز إلى ORBIT أو إيقاف التشغيل، مع اختصارات مباشرة أخرى.",
   ": rcheevos-compatible game hash, ○ lists the achievements with your progress, and an agent inside the game feeds the": ": التعرّف على اللعبة باستخدام بصمة متوافقة مع rcheevos، وعرض إنجازاتها وتقدمك عند الضغط على ○، مع وكيل داخل اللعبة يرسل البيانات إلى عميل",
-  ": udpfs + ORBIT's catalog service; server games keep covers, achievements and save icons.": ": استخدام udpfs وخدمة فهرسة ORBIT؛ وتحتفظ ألعاب الخادم بدعم الأغلفة والإنجازات وأيقونات الحفظ.",
-  ": USB, internal HDD (exFAT, HD Loader), MX4SIO, iLink, MMCE, UDPBD, udpfs; discs, PS1 (POPStarter), homebrew from": ": USB والقرص الداخلي HDD (exFAT وHD Loader) وMX4SIO وiLink وMMCE وUDPBD وudpfs، إضافة إلى الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من",
+  ": HTTP application catalogue only; no remote game filesystem.": ": استخدام udpfs وخدمة فهرسة ORBIT؛ وتحتفظ ألعاب الخادم بدعم الأغلفة والإنجازات وأيقونات الحفظ.",
+  ": USB FAT32, ATA FAT32 HDD, HD Loader, MX4SIO, iLink; discs, PS1 (POPStarter), homebrew from": ": USB FAT32 وقرص ATA FAT32 وHD Loader وMX4SIO وiLink؛ إضافة إلى الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من",
   "), including the in-game menu and config.ini's comments.": ")، بما في ذلك قائمة اللعبة والتعليقات الموجودة في ملف config.ini.",
   "Achievement unlocks depend on the xeRAbora client being reachable on the same network.": "يتطلب فتح الإنجازات أن يكون عميل xeRAbora متاحاً على الشبكة المحلية نفسها."
 });
@@ -674,7 +674,7 @@
   });
 
   Object.assign(dict, {
-  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0). Called ORBIT until v1.1.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0. كان اسم المشروع ORBIT حتى الإصدار v1.1.",
+  "TEa.G3 is free software under GPL-3.0 and includes OPL as its only PS2 game runtime. Called ORBIT until v1.1.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويضم OPL بوصفه محرك ألعاب PS2 الوحيد. كان اسم المشروع ORBIT حتى الإصدار v1.1.",
   "mass0:/tea_g3/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)": "mass0:/tea_g3/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
   "nombre = Ocaso ; the name in the setup panel base = nuld ; legacy key, displayed as Classic [colores] ; RRGGBB; what you leave out keeps the base's fondo = 0E0714 panel = 1A0F22 fila = 3A2140 borde = 6A4A66 tenue = 5A4458 texto = FFF4E8 texto2 = E8D2C4 etiqueta = C9A9A0 acento = FF8A3C acero = 2A1830 inverso = 0E0714": "nombre = Ocaso       ; اسم السمة في لوحة الإعداد\\nbase = nuld          ; المفتاح القديم ويظهر باسم Classic\\n\\n[colores]            ; قيم الألوان بصيغة RRGGBB\\n                     ; أي لون لا تحدده يحتفظ بلون السمة الأساسية\\nfondo = 0E0714\\npanel = 1A0F22\\nfila = 3A2140\\nborde = 6A4A66\\ntenue = 5A4458\\ntexto = FFF4E8\\ntexto2 = E8D2C4\\netiqueta = C9A9A0\\nacento = FF8A3C\\nacero = 2A1830\\ninverso = 0E0714",
   ", and keeps using": "، ويواصل استخدام",
@@ -689,7 +689,7 @@
   ", needs numpy and Pillow).": "، ويتطلب مكتبتي numpy وPillow).",
   "RetroAchievements on real hardware": "خدمة RetroAchievements على جهاز حقيقي",
   "manual": "الدليل",
-  "TEa.G3 is free software under GPL-3.0 and ships a fork of Neutrino (AFL-3.0).": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويتضمن نسخة متفرعة من Neutrino بترخيص AFL-3.0."
+  "TEa.G3 is free software under GPL-3.0 and includes OPL as its only PS2 game runtime.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويضم OPL بوصفه محرك ألعاب PS2 الوحيد."
 });
 
   Object.assign(dict, {
@@ -745,7 +745,7 @@
   });
   Object.assign(dict, {
     "changelog":"سجل التغييرات",
-    "Per-game options panel: video mode, video compatibility, memory card and Neutrino":"لوحة إعدادات اللعبة: نمط الفيديو وتوافق الفيديو وبطاقة الذاكرة وخيارات التوافق في Neutrino.",
+    "Per-game options panel: video mode, video compatibility, memory card and OPL":"لوحة إعدادات اللعبة: نمط الفيديو وخيارات توافق OPL.",
     "Preview of TEa.G3":"معاينة TEa.G3",
     "Achievements panel for Black: 0 of 56, 0 of 600 points":"لوحة إنجازات لعبة Black: ٠ من ٥٦ إنجازاً و٠ من ٦٠٠ نقطة.",
     "Carousel with the example theme Ocaso: a dusk sky behind the covers, orange accent":"العرض الدائري باستخدام السمة التجريبية Ocaso: سماء الغسق خلف الأغلفة مع لون تمييز برتقالي.",
@@ -787,8 +787,8 @@
     ": a new name, a new look, and nothing to redo on your USB drive.": ": اسم جديد ومظهر جديد، دون الحاجة إلى إعادة إعداد وحدة USB.",
     ": the menu was 720p only, which a CRT shows as a black screen. Press": ": كانت القائمة تعمل بدقة 720p فقط، ولذلك تظهر شاشة سوداء على تلفاز CRT. اضغط",
     ": rcheevos-compatible game hash, ○ lists the achievements with your progress, and an agent inside the game feeds the": ": يتعرّف على اللعبة باستخدام بصمة rcheevos المتوافقة؛ ويعرض الزر ○ الإنجازات وتقدمك فيها، بينما يرسل مكوّن داخل اللعبة بياناتها إلى عميل",
-    ": udpfs + ORBIT's catalog service; server games keep covers, achievements and save icons.": ": يستخدم udpfs مع خدمة فهرسة ORBIT؛ وتحتفظ ألعاب الخادم بأغلفتها وإنجازاتها وأيقونات الحفظ.",
-    ": USB, internal HDD (exFAT, HD Loader), MX4SIO, iLink, MMCE, UDPBD, udpfs; discs, PS1 (POPStarter), homebrew from": ": يدعم USB والقرص الداخلي HDD (بنظام exFAT أو HD Loader) وMX4SIO وiLink وMMCE وUDPBD وudpfs، إضافة إلى الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من",
+    ": HTTP application catalogue only; no remote game filesystem.": ": فهرس تطبيقات HTTP فقط؛ لا يوجد نظام ملفات ألعاب عن بعد.",
+    ": USB FAT32, ATA FAT32 HDD, HD Loader, MX4SIO, iLink; discs, PS1 (POPStarter), homebrew from": ": يدعم USB FAT32 وقرص ATA FAT32 وHD Loader وMX4SIO وiLink، إضافة إلى الأقراص وألعاب PS1 عبر POPStarter وتطبيقات Homebrew من",
     "ORBIT is now": "أصبح ORBIT الآن",
     "No covers": "لا تظهر أغلفة الألعاب",
     "A source shows no games": "أحد مصادر الألعاب لا يعرض أي لعبة",
@@ -831,7 +831,7 @@
       "God of War selected: the saves card shows 1 save on memory card 1 with its 3D icon":"لعبة God of War محددة؛ تعرض بطاقة الحفظ عملية حفظ واحدة على بطاقة الذاكرة 1 مع أيقونتها ثلاثية الأبعاد.",
       "Black selected, with an Achievements 56 tag next to its serial, media, source and video tags":"لعبة Black محددة، وتظهر بجانب رقمها التسلسلي ووسوم الوسيط والمصدر والفيديو علامة الإنجازات 56.",
       "Achievements panel for Black: 0 of 56, 0 of 600 points, each achievement with its points":"لوحة إنجازات لعبة Black: تم فتح 0 من أصل 56 إنجازاً، و0 من أصل 600 نقطة، مع عرض نقاط كل إنجاز.",
-      "Per-game options panel: video mode, video compatibility, memory card and Neutrino's compatibility modes":"لوحة إعدادات اللعبة: نمط الفيديو وتوافقه وبطاقة الذاكرة وأنماط التوافق في Neutrino.",
+      "Per-game options: video output mode and OPL compatibility settings":"إعدادات اللعبة: نمط إخراج الفيديو وخيارات توافق OPL.",
       "Arabic-first setup wizard: language, game sources, memory card, video, network, boot stub and FreeMcBoot":"معالج الإعداد باللغة العربية: اللغة ومصادر الألعاب وبطاقة الذاكرة والفيديو والشبكة وإعدادات الإقلاع وFreeMcBoot.",
       "Carousel view: Beyond Good and Evil selected, its tags at the top and the button hints at the bottom":"العرض الدائري مع تحديد لعبة Beyond Good and Evil؛ تظهر وسومها في الأعلى وتلميحات الأزرار في الأسفل."
     },
@@ -907,11 +907,11 @@
     "OPL / EMBEDDED ENGINE":"OPL / محرك مضمّن",
     "OPL is built into the single TEa.G3.ELF.":"محرك OPL مدمج داخل ملف TEa.G3.ELF الوحيد.",
     "Default motor=opl selects OPL BDM for USB ISO; physical-PS2 game testing is still pending.":"يختار الإعداد الافتراضي motor=opl محوّل OPL BDM لألعاب ISO على USB؛ وما زال اختبار التشغيل على جهاز PS2 حقيقي مطلوباً.",
-    "TEa.G3 embeds OPL and Neutrino, then chooses the correct engine for the game's format, storage source and motor preference. The simulator below follows the current engine-selection code.":"يدمج TEa.G3 محركي OPL وNeutrino، ثم يختار المحرك وفق صيغة اللعبة ومصدر التخزين وتفضيل المحرك. المحاكاة أدناه تتبع منطق اختيار المحرك الموجود في الكود الحالي.",
+    "TEa.G3 uses OPL as its only PS2 game engine. The simulator below shows supported OPL-only routes and fail-closed behavior for unsupported sources.":"يستخدم TEa.G3 محرك OPL وحده لألعاب PS2. تعرض المحاكاة أدناه المسارات المدعومة، مع رفض آمن للمصادر غير المدعومة.",
     "Explore embedded OPL":"استكشف محرك OPL المضمّن",
     "One launcher. Two embedded engines.":"مشغّل واحد ومحركان مضمّنان.",
     "USBExtreme UL selects OPL automatically. USB ISO/ZSO can use OPL when ":"تختار ألعاب USBExtreme UL محرك OPL تلقائياً. ويمكن تشغيل ألعاب USB ISO/ZSO عبر OPL عند ضبط ",
-    "Auto uses OPL on ready BDM/ETH routes. Neutrino is an ISO-only fallback; ZSO is never sent to Neutrino.":"يستخدم الوضع التلقائي OPL عبر مسارات BDM/ETH الجاهزة. ويُستخدم Neutrino بديلاً لألعاب ISO فقط؛ ولا يُمرر ZSO إليه مطلقاً.",
+    "OPL handles only explicitly wired BDM, UL and HD Loader routes; unsupported sources fail closed. No secondary game engine is used.":"يعمل OPL فقط عبر مسارات BDM وUL وHD Loader الموصولة صراحة؛ وتُرفض المصادر غير المدعومة بأمان. لا يتم تحميل محرك ألعاب ثانٍ.",
     "Open the full OPL Integration Lab and image gallery":"افتح مختبر تكامل OPL الكامل ومعرض الرسوم",
     "Try the routing simulation":"جرّب محاكاة مسار التشغيل",
     "Try the engine selector":"جرّب محدد محرك التشغيل",
@@ -927,7 +927,7 @@
     "Embedded OPL runtime":"محرك OPL المضمّن",
     "Storage source":"مصدر التخزين",
     "Engine preference":"تفضيل المحرك",
-    "Other source (HDD / MX4SIO / iLink / MMCE / network)":"مصدر آخر (HDD / MX4SIO / iLink / MMCE / الشبكة)",
+    "Other source (FAT32 HDD / MX4SIO / iLink / HD Loader)":"مصدر آخر (قرص FAT32 / MX4SIO / iLink / HD Loader)",
     "Other source":"مصدر آخر",
     "Simulate route":"حاكِ المسار",
     "Simulate this route":"حاكِ هذا المسار",
@@ -947,7 +947,7 @@
     "Current route":"المسار الحالي",
     "OPL · UL direct boot":"OPL · إقلاع UL مباشر",
     "OPL · USB direct boot":"OPL · إقلاع USB مباشر",
-    "Existing Neutrino route":"مسار Neutrino الحالي",
+    "Existing OPL route":"مسار OPL الحالي",
     "Not wired to OPL":"غير موصول بـ OPL",
     "Unsupported in current adapter":"غير مدعوم في المحوّل الحالي",
     "PS1 ":"ألعاب PS1 ",
@@ -967,8 +967,8 @@
     "UL record, CRC and split-part validation":"التحقق من سجل UL وCRC وأجزاء اللعبة",
     "TEa.G3's pinned OPL UL direct-boot patch":"تصحيح الإقلاع المباشر لـ OPL UL المثبّت في TEa.G3",
     "Runtime installation and CRC-32 checks":"تثبيت موارد التشغيل وفحوص CRC-32",
-    "CI build of pinned OPL, Neutrino and the single ELF":"بناء OPL وNeutrino وملف ELF الواحد عبر CI",
-    "OPL and Neutrino are embedded runtime components; the routing boundary above is specific to this TEa.G3 integration.":"محركا OPL وNeutrino مكوّنان مضمّنان في موارد التشغيل؛ وحدود التوجيه أعلاه خاصة بطريقة تكاملهما في TEa.G3.",
+    "CI build of the pinned OPL runtime and single ELF":"بناء محرك OPL المثبت وملف ELF الواحد عبر CI",
+    "OPL is the only embedded PS2 runtime; unsupported source backends are not packaged.":"OPL هو محرك PS2 الوحيد المضمن؛ ولا تُدرج محولات المصادر غير المدعومة في الحزمة.",
     "Browser simulation only; no PS2 game or ELF is executed.":"محاكاة داخل المتصفح فقط؛ لا يتم تشغيل لعبة PS2 أو ملف ELF.",
     "Browser simulation only · no PS2 ELF, emulator or game is executed here.":"محاكاة داخل المتصفح فقط · لا يتم تشغيل ملف ELF أو محاكي أو لعبة هنا.",
     "Verification boundary:":"حدود التحقق:",
@@ -985,7 +985,7 @@
     "The route selector":"محدد مسار التشغيل"
   });
   Object.assign(attributeDict.alt, {
-    "TEa.G3 embeds OPL and Neutrino in one ELF and routes games according to format, source and engine preference":"يدمج TEa.G3 محركي OPL وNeutrino في ملف ELF واحد ويوجه الألعاب وفق الصيغة والمصدر وتفضيل المحرك.",
+    "TEa.G3 embeds OPL as its only PS2 game engine in one ELF and routes games through supported source adapters":"يدمج TEa.G3 محرك OPL وحده لألعاب PS2 في ملف ELF واحد، ويوجه الألعاب عبر محولات المصادر المدعومة فقط.",
     "USBExtreme UL scan, split-part validation and direct OPL launch flow":"مخطط فحص USBExtreme UL والتحقق من أجزاء اللعبة ومسار الإقلاع المباشر عبر OPL.",
     "Embedded runtime build, CRC verification and installation under tea_g3/runtime":"مخطط بناء موارد التشغيل المضمّنة والتحقق من CRC وتثبيتها داخل tea_g3/runtime.",
     "OPL integration diagrams, scroll sideways":"مخططات تكامل OPL القابلة للاستعراض"
@@ -994,7 +994,7 @@
     "TEa.G3 OPL Integration Lab":"مختبر تكامل OPL في TEa.G3"
   });
   Object.assign(metaDict, {
-    "Explore how TEa.G3 embeds OPL and Neutrino in one ELF, see the verified USBExtreme UL and USB ISO/ZSO routing rules, and try a browser-only launch-path simulation.":"استكشف طريقة دمج OPL وNeutrino داخل ملف ELF واحد في TEa.G3، وراجع مسارات USBExtreme UL وUSB ISO/ZSO، وجرّب محاكاة لمسارات التشغيل داخل المتصفح."
+    "Explore how TEa.G3 embeds OPL as its only PS2 game engine, review USBExtreme UL and USB ISO/ZSO routing, and try the browser-only launch-path simulation.":"استكشف طريقة دمج OPL بوصفه محرك ألعاب PS2 الوحيد في TEa.G3، وراجع مسارات USBExtreme UL وUSB ISO/ZSO، وجرّب محاكاة لمسارات التشغيل داخل المتصفح."
   });
 
   // Correct normalized text-node keys and translate the new manual chapter.
@@ -1006,7 +1006,7 @@
     "USBExtreme UL: parse":"USBExtreme UL: تحليل ملف",
     "Integrated OPL engine":"محرك OPL المدمج",
     "TEa.G3 ships one user-facing executable:":"يوفر TEa.G3 ملف تشغيل واحداً للمستخدم:",
-    ". The build embeds a pinned OPL runtime and Neutrino, including the required modules. TEa.G3 installs and integrity-checks the runtime under":". يدمج البناء محرك OPL من نسخة مثبتة وNeutrino مع الوحدات المطلوبة. يثبت TEa.G3 موارد التشغيل ويتحقق من سلامتها داخل",
+    ". The build embeds only a pinned OPL runtime, including its required modules. TEa.G3 installs and integrity-checks the runtime under":". يدمج البناء محرك OPL المثبت وحده مع وحداته المطلوبة. يثبت TEa.G3 موارد التشغيل ويتحقق من سلامتها داخل",
     " on first boot.":" عند التشغيل الأول.",
     "What is routed today":"مسارات التشغيل المتاحة حالياً",
     "Any preference":"أي تفضيل للمحرك",
@@ -1020,7 +1020,7 @@
     ", validates the fixed-size records, and checks that every declared":"، ويتحقق من السجلات ذات الحجم الثابت، ويفحص وجود كل جزء معلن من",
     ". A record with missing or invalid parts is skipped instead of being offered as a working game. A valid entry receives the OPL UL route with its title, startup ID, media type and part count.":". يتم تجاوز السجل الذي تنقصه أجزاء أو يحتوي بيانات غير صحيحة بدلاً من عرضه كلعبة قابلة للتشغيل. ويحصل السجل الصحيح على مسار OPL UL مع العنوان ومعرّف بدء التشغيل ونوع الوسيط وعدد الأجزاء.",
     "Important limits":"حدود مهمة",
-    "Embedding upstream OPL does not mean every backend supported by standalone OPL is connected to TEa.G3. TEa.G3 currently has direct-boot adapters for BDM devices (USB, MX4SIO, iLink and ATA-backed FAT/exFAT HDD), SMB/ETH, APA/HD Loader and USBExtreme UL. MMCE and UDPBD/UDPFS remain on Neutrino for supported ISO images; ZSO is rejected on sources without a ready OPL BDM/ETH decoder. Every OPL route still requires physical-PS2 game and sustained-read testing.":"إن تضمين OPL الأصلي لا يعني ربط جميع مصادر التخزين التي يدعمها OPL المستقل مع TEa.G3. يوفّر TEa.G3 حالياً محوّلات إقلاع مباشر لأجهزة BDM (USB وMX4SIO وiLink وأقراص FAT/exFAT المتصلة عبر ATA)، وSMB/ETH، وAPA/HD Loader، وألعاب USBExtreme UL. تبقى MMCE وUDPBD/UDPFS على Neutrino لألعاب ISO المدعومة؛ ويُرفض ZSO في المصادر التي لا يتوفر لها مفكك OPL BDM/ETH جاهز. وما زال كل مسار OPL بحاجة إلى اختبار تشغيل اللعبة والقراءة المستمرة على جهاز PS2 حقيقي.",
+    "Embedding upstream OPL does not mean every backend supported by standalone OPL is connected to TEa.G3. TEa.G3 uses OPL as its only PS2 game engine, with explicit routes for USB FAT32 ISO/ZSO, USBExtreme UL, ATA FAT32, MX4SIO, iLink and HD Loader. MMCE game launching and SMB/UDPBD/UDPFS game streaming are disabled until OPL-only adapters are integrated. ZSO is rejected for unsupported source types. Every hardware route still requires physical-PS2 game and sustained-read testing.":"إن تضمين OPL لا يعني ربط جميع مصادر التخزين التي يدعمها OPL المستقل مع TEa.G3. يستخدم TEa.G3 محرك OPL وحده، مع مسارات صريحة لـ USB FAT32 ISO/ZSO وUSBExtreme UL وATA FAT32 وMX4SIO وiLink وHD Loader. تشغيل الألعاب من MMCE وبث SMB/UDPBD/UDPFS معطل حتى دمج محولات مستقلة لـ OPL. ويُرفض ZSO في المصادر غير المدعومة. وما زالت جميع مسارات الأجهزة بحاجة إلى اختبار تشغيل وقراءة مستمرة على جهاز PS2 حقيقي.",
     "Open the interactive OPL Integration Lab":"افتح مختبر تكامل OPL التفاعلي",
     " — its browser simulation mirrors the route selector; it does not execute an ELF, emulate a console or launch a game.":" — تحاكي آلية المتصفح محدد المسارات فقط؛ فهي لا تشغّل ELF ولا تحاكي جهازاً ولا تبدأ لعبة.",
     "candidate package":"حزمة مرشحة",

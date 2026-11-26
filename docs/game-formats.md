@@ -7,7 +7,7 @@ OPL is the only PS2 game engine in TEa.G3. The launcher does not fall back to an
 | PS2 ISO | DVD/ or CD/ on USB | OPL BDM / USB | Boot and sustained-read test pending |
 | PS2 ZSO | DVD/ or CD/ on USB | OPL BDM / USB | OPL IOP decoder is included; hardware test pending |
 | USBExtreme UL | ul.cfg and ul.* parts in USB root | OPL UL | All declared split parts are checked before launch |
-| HDD ISO/ZSO | FAT/exFAT ATA disk | OPL BDM / ATA | Device adapter test pending |
+| HDD ISO/ZSO | FAT32 ATA disk | OPL BDM / ATA | Device adapter test pending |
 | HD Loader | APA/PFS HDD partition | OPL HDD mini-launch | Partition metadata is checked before launch |
 | MX4SIO / iLink | Supported BDM device | OPL BDM | Hardware test pending |
 | SMB / UDPBD / UDPFS / MMCE game source | Network / memory-card media | Disabled | No complete OPL-only discovery and sector-reader path is enabled |

@@ -114,11 +114,13 @@
   </section>
 
   <section class="chapter" id="video">
-    <header><b>5</b><h2>AV, Component and HDMI video</h2></header>
+    <header><b>5</b><h2>AV, S-Video, SCART, Component and HDMI video</h2></header>
     <div>
       <p>The launcher initializes interlaced SD output first: 480i on NTSC-region consoles or 576i on PAL-region consoles. This is the safest default for composite AV cables (yellow video, red/white audio) and is accepted by many Component and HDMI adapters.</p>
       <ul>
         <li>Use the yellow RCA video connector for composite AV; red and white carry audio.</li>
+        <li>S-Video uses the S-Video cable and the same 480i/576i standard-definition output.</li>
+        <li>RGB SCART uses the RGB option in the PS2 system menu and the same 480i/576i output.</li>
         <li>Component YPbPr uses the component cable and a display that accepts the selected resolution.</li>
         <li>HDMI requires a compatible PS2 HDMI adapter; support for 480i/576i and 720p varies by adapter.</li>
         <li>Press L2+R2 to switch the launcher between interlaced SD and 720p. Do not select 720p for a composite-only CRT.</li>
@@ -133,7 +135,7 @@
     <div>
       <p>If a composite AV television shows a black screen, power off and reconnect the yellow RCA video lead, then restart with the default 480i/576i mode. If using Component or HDMI, check the TV input and the adapter's supported modes before switching to 720p.</p>
       <p>If a game is refused, check the source type, format, startup ID, file readability and OPL runtime integrity. SMB, UDPBD, UDPFS game streaming and MMCE game launching are intentionally disabled rather than routed elsewhere.</p>
-      <p>CI verifies source-policy tests, OPL compilation, embedded runtime integrity and package creation. It cannot validate a real device's enumeration, game boot, sustained reads, return-to-launcher behaviour or the picture on a physical AV/Component/HDMI chain. Those checks remain hardware acceptance tests.</p>
+      <p>CI verifies source-policy tests, OPL compilation, embedded runtime integrity and package creation. It cannot validate a real device's enumeration, game boot, sustained reads, return-to-launcher behaviour or the picture on a physical AV/S-Video/SCART/Component/HDMI chain. Those checks remain hardware acceptance tests.</p>
       <p><a class="btn ink" href="opl-lab.html">Open the OPL Integration Lab</a> for a browser-only route simulation.</p>
     </div>
   </section>

@@ -99,7 +99,7 @@ const char *src_init(unsigned mask, const char *ip, int udpfs_mount)
                 src[nsrc].unit = 0;
                 strcpy(src[nsrc].root, "hdd0:");
                 nsrc++;
-            } else FAIL(SRC_HDD, L("Hard disk not found (FAT/exFAT or HD Loader)"));
+            } else FAIL(SRC_HDD, L("Hard disk not found (FAT32 or HD Loader)"));
         }
     }
     if ((mask & (1u << SRC_USB)) && !add(SRC_USB, "mass0:", 20))
