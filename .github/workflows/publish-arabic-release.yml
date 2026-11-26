@@ -165,11 +165,14 @@ jobs:
             export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
             apk add --no-cache python3 py3-pip make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
             pip3 install --break-system-packages --no-cache-dir fonttools mapbox-earcut
-            python3 -m py_compile tools/make_release.py tools/embed_runtime.py tools/verify_runtime_manifest.py tools/package_single_elf_release.py tools/theme_check.py
+            python3 -m py_compile tools/make_release.py tools/embed_runtime.py tools/verify_runtime_manifest.py ui/neutrino-igr/generate_arabic_assets.py tools/package_single_elf_release.py tools/theme_check.py
             python3 tools/lang_check.py
             python3 tools/fetch_arabic_font.py
+            python3 ui/neutrino-igr/generate_arabic_assets.py
+            test -s ui/neutrino-igr/menu_arabic.h
+            grep -Fq 'IGR_AR_BOX_WIDTH 216' ui/neutrino-igr/menu_arabic.h
             python3 tools/font.py --selftest
-            python3 -m unittest tests/test_runtime_manifest.py
+            python3 -m unittest tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py
             make test
             python3 tools/theme_check.py
             make clean
