@@ -43,6 +43,7 @@
 #include "runtime_install.h"
 #include "catalog_guard_ps2.h"
 #include "catalog_stage.h"
+#include "app_payload.h"
 
 #define TEAG3_VERSION "v1.3.12" // tag: arabic-v1.3.12
 #include "lang.h"
@@ -2738,21 +2739,31 @@ static const char *app_fetch(int i, char *file, int n)
 {
 	for (int t = 0; t < 500 && (dl_state == 1 || dl_state == 2); t++) usleep(20000); // covers stop (ra_launching)
 	if (dl_state == 1 || dl_state == 2) return L("Covers still downloading: try again");
-	int body, len, max = cv[i].size + 4096, st = 0;
-	char *buf = cv[i].size ? malloc(max) : NULL, path[180];
+	static char why[96];
+	s32 memory_size = GetMemorySize();
+	if (!cv[i].size || cv[i].size >= 0x7ffff000u || memory_size <= 0x00100000)
+		return snprintf(why, sizeof(why), L("The server did not send the app (%s)"), "invalid catalogue size or EE memory size"), why;
+	int max = (int)cv[i].size + 4096, body = -1, len = -1, st = 0;
+	char *buf = malloc((size_t)max), path[180];
 	if (!buf) return L("Not enough memory to download the app");
 	snprintf(path, sizeof(path), "/app/%s", cv[i].path + 5);
 	st = http_get(ini_get(&cfg, "juegos", "servidor", ""), 18290, path, buf, max, &body, &len);
+	if (st != 200 || body < 0 || len <= 0 || body > max || len > max - body ||
+	    (unsigned)len != cv[i].size ||
+	    !app_payload_is_valid((const unsigned char *)buf + body, (size_t)len,
+				  cv[i].size, (unsigned)memory_size)) {
+		free(buf);
+		return snprintf(why, sizeof(why), L("The server did not send the app (%s)"),
+		                st == 200 ? "size or ELF validation failed" : net_err(st)), why;
+	}
 	snprintf(file, n, "%s/%s/red.elf", homedev, home_dir);
-	FILE *f = st == 200 ? fopen(file, "wb") : NULL;
-	int ok = f && fwrite(buf + body, len, 1, f) == 1;
+	FILE *f = fopen(file, "wb");
+	int ok = f && fwrite(buf + body, 1, (size_t)len, f) == (size_t)len;
 	if (f) ok &= fclose(f) == 0;
 	free(buf);
-	printf("app %s: HTTP %d, %d bytes to %s%s\n", cv[i].path, st, st == 200 ? len : 0, file, ok ? "" : " FAILED");
+	printf("app %s: HTTP %d, %d bytes to %s%s\n", cv[i].path, st, len, file, ok ? "" : " FAILED");
 	if (ok) return NULL;
-	static char why[96];
-	return snprintf(why, sizeof(why), st == 200 ? L("Could not write %s") : L("The server did not send the app (%s)"),
-	                st == 200 ? file : net_err(st)), why;
+	return snprintf(why, sizeof(why), L("Could not write %s"), file), why;
 }
 
 static void launch(int i)
