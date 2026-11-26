@@ -5,6 +5,7 @@ from __future__ import annotations
 from html.parser import HTMLParser
 from pathlib import Path
 import sys
+import re
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,9 +111,15 @@ def check_required_opl_files() -> None:
 
 
 def check_release_download_links() -> None:
+    launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
+    version_match = re.search(r'^#define TEAG3_VERSION "v([0-9]+(?:[.][0-9]+)*)"', launcher, re.MULTILINE)
+    if not version_match:
+        fail("launcher.c: TEAG3_VERSION is missing or malformed")
+        return
+    version = version_match.group(1)
     expected = (
         "https://github.com/TEaG3/newday/releases/download/"
-        "arabic-v1.3.12/TEa.G3-Complete-Package.zip"
+        f"arabic-v{version}/TEa.G3-Complete-Package.zip"
     )
     for rel in ("index.html", "manual.html", "opl-lab.html"):
         path = SITE / rel
@@ -123,7 +130,7 @@ def check_release_download_links() -> None:
         parser.feed(path.read_text(encoding="utf-8"))
         parser.close()
         if parser.download_links != [expected]:
-            fail(f"site/{rel}: data-zip fallback must point to the verified v1.3.12 package")
+            fail(f"site/{rel}: data-zip fallback must point to the verified v{version} package")
 
 
 def main() -> int:
