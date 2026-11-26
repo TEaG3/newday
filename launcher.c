@@ -563,6 +563,7 @@ static void load_covers(entry *e) // the disc's: the grid's half from the big on
 static volatile char cover_req[MAXC], cover_done[MAXC]; // sizes asked and not read yet / read (or not on the USB)
 static int cover_seen[MAXC], frame_n; // render thread: the frame each cover was last drawn
 static int cover_sema = -1, cover_lock = -1;
+static volatile int ra_launching, cover_busy;
 static int save_c16(const char *serial, const char *suffix, const void *px, unsigned w, unsigned h);
 
 static void *half_file(const char *serial, int sq, void **big, void **small) // _h.c16, made from the big one the first time
@@ -603,12 +604,29 @@ static void cover_evict(void) // render thread, between frames (the GS is done w
 }
 
 static u8 cover_stack[0x4000] __attribute__((aligned(16)));
+static int background_work_begin(volatile int *busy)
+{
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return 0;
+	int allowed = !ra_launching;
+	if (allowed) *busy = 1;
+	if (SignalSema(cover_lock) < 0) return 0;
+	return allowed;
+}
+
+static void background_work_end(volatile int *busy)
+{
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
+	*busy = 0;
+	if (SignalSema(cover_lock) < 0) *busy = 1;
+}
+
 static void cover_thread(void *arg) // woken by draw_cover
 {
 	(void)arg;
 	for (;;) {
 		WaitSema(cover_sema);
-		for (int i = 1; i < ncv; i++) {
+		if (!background_work_begin(&cover_busy)) continue;
+		for (int i = 1; i < ncv && !ra_launching; i++) {
 			int b = cover_req[i];
 			if (!b) continue;
 			if (cover_seen[i] < frame_n - 2) { cover_req[i] = 0; continue; } // scrolled past: asked again if drawn
@@ -623,6 +641,7 @@ static void cover_thread(void *arg) // woken by draw_cover
 			if (b & 4 && !im[2]) im[2] = load_c16(path, LW, COVER_TALL(sq, LW, LH));
 			cover_set(i, im, b);
 		}
+		background_work_end(&cover_busy);
 	}
 }
 
@@ -1354,7 +1373,8 @@ static int wants_cover(int i) // a PS2 / PS1 game without covers on the USB
 	return *cv[i].serial && (cv[i].kind == K_PS2 || cv[i].kind == K_PS1) && !has_cover(i);
 }
 static volatile int dl_state, dl_done, dl_total, dl_got; // state: 0 idle, 1 connecting, 2 downloading, 3 done, NET_ERR_*
-static volatile int ra_launching; // set by launch() (achievements, below): the cover download stops for a server app
+static volatile int art_busy, dl_busy, update_busy;
+/* ra_launching is declared with the shared background gate above. */
 
 static int save_c16(const char *serial, const char *suffix, const void *px, unsigned w, unsigned h)
 {
@@ -1397,12 +1417,13 @@ static int cover_store(int i, const unsigned char *img, int n) // a JPG / PNG ->
 // lives next to the games); turned into the .c16 pair once, before any download. Loader thread: the network's owner
 static void art_import(void)
 {
+	if (!background_work_begin(&art_busy)) return;
 	char path[300], name[80];
 	int got = 0, max = 1 << 20;
 	char *net = NULL; // the server's answers
 	snprintf(path, sizeof(path), "%s/covers", homedev);
 	mkdir(path, 0777);
-	for (int i = 1; i < ncv; i++) {
+	for (int i = 1; i < ncv && !ra_launching; i++) {
 		if (has_cover(i)) continue;
 		if (*cv[i].serial) // dash form back to OPL's: SLUS-20946 -> SLUS_209.46
 			snprintf(name, sizeof(name), "%.4s_%.3s.%.2s", cv[i].serial, cv[i].serial + 5, cv[i].serial + 8);
@@ -1419,7 +1440,7 @@ static void art_import(void)
 			}
 		if (!f && on_catalog(i) && (net || (net = malloc(max)))) { // the server's ART/ (name URL-quoted for apps)
 			int st = 0, body, len;
-			for (int e = 0; e < 2 && st != 200; e++) {
+			for (int e = 0; e < 2 && st != 200 && !ra_launching; e++) {
 				snprintf(path, sizeof(path), "/art/%s_COV.%s", name, e ? "jpg" : "png");
 				st = http_get(ini_get(&cfg, "juegos", "servidor", ""), 18290, path, net, max, &body, &len);
 			}
@@ -1442,16 +1463,18 @@ static void art_import(void)
 	}
 	free(net);
 	printf("art: %d covers from OPL's ART/\n", got);
+	background_work_end(&art_busy);
 }
 
 static void download_covers(void)
 {
 	if (strcasecmp(ini_get(&cfg, "portadas", "descargar", "si"), "si")) return;
+	if (!background_work_begin(&dl_busy)) return;
 	for (int i = 1; i < ncv; i++) dl_total += wants_cover(i); // not the disc entry: its covers come from the USB
-	if (!dl_total) return;
+	if (!dl_total) { background_work_end(&dl_busy); return; }
 	dl_state = 1;
 	int r = net_ready();
-	if (r < 0) { dl_state = r; return; }
+	if (r < 0) { dl_state = r; background_work_end(&dl_busy); return; }
 	dl_state = 2;
 	int max = 1 << 20; // a JPG + headers; xlenore covers are about 135 KB (SLUS-21376)
 	char *buf = malloc(max);
@@ -1465,7 +1488,7 @@ static void download_covers(void)
 		int body, len;
 		snprintf(path, sizeof(path), COVER_PATH, cv[i].kind == K_PS1 ? "psx-covers" : "ps2-covers", cv[i].serial);
 		int st = https_get(COVER_HOST, path, buf, max, &body, &len);
-		if (st == NET_ERR_CONNECT && !dl_done) // the first connection right after the lease failed once on the console
+		if (st == NET_ERR_CONNECT && !dl_done && !ra_launching) // retry only while the background gate remains open
 			sleep(2), st = https_get(COVER_HOST, path, buf, max, &body, &len);
 		if (st < 0) { dl_state = st; break; } // network or TLS: the rest would fail the same way
 		if (st == 200 && cover_store(i, (unsigned char *)buf + body, len)) dl_got++; // 404: the generic one stays
@@ -1478,12 +1501,13 @@ static void download_covers(void)
 	if (fp) fprintf(fp, "TEa.G3 covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n", dl_got, dl_total,
 	                ms, dl_got ? ms / dl_got : 0, dl_state, net_why, net_ip()), fclose(fp);
 	if (dl_state == 2) dl_state = 3;
+	background_work_end(&dl_busy);
 }
 
 // ---- achievements (phase 16, step 1): the selected PS2 game's RetroAchievements hash, cached in
 // RA_DIR/<serial>.txt with the ISO size, then the client on the home server is asked about it; the loader
 // thread does it after the covers, one game at a time, the latest selection first ----
-static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy, ra_launching; // ra_down: 1 no network, 2 no client (toast once)
+static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy; // ra_down: 1 no network, 2 no client (toast once)
 static volatile char ra_state[MAXC];                      // 0 not asked, 1 working, then RA_SET.. (achievements.h)
 static short ra_count[MAXC];
 // the Logros panel (○): one game's list at a time, loaded by the worker. st: 1 loading, 2 ready, -1 failed
@@ -1494,6 +1518,37 @@ static int ra_gid[MAXC]; // RetroAchievements' game id, asked once
 static int ach_row = -1; // the panel's cursor, -1 = closed
 // ponytail: HD Loader partitions and the disc drive have no ISO file to hash; a reader over them if wanted
 static int ra_game_ok(int i) { return ra_on && cv[i].kind == K_PS2 && src[(int)cv[i].src].type != SRC_HDL; }
+
+/* Close the shared gate before an IOP reset. A timeout is fail-closed:
+   the main loop reopens it only after every tracked cover/network worker is idle. */
+static int background_quiesce(void)
+{
+	if (cover_lock >= 0) {
+		if (WaitSema(cover_lock) < 0) return 0;
+		ra_launching = 1;
+		if (SignalSema(cover_lock) < 0) return 0;
+	} else ra_launching = 1; // the cover worker is not running
+	ra_abort = 1;
+	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy); t++) usleep(10000);
+	if (ra_busy || art_busy || update_busy) return 0;
+	for (int t = 0; t < 500 && (dl_busy || dl_state == 1 || dl_state == 2); t++) usleep(20000);
+	if (dl_busy || dl_state == 1 || dl_state == 2) return 0;
+	for (int t = 0; t < 150 && cover_busy; t++) usleep(10000);
+	return !cover_busy;
+}
+
+static void background_resume_if_idle(void)
+{
+	if (!ra_launching) return;
+	if (cover_lock >= 0) {
+		if (WaitSema(cover_lock) < 0) return;
+		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy &&
+		           dl_state != 1 && dl_state != 2 && !cover_busy;
+		if (idle) ra_launching = 0, ra_abort = 0;
+		if (SignalSema(cover_lock) < 0 && idle) ra_launching = 1, ra_abort = 1;
+	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy &&
+	           dl_state != 1 && dl_state != 2 && !cover_busy) ra_launching = 0, ra_abort = 0;
+}
 
 static void ra_log(const char *fmt, ...) // the console has no printf: launcher.txt, for the gate
 {
@@ -1641,13 +1696,17 @@ static char upd_base[160];
 
 static void update_check(void) // loader thread; the network is up for the covers anyway
 {
-	if (strcasecmp(ini_get(&cfg, "actualizaciones", "buscar", "si"), "si") || net_busy || net_ready() < 0) return;
+	if (!background_work_begin(&update_busy)) return;
+	if (strcasecmp(ini_get(&cfg, "actualizaciones", "buscar", "si"), "si") || net_busy || net_ready() < 0) {
+		background_work_end(&update_busy);
+		return;
+	}
 	snprintf(upd_base, sizeof(upd_base), "%s", ini_get(&cfg, "actualizaciones", "url", UPD_URL)); // url: tests only
 	int max = 16 << 10, body, len, sbody, slen, st, ss = 0, sig = 0;
 	char *t = malloc(max), *g = malloc(max), url[200];
 	snprintf(url, sizeof(url), "%supdate.txt", upd_base);
 	st = t && g ? net_fetch(url, t, max - 1, &body, &len) : NET_ERR_PROTO;
-	if (st == 200) {
+	if (st == 200 && !ra_launching) {
 		t[body + len] = 0;
 		snprintf(url, sizeof(url), "%supdate.sig", upd_base);
 		ss = net_fetch(url, g, max, &sbody, &slen);
@@ -1658,6 +1717,7 @@ static void update_check(void) // loader thread; the network is up for the cover
 	if (lf) fprintf(lf, "TEa.G3 update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
 	                sig ? upd.version : "?", TEAG3_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
 	free(t), free(g);
+	background_work_end(&update_busy);
 }
 
 static u8 loader_stack[0x20000] __attribute__((aligned(16)));
@@ -1745,15 +1805,21 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 		if (!upd_left) WaitSema(ra_sema);
 		else if (PollSema(ra_sema) < 0) { upd_left = 0, update_check(); continue; } // nothing asked: check now
 		int v = vmc_net_want, port; // a server game's card and save icon (phase 20)
-		if (v >= 0 && !ra_launching) {
-			vmc_net_want = -1, ra_busy = 1, vmc_load(v), vmc_state[v] = 2;
+		if (v >= 0 && background_work_begin(&ra_busy)) {
+			vmc_net_want = -1, vmc_load(v), vmc_state[v] = 2;
 			if (newest_save(v, &port)) gicon_state[v] = 1, gicon[v] = load_icon(v), gicon_state[v] = 2;
-			ra_busy = 0;
+			background_work_end(&ra_busy);
 		}
 		int l = ra_list_want; // the Logros panel first: the user is looking at it
-		if (l >= 0 && !ra_abort && !ra_launching) ra_list_want = -1, ra_busy = 1, ra_load_list(l), ra_busy = 0;
+		if (l >= 0 && !ra_abort && background_work_begin(&ra_busy)) {
+			ra_list_want = -1, ra_load_list(l);
+			background_work_end(&ra_busy);
+		}
 		int i = ra_want;
-		if (i >= 0 && !ra_state[i] && !ra_abort && !ra_launching) ra_busy = 1, ra_state[i] = 1, ra_state[i] = ra_game(i), ra_busy = 0;
+		if (i >= 0 && !ra_state[i] && !ra_abort && background_work_begin(&ra_busy)) {
+			ra_state[i] = 1, ra_state[i] = ra_game(i);
+			background_work_end(&ra_busy);
+		}
 	}
 	ExitThread();
 }
@@ -2744,15 +2810,15 @@ static int vmc_ready(int i) // phase 14: the game's virtual card exists, or is c
 
 static char self_path[128]; // this ELF as it was started (argv[0]), for restart_self
 
-static void restart_self(void) // the setup wizard saved (#15): start TEa.G3 again, as launch() leaves for an app
+static int restart_self(void) // the setup wizard saved (#15): start TEa.G3 again, as launch() leaves for an app
 {
 	char *argv[2] = {self_path, ""};
-	ra_launching = 1, ra_abort = 1;
-	for (int t = 0; t < 150 && ra_busy; t++) usleep(10000);
-	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down();
+	if (!background_quiesce()) return 0;
+	net_down();
 	if (disc_tid >= 0) TerminateThread(disc_tid);
 	gfx_shutdown();
 	run_loader_recover(2, argv);
+	return 1;
 }
 
 // a server app (catalog APPS/): its ELF is fetched over HTTP into the current data folder as red.elf. NULL or why not
@@ -2814,8 +2880,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 	if (cv[i].kind == K_PS2 && engine == ENGINE_NEUTRINO && uses_vmc(i) && !vmc_ready(i)) { launch_err = L("Could not create the virtual memory card"); return; }
 	// no ISO read nor socket call of the achievements worker left half-way under the IOP reset (phase 16: the game
 	// hung when launched while its hash was being computed); the render thread sleeps so the worker can stop
-	ra_launching = 1, ra_abort = 1;
-	for (int t = 0; t < 150 && ra_busy; t++) usleep(10000);
+	if (!background_quiesce()) { launch_err = L("Background work is still active; try again"); return; }
 	// phase 16b: the watch list and the agent's config, while the network is still up (the worker takes no new work)
 	static char ra_arg[72];
 	int ra = 0;
@@ -2823,7 +2888,7 @@ static void launch(int i) // per kind (phase 11): Neutrino, OPL, POPStarter, an 
 		ra_abort = 0, ra = ra_prepare(i, ra_arg, sizeof(ra_arg)), ra_abort = 1;
 	static char file[200], arg0[200];
 	if (cv[i].kind == K_APP && on_catalog(i) && (launch_err = app_fetch(i, file, sizeof(file)))) return;
-	if (!ra_busy && dl_state != 1 && dl_state != 2) net_down(); // ponytail: a cover download in flight keeps it up
+	net_down(); // all background network work is idle; no IOP reset races an active transfer
 	// no libcdvd call of the disc thread left half-way under the next program (Neutrino's branch: after its checks)
 	if ((cv[i].kind != K_PS2 || engine != ENGINE_NEUTRINO) && disc_tid >= 0) TerminateThread(disc_tid);
 	if (cv[i].kind == K_DISC) { // the BIOS: PS2LOGO checks and runs the BOOT2 path; PS1DRV takes file name + version
@@ -3080,6 +3145,7 @@ int main(int argc, char *argv[])
 		unsigned b = pad_buttons(), pressed = b & ~prev;
 		prev = b;
 		frame_n++;
+		background_resume_if_idle();
 		if (pressed & (PAD_L2 | PAD_R2) && (b & (PAD_L2 | PAD_R2)) == (PAD_L2 | PAD_R2)) { // blind: 720p <-> 480i
 			gfx_crt(crt ^= 1);
 			ini_set(&cfg, "video", "pantalla", crt ? "480i" : "720p");
@@ -3108,7 +3174,11 @@ int main(int argc, char *argv[])
 		if (wiz >= 0) { // setup wizard owns the pad until ○ / Save (#15)
 			if (w_done == 2) { // saved: TEa.G3 starts again only if the sources or the network changed
 				if (w_quiet) wiz = -1, toast = 180, toast_msg = L("Setup saved");
-				else if (pressed & PAD_CROSS) { if (w_restart) restart_self(); else wiz = -1, play(S_PANEL, 70); }
+				else if (pressed & PAD_CROSS) {
+					if (w_restart) {
+						if (!restart_self()) toast = 180, toast_msg = L("Background work is still active; try again");
+					} else wiz = -1, play(S_PANEL, 70);
+				}
 			}
 			else if (w_job != 2) {
 				if (pressed & PAD_DOWN) { if (wiz < W_ROWS - 1) wiz++, play(S_MOVE, 70); else play(S_EDGE, 80); }
