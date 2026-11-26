@@ -56,7 +56,9 @@ class LauncherHandoffTests(unittest.TestCase):
         start = self.launcher.index("static int background_quiesce(void)")
         end = self.launcher.index("static void background_resume_if_idle(void)", start)
         body = self.launcher[start:end]
+        self.assertIn("WaitSema(cover_lock)", body)
         self.assertIn("ra_launching = 1", body)
+        self.assertIn("SignalSema(cover_lock)", body)
         self.assertIn("ra_abort = 1", body)
         self.assertIn("ra_busy", body)
         self.assertIn("art_busy", body)
@@ -135,6 +137,24 @@ class LauncherHandoffTests(unittest.TestCase):
         update_start = self.launcher.index("static void update_check(void)")
         update_end = self.launcher.index("static u8 loader_stack", update_start)
         self.assertIn("st == 200 && !ra_launching", self.launcher[update_start:update_end])
+
+
+    def test_shared_worker_gate_serializes_start_against_quiesce(self):
+        start = self.launcher.index("static int background_work_begin(")
+        end = self.launcher.index("static void background_work_end(", start)
+        body = self.launcher[start:end]
+        self.assertIn("WaitSema(cover_lock)", body)
+        self.assertIn("!ra_launching", body)
+        self.assertIn("*busy = 1", body)
+        self.assertIn("SignalSema(cover_lock)", body)
+
+        download_start = self.launcher.index("static void download_covers(void)")
+        download_end = self.launcher.index("// ---- achievements", download_start)
+        download = self.launcher[download_start:download_end]
+        self.assertLess(
+            download.index("background_work_begin(&dl_busy)"),
+            download.index("wants_cover(i)"),
+        )
 
     def test_resume_is_declared_in_public_header(self):
         self.assertIn("int gfx_resume(void);", self.header)
