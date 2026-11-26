@@ -42,6 +42,7 @@
 #include "theme.h"
 #include "runtime_install.h"
 #include "catalog_guard_ps2.h"
+#include "catalog_stage.h"
 
 #define TEAG3_VERSION "v1.3.6" // must match the published release tag
 #include "lang.h"
@@ -115,6 +116,9 @@ typedef struct {
 	void *big, *small, *half;
 } entry;
 static entry cv[MAXC];
+/* Stable-key baseline from the boot-time catalog; live rescans remain disabled. */
+static catalog_stage_snapshot catalog_active_snapshot;
+static int catalog_active_snapshot_ready;
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
 static int is_ps1(int i) { return cv[i].kind == K_PS1 || (cv[i].kind == K_DISC && cv[i].disc == D_PS1); }
@@ -926,6 +930,87 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 
 
 
+static uint32_t catalog_fingerprint_bytes(uint32_t hash, const void *data, size_t length)
+{
+    const unsigned char *bytes = (const unsigned char *)data;
+    for (size_t i = 0; i < length; i++) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+/* Metadata fingerprint only: this is not a cryptographic digest of the game's contents. */
+static uint32_t catalog_entry_fingerprint(const entry *item)
+{
+    uint32_t hash = 2166136261u;
+    hash = catalog_fingerprint_bytes(hash, item->title, strlen(item->title) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->serial, strlen(item->serial) + 1u);
+    if (item->engine != ENGINE_OPL_UL)
+        hash = catalog_fingerprint_bytes(hash, item->path, strlen(item->path) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->boot, strlen(item->boot) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->hash, strlen(item->hash) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->ul_name, sizeof(item->ul_name));
+    hash = catalog_fingerprint_bytes(hash, &item->kind, sizeof(item->kind));
+    hash = catalog_fingerprint_bytes(hash, &item->cd, sizeof(item->cd));
+    hash = catalog_fingerprint_bytes(hash, &item->disc, sizeof(item->disc));
+    hash = catalog_fingerprint_bytes(hash, &item->engine, sizeof(item->engine));
+    hash = catalog_fingerprint_bytes(hash, &item->parts, sizeof(item->parts));
+    hash = catalog_fingerprint_bytes(hash, &item->hdl_start_sector, sizeof(item->hdl_start_sector));
+    hash = catalog_fingerprint_bytes(hash, &item->hdl_size_kb, sizeof(item->hdl_size_kb));
+    hash = catalog_fingerprint_bytes(hash, &item->hdl_disc_type, sizeof(item->hdl_disc_type));
+    return hash;
+}
+
+static int catalog_snapshot_capture(const entry *items, int count,
+                                    catalog_stage_snapshot *snapshot)
+{
+    if (items == NULL || snapshot == NULL || count < 1)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (count > (int)CATALOG_STAGE_MAX_ITEMS)
+        return CATALOG_STAGE_ERR_CAPACITY;
+
+    memset(snapshot, 0, sizeof(*snapshot));
+    for (int i = 0; i < count; i++) {
+        const entry *item = &items[i];
+        catalog_stage_record record;
+        int path_length;
+
+        memset(&record, 0, sizeof(record));
+        record.kind = (uint8_t)item->kind;
+        record.flags = (uint8_t)((item->cd ? 1u : 0u) |
+                                 ((unsigned char)item->engine << 1));
+        record.size = item->size;
+        record.fingerprint = catalog_entry_fingerprint(item);
+
+        if (item->kind == K_DISC) {
+            record.source_type = 0xffu; /* the optical drive is not a mounted source */
+            path_length = snprintf(record.path, sizeof(record.path), "DISC");
+        } else {
+            unsigned source_index = (unsigned char)item->src;
+            if (source_index >= (unsigned)nsrc)
+                return CATALOG_STAGE_ERR_ARGUMENT;
+            record.source_type = (uint8_t)src[source_index].type;
+            record.source_unit = (uint8_t)src[source_index].unit;
+            if (src[source_index].type == SRC_HDL) record.flags |= 0x40u; /* size is KiB */
+            if (!item->size) record.flags |= 0x80u; /* size unavailable: compare validated metadata */
+            if (item->engine == ENGINE_OPL_UL) {
+                /* ul.cfg row numbers move when records are reordered; the OPL name CRC + startup is stable. */
+                path_length = snprintf(record.path, sizeof(record.path), "UL/%08X/%s",
+                                       ul_name_crc32(item->ul_name), item->boot);
+            } else {
+                path_length = snprintf(record.path, sizeof(record.path), "%s", item->path);
+            }
+        }
+        if (path_length < 0 || path_length >= (int)sizeof(record.path))
+            return CATALOG_STAGE_ERR_PATH;
+        int status = catalog_stage_snapshot_append(snapshot, &record);
+        if (status != CATALOG_STAGE_OK) return status;
+    }
+    return catalog_stage_snapshot_validate(snapshot);
+}
+
+
 static int by_title(const void *a, const void *b) // then by source
 {
 	const entry *x = a, *y = b;
@@ -979,6 +1064,15 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	if (d) closedir(d);
 	qsort(cv + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
 	ncv = n;
+	int snapshot_status = catalog_snapshot_capture(cv, ncv, &catalog_active_snapshot);
+	catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK;
+	if (!catalog_active_snapshot_ready) {
+		catalog_active_snapshot.count = 0;
+		printf("catalog snapshot: rejected (%d); live refresh remains disabled\n", snapshot_status);
+	} else {
+		printf("catalog snapshot: %u stable source keys captured; live refresh remains disabled\n",
+		       (unsigned)catalog_active_snapshot.count);
+	}
 }
 
 // ---- disc drive (phase 11): polled once a second off the render thread; a change is staged here and copied into
