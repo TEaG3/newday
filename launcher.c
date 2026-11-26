@@ -462,7 +462,7 @@ static volatile int vmc_net_want = -1; // a server game's card for the loader th
 static int vmc_net_ask(int i);         // asks for it; 0 if there is no loader thread to ask
 
 static u8 icon_stack[0x10000] __attribute__((aligned(16)));
-static volatile int ra_launching, cover_busy, icon_busy;
+static volatile int ra_launching, cover_busy, icon_busy, disc_busy;
 static int background_work_begin(volatile int *busy);
 static void background_work_end(volatile int *busy);
 
@@ -1059,11 +1059,16 @@ static int disc_cnf(char *cnf, int max) // cdrom0:\SYSTEM.CNF;1 through libcdvd 
 static void disc_thread(void *arg)
 {
 	(void)arg;
-	int last = -1, said = -1; // said: the language the title was written in (the setup panel changes it)
-	sceCdInit(SCECdINoD);
-	for (;; sleep(1)) {
+	int last = -1, said = -1, initialized = 0; // said: the language the title was written in (the setup panel changes it)
+	for (;;) {
+		sleep(1);
+		if (!background_work_begin(&disc_busy)) continue;
+		if (!initialized) sceCdInit(SCECdINoD), initialized = 1;
 		int st = disc_state(sceCdGetDiskType());
-		if ((st == last && lang == said) || disc_new) continue;
+		if ((st == last && lang == said) || disc_new) {
+			background_work_end(&disc_busy);
+			continue;
+		}
 		said = lang;
 		entry *d = &disc_stage;
 		memset(d, 0, sizeof(*d));
@@ -1083,6 +1088,7 @@ static void disc_thread(void *arg)
 		printf("disc: state %d, %s %s boot %s\n", st, d->serial, d->title, d->boot);
 		last = st;
 		disc_new = 1;
+		background_work_end(&disc_busy);
 	}
 }
 
@@ -1542,12 +1548,12 @@ static int background_quiesce(void)
 		if (SignalSema(cover_lock) < 0) return 0;
 	} else ra_launching = 1; // the cover worker is not running
 	ra_abort = 1;
-	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy || icon_busy); t++) usleep(10000);
-	if (ra_busy || art_busy || update_busy || icon_busy) return 0;
+	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy || icon_busy || disc_busy); t++) usleep(10000);
+	if (ra_busy || art_busy || update_busy || icon_busy || disc_busy) return 0;
 	for (int t = 0; t < 500 && (dl_busy || dl_state == 1 || dl_state == 2); t++) usleep(20000);
 	if (dl_busy || dl_state == 1 || dl_state == 2) return 0;
 	for (int t = 0; t < 150 && cover_busy; t++) usleep(10000);
-	return !cover_busy && !icon_busy;
+	return !cover_busy && !icon_busy && !disc_busy;
 }
 
 static void background_resume_if_idle(void)
@@ -1555,11 +1561,11 @@ static void background_resume_if_idle(void)
 	if (!ra_launching) return;
 	if (cover_lock >= 0) {
 		if (WaitSema(cover_lock) < 0) return;
-		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy &&
+		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy && !disc_busy &&
 		           dl_state != 1 && dl_state != 2 && !cover_busy;
 		if (idle) ra_launching = 0, ra_abort = 0;
 		if (SignalSema(cover_lock) < 0 && idle) ra_launching = 1, ra_abort = 1;
-	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy &&
+	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy && !disc_busy &&
 	           dl_state != 1 && dl_state != 2 && !cover_busy) ra_launching = 0, ra_abort = 0;
 }
 

@@ -67,7 +67,8 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("dl_state == 1 || dl_state == 2", body)
         self.assertIn("cover_busy", body)
         self.assertIn("icon_busy", body)
-        self.assertIn("return !cover_busy && !icon_busy", body)
+        self.assertIn("disc_busy", body)
+        self.assertIn("return !cover_busy && !icon_busy && !disc_busy", body)
 
         launch_start = self.launcher.index("static void launch(int i)")
         self.assertLess(
@@ -111,6 +112,29 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertLess(lock, worker)
         self.assertIn("cover_lock >= 0 && icon_sema >= 0 ? CreateThread(&it)", self.launcher[worker:])
 
+    def test_disc_worker_stops_libcdvd_and_cover_io_after_gate_closes(self):
+        start = self.launcher.index("static void disc_thread(void *arg)")
+        end = self.launcher.index("// ---- config", start)
+        body = self.launcher[start:end]
+        begin = body.index("background_work_begin(&disc_busy)")
+        end_work = body.rindex("background_work_end(&disc_busy)")
+        work = body[begin:end_work]
+        for operation in ("sceCdInit(SCECdINoD)", "disc_state(sceCdGetDiskType())", "sceCdDiskReady(0)",
+                          "disc_cnf(cnf, sizeof(cnf))", "cv[i].serial",
+                          "cv[i].title", "load_covers(d)"):
+            self.assertIn(operation, work)
+        self.assertLess(begin, body.index("disc_state(sceCdGetDiskType())"))
+        self.assertIn("sleep(1);", body)
+        skip = body.index("if ((st == last")
+        release = body.index("background_work_end(&disc_busy)", skip)
+        continue_stmt = body.index("continue;", skip)
+        self.assertLess(release, continue_stmt)
+
+        loader_start = self.launcher.index("static void loader(void *arg)")
+        lock = self.launcher.index("cover_lock = CreateSema", loader_start)
+        worker = self.launcher.index("ee_thread_t dt = { .func = disc_thread", loader_start)
+        self.assertLess(lock, worker)
+
     def test_background_gate_reopens_only_after_tracked_workers_are_idle(self):
         start = self.launcher.index("static void background_resume_if_idle(void)")
         end = self.launcher.index("static void ra_log(", start)
@@ -122,6 +146,7 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("dl_state != 1 && dl_state != 2", body)
         self.assertIn("cover_busy", body)
         self.assertIn("icon_busy", body)
+        self.assertIn("disc_busy", body)
         self.assertIn("ra_abort = 0", body)
         self.assertIn("Background work is still active; try again", self.launcher)
         self.assertIn(
