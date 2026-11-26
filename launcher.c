@@ -1469,8 +1469,9 @@ static void art_import(void)
 static void download_covers(void)
 {
 	if (strcasecmp(ini_get(&cfg, "portadas", "descargar", "si"), "si")) return;
+	if (!background_work_begin(&dl_busy)) return;
 	for (int i = 1; i < ncv; i++) dl_total += wants_cover(i); // not the disc entry: its covers come from the USB
-	if (!dl_total || !background_work_begin(&dl_busy)) return;
+	if (!dl_total) { background_work_end(&dl_busy); return; }
 	dl_state = 1;
 	int r = net_ready();
 	if (r < 0) { dl_state = r; background_work_end(&dl_busy); return; }
