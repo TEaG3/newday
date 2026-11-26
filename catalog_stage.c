@@ -55,6 +55,17 @@ int catalog_stage_path_is_safe(const char *path)
     }
 }
 
+int catalog_stage_snapshot_append(catalog_stage_snapshot *snapshot,
+                                  const catalog_stage_record *record)
+{
+    if (snapshot == NULL || record == NULL) return CATALOG_STAGE_ERR_ARGUMENT;
+    if (snapshot->count >= CATALOG_STAGE_MAX_ITEMS) return CATALOG_STAGE_ERR_CAPACITY;
+    if (memchr(record->path, 0, sizeof(record->path)) == NULL ||
+        !catalog_stage_path_is_safe(record->path)) return CATALOG_STAGE_ERR_PATH;
+    snapshot->records[snapshot->count++] = *record;
+    return CATALOG_STAGE_OK;
+}
+
 static int build_index(const catalog_stage_snapshot *snapshot,
                        uint16_t slots[CATALOG_STAGE_HASH_SLOTS])
 {

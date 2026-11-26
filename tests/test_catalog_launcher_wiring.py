@@ -61,6 +61,19 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("for (int t = 0; t < 150; t++)", LAUNCHER)
         self.assertIn("usleep(10000);", LAUNCHER)
 
+    def test_boot_catalog_captures_validated_stable_source_keys(self):
+        load = function_body(LAUNCHER, "static void load_games(", "// ---- disc drive")
+        capture = function_body(LAUNCHER, "static int catalog_snapshot_capture(", "static int by_title(")
+        self.assertIn("catalog_snapshot_capture(cv, ncv, &catalog_active_snapshot)", load)
+        self.assertIn("catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK", load)
+        self.assertIn("src[source_index].type", capture)
+        self.assertIn("src[source_index].unit", capture)
+        self.assertIn("ul_name_crc32(item->ul_name)", capture)
+        self.assertIn("catalog_stage_snapshot_append(snapshot, &record)", capture)
+        fingerprint = function_body(LAUNCHER, "static uint32_t catalog_entry_fingerprint(", "static int catalog_snapshot_capture(")
+        self.assertIn("if (item->engine != ENGINE_OPL_UL)", fingerprint)
+        self.assertIn("catalog_stage_snapshot_validate(snapshot)", capture)
+
     def test_live_scan_and_apply_are_still_disabled(self):
         self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
         self.assertNotIn("catalog_guard_request_apply(", LAUNCHER)
