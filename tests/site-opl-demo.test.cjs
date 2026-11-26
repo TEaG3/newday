@@ -11,6 +11,7 @@ assert.match(releaseSource, /Date\.parse\(a\.published_at \|\| a\.created_at/);
 assert.match(releaseSource, /Date\.parse\(b\.published_at \|\| b\.created_at/);
 assert.ok(releaseSource.includes("var downloadUrl = String(zip.browser_download_url);"));
 assert.ok(releaseSource.includes("The release asset URL is outside the trusted repository"));
+assert.match(releaseSource, /PS2 hardware acceptance not claimed/);
 assert.ok(releaseSource.includes("a.href = downloadUrl;"));
 assert.ok(releaseSource.includes("https:\\/\\/github\\.com\\/TEaG3\\/newday\\/releases\\/download"));
 assert.ok(releaseSource.includes("TEa\\.G3-Complete-Package\\.zip$/i"));
@@ -57,8 +58,10 @@ assert.match(manual, /OPL IGR uses START\+SELECT to return to TEa.G3 and R3\+L3 
 assert.match(manual, /ui\/neutrino-igr\//);
 assert.match(manual, /not linked or active in this build/);
 const changelog = read("site/changelog.html");
-assert.match(changelog, /OPL-only integration state/);
-assert.match(changelog, /SMB\/UDPBD\/UDPFS game streaming and MMCE game launching remain disabled/);
+assert.match(changelog, /id="v1\.3\.12"/);
+assert.match(changelog, /stable software release/);
+assert.match(changelog, /physical PS2 acceptance is intentionally not claimed/);
+assert.match(changelog, /SMB, UDPBD and UDPFS game streaming, plus MMCE game launching, remain disabled/);
 const pagesWorkflow = read(".github/workflows/pages.yml");
 assert.match(pagesWorkflow, /permissions:\n  contents: read/);
 assert.match(pagesWorkflow, /validate:[\s\S]*?permissions:\n      contents: read/);
@@ -70,7 +73,7 @@ assert.ok(pagesWorkflow.includes("Wait for GitHub Pages artifact metadata"));
 assert.ok(pagesWorkflow.includes("Archive site for GitHub Pages"));
 assert.doesNotMatch(pagesWorkflow, /upload-pages-artifact/);
 
-const fallback = "https://github.com/TEaG3/newday/releases/download/arabic-v1.3.11/TEa.G3-Complete-Package.zip";
+const fallback = "https://github.com/TEaG3/newday/releases/download/arabic-v1.3.12/TEa.G3-Complete-Package.zip";
 for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
   const html = read("site/" + page);
   assert.ok(html.includes(fallback), page + " needs the last verified package as no-JS fallback");
