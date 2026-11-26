@@ -1,4 +1,4 @@
-// Torres theme (v1.3; the prototype "Temas NULD en vivo"): prisms of light rising out of a blue night, lights
+// Torres theme (v1.3; the TEa.G3 live-theme prototype): prisms of light rising out of a blue night, lights
 // drifting up between them and seven orbs. Everything live is light ADDED to the picture (gfx_add), so nothing
 // needs sorting; the backdrop (the radial glow, the night at the top, the vignette) never changes and is dithered
 // once on the EE (docs/image-quality.md: the GS dither leaves steps in big dark gradients). Lights fade into the
