@@ -580,6 +580,119 @@ static void test_staged_scan_builder(void)
 }
 
 
+typedef struct {
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    int entered;
+    int done;
+    int release;
+    int handle_open;
+    int handle_closed;
+    int next_calls;
+} concurrent_scan_fixture;
+
+typedef struct {
+    catalog_guard *guard;
+    concurrent_scan_fixture *fixture;
+    catalog_stage_snapshot *candidate;
+    int result;
+} concurrent_scan_thread_context;
+
+static int concurrent_scan_next(void *opaque, catalog_stage_record *record)
+{
+    concurrent_scan_fixture *fixture = (concurrent_scan_fixture *)opaque;
+
+    assert(pthread_mutex_lock(&fixture->mutex) == 0);
+    ++fixture->next_calls;
+    if (fixture->next_calls > 1) {
+        assert(pthread_mutex_unlock(&fixture->mutex) == 0);
+        return 0;
+    }
+
+    /* Model one source handle that stays open while the read is in progress. */
+    fixture->handle_open = 1;
+    fixture->entered = 1;
+    assert(pthread_cond_broadcast(&fixture->cond) == 0);
+    while (!fixture->release)
+        assert(pthread_cond_wait(&fixture->cond, &fixture->mutex) == 0);
+    fixture->handle_open = 0;
+    fixture->handle_closed = 1;
+    assert(pthread_mutex_unlock(&fixture->mutex) == 0);
+
+    set_record(record, 1, 0, 1, "DVD/Concurrent.iso", 42, 7);
+    return 1;
+}
+
+static void *concurrent_scan_worker(void *opaque)
+{
+    concurrent_scan_thread_context *context = (concurrent_scan_thread_context *)opaque;
+    context->result = catalog_stage_scan(context->guard, concurrent_scan_next,
+                                         context->fixture, context->candidate);
+    assert(pthread_mutex_lock(&context->fixture->mutex) == 0);
+    context->fixture->done = 1;
+    assert(pthread_cond_broadcast(&context->fixture->cond) == 0);
+    assert(pthread_mutex_unlock(&context->fixture->mutex) == 0);
+    return NULL;
+}
+
+static void test_concurrent_scan_cancellation(void)
+{
+    catalog_guard guard;
+    mutex_context mutex;
+    concurrent_scan_fixture fixture;
+    concurrent_scan_thread_context worker;
+    catalog_stage_snapshot candidate;
+    pthread_t thread;
+
+    memset(&fixture, 0, sizeof(fixture));
+    memset(&candidate, 0, sizeof(candidate));
+    memset(&worker, 0, sizeof(worker));
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+    assert(pthread_mutex_init(&fixture.mutex, NULL) == 0);
+    assert(pthread_cond_init(&fixture.cond, NULL) == 0);
+
+    worker.guard = &guard;
+    worker.fixture = &fixture;
+    worker.candidate = &candidate;
+    worker.result = CATALOG_STAGE_SCAN_ERR_ARGUMENT;
+    assert(pthread_create(&thread, NULL, concurrent_scan_worker, &worker) == 0);
+
+    /* Wait until the source callback has opened its handle and is blocked in I/O. */
+    assert(pthread_mutex_lock(&fixture.mutex) == 0);
+    while (!fixture.entered && !fixture.done)
+        assert(pthread_cond_wait(&fixture.cond, &fixture.mutex) == 0);
+    assert(fixture.entered && fixture.handle_open && !fixture.handle_closed);
+    assert(pthread_mutex_unlock(&fixture.mutex) == 0);
+
+    /* Gameplay cancels the scan, but must wait for the callback to close its handle. */
+    assert(!catalog_guard_set_activity(&guard, 1, 0));
+    assert(catalog_guard_scan_cancelled(&guard) == 1);
+
+    assert(pthread_mutex_lock(&fixture.mutex) == 0);
+    fixture.release = 1;
+    assert(pthread_cond_broadcast(&fixture.cond) == 0);
+    assert(pthread_mutex_unlock(&fixture.mutex) == 0);
+    assert(pthread_join(thread, NULL) == 0);
+
+    assert(worker.result == CATALOG_STAGE_SCAN_CANCELLED);
+    assert(candidate.count == 0); /* a cancelled source never exposes a partial candidate */
+    assert(pthread_mutex_lock(&fixture.mutex) == 0);
+    assert(fixture.handle_closed && !fixture.handle_open);
+    assert(fixture.next_calls == 1); /* no further source reads after cancellation */
+    assert(pthread_mutex_unlock(&fixture.mutex) == 0);
+    assert(!guard.scanning);
+
+    /* The caller may proceed with gameplay once the cancelled callback has drained. */
+    assert(catalog_guard_set_activity(&guard, 1, 0));
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    assert(pthread_cond_destroy(&fixture.cond) == 0);
+    assert(pthread_mutex_destroy(&fixture.mutex) == 0);
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
+}
+
 static void test_safe_snapshot_publish(void)
 {
     catalog_guard guard;
@@ -642,6 +755,7 @@ static void test_safe_snapshot_publish(void)
 int main(void)
 {
     test_staged_scan_builder();
+    test_concurrent_scan_cancellation();
     test_safe_snapshot_publish();
     test_path_and_validation();
     test_snapshot_append();
