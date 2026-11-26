@@ -139,7 +139,7 @@ static int view;
 static volatile int state_dirty;
 // the launcher's own device (#8): mass0:, or mmce0: / mmce1: when started from an MMCE (argv[0]); its files live there
 static char homedev[8] = "mass0:";
-static char STATE_INI[32], CONFIG[32], GAMES_INI[32], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160];
+static char STATE_INI[32], CONFIG[32], GAMES_INI[32], RUNTIME_DIR[128], LOG_TXT[24], OPL_PATH[160], RA_DIR[128];
 static const char *home_dir = "tea_g3"; // current data folder; legacy paths are migrated at boot
 static void home_paths(void)
 {
@@ -148,6 +148,7 @@ static void home_paths(void)
 	snprintf(GAMES_INI, sizeof(GAMES_INI), "%s/%s/juegos.ini", homedev, home_dir);
 	snprintf(RUNTIME_DIR, sizeof(RUNTIME_DIR), "%s/%s/runtime", homedev, home_dir);
 	snprintf(OPL_PATH, sizeof(OPL_PATH), "%s/OPL.ELF", RUNTIME_DIR);
+	snprintf(RA_DIR, sizeof(RA_DIR), "%s/%s/ra", homedev, home_dir);
 	snprintf(LOG_TXT, sizeof(LOG_TXT), "%s/launcher.txt", homedev);
 }
 
@@ -165,6 +166,10 @@ static volatile int ncv, stage, done_n, total_n, usb, load_ms; // written by the
 #define MAXDIR 128
 static sceMcTblGetDir mcdir[2][MAXDIR];
 static int mcn[2] = {-1, -1};
+/* Legacy VMC UI is disabled in this OPL-only launcher (uses_vmc always returns 0). */
+static sceMcTblGetDir *vdir[MAXC];
+static int vmc_n[MAXC];
+static volatile char vmc_state[MAXC];
 
 static void scan_cards(void)
 {
@@ -189,6 +194,7 @@ static void scan_cards(void)
 enum { MC_DEFAULT, MC_GAME, MC_SHARED, MC_REAL, MC_N };
 static int game_mc(int i);                                 // effective mode, MC_GAME..MC_REAL (config section)
 static int uses_vmc(int i) { (void)i; return 0; }
+static void vmc_name(int i, char *out, int n) { snprintf(out, n, "VMC/%s.bin", cv[i].serial); }
 static void vmc_file(int i, char *out, int n) // the launcher's path to it
 {
 	char name[40];
@@ -848,6 +854,8 @@ static int ipv4_text(const char *s)
 	return s && sscanf(s, "%u.%u.%u.%u%c", &a, &b, &c, &d, &tail) == 4 &&
 	       a <= 255 && b <= 255 && c <= 255 && d <= 255;
 }
+
+static int exists(const char *path);
 
 static engine_decision engine_for(const entry *e)
 {
