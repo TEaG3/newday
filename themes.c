@@ -1,4 +1,4 @@
-// The themes' table and the scenes of ten of them (v1.3; the prototype "Temas NULD en vivo"). What the console
+// The themes' table and the scenes of ten of them (v1.3; the TEa.G3 live-theme prototype). What the console
 // taught with Torres (2026-11-18) holds for all: a full-screen picture sent every frame costs 3 ms, so the dithered
 // backdrops are a 64-px strip repeated (vertical gradients) or a left half mirrored (radial ones); libm's sinf is
 // software on the EE, so what moves uses fsin, a parabola; and the lights are added (gfx_add), never sorted.
@@ -182,9 +182,9 @@ static void blurred(float a, float zoom) // the cover out of focus over the whol
 	gfx_dither(0), gfx_alpha(0x80);
 }
 
-// ---- Classic (former NULD theme): splash.c's floor, corners and scanlines ----
-static void nuld_bg(float turn) { (void)turn; tick(); splash_floor(now * 0.5f, NULD_FG, 0x12); }
-static void nuld_sel(float x, float y, float w, float h, float f, int front)
+// ---- Classic (the original v1.2 look): splash.c's floor, corners and scanlines ----
+static void classic_bg(float turn) { (void)turn; tick(); splash_floor(now * 0.5f, CLASSIC_FG, 0x12); }
+static void classic_sel(float x, float y, float w, float h, float f, int front)
 {
 	int g = (int)(12 * w / 256);
 	if (front) return;
@@ -192,7 +192,7 @@ static void nuld_sel(float x, float y, float w, float h, float f, int front)
 	splash_hud((int)x - g, (int)y - g, (int)w + 2 * g, (int)h + 2 * g, (int)(30 * w / 256), themes[cur].pal.accent);
 	gfx_alpha(0x80);
 }
-static void nuld_launch(float u) { splash_floor(u, NULD_FG, 0x12); }
+static void classic_launch(float u) { splash_floor(u, CLASSIC_FG, 0x12); }
 
 // ---- Cristal: the game's cover, out of focus, is the ground; panes of glass; the accent comes from the cover ----
 static void cristal_bg(float turn)
@@ -800,8 +800,8 @@ static void papel_launch(float u) // an ink rule draws itself
 theme_def themes[TH_MAX] = {
 	{"torres", "Torres", {0x01030F, 0x050C2E, 0x16296B, 0x4962A5, 0x3A4A80, 0xE8EEFF, 0xC3D0F5, 0xA6B8EA, 0x8FD8FF, 0x13235A, 0x031236},
 	 0x4D, 0x80, TF_PIANO, 330, 430, torres_init, torres_bg, torres_orbs, torres_splash, torres_launch, NULL},
-	{"nuld", "Classic", {NULD_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, NULD_FG, 0xA9B0BA, NULD_MUTED, NULD_ACID, NULD_STEEL, NULD_BG},
-	 0, 0x80, TF_MARK, 240, 0, NULL, nuld_bg, nuld_sel, NULL, nuld_launch, splash_scan},
+	{"classic", "Classic", {CLASSIC_BG, 0x0C0E12, 0x161A21, 0x2A303A, 0x4A515C, CLASSIC_FG, 0xA9B0BA, CLASSIC_MUTED, CLASSIC_ACID, CLASSIC_STEEL, CLASSIC_BG},
+	 0, 0x80, TF_MARK, 240, 0, NULL, classic_bg, classic_sel, NULL, classic_launch, splash_scan},
 	{"cristal", "Cristal", {0x0B0A14, 0x15122A, 0x2E2A48, 0x6A6880, 0x4A4860, 0xFFFFFF, 0xEFECF6, 0xDAD5E8, 0xFFB454, 0x26233A, 0x15101F},
 	 0x50, 0x58, TF_ACCENT | TF_MARK | TF_PIANO, 240, 446, NULL, cristal_bg, cristal_sel, cristal_splash, cristal_launch, NULL},
 	{"aurora", "Aurora", {0x03050F, 0x080C1A, 0x18233F, 0x3A4058, 0x39405C, 0xEEF2FF, 0xCBD2EC, 0xAEB7D6, 0x7CF5D6, 0x121A30, 0x070A14},
@@ -882,13 +882,16 @@ void themes_load(const char *dir)
 	DIR *d = opendir(dir);
 	struct dirent *e;
 	while (d && (e = readdir(d)) && themes_n < TH_MAX) {
-		int u = themes_n - TH_N, base = TH_NULD, taken = 0;
+		int u = themes_n - TH_N, base = TH_CLASSIC, taken = 0;
 		if (e->d_name[0] == '.' || strlen(e->d_name) > 31) continue;
 		snprintf(path, sizeof(path), "%s/%s/theme.ini", dir, e->d_name);
 		if (!ini_load(&t, path)) continue;
+		const char *base_key = ini_get(&t, "", "base", "classic");
+		if (!strcasecmp(base_key, "nuld")) base_key = "classic"; // legacy theme.ini alias
 		for (int i = 0; i < themes_n; i++) {
-			if (i < TH_N && !strcasecmp(ini_get(&t, "", "base", "nuld"), themes[i].key)) base = i;
-			taken |= !strcasecmp(e->d_name, themes[i].key);
+			if (i < TH_N && !strcasecmp(base_key, themes[i].key)) base = i;
+			taken |= !strcasecmp(e->d_name, themes[i].key) ||
+			         (i == TH_CLASSIC && !strcasecmp(e->d_name, "nuld")); // reserve the old built-in key
 		}
 		if (taken) continue; // a built-in theme's name
 		theme_def *th = &themes[themes_n];
