@@ -78,7 +78,7 @@ int catalog_guard_read_end(catalog_guard *guard);
 int catalog_guard_can_scan(catalog_guard *guard);
 int catalog_guard_scan_begin(catalog_guard *guard);
 int catalog_guard_scan_cancelled(catalog_guard *guard);
-/* Returns 1 only for a completed, non-cancelled scan; 0 means discard its candidate. */
+/* Returns 1 on completion, 0 when cancelled/not active, and -1 on guard lock/release failure. */
 int catalog_guard_scan_end(catalog_guard *guard);
 /* Returns 0 while a cancelled scan/download is still draining; retry before starting activity. */
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy);
@@ -93,5 +93,22 @@ int catalog_guard_request_apply(catalog_guard *guard);
 int catalog_guard_try_apply(catalog_guard *guard);
 int catalog_guard_finish_apply(catalog_guard *guard);
 int catalog_guard_cancel_apply(catalog_guard *guard);
+
+/* A source callback returns 1 for a record, 0 at end-of-source, and a negative value on I/O error.
+   It must finish/close its current I/O before returning; cancellation is checked immediately afterward. */
+typedef int (*catalog_stage_scan_next_fn)(void *context, catalog_stage_record *record);
+enum {
+    CATALOG_STAGE_SCAN_OK = 0,
+    CATALOG_STAGE_SCAN_CANCELLED = 1,
+    CATALOG_STAGE_SCAN_ERR_ARGUMENT = -1,
+    CATALOG_STAGE_SCAN_ERR_BUSY = -2,
+    CATALOG_STAGE_SCAN_ERR_SOURCE = -3,
+    CATALOG_STAGE_SCAN_ERR_CAPACITY = -4,
+    CATALOG_STAGE_SCAN_ERR_RECORD = -5,
+    CATALOG_STAGE_SCAN_ERR_GUARD = -6
+};
+/* Builds an inactive candidate. The caller must not publish it unless this returns OK. */
+int catalog_stage_scan(catalog_guard *guard, catalog_stage_scan_next_fn next,
+                       void *context, catalog_stage_snapshot *candidate);
 
 #endif
