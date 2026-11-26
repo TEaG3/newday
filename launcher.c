@@ -1585,6 +1585,15 @@ static int catalog_activity_update(int playing)
 	return catalog_guard_set_activity(&catalog_live_guard, playing, io_busy);
 }
 
+static int catalog_activity_wait(int playing)
+{
+	for (int t = 0; t < 150; t++) {
+		if (catalog_activity_update(playing)) return 1;
+		usleep(10000);
+	}
+	return catalog_activity_update(playing);
+}
+
 static volatile char ra_state[MAXC];                      // 0 not asked, 1 working, then RA_SET.. (achievements.h)
 static short ra_count[MAXC];
 // the Logros panel (○): one game's list at a time, loaded by the worker. st: 1 loading, 2 ready, -1 failed
@@ -1604,10 +1613,10 @@ static int background_quiesce(void)
 		if (WaitSema(cover_lock) < 0) return 0;
 		ra_launching = 1;
 		int unlocked = SignalSema(cover_lock) >= 0;
-		if (!catalog_activity_update(1) || !unlocked) return 0;
+		if (!catalog_activity_wait(1) || !unlocked) return 0;
 	} else {
 		ra_launching = 1; // the cover worker is not running
-		if (!catalog_activity_update(1)) return 0;
+		if (!catalog_activity_wait(1)) return 0;
 	}
 	ra_abort = 1;
 	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy || icon_busy || disc_busy); t++) usleep(10000);
