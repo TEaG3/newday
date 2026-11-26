@@ -87,7 +87,7 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("i < ncv && !ra_launching", body)
         self.assertIn("cover_work_end()", body)
 
-    def test_background_gate_reopens_only_after_all_workers_are_idle(self):
+    def test_background_gate_reopens_only_after_tracked_workers_are_idle(self):
         start = self.launcher.index("static void background_resume_if_idle(void)")
         end = self.launcher.index("static void ra_log(", start)
         body = self.launcher[start:end]
@@ -105,7 +105,7 @@ class LauncherHandoffTests(unittest.TestCase):
         )
 
 
-    def test_every_background_reader_and_downloader_uses_the_shared_gate(self):
+    def test_every_cover_and_network_worker_uses_the_shared_gate(self):
         ranges = (
             ("static void art_import(void)", "static void download_covers(void)"),
             ("static void download_covers(void)", "// ---- achievements"),
