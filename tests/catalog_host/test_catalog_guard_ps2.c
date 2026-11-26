@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "catalog_guard_ps2.h"
 #include <kernel.h>
@@ -76,6 +77,28 @@ static void *reader_worker(void *opaque)
         assert(catalog_guard_read_end(args->guard));
     }
     return NULL;
+}
+
+
+typedef struct {
+    int calls;
+    int fail_unlock_after_record;
+} staged_scan_fixture;
+
+static int staged_scan_next(void *opaque, catalog_stage_record *record)
+{
+    staged_scan_fixture *fixture = (staged_scan_fixture *)opaque;
+    if (fixture->calls++ == 0) {
+        memset(record, 0, sizeof(*record));
+        record->source_type = 1;
+        record->kind = 1;
+        snprintf(record->path, sizeof(record->path), "DVD/scan.iso");
+        return 1;
+    }
+    if (fixture->fail_unlock_after_record) {
+        fail_signal = 1;
+    }
+    return 0;
 }
 
 int main(void)
@@ -180,6 +203,48 @@ int main(void)
         assert(failed_destroy_guard.lock_context == &failed_destroy_context);
         assert(!catalog_guard_read_begin(&failed_destroy_guard));
         fail_signal = 0;
+        assert(pthread_mutex_unlock(&test_sema) == 0);
+        sema_created = 0;
+    }
+
+
+    /* A failed WaitSema at scan start must not call the source or expose a candidate. */
+    {
+        catalog_guard scan_guard;
+        catalog_guard_ps2_context scan_context;
+        catalog_stage_snapshot candidate;
+        staged_scan_fixture fixture = {0, 0};
+
+        catalog_guard_ps2_context_init(&scan_context);
+        assert(catalog_guard_ps2_init(&scan_guard, &scan_context));
+        memset(&candidate, 0, sizeof(candidate));
+        fail_wait = 1;
+        assert(catalog_stage_scan(&scan_guard, staged_scan_next, &fixture, &candidate) ==
+               CATALOG_STAGE_SCAN_ERR_GUARD);
+        assert(fixture.calls == 0);
+        assert(candidate.count == 0);
+        fail_wait = 0;
+        assert(catalog_guard_ps2_destroy(&scan_guard, &scan_context));
+    }
+
+    /* A failed SignalSema after one staged record must discard the partial candidate. */
+    {
+        catalog_guard scan_guard;
+        catalog_guard_ps2_context scan_context;
+        catalog_stage_snapshot candidate;
+        staged_scan_fixture fixture = {0, 1};
+
+        catalog_guard_ps2_context_init(&scan_context);
+        assert(catalog_guard_ps2_init(&scan_guard, &scan_context));
+        memset(&candidate, 0, sizeof(candidate));
+        assert(catalog_stage_scan(&scan_guard, staged_scan_next, &fixture, &candidate) ==
+               CATALOG_STAGE_SCAN_ERR_GUARD);
+        assert(fixture.calls == 2);
+        assert(candidate.count == 0);
+        assert(scan_context.faulted);
+        assert(!catalog_guard_ps2_destroy(&scan_guard, &scan_context));
+        fail_signal = 0;
+        /* The simulated SignalSema failure leaves the host mutex locked. */
         assert(pthread_mutex_unlock(&test_sema) == 0);
         sema_created = 0;
     }
