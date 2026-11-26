@@ -447,6 +447,6 @@ int main(void)
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
     test_download_gate();
-    puts("catalog stage: path, validation, diff, selection, concurrent apply and download gates PASS");
+    puts("catalog stage: staged scan, path, validation, diff, selection, concurrent apply and download gates PASS");
     return 0;
 }
