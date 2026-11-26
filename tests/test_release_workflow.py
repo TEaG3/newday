@@ -1,0 +1,323 @@
+name: PS2 launcher build
+
+on:
+  push:
+    branches:
+      - master
+      - feature/tea-g3-rebrand
+      - feature/single-entrypoint-runtime
+      - feature/opl-source-autolaunch
+      - feature/opl-only-rebased-20261126
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ps2-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host-zso-tests:
+    name: ZSO host decoder fixture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run bounded ZSO decoder and scanner fixtures
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tools/make_release.py tools/embed_runtime.py tools/verify_runtime_manifest.py ui/neutrino-igr/generate_arabic_assets.py tools/theme_check.py
+          cc -std=c99 -Wall -Wextra -Wno-unused-parameter -include string.h \
+            -Itests/zso_host -Ithird_party/opl-zso \
+            tests/zso_host/test_zso.c third_party/opl-zso/zso.c \
+            third_party/opl-zso/lz4.c \
+            -o /tmp/zso_host_test
+          /tmp/zso_host_test
+          cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter \
+            -Itests/zso_host/include -I. -Ithird_party/opl-zso \
+            tests/zso_host/test_zso_ee.c zso_ee.c \
+            -o /tmp/zso_ee_host_test
+          /tmp/zso_ee_host_test
+          python3 -m unittest tests/test_nuld_catalog.py tests/test_release_version.py tests/test_launcher_handoff.py tests/test_catalog_launcher_wiring.py tests/test_ee_core_headroom.py tests/test_teag3_branding.py tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py tests/test_opl_source_policy.py tests/test_release_workflow.py
+          cc -std=c99 -Wall -Wextra -Werror -pthread -I. catalog_stage.c tests/catalog_host/test_catalog_stage.c -o /tmp/catalog_stage_test
+          /tmp/catalog_stage_test
+          cc -std=c99 -Wall -Wextra -Werror -pthread -Itests/catalog_host/ps2stub -I. catalog_stage.c catalog_guard_ps2.c tests/catalog_host/test_catalog_guard_ps2.c -o /tmp/catalog_guard_ps2_test
+          /tmp/catalog_guard_ps2_test
+          cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST engine.c -o /tmp/engine_selftest
+          /tmp/engine_selftest
+          node tests/site-opl-demo.test.cjs
+
+  launcher:
+    name: Build OPL-only TEa.G3 launcher
+    needs: [host-zso-tests, opl-engine]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Download pinned OPL runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-opl-${{ github.sha }}
+          path: runtime-input
+      - name: Validate TEa.G3 splash wordmark
+        run: |
+          set -euo pipefail
+          grep -Fq 'splash_vtext_w(&vfont_michroma, cap, 0.06f, "TEa.G3")' torres.c
+          grep -Fq 'splash_vtext(&vfont_michroma, x + 2 * r + gap, 300 + cap / 2, cap, 0.06f, "TEa.G3", INK)' torres.c
+          ! grep -Fq '"NULD"' torres.c
+      - name: Build OPL-only launcher with PS2SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm -v "${GITHUB_WORKSPACE}:/src" -w /src ps2dev/ps2dev:latest sh -c '
+            set -eu
+            set -o pipefail
+            export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
+            export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"
+            export PATH="$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin:$PATH"
+            apk add --no-cache python3 py3-pip make py3-pillow build-base openssl-dev libjpeg-turbo-dev libpng-dev bash git
+            pip3 install --break-system-packages --no-cache-dir fonttools mapbox-earcut
+            command -v mips64r5900el-ps2-elf-gcc
+            test -x "$PS2DEV/ee/bin/mips64r5900el-ps2-elf-gcc"
+            python3 -m py_compile tools/lang_check.py tools/font.py tools/fetch_arabic_font.py tools/embed_runtime.py
+            python3 tools/lang_check.py
+            python3 tools/fetch_arabic_font.py
+            python3 ui/neutrino-igr/generate_arabic_assets.py
+            test -s ui/neutrino-igr/menu_arabic.h
+            grep -Fq "IGR_AR_BOX_WIDTH 216" ui/neutrino-igr/menu_arabic.h
+            python3 tools/font.py --selftest
+            make test
+            python3 tools/theme_check.py
+            make clean
+            test -s runtime-input/OPL.ELF
+            test -s runtime-input/OPL-LICENSE.txt
+            python3 tools/embed_runtime.py runtime-input "$PS2SDK/bin/bin2c"
+            python3 tools/verify_runtime_manifest.py runtime-input ../runtime-manifest.txt
+            { make APP=launcher; } 2>&1 | tee build.log
+            test -s TEa.G3.ELF
+            test -s runtime-manifest.txt
+            grep -q "^OPL[.]ELF" runtime-manifest.txt
+            test "$(grep -c "^OPL[.]ELF" runtime-manifest.txt)" -eq 1
+            test "$(grep -c "^files=1$" runtime-manifest.txt)" -eq 1
+            ls -lh TEa.G3.ELF runtime-manifest.txt
+          '
+      - name: Upload launcher ELF
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-launcher-${{ github.sha }}
+          path: |
+            TEa.G3.ELF
+            runtime-manifest.txt
+            runtime-input/OPL-LICENSE.txt
+          if-no-files-found: error
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-build-log-${{ github.sha }}
+          path: build.log
+          if-no-files-found: warn
+
+  opl-engine:
+    name: Build TEaG3/OPL source runtime (pinned submodule)
+    runs-on: ubuntu-latest
+    container: ghcr.io/ps2homebrew/ps2homebrew:main
+    steps:
+      - name: Check out TEa.G3 with the complete OPL source submodule
+        uses: actions/checkout@v4
+        with:
+          path: tea-g3
+          submodules: recursive
+
+      - name: Fetch pinned lwNBD dependency before cleaning
+        working-directory: tea-g3/engine/opl
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/tea-g3/engine/opl"
+          apk add --no-cache curl py3-yaml
+          curl -fsSL https://raw.githubusercontent.com/ps2homebrew/Open-PS2-Loader/b3a2199795fe89ba7e2dd7b843354472dff2c3eb/download_lwNBD.sh -o download_lwNBD.sh
+          chmod +x download_lwNBD.sh
+          test -x download_lwNBD.sh
+          bash ./download_lwNBD.sh
+          python3 -m py_compile lang_compiler.py check_arabic_translation.py
+          python3 -c "import yaml"
+          test -f modules/network/lwNBD/Makefile
+          test "$(git -C modules/network/lwNBD rev-parse HEAD)" = "15f1c14536d662e2e00d38d0aa91ef24149e8b96"
+
+      - name: Apply TEa.G3 USBExtreme direct-boot patch
+        working-directory: tea-g3/engine/opl
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py" "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py"
+          python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py" src/opl.c
+          python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py" src/opl.c src/ethsupport.c
+          python3 "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py" src/opl.c src/hddsupport.c include/hddsupport.h
+          grep -Fq 'if (!strcmp(argv[4], "eth") && argc >= 14)' src/opl.c
+          grep -Fq 'int ethAutoLaunchGame(char *argv[])' src/ethsupport.c
+          grep -Fq 'if (ethDirectLaunch)' src/ethsupport.c
+          grep -Fq 'int isUL = !strcmp(argv[4], "ul")' src/opl.c
+          grep -Fq 'int isBDM = !strcmp(argv[4], "bdm")' src/opl.c
+          grep -Fq 'gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_SDC' src/opl.c
+          grep -Fq 'gAutoLaunchDeviceData->massDeviceIndex == wantedUnit' src/opl.c
+          grep -Fq 'TEa.G3 BDM auto-launch: requested device not found' src/opl.c
+          grep -Fq 'GAME_FORMAT_USBLD' src/opl.c
+          grep -Fq 'gTEaG3HDDMiniReady = 1' src/hddsupport.c
+          grep -Fq 'FIO_MT_RDONLY' src/hddsupport.c
+          grep -Fq 'TEa.G3 HDL mini-launch refused' src/opl.c
+          grep -Fq 'gAutoLaunchGame->total_size_in_kb = (u32)size_kb' src/opl.c
+          grep -Fq 'gAutoLaunchGame->disctype = (u8)disc_type' src/opl.c
+          grep -Fq 'argc >= 6 && !strcmp(argv[5], "mini")' src/opl.c
+          grep -Fq 'argv[6] = "mini"' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'argv[5] = disc_type' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader_recover(8, argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'run_loader_recover(9, argv)' "$GITHUB_WORKSPACE/tea-g3/launcher.c"
+          grep -Fq 'strcasecmp(&name[size - 4], ".zso")' src/supportbase.c
+          grep -Fq 'IOP_OBJS = isofs.o zso.o lz4.o imports.o' modules/isofs/Makefile
+          python3 - <<'PY'
+          from pathlib import Path
+          launcher = Path("../../launcher.c").read_text(encoding="utf-8")
+          hdd = launcher.split('if (engine == ENGINE_OPL_HDD)', 1)[1].split('if (engine == ENGINE_OPL_BDM)', 1)[0]
+          bdm = launcher.split('if (engine == ENGINE_OPL_BDM)', 1)[1].split('if (cv[i].kind != K_PS2)', 1)[0]
+          assert 'char sector[16], size_kb[16], disc_type[16], *argv[9];' in hdd
+          assert 'argv[8] = NULL;' in hdd
+          assert 'run_loader_recover(8, argv);' in hdd
+          assert 'char unit[8], *argv[9];' in bdm
+          assert 'argv[8] = (char *)igr_stub_path();' in bdm
+          assert 'run_loader_recover(9, argv);' in bdm
+          assert 'HD Loader partition metadata is incomplete' in launcher
+          print('OPL BDM IGR argument and HDD preflight checks passed')
+          PY
+          grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_hdl.py"
+          grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[13]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_eth.py"
+          grep -Fq 'gExitPath, sizeof(gExitPath), "%s", argv[6]' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
+          grep -Fq 'if (!strcmp(argv[4], "ul") && argv[6] && argv[6][0])' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
+          grep -Fq 'else if (!strcmp(argv[4], "bdm") && argv[7] && argv[7][0])' "$GITHUB_WORKSPACE/tea-g3/tools/patch_opl_ul.py"
+          grep -Fq 'return 0;' src/opl.c
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path("src/opl.c").read_text(encoding="utf-8")
+          assert "if (!isUL && gBDMPrefix[0] != '\\0') {" in source
+          assert "if (!isUL && gBDMPrefix[0] != '\\\\0') {" not in source
+          assert 'snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), "%s", argv[2]);' in source
+          PY
+
+      - name: Clean and compile OPL ELF
+        working-directory: tea-g3/engine/opl
+        shell: bash
+        run: |
+          set -euo pipefail
+          make clean
+          test -s lng_src/Arabic.yml
+          test -s lng_src/thirdparty/font_Arabic.ttf
+          python3 check_arabic_translation.py
+          make languages
+          test -s lng/lang_Arabic.lng
+          grep -Fq 'رجوع' lng/lang_Arabic.lng
+          test -s include/lang_autogen.h
+          test -s src/lang_internal.c
+          grep -Fq 'lngLoadEmbeddedArabic' src/lang.c
+          grep -Fq 'if (langID == -1)' src/opl.c
+          make NOT_PACKED=1 RTL=1 PADEMU=1
+          test -s asm/lang_Arabic.c
+          test -s asm/font_Arabic.c
+          grep -Fq 'lang_Arabic_raw' asm/lang_Arabic.c
+          grep -Fq 'font_Arabic_raw' asm/font_Arabic.c
+          test -s opl.elf
+          cp opl.elf "$GITHUB_WORKSPACE/OPL.ELF"
+          cp LICENSE "$GITHUB_WORKSPACE/OPL-LICENSE.txt"
+          file "$GITHUB_WORKSPACE/OPL.ELF" || true
+          sha256sum "$GITHUB_WORKSPACE/OPL.ELF"
+
+      - name: Upload standalone OPL runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-opl-${{ github.sha }}
+          path: |
+            OPL.ELF
+            OPL-LICENSE.txt
+          if-no-files-found: error
+
+  test-bundle:
+    name: Assemble OPL-only TEa.G3 runtime test bundle
+    runs-on: ubuntu-latest
+    needs: [host-zso-tests, launcher, opl-engine]
+    steps:
+      - name: Check out integration docs
+        uses: actions/checkout@v4
+      - name: Download launcher ELF
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-launcher-${{ github.sha }}
+          path: bundle
+      - name: Download OPL runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: tea-g3-opl-${{ github.sha }}
+          path: bundle
+      - name: Verify and add integration test instructions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s bundle/TEa.G3.ELF
+          test -s bundle/OPL.ELF
+          grep -q '^OPL.ELF' bundle/runtime-manifest.txt
+          python3 tools/verify_runtime_manifest.py bundle
+          mkdir -p bundle/docs
+          cp docs/game-formats.md docs/opl-engine-integration.md bundle/docs/
+          cp tests/PCSX2_SMOKE_TEST.md bundle/PCSX2_SMOKE_TEST.md
+          cat > bundle/README-TEST-BUNDLE.txt <<'EOF'
+          TEa.G3 OPL-only integration test bundle
+
+          User installation:
+          - Copy TEa.G3.ELF only. OPL is embedded and extracted automatically
+            to tea_g3/runtime/ on first boot.
+
+          Diagnostic files:
+          - OPL.ELF is the standalone CI build output for inspection only.
+
+          Disabled sources fail closed. CI success does not prove gameplay.
+          Follow PCSX2_SMOKE_TEST.md before reporting runtime compatibility.
+          EOF
+          mkdir -p runtime-input
+          cp bundle/OPL.ELF runtime-input/OPL.ELF
+          cp bundle/OPL-LICENSE.txt OPL-LICENSE.txt
+          cp bundle/TEa.G3.ELF TEa.G3.ELF
+          cp bundle/runtime-manifest.txt runtime-manifest.txt
+          python3 tools/package_single_elf_release.py development
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          package = Path("dist/TEa.G3-Complete-Package.zip")
+          with ZipFile(package) as archive:
+              assert archive.testzip() is None
+              names = archive.namelist()
+              assert len(names) == len(set(names)), "duplicate package entries"
+              required = {
+                  "TEa.G3.ELF", "diagnostics/OPL-standalone.ELF",
+                  "licenses/OPL-AFL-3.0.txt", "PACKAGE-MANIFEST.txt",
+                  "INSTALL-AR.txt", "INSTALL-EN.txt",
+              }
+              assert required.issubset(names), sorted(required - set(names))
+              manifest = archive.read("PACKAGE-MANIFEST.txt").decode("utf-8")
+              assert "OPL is the only PS2 game engine" in manifest
+              assert "SMB, UDPBD, UDPFS game streaming" in manifest
+              assert "Neutrino" not in manifest
+          sums = Path("dist/SHA256SUMS.txt").read_text(encoding="utf-8")
+          assert "TEa.G3-Complete-Package.zip" in sums and "TEa.G3.ELF" in sums
+          print(f"release package fixture: PASS ({package.stat().st_size} bytes)")
+          PY
+          mkdir -p bundle/package-test
+          cp dist/TEa.G3-Complete-Package.zip dist/SHA256SUMS.txt bundle/package-test/
+      - name: Upload unified integration test bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: tea-g3-integration-test-bundle-${{ github.sha }}
+          path: bundle/
+          if-no-files-found: error
+          retention-days: 30
