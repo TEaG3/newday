@@ -44,7 +44,7 @@
 #include "catalog_guard_ps2.h"
 #include "catalog_stage.h"
 
-#define TEAG3_VERSION "v1.3.10" // tag: arabic-v1.3.10
+#define TEAG3_VERSION "v1.3.11" // tag: arabic-v1.3.11
 #include "lang.h"
 #include "achievements.h"
 #include <sys/stat.h>
