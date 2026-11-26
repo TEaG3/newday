@@ -76,9 +76,9 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("usleep(10000);", LAUNCHER)
 
     def test_boot_catalog_captures_validated_stable_source_keys(self):
-        load = function_body(LAUNCHER, "static void load_games(", "// ---- disc drive")
+        load = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
         capture = function_body(LAUNCHER, "static int catalog_snapshot_capture(", "static int by_title(")
-        self.assertIn("catalog_snapshot_capture(cv, ncv, &catalog_active_snapshot)", load)
+        self.assertIn("catalog_snapshot_capture(items, n, snapshot)", load)
         self.assertIn("catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK", load)
         self.assertIn("src[source_index].type", capture)
         self.assertIn("src[source_index].unit", capture)
@@ -98,6 +98,37 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("record.size = item->catalog_size ? item->catalog_size : item->size;", capture)
         self.assertIn("record.size = item->hdl_size_kb;", capture)
         self.assertIn("if (!record.size) record.flags |= 0x80u;", capture)
+
+
+    def test_all_source_scanners_write_only_to_the_supplied_candidate_buffer(self):
+        ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
+        iso = function_body(LAUNCHER, "static int scan_dir(", "// phase 17:")
+        remote = function_body(LAUNCHER, "static int catalog_load(", "typedef struct { int s, n; entry *items; } hdl_ctx;")
+        hdl = function_body(LAUNCHER, "static void hdl_add(", "static uint32_t catalog_fingerprint_bytes")
+        self.assertIn("entry *items", ul)
+        self.assertIn("entry *e = &items[n]", ul)
+        self.assertNotIn("&cv[n]", ul)
+        self.assertIn("entry *items", iso)
+        self.assertIn("entry *item = &items[n]", iso)
+        self.assertNotIn("&cv[n]", iso)
+        self.assertIn("entry *c = &items[n++]", remote)
+        self.assertNotIn("&cv[n", remote)
+        self.assertIn("entry *e = &c->items[c->n++]", hdl)
+        self.assertIn("memset(e, 0, sizeof(*e))", hdl)
+
+    def test_boot_scan_builds_candidate_before_exposing_active_count(self):
+        builder = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
+        publish = function_body(LAUNCHER, "static void load_games(void)", "// ---- disc drive")
+        self.assertIn("memset(&items[0], 0, sizeof(items[0]))", builder)
+        self.assertIn("scan_dir(items, s, 1, scan_dir(items, s, 0, n))", builder)
+        self.assertIn("scan_ul(items, s, n)", builder)
+        self.assertIn("qsort(items + 1", builder)
+        self.assertIn("catalog_snapshot_capture(items, n, snapshot)", builder)
+        self.assertIn("entry *candidate = malloc(sizeof(entry) * MAXC)", publish)
+        self.assertIn("count = load_games_into(candidate, &catalog_active_snapshot)", publish)
+        self.assertLess(publish.index("memcpy(cv, candidate"), publish.index("ncv = count"))
+        self.assertIn("free(candidate)", publish)
+        self.assertIn("load_games_into(cv, &catalog_active_snapshot)", publish)
 
     def test_safe_publish_primitive_is_host_tested_but_not_enabled_in_launcher(self):
         self.assertIn("catalog_stage_snapshot_publish", STAGE)
