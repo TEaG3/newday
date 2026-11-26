@@ -1488,7 +1488,7 @@ static void download_covers(void)
 		int body, len;
 		snprintf(path, sizeof(path), COVER_PATH, cv[i].kind == K_PS1 ? "psx-covers" : "ps2-covers", cv[i].serial);
 		int st = https_get(COVER_HOST, path, buf, max, &body, &len);
-		if (st == NET_ERR_CONNECT && !dl_done) // the first connection right after the lease failed once on the console
+		if (st == NET_ERR_CONNECT && !dl_done && !ra_launching) // retry only while the background gate remains open
 			sleep(2), st = https_get(COVER_HOST, path, buf, max, &body, &len);
 		if (st < 0) { dl_state = st; break; } // network or TLS: the rest would fail the same way
 		if (st == 200 && cover_store(i, (unsigned char *)buf + body, len)) dl_got++; // 404: the generic one stays
