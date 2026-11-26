@@ -274,6 +274,8 @@ class LauncherHandoffTests(unittest.TestCase):
             self.assertIn("test -s lng/lang_Arabic.lng", workflow)
             self.assertIn("grep -Fq 'رجوع' lng/lang_Arabic.lng", workflow)
             self.assertIn("test -s lng_src/thirdparty/font_Arabic.ttf", workflow)
+            self.assertIn("lngLoadEmbeddedArabic", workflow)
+            self.assertIn("if (langID == -1)", workflow)
 
     def test_lwnbd_script_is_executable_before_make_clean(self):
         # OPL's clean target executes the downloaded helper directly, not through bash.
