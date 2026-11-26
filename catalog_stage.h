@@ -52,7 +52,7 @@ int catalog_stage_snapshot_find(const catalog_stage_snapshot *snapshot,
                                 uint8_t kind, const char *path);
 
 typedef int (*catalog_guard_lock_fn)(void *context); /* nonzero only when the lock was acquired */
-typedef void (*catalog_guard_unlock_fn)(void *context);
+typedef int (*catalog_guard_unlock_fn)(void *context); /* nonzero only when unlocked */
 
 typedef struct {
     catalog_guard_lock_fn lock;
