@@ -72,6 +72,7 @@ typedef struct {
 /* The caller supplies a real mutex/semaphore pair. Every guard API is serialized by it. */
 int catalog_guard_init(catalog_guard *guard, catalog_guard_lock_fn lock,
                        catalog_guard_unlock_fn unlock, void *lock_context);
+/* Scans and active-snapshot readers are mutually exclusive. A scan blocks new readers until scan_end. */
 int catalog_guard_read_begin(catalog_guard *guard);
 int catalog_guard_read_end(catalog_guard *guard);
 int catalog_guard_can_scan(catalog_guard *guard);
