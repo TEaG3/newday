@@ -64,7 +64,7 @@ static void theme_set(int id) // render thread; a theme with a backdrop to dithe
 }
 static int theme_of(const char *key)
 {
-	if (!strcasecmp(key, "classic")) return TH_NULD; // display name; keep the legacy "nuld" key readable too
+	if (!strcasecmp(key, "classic") || !strcasecmp(key, "nuld")) return TH_CLASSIC; // migrate the old saved theme key
 	for (int i = 0; i < themes_n; i++)
 		if (!strcasecmp(key, themes[i].key)) return i;
 	return TH_TORRES;
@@ -1887,7 +1887,7 @@ static int hint(int x, int key_icon, const char *key_text, const char *label) //
 static void generic_cover(int i, int x, int y, int w, int h, int a) // no cover file: a hatched panel with the title
 {
 	gfx_alpha(a);
-	gfx_rect(x, y, w, h, theme_id == TH_NULD ? 0x11141A : PANEL);
+	gfx_rect(x, y, w, h, theme_id == TH_CLASSIC ? 0x11141A : PANEL);
 	gfx_scissor(x, y, x + w - 1, y + h - 1);
 	for (int d = -h; d < w; d += 12) gfx_line(x + d, y + h, x + d + h, y, TEXT, a / 8, a / 8);
 	gfx_scissor(0, 0, GFX_W - 1, GFX_H - 1);
@@ -1930,7 +1930,7 @@ static void panel(int x, int y, int w, int h, int icon, const char *title) // â–
 	gfx_alpha(0x80);
 	gfx_rect(x, y, w, h, PANEL);
 	frame1(x, y, w, h, EDGE);
-	if (theme_id == TH_NULD) splash_hud(x - 6, y - 6, w + 12, h + 12, 22, ACID);
+	if (theme_id == TH_CLASSIC) splash_hud(x - 6, y - 6, w + 12, h + 12, 22, ACID);
 	gfx_icon(icon, x + 24, y + 24, ACID);
 	gfx_text(&gfx_font_ui, x + 52, y + 21, title, TEXT);
 	gfx_rect(x + 24, y + 58, w - 48, 1, EDGE);
@@ -2079,7 +2079,7 @@ static void draw_cover(int i)
 		gfx_image(im[k], iw[k], ih[k], x, y, w, h);
 		gfx_tint(0xFFFFFF);
 	}
-	frame1(x, y, w, h, theme_id != TH_NULD ? EDGE : b->f > 0.5f ? 0x3A4150 : 0x232833);
+	frame1(x, y, w, h, theme_id != TH_CLASSIC ? EDGE : b->f > 0.5f ? 0x3A4150 : 0x232833);
 	if (b->f > 0.01f) T->sel(x, y, w, h, b->f * b->a, 1), gfx_alpha(0x80); // and in front of it
 }
 
@@ -2793,7 +2793,7 @@ static void launch(int i)
                 (unsigned)engine, engine_reason_name(decision.reason));
         fclose(diag);
     }
-    for (int t = 0; t < (theme_id == TH_NULD ? 40 : 64); t++) {
+    for (int t = 0; t < (theme_id == TH_CLASSIC ? 40 : 64); t++) {
         gfx_begin(); T->launch(t / 60.f); gfx_alpha((int)(0x80 * span(t, 0, 20)));
         if (T->flags & TF_MARK) splash_mark(640, 278, 28, TEXT, ACID);
         text_c(&gfx_font_title, 340, cv[i].title, TEXT);

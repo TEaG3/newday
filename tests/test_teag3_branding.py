@@ -15,6 +15,10 @@ class TEaG3BrandingTests(unittest.TestCase):
         cls.site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
         cls.site_index = (ROOT / "site/index.html").read_text(encoding="utf-8")
         cls.site_manual = (ROOT / "site/manual.html").read_text(encoding="utf-8")
+        cls.theme_header = (ROOT / "theme.h").read_text(encoding="utf-8")
+        cls.themes = (ROOT / "themes.c").read_text(encoding="utf-8")
+        cls.splash_header = (ROOT / "splash.h").read_text(encoding="utf-8")
+        cls.torres = (ROOT / "torres.c").read_text(encoding="utf-8")
 
     def test_runtime_messages_and_configuration_use_teag3_branding(self):
         stale = ("nuld vmc remote:", "nuld covers:", "nuld %s\\\\n", "nuld update:",
@@ -30,6 +34,16 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertIn("downloadable applications only", config)
         self.assertIn("motor = opl", config)
         self.assertIn("pantalla = 480i", config)
+
+    def test_classic_theme_replaces_nuld_brand_but_migrates_saved_key(self):
+        self.assertIn("TH_CLASSIC", self.theme_header)
+        self.assertNotIn("TH_NULD", self.theme_header)
+        self.assertIn('if (!strcasecmp(key, "classic") || !strcasecmp(key, "nuld")) return TH_CLASSIC;', self.launcher)
+        self.assertIn('{"classic", "Classic"', self.themes)
+        self.assertIn('if (!strcasecmp(base_key, "nuld")) base_key = "classic";', self.themes)
+        self.assertNotIn("NULD_", self.splash_header)
+        self.assertNotIn("nuld_bg", self.themes)
+        self.assertNotIn("Temas NULD en vivo", self.torres)
 
     def test_network_identifies_the_current_product(self):
         self.assertIn("User-Agent: TEa.G3", self.net)
