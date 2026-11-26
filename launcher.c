@@ -41,6 +41,7 @@
 #include "torres.h"
 #include "theme.h"
 #include "runtime_install.h"
+#include "catalog_guard_ps2.h"
 
 #define TEAG3_VERSION "v1.3.6" // must match the published release tag
 #include "lang.h"
@@ -463,8 +464,15 @@ static int vmc_net_ask(int i);         // asks for it; 0 if there is no loader t
 
 static u8 icon_stack[0x10000] __attribute__((aligned(16)));
 static volatile int ra_launching, cover_busy, icon_busy, disc_busy;
+static catalog_guard catalog_live_guard;
+static catalog_guard_ps2_context catalog_live_context;
+static volatile int catalog_live_ready;
 static int background_work_begin(volatile int *busy);
 static void background_work_end(volatile int *busy);
+static int catalog_activity_update(int playing);
+static int catalog_reader_try_begin(void);
+static void catalog_reader_wait_begin(void);
+static void catalog_reader_end(void);
 
 static void icon_thread(void *arg) // the only libmc user after the boot scan; woken by the render thread
 {
@@ -626,20 +634,47 @@ static void cover_evict(void) // render thread, between frames (the GS is done w
 }
 
 static u8 cover_stack[0x4000] __attribute__((aligned(16)));
+
+static int catalog_reader_try_begin(void)
+{
+	return !catalog_live_ready || catalog_guard_read_begin(&catalog_live_guard);
+}
+
+static void catalog_reader_wait_begin(void)
+{
+	while (!catalog_reader_try_begin()) usleep(1000);
+}
+
+static void catalog_reader_end(void)
+{
+	if (!catalog_live_ready) return;
+	while (!catalog_guard_read_end(&catalog_live_guard)) usleep(1000);
+}
+
 static int background_work_begin(volatile int *busy)
 {
-	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return 0;
+	catalog_reader_wait_begin();
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) {
+		catalog_reader_end();
+		return 0;
+	}
 	int allowed = !ra_launching;
-	if (allowed) *busy = 1;
-	if (SignalSema(cover_lock) < 0) return 0;
+	if (allowed) {
+		*busy = 1;
+		while (!catalog_activity_update(0)) usleep(1000);
+	}
+	if (SignalSema(cover_lock) < 0) return 0; // retain the lease and busy state on lock failure
+	if (!allowed) catalog_reader_end();
 	return allowed;
 }
 
 static void background_work_end(volatile int *busy)
 {
-	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
+	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return; // retain the reader lease on failure
 	*busy = 0;
-	if (SignalSema(cover_lock) < 0) *busy = 1;
+	while (!catalog_activity_update(ra_launching)) usleep(1000);
+	if (SignalSema(cover_lock) < 0) { *busy = 1; return; }
+	catalog_reader_end();
 }
 
 static void cover_thread(void *arg) // woken by draw_cover
@@ -1542,6 +1577,14 @@ static void download_covers(void)
 // RA_DIR/<serial>.txt with the ISO size, then the client on the home server is asked about it; the loader
 // thread does it after the covers, one game at a time, the latest selection first ----
 static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy; // ra_down: 1 no network, 2 no client (toast once)
+
+static int catalog_activity_update(int playing)
+{
+	if (!catalog_live_ready) return 1;
+	int io_busy = ra_busy || art_busy || update_busy || dl_busy || icon_busy || disc_busy || cover_busy;
+	return catalog_guard_set_activity(&catalog_live_guard, playing, io_busy);
+}
+
 static volatile char ra_state[MAXC];                      // 0 not asked, 1 working, then RA_SET.. (achievements.h)
 static short ra_count[MAXC];
 // the Logros panel (○): one game's list at a time, loaded by the worker. st: 1 loading, 2 ready, -1 failed
@@ -1560,8 +1603,12 @@ static int background_quiesce(void)
 	if (cover_lock >= 0) {
 		if (WaitSema(cover_lock) < 0) return 0;
 		ra_launching = 1;
-		if (SignalSema(cover_lock) < 0) return 0;
-	} else ra_launching = 1; // the cover worker is not running
+		int unlocked = SignalSema(cover_lock) >= 0;
+		if (!catalog_activity_update(1) || !unlocked) return 0;
+	} else {
+		ra_launching = 1; // the cover worker is not running
+		if (!catalog_activity_update(1)) return 0;
+	}
 	ra_abort = 1;
 	for (int t = 0; t < 150 && (ra_busy || art_busy || update_busy || icon_busy || disc_busy); t++) usleep(10000);
 	if (ra_busy || art_busy || update_busy || icon_busy || disc_busy) return 0;
@@ -1578,10 +1625,17 @@ static void background_resume_if_idle(void)
 		if (WaitSema(cover_lock) < 0) return;
 		int idle = !ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy && !disc_busy &&
 		           dl_state != 1 && dl_state != 2 && !cover_busy;
-		if (idle) ra_launching = 0, ra_abort = 0;
-		if (SignalSema(cover_lock) < 0 && idle) ra_launching = 1, ra_abort = 1;
+		int activity_ok = !idle || catalog_activity_update(0);
+		if (idle && activity_ok) ra_launching = 0, ra_abort = 0;
+		if (idle && !activity_ok) ra_launching = 1, ra_abort = 1;
+		if (SignalSema(cover_lock) < 0 && idle) {
+			ra_launching = 1, ra_abort = 1;
+			(void)catalog_activity_update(1);
+		}
 	} else if (!ra_busy && !art_busy && !update_busy && !dl_busy && !icon_busy && !disc_busy &&
-	           dl_state != 1 && dl_state != 2 && !cover_busy) ra_launching = 0, ra_abort = 0;
+	           dl_state != 1 && dl_state != 2 && !cover_busy) {
+		if (catalog_activity_update(0)) ra_launching = 0, ra_abort = 0;
+	}
 }
 
 static void ra_log(const char *fmt, ...) // the console has no printf: launcher.txt, for the gate
@@ -1813,8 +1867,13 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	FILE *lf = usb ? fopen(LOG_TXT, "a") : NULL; // the toast is gone after a few seconds
 	if (lf) fprintf(lf, "TEa.G3 games: %d in %d ms, sources %d%s%s (me %s, net %d %s)\n", ncv, load_ms, nsrc,
 	                src_why ? ": " : "", src_why ? src_why : "", net_ip(), net_res, net_why), fclose(lf);
-	stage = 3;
 	cover_lock = CreateSema(&(ee_sema_t){ .init_count = 1, .max_count = 1 });
+	catalog_guard_ps2_context_init(&catalog_live_context);
+	if (catalog_guard_ps2_init(&catalog_live_guard, &catalog_live_context)) {
+		catalog_live_ready = 1;
+		printf("catalog guard: reader/activity gate ready; live monitor remains disabled\n");
+	} else printf("catalog guard: unavailable; live monitor remains disabled\n");
+	stage = 3;
 	ee_thread_t it = { .func = icon_thread, .stack = icon_stack, .stack_size = sizeof(icon_stack), .gp_reg = &_gp,
 	                   .initial_priority = 0x40 };
 	int itid = cover_lock >= 0 && icon_sema >= 0 ? CreateThread(&it) : -1;
@@ -3186,6 +3245,8 @@ int main(int argc, char *argv[])
 	char text[1536];
 
 	for (int f = 0;; f++) {
+		/* A future candidate apply belongs here, before this frame's reader lease. */
+		if (!catalog_reader_try_begin()) { usleep(1000); continue; }
 		unsigned b = pad_buttons(), pressed = b & ~prev;
 		prev = b;
 		if (cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
@@ -3350,6 +3411,7 @@ int main(int argc, char *argv[])
 		build[n] = to_us(cycles() - t0);
 
 		gfx_flip();
+		catalog_reader_end();
 		u32 now = cycles();
 		if (n > 0 && to_us(now - last_vsync) > FRAME_US * 3 / 2) missed++; // n == 0: gap includes the file write
 		last_vsync = now;
