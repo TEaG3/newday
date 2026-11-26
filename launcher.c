@@ -474,7 +474,7 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 		if (!background_work_begin(&icon_busy)) {
 			if (ra_launching) {
 				SignalSema(icon_sema);
-				DelayThread(10000);
+				usleep(10000);
 			}
 			continue;
 		}
