@@ -12,6 +12,8 @@ static int fail_create;
 static int fail_delete;
 static int fail_wait;
 static int fail_signal;
+static int fail_signal_after;
+static int signal_calls;
 
 int CreateSema(ee_sema_t *sema)
 {
@@ -56,7 +58,9 @@ int WaitSema(int sema_id)
 
 int SignalSema(int sema_id)
 {
-    if (fail_signal || sema_id != 7 || !sema_created) {
+    ++signal_calls;
+    if (fail_signal || (fail_signal_after > 0 && signal_calls >= fail_signal_after) ||
+        sema_id != 7 || !sema_created) {
         return -1;
     }
     return pthread_mutex_unlock(&test_sema);
@@ -178,6 +182,37 @@ int main(void)
         assert(strcmp(candidate->records[0].path, "DVD/Old.iso") == 0);
     }
 
+    /* Item, sidecar, count and snapshot slots move together through the PS2 semaphore adapter. */
+    {
+        catalog_stage_snapshot old_snapshot, new_snapshot;
+        int old_items[1] = {1}, new_items[1] = {2};
+        int old_sidecars[1] = {10}, new_sidecars[1] = {20};
+        catalog_stage_bundle active_bundle, candidate_bundle;
+        memset(&old_snapshot, 0, sizeof(old_snapshot));
+        memset(&new_snapshot, 0, sizeof(new_snapshot));
+        old_snapshot.count = 1;
+        old_snapshot.records[0].source_type = 1;
+        old_snapshot.records[0].kind = 1;
+        snprintf(old_snapshot.records[0].path, sizeof(old_snapshot.records[0].path), "DVD/Old.iso");
+        new_snapshot.count = 1;
+        new_snapshot.records[0].source_type = 1;
+        new_snapshot.records[0].kind = 1;
+        snprintf(new_snapshot.records[0].path, sizeof(new_snapshot.records[0].path), "DVD/New.iso");
+        active_bundle.items = old_items;
+        active_bundle.sidecars = old_sidecars;
+        active_bundle.count = 1;
+        active_bundle.snapshot = &old_snapshot;
+        candidate_bundle.items = new_items;
+        candidate_bundle.sidecars = new_sidecars;
+        candidate_bundle.count = 1;
+        candidate_bundle.snapshot = &new_snapshot;
+        assert(catalog_guard_request_apply(&guard));
+        assert(catalog_stage_bundle_publish(&guard, &active_bundle, &candidate_bundle) == CATALOG_STAGE_OK);
+        assert(active_bundle.items == new_items && active_bundle.sidecars == new_sidecars);
+        assert(candidate_bundle.items == old_items && candidate_bundle.sidecars == old_sidecars);
+        assert(active_bundle.snapshot == &new_snapshot && candidate_bundle.snapshot == &old_snapshot);
+    }
+
     assert(catalog_guard_set_activity(&guard, 1, 0));
     assert(!catalog_guard_ps2_destroy(&guard, &context));
     assert(catalog_guard_set_activity(&guard, 0, 0));
@@ -209,6 +244,46 @@ int main(void)
         assert(!catalog_guard_ps2_destroy(&failed_guard, &failed_context));
         fail_signal = 0;
         /* The simulated kernel failure left the mutex held; clean up the test stub directly. */
+        assert(pthread_mutex_unlock(&test_sema) == 0);
+        sema_created = 0;
+    }
+
+    /* A failed release after bundle swap must fail closed; no reader may observe the bundle. */
+    {
+        catalog_guard failed_bundle_guard;
+        catalog_guard_ps2_context failed_bundle_context;
+        catalog_stage_snapshot old_snapshot, new_snapshot;
+        int old_items[1] = {1}, new_items[1] = {2};
+        int old_sidecars[1] = {10}, new_sidecars[1] = {20};
+        catalog_stage_bundle active_bundle, candidate_bundle;
+        memset(&old_snapshot, 0, sizeof(old_snapshot));
+        memset(&new_snapshot, 0, sizeof(new_snapshot));
+        old_snapshot.count = 1;
+        old_snapshot.records[0].source_type = 1;
+        old_snapshot.records[0].kind = 1;
+        snprintf(old_snapshot.records[0].path, sizeof(old_snapshot.records[0].path), "DVD/Old.iso");
+        new_snapshot.count = 1;
+        new_snapshot.records[0].source_type = 1;
+        new_snapshot.records[0].kind = 1;
+        snprintf(new_snapshot.records[0].path, sizeof(new_snapshot.records[0].path), "DVD/New.iso");
+        active_bundle.items = old_items;
+        active_bundle.sidecars = old_sidecars;
+        active_bundle.count = 1;
+        active_bundle.snapshot = &old_snapshot;
+        candidate_bundle.items = new_items;
+        candidate_bundle.sidecars = new_sidecars;
+        candidate_bundle.count = 1;
+        candidate_bundle.snapshot = &new_snapshot;
+        catalog_guard_ps2_context_init(&failed_bundle_context);
+        assert(catalog_guard_ps2_init(&failed_bundle_guard, &failed_bundle_context));
+        assert(catalog_guard_request_apply(&failed_bundle_guard));
+        signal_calls = 0;
+        fail_signal_after = 2; /* try_apply releases once; finish_apply release fails */
+        assert(catalog_stage_bundle_publish(&failed_bundle_guard, &active_bundle, &candidate_bundle) == CATALOG_STAGE_ERR_GUARD);
+        assert(failed_bundle_context.faulted);
+        assert(active_bundle.items == new_items && active_bundle.sidecars == new_sidecars);
+        assert(!catalog_guard_read_begin(&failed_bundle_guard));
+        fail_signal_after = 0;
         assert(pthread_mutex_unlock(&test_sema) == 0);
         sema_created = 0;
     }

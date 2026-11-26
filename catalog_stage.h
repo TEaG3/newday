@@ -22,6 +22,15 @@ typedef struct {
     catalog_stage_record records[CATALOG_STAGE_MAX_ITEMS];
 } catalog_stage_snapshot;
 
+/* One publishable generation: item storage, per-item sidecars, count and stable snapshot
+   move together while the catalog guard blocks readers at the frame safe point. */
+typedef struct {
+    void *items;
+    void *sidecars;
+    size_t count;
+    catalog_stage_snapshot *snapshot;
+} catalog_stage_bundle;
+
 typedef struct {
     size_t added_count;
     size_t removed_count;
@@ -117,6 +126,12 @@ int catalog_guard_cancel_apply(catalog_guard *guard);
 int catalog_stage_snapshot_publish(catalog_guard *guard,
                                    catalog_stage_snapshot **active,
                                    catalog_stage_snapshot **candidate);
+/* Atomically publish one complete generation; candidate receives the previous active bundle.
+   If ERR_GUARD is returned after the swap, the guard is fail-closed; do not read either bundle
+   until the guard is reinitialized. */
+int catalog_stage_bundle_publish(catalog_guard *guard,
+                                 catalog_stage_bundle *active,
+                                 catalog_stage_bundle *candidate);
 
 /* A source callback returns 1 for a record, 0 at end-of-source, and a negative value on I/O error.
    It must finish/close its current I/O before returning; cancellation is checked immediately afterward. */

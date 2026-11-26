@@ -104,6 +104,16 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("catalog_guard_try_apply(guard)", STAGE)
         self.assertNotIn("catalog_stage_snapshot_publish(", LAUNCHER)
 
+    def test_bundle_publish_moves_items_sidecars_count_and_snapshot_as_one_generation(self):
+        header = STAGE_HEADER
+        host_test = (ROOT / "tests" / "catalog_host" / "test_catalog_stage.c").read_text(encoding="utf-8")
+        ps2_test = (ROOT / "tests" / "catalog_host" / "test_catalog_guard_ps2.c").read_text(encoding="utf-8")
+        self.assertIn("catalog_stage_bundle_publish", STAGE)
+        self.assertIn("catalog_stage_bundle", header)
+        self.assertIn("test_safe_bundle_publish", host_test)
+        self.assertIn("catalog_stage_bundle_publish", ps2_test)
+        self.assertNotIn("catalog_stage_bundle_publish(", LAUNCHER)
+
     def test_live_scan_and_apply_are_still_disabled(self):
         self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
         self.assertNotIn("catalog_guard_request_apply(", LAUNCHER)
