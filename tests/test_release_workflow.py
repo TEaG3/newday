@@ -20,8 +20,8 @@ class ReleaseWorkflowRegressionTests(unittest.TestCase):
 
     def test_release_version_is_synchronised(self) -> None:
         launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
-        self.assertIn('#define TEAG3_VERSION "v1.3.9"', launcher)
-        self.assertIn('tag: arabic-v1.3.9', launcher)
+        self.assertIn('#define TEAG3_VERSION "v1.3.10"', launcher)
+        self.assertIn('tag: arabic-v1.3.10', launcher)
 
 
 if __name__ == "__main__":
