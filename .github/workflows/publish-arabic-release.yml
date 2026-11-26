@@ -20,11 +20,13 @@ on:
       - ".github/workflows/publish-arabic-release.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   opl-engine:
     name: Build pinned OPL runtime
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     container: ghcr.io/ps2homebrew/ps2homebrew:main
     steps:
@@ -144,6 +146,8 @@ jobs:
 
   package-and-release:
     name: Build single-ELF OPL-only Arabic package
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     needs: [opl-engine]
     steps:
