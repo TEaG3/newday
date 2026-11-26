@@ -661,7 +661,7 @@ static int background_work_begin(volatile int *busy)
 	int allowed = !ra_launching;
 	if (allowed) {
 		*busy = 1;
-		if (!catalog_activity_update(0)) *busy = 0, allowed = 0;
+		while (!catalog_activity_update(0)) usleep(1000);
 	}
 	if (SignalSema(cover_lock) < 0) return 0; // retain the lease and busy state on lock failure
 	if (!allowed) catalog_reader_end();
@@ -672,10 +672,9 @@ static void background_work_end(volatile int *busy)
 {
 	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return; // retain the reader lease on failure
 	*busy = 0;
-	int activity_ok = catalog_activity_update(ra_launching);
-	if (!activity_ok) *busy = 1;
+	while (!catalog_activity_update(ra_launching)) usleep(1000);
 	if (SignalSema(cover_lock) < 0) { *busy = 1; return; }
-	if (activity_ok) catalog_reader_end();
+	catalog_reader_end();
 }
 
 static void cover_thread(void *arg) // woken by draw_cover
@@ -3246,6 +3245,7 @@ int main(int argc, char *argv[])
 	char text[1536];
 
 	for (int f = 0;; f++) {
+		/* A future candidate apply belongs here, before this frame's reader lease. */
 		if (!catalog_reader_try_begin()) { usleep(1000); continue; }
 		unsigned b = pad_buttons(), pressed = b & ~prev;
 		prev = b;
