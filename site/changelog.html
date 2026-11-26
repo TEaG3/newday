@@ -29,6 +29,26 @@
     <p>Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.</p>
   </header>
 
+  <section class="chapter" id="v1.3.13">
+    <header><b>1.3.13</b><h2 class="mono">2026-11-26 · <a href="https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.13">stable software release</a></h2></header>
+    <div>
+      <p>A maintenance release that hardens downloaded ELF applications and corrects the second-stage hand-off to the loaded program. Software validation passed for the stated scope; physical PS2 acceptance is intentionally not claimed.</p>
+      <h3>Included</h3>
+      <ul>
+        <li><b>ELF payload validation.</b> Downloaded applications are checked for ELF32/MIPS identity, a valid program-header table, bounded PT_LOAD file and EE-memory ranges, and an entry point inside an executable load segment before the payload is installed.</li>
+        <li><b>Second-stage hand-off.</b> The loader no longer clears EE memory after <code>SifLoadElf</code>, which had erased the program segments immediately before <code>ExecPS2</code>.</li>
+        <li><b>Single PS2 engine.</b> OPL remains the only PS2 game runtime. No Neutrino game runtime or silent engine fallback is included.</li>
+      </ul>
+      <h3>Verification boundary</h3>
+      <ul>
+        <li>CI and host-side tests validate the loader, package and supported route preparation; they do not prove game playback on a console.</li>
+        <li>ISO, ZSO and USBExtreme UL still require physical-console boot and sustained-read acceptance. HDD/APA remains hardware-test pending.</li>
+        <li>SMB, UDPBD, UDPFS game streaming and MMCE game launching remain disabled.</li>
+        <li>Live catalogue monitoring and staged snapshot/diff publication remain disabled pending scanner integration and target concurrency tests.</li>
+      </ul>
+    </div>
+  </section>
+
   <section class="chapter" id="v1.3.12">
     <header><b>1.3.12</b><h2 class="mono">2026-11-26 · <a href="https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.12">stable software release</a></h2></header>
     <div>
