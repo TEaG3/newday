@@ -4,10 +4,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.nuld_catalog import Catalog
+from tools.nuld_catalog import Catalog, default_hash_tool_path
 
 
 class CatalogAppPathTests(unittest.TestCase):
+    def test_default_hash_tool_matches_makefile_output_path(self) -> None:
+        expected = Path(__file__).resolve().parents[1] / "nuld_hash"
+        self.assertEqual(Path(default_hash_tool_path()), expected)
+
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name) / "share"
