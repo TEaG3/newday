@@ -41,7 +41,7 @@ assert.ok(pagesWorkflow.includes("Wait for GitHub Pages artifact metadata"));
 assert.ok(pagesWorkflow.includes("Archive site for GitHub Pages"));
 assert.doesNotMatch(pagesWorkflow, /upload-pages-artifact/);
 
-const fallback = "https://github.com/TEaG3/newday/releases/download/arabic-v1.3.10/TEa.G3-Complete-Package.zip";
+const fallback = "https://github.com/TEaG3/newday/releases/download/arabic-v1.3.11/TEa.G3-Complete-Package.zip";
 for (const page of ["index.html", "opl-lab.html", "manual.html"]) {
   const html = read("site/" + page);
   assert.ok(html.includes(fallback), page + " needs the last verified package as no-JS fallback");
