@@ -726,7 +726,7 @@ static int ul_part_exists(void *context, const char *filename)
     return size > 0 && closed >= 0;
 }
 
-static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
+static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
 {
     if (s < 0 || s >= nsrc || src[s].type != SRC_USB || n < 1 || n >= MAXC) return n;
     char cfg_path[300];
@@ -754,7 +754,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
             break;
         }
         if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
-        entry *e = &cv[n];
+        entry *e = &items[n];
         memset(e, 0, sizeof(*e));
         if (snprintf(e->title, sizeof(e->title), "%s", game.name) >= (int)sizeof(e->title) ||
             snprintf(e->path, sizeof(e->path), "ul.cfg#%d", r) >= (int)sizeof(e->path)) continue;
@@ -772,7 +772,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
     return n;
 }
 
-static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS, the USB only) of source s
+static int scan_dir(entry *items, int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS, the USB only) of source s
 {
     static const char *dirs[3] = {"DVD", "CD", "POPS"};
     struct dirent *e;
@@ -786,7 +786,7 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 PO
         int ps1 = k == 2;
         if (!has_ext(e->d_name, ps1 ? ".vcd" : ".iso") &&
             (ps1 || !has_ext(e->d_name, ".zso"))) continue;
-        entry *item = &cv[n];
+        entry *item = &items[n];
         memset(item, 0, sizeof(*item));
         int rel_len = snprintf(item->path, sizeof(item->path), "%s/%s", dirs[k], e->d_name);
         if (rel_len < 0 || rel_len >= (int)sizeof(item->path)) continue;
@@ -873,7 +873,7 @@ static engine_decision engine_for(const entry *e)
     return engine_assess(format, source_type, "opl", exists(OPL_PATH), 1);
 }
 
-static int catalog_load(int s, int n)
+static int catalog_load(entry *items, int s, int n)
 {
 	const char *host = ini_get(&cfg, "juegos", "servidor", ""), *why = NULL;
 	static char detail[192];
@@ -891,7 +891,7 @@ static int catalog_load(int s, int n)
 		while (n < MAXC && catalog_next(&p, &e)) {
 			int app = !strncmp(e.path, "APPS/", 5); // the server's apps: path URL-quoted, size for the download
 			if (!app) continue; // OPL-only: remote catalog is for downloadable applications only
-			entry *c = &cv[n++];
+			entry *c = &items[n++];
 			memset(c, 0, sizeof(*c));
 			snprintf(c->path, sizeof(c->path), "%s", e.path);
 			snprintf(c->title, sizeof(c->title), "%s", e.title);
@@ -908,12 +908,13 @@ static int catalog_load(int s, int n)
 	return n;
 }
 
-typedef struct { int s, n; } hdl_ctx;
+typedef struct { int s, n; entry *items; } hdl_ctx;
 static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd) // one HD Loader game
 {
 	hdl_ctx *c = p;
 	if (c->n >= MAXC || strlen(startup) != 11 || !start_sector || !total_size_kb) return; // "SLUS_213.76"
-	entry *e = &cv[c->n++];
+	entry *e = &c->items[c->n++];
+	memset(e, 0, sizeof(*e));
 	snprintf(e->path, sizeof(e->path), "%s", part);
 	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
 	serial_dash(startup, e->serial);
@@ -1017,14 +1018,15 @@ static int by_title(const void *a, const void *b) // then by source
 	return c ? c : x->src - y->src;
 }
 
-static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of the USB: serial, title, covers
+static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS2 ISOs of every source, PS1 VCDs and apps of the USB: serial, title, covers
 {
 	static ini cfg_app; // APPS/<dir>/title.cfg: "title=" and "boot=" (OPL)
 	struct dirent *e;
 	char path[300];
-	int n = 1; // cv[0]: the disc drive, filled in by the disc thread
-	cv[0].kind = K_DISC, cv[0].disc = D_NONE;
-	snprintf(cv[0].title, sizeof(cv[0].title), L("No disc"));
+	int n = 1; // items[0]: the disc drive, filled in by the disc thread
+	memset(&items[0], 0, sizeof(items[0]));
+	items[0].kind = K_DISC, items[0].disc = D_NONE;
+	snprintf(items[0].title, sizeof(items[0].title), L("No disc"));
 	total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
 	for (int s = 0; s < nsrc; s++)
 		if (src[s].type != SRC_HDL && src[s].type != SRC_SMB && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
@@ -1032,46 +1034,65 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 			           count_dir(src[s].root, "CD", ".iso") + count_dir(src[s].root, "CD", ".zso");
 	for (int s = 0; s < nsrc; s++) {
 		if (src[s].type == SRC_HDL) {
-			hdl_ctx c = {s, n};
+			hdl_ctx c = {s, n, items};
 			src_hdl_scan(hdl_add, &c);
 			n = c.n;
 		} else if (src[s].type == SRC_UDPFS && udpfs_cat)
-			n = catalog_load(s, n);
+			n = catalog_load(items, s, n);
 		else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
-			n = scan_dir(s, 1, scan_dir(s, 0, n));
-			if (src[s].type == SRC_USB) n = scan_ul(s, n);
+			n = scan_dir(items, s, 1, scan_dir(items, s, 0, n));
+			if (src[s].type == SRC_USB) n = scan_ul(items, s, n);
 		}
 	}
-	if (src[0].type == SRC_USB) n = scan_dir(0, 2, n); // PS1: POPStarter reads mass:
+	if (src[0].type == SRC_USB) n = scan_dir(items, 0, 2, n); // PS1: POPStarter reads mass:
 	snprintf(path, sizeof(path), "%s/APPS", homedev);
 	DIR *d = opendir(path);
 	while (d && (e = readdir(d)) && n < MAXC) {
 		if (e->d_name[0] == '.') continue;
+		memset(&items[n], 0, sizeof(items[n]));
 		done_n++;
 		if (has_ext(e->d_name, ".elf")) { // a loose ELF: titled by its name
-			snprintf(cv[n].path, sizeof(cv[n].path), "APPS/%s", e->d_name);
-			iso_title(e->d_name, cv[n].title, sizeof(cv[n].title));
+			snprintf(items[n].path, sizeof(items[n].path), "APPS/%s", e->d_name);
+			iso_title(e->d_name, items[n].title, sizeof(items[n].title));
 		} else { // a folder with title.cfg
 			snprintf(path, sizeof(path), "%s/APPS/%s/title.cfg", homedev, e->d_name);
 			if (!ini_load(&cfg_app, path) || !*ini_get(&cfg_app, "", "boot", "")) continue;
-			snprintf(cv[n].path, sizeof(cv[n].path), "APPS/%s/%s", e->d_name, ini_get(&cfg_app, "", "boot", ""));
-			snprintf(cv[n].title, sizeof(cv[n].title), "%s", ini_get(&cfg_app, "", "title", e->d_name));
+			snprintf(items[n].path, sizeof(items[n].path), "APPS/%s/%s", e->d_name, ini_get(&cfg_app, "", "boot", ""));
+			snprintf(items[n].title, sizeof(items[n].title), "%s", ini_get(&cfg_app, "", "title", e->d_name));
 		}
-		cv[n].kind = K_APP, cv[n].src = 0;
+		items[n].kind = K_APP, items[n].src = 0;
 		n++;
 	}
 	if (d) closedir(d);
-	qsort(cv + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
-	ncv = n;
-	int snapshot_status = catalog_snapshot_capture(cv, ncv, &catalog_active_snapshot);
+	qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
+	int snapshot_status = catalog_snapshot_capture(items, n, snapshot);
 	catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK;
 	if (!catalog_active_snapshot_ready) {
-		catalog_active_snapshot.count = 0;
+		snapshot->count = 0;
 		printf("catalog snapshot: rejected (%d); live refresh remains disabled\n", snapshot_status);
 	} else {
 		printf("catalog snapshot: %u stable source keys captured; live refresh remains disabled\n",
 		       (unsigned)catalog_active_snapshot.count);
 	}
+	return n;
+}
+
+static void load_games(void) // publish the initial scan only after a complete candidate build
+{
+	entry *candidate = malloc(sizeof(entry) * MAXC);
+	int count;
+
+	if (!candidate) {
+		/* Boot is still single-writer before stage 3; keep a safe low-memory fallback. */
+		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\\n");
+		count = load_games_into(cv, &catalog_active_snapshot);
+	} else {
+		count = load_games_into(candidate, &catalog_active_snapshot);
+		memcpy(cv, candidate, (size_t)count * sizeof(*cv));
+		free(candidate);
+	}
+	/* Expose the new count only after all active records and their snapshot are ready. */
+	ncv = count;
 }
 
 // ---- disc drive (phase 11): polled once a second off the render thread; a change is staged here and copied into
