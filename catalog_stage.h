@@ -94,7 +94,8 @@ int catalog_guard_try_apply(catalog_guard *guard);
 int catalog_guard_finish_apply(catalog_guard *guard);
 int catalog_guard_cancel_apply(catalog_guard *guard);
 
-/* A source callback returns 1 for a record, 0 at end-of-source, and a negative value on I/O error. */
+/* A source callback returns 1 for a record, 0 at end-of-source, and a negative value on I/O error.
+   It must finish/close its current I/O before returning; cancellation is checked immediately afterward. */
 typedef int (*catalog_stage_scan_next_fn)(void *context, catalog_stage_record *record);
 enum {
     CATALOG_STAGE_SCAN_OK = 0,
