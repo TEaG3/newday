@@ -16,7 +16,7 @@ class ReleaseVersionTests(unittest.TestCase):
         self.assertEqual(validate_release_version("development", self.SOURCE), "development")
 
     def test_rejects_stale_launcher_version(self) -> None:
-        with self.assertRaisesRegex(ValueError, "not v1.3.8"):
+        with self.assertRaisesRegex(ValueError, "not v1.3.7"):
             validate_release_version("arabic-v1.3.7", self.SOURCE)
 
     def test_rejects_malformed_release_tag(self) -> None:
