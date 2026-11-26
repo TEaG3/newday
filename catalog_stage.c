@@ -254,14 +254,86 @@ int catalog_guard_scan_cancelled(catalog_guard *guard)
 int catalog_guard_scan_end(catalog_guard *guard)
 {
     int ended = 0;
-    if (!guard_lock(guard)) return 0;
+    if (!guard_lock(guard)) return -1;
     if (guard->scanning) {
         ended = !guard->scan_cancelled;
         guard->scanning = 0;
         guard->scan_cancelled = 0;
     }
-    if (!guard_release(guard)) return 0;
+    if (!guard_release(guard)) return -1;
     return ended;
+}
+
+int catalog_stage_scan(catalog_guard *guard, catalog_stage_scan_next_fn next,
+                       void *context, catalog_stage_snapshot *candidate)
+{
+    catalog_stage_record record;
+    int result = CATALOG_STAGE_SCAN_OK;
+    int end_result;
+
+    if (guard == NULL || next == NULL || candidate == NULL)
+        return CATALOG_STAGE_SCAN_ERR_ARGUMENT;
+
+    candidate->count = 0;
+    if (!catalog_guard_scan_begin(guard))
+        return CATALOG_STAGE_SCAN_ERR_BUSY;
+
+    for (;;) {
+        int cancelled = catalog_guard_scan_cancelled(guard);
+        int next_result;
+
+        if (cancelled < 0) {
+            result = CATALOG_STAGE_SCAN_ERR_GUARD;
+            break;
+        }
+        if (cancelled) {
+            result = CATALOG_STAGE_SCAN_CANCELLED;
+            break;
+        }
+
+        memset(&record, 0, sizeof(record));
+        next_result = next(context, &record);
+
+        cancelled = catalog_guard_scan_cancelled(guard);
+        if (cancelled < 0) {
+            result = CATALOG_STAGE_SCAN_ERR_GUARD;
+            break;
+        }
+        if (cancelled) {
+            result = CATALOG_STAGE_SCAN_CANCELLED;
+            break;
+        }
+        if (next_result < 0 || next_result > 1) {
+            result = CATALOG_STAGE_SCAN_ERR_SOURCE;
+            break;
+        }
+        if (next_result == 0)
+            break;
+        if (candidate->count >= CATALOG_STAGE_MAX_ITEMS) {
+            result = CATALOG_STAGE_SCAN_ERR_CAPACITY;
+            break;
+        }
+        if (memchr(record.path, 0, sizeof(record.path)) == NULL ||
+            !catalog_stage_path_is_safe(record.path)) {
+            result = CATALOG_STAGE_SCAN_ERR_RECORD;
+            break;
+        }
+        candidate->records[candidate->count++] = record;
+    }
+
+    if (result == CATALOG_STAGE_SCAN_OK &&
+        catalog_stage_snapshot_validate(candidate) != CATALOG_STAGE_OK)
+        result = CATALOG_STAGE_SCAN_ERR_RECORD;
+
+    end_result = catalog_guard_scan_end(guard);
+    if (end_result < 0)
+        result = CATALOG_STAGE_SCAN_ERR_GUARD;
+    else if (end_result == 0)
+        result = CATALOG_STAGE_SCAN_CANCELLED;
+
+    if (result != CATALOG_STAGE_SCAN_OK)
+        candidate->count = 0;
+    return result;
 }
 
 int catalog_guard_set_activity(catalog_guard *guard, int playing, int io_busy)
