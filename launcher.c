@@ -116,6 +116,9 @@ typedef struct {
 	void *big, *small, *half;
 } entry;
 static entry cv[MAXC];
+/* Stable-key baseline captured after the boot-time source scan. It is not published as a live monitor. */
+static catalog_stage_snapshot catalog_active_snapshot;
+static int catalog_active_snapshot_ready;
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
 static int is_ps1(int i) { return cv[i].kind == K_PS1 || (cv[i].kind == K_DISC && cv[i].disc == D_PS1); }
@@ -722,19 +725,29 @@ static int count_dir(const char *root, const char *dir, const char *ext)
 
 static unsigned src_want; // config [juegos] origen (phase 14)
 
+typedef struct {
+    const char *root;
+    unsigned long long total_size;
+} ul_part_context;
+
 static int ul_part_exists(void *context, const char *filename)
 {
-    const char *root = (const char *)context;
+    ul_part_context *parts = (ul_part_context *)context;
     char path[320];
     int n;
-    if (!root || !filename || !*filename) return 0;
-    n = snprintf(path, sizeof(path), "%s/%s", root, filename);
+    if (!parts || !parts->root || !filename || !*filename) return 0;
+    n = snprintf(path, sizeof(path), "%s/%s", parts->root, filename);
     if (n < 0 || n >= (int)sizeof(path)) return 0;
     int fd = fileXioOpen(path, FIO_O_RDONLY);
     if (fd < 0) return 0;
     s64 size = fileXioLseek64(fd, 0, FIO_SEEK_END);
     int closed = fileXioClose(fd);
-    return size > 0 && closed >= 0;
+    if (size <= 0 || closed < 0) return 0;
+    if (parts->total_size > 0xffffffffULL - (unsigned long long)size)
+        parts->total_size = 0xffffffffULL;
+    else
+        parts->total_size += (unsigned long long)size;
+    return 1;
 }
 
 static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
@@ -759,12 +772,13 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
     for (int r = 0; r < records && n < MAXC; r++) {
         unsigned char raw[UL_CFG_RECORD_SIZE];
         ul_game game;
+        ul_part_context part_context = {src[s].root, 0};
         int got = fileXioRead(fd, raw, sizeof(raw));
         if (got != (int)sizeof(raw)) {
             printf("UL: short read at record %d (%d/%u)\n", r, got, (unsigned)sizeof(raw));
             break;
         }
-        if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
+        if (!ul_decode_record(raw, &game, ul_part_exists, &part_context)) continue;
         entry *e = &cv[n];
         memset(e, 0, sizeof(*e));
         if (snprintf(e->title, sizeof(e->title), "%s", game.name) >= (int)sizeof(e->title) ||
@@ -777,6 +791,7 @@ static int scan_ul(int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every 
         e->src = s;
         e->engine = ENGINE_OPL_UL;
         e->parts = game.parts;
+        e->size = (unsigned)part_context.total_size;
         n++, done_n++, total_n++;
     }
     if (fileXioClose(fd) < 0) printf("UL: close failed for %s\n", cfg_path);
@@ -826,6 +841,7 @@ static int scan_dir(int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 PO
             printf("scan: unreadable or empty game image: %s\n", path);
             continue;
         }
+        item->size = bytes > 0xffffffffLL ? 0xffffffffu : (unsigned)bytes;
         if (!ok && !zso_file) ok = name_serial(e->d_name, raw);
         if (!ok && !ps1) {
             printf("%s: no PS2 SYSTEM.CNF nor OPL serial in the name, skipped\n", path);
@@ -947,11 +963,13 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 	hdl_ctx *c = p;
 	if (c->n >= MAXC || strlen(startup) != 11 || !start_sector || !total_size_kb) return; // "SLUS_213.76"
 	entry *e = &cv[c->n++];
+	memset(e, 0, sizeof(*e));
 	snprintf(e->path, sizeof(e->path), "%s", part);
 	snprintf(e->title, sizeof(e->title), "%s", *title ? title : part);
 	serial_dash(startup, e->serial);
 	snprintf(e->boot, sizeof(e->boot), "%s", startup);
 	e->kind = K_PS2, e->src = c->s, e->cd = is_cd, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb, e->hdl_disc_type = disc_type;
+	e->size = total_size_kb; // APA aggregate size in KiB; the source type marks the unit in the stable snapshot.
 	done_n++, total_n++; // as the catalog: not counted beforehand
 }
 
@@ -1019,6 +1037,85 @@ static int smb_catalog_load(int s, int n)
 	return n;
 }
 
+static uint32_t catalog_fingerprint_bytes(uint32_t hash, const void *data, size_t length)
+{
+    const unsigned char *bytes = (const unsigned char *)data;
+    for (size_t i = 0; i < length; i++) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+/* Metadata fingerprint only: this is not a cryptographic digest of the game's contents. */
+static uint32_t catalog_entry_fingerprint(const entry *item)
+{
+    uint32_t hash = 2166136261u;
+    hash = catalog_fingerprint_bytes(hash, item->title, strlen(item->title) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->serial, strlen(item->serial) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->path, strlen(item->path) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->boot, strlen(item->boot) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->hash, strlen(item->hash) + 1u);
+    hash = catalog_fingerprint_bytes(hash, item->ul_name, sizeof(item->ul_name));
+    hash = catalog_fingerprint_bytes(hash, &item->kind, sizeof(item->kind));
+    hash = catalog_fingerprint_bytes(hash, &item->cd, sizeof(item->cd));
+    hash = catalog_fingerprint_bytes(hash, &item->disc, sizeof(item->disc));
+    hash = catalog_fingerprint_bytes(hash, &item->engine, sizeof(item->engine));
+    hash = catalog_fingerprint_bytes(hash, &item->parts, sizeof(item->parts));
+    hash = catalog_fingerprint_bytes(hash, &item->hdl_start_sector, sizeof(item->hdl_start_sector));
+    hash = catalog_fingerprint_bytes(hash, &item->hdl_size_kb, sizeof(item->hdl_size_kb));
+    hash = catalog_fingerprint_bytes(hash, &item->hdl_disc_type, sizeof(item->hdl_disc_type));
+    return hash;
+}
+
+static int catalog_snapshot_capture(const entry *items, int count,
+                                    catalog_stage_snapshot *snapshot)
+{
+    if (items == NULL || snapshot == NULL || count < 1)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (count > (int)CATALOG_STAGE_MAX_ITEMS)
+        return CATALOG_STAGE_ERR_CAPACITY;
+
+    memset(snapshot, 0, sizeof(*snapshot));
+    for (int i = 0; i < count; i++) {
+        const entry *item = &items[i];
+        catalog_stage_record record;
+        int path_length;
+
+        memset(&record, 0, sizeof(record));
+        record.kind = (uint8_t)item->kind;
+        record.flags = (uint8_t)((item->cd ? 1u : 0u) |
+                                 ((unsigned char)item->engine << 1));
+        record.size = item->size;
+        record.fingerprint = catalog_entry_fingerprint(item);
+
+        if (item->kind == K_DISC) {
+            record.source_type = 0xffu; /* the optical drive is not a mounted source */
+            path_length = snprintf(record.path, sizeof(record.path), "DISC");
+        } else {
+            unsigned source_index = (unsigned char)item->src;
+            if (source_index >= (unsigned)nsrc)
+                return CATALOG_STAGE_ERR_ARGUMENT;
+            record.source_type = (uint8_t)src[source_index].type;
+            record.source_unit = (uint8_t)src[source_index].unit;
+            if (src[source_index].type == SRC_HDL) record.flags |= 0x40u; /* size is KiB */
+            if (!item->size) record.flags |= 0x80u; /* size unavailable: compare validated metadata */
+            if (item->engine == ENGINE_OPL_UL) {
+                /* ul.cfg row numbers move when records are reordered; the OPL name CRC + startup is stable. */
+                path_length = snprintf(record.path, sizeof(record.path), "UL/%08X/%s",
+                                       ul_name_crc32(item->ul_name), item->boot);
+            } else {
+                path_length = snprintf(record.path, sizeof(record.path), "%s", item->path);
+            }
+        }
+        if (path_length < 0 || path_length >= (int)sizeof(record.path))
+            return CATALOG_STAGE_ERR_PATH;
+        int status = catalog_stage_snapshot_append(snapshot, &record);
+        if (status != CATALOG_STAGE_OK) return status;
+    }
+    return catalog_stage_snapshot_validate(snapshot);
+}
+
 static int by_title(const void *a, const void *b) // then by source
 {
 	const entry *x = a, *y = b;
@@ -1032,6 +1129,7 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	struct dirent *e;
 	char path[300];
 	int n = 1; // cv[0]: the disc drive, filled in by the disc thread
+	memset(&cv[0], 0, sizeof(cv[0]));
 	cv[0].kind = K_DISC, cv[0].disc = D_NONE;
 	snprintf(cv[0].title, sizeof(cv[0].title), L("No disc"));
 	total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
@@ -1059,6 +1157,7 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	while (d && (e = readdir(d)) && n < MAXC) {
 		if (e->d_name[0] == '.') continue;
 		done_n++;
+		memset(&cv[n], 0, sizeof(cv[n]));
 		if (has_ext(e->d_name, ".elf")) { // a loose ELF: titled by its name
 			snprintf(cv[n].path, sizeof(cv[n].path), "APPS/%s", e->d_name);
 			iso_title(e->d_name, cv[n].title, sizeof(cv[n].title));
@@ -1074,6 +1173,15 @@ static void load_games(void) // PS2 ISOs of every source, PS1 VCDs and apps of t
 	if (d) closedir(d);
 	qsort(cv + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
 	ncv = n;
+	int snapshot_status = catalog_snapshot_capture(cv, ncv, &catalog_active_snapshot);
+	catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK;
+	if (!catalog_active_snapshot_ready) {
+		catalog_active_snapshot.count = 0;
+		printf("catalog snapshot: rejected (%d); live refresh remains disabled\n", snapshot_status);
+	} else {
+		printf("catalog snapshot: %u stable source keys captured; live refresh remains disabled\n",
+		       (unsigned)catalog_active_snapshot.count);
+	}
 }
 
 // ---- disc drive (phase 11): polled once a second off the render thread; a change is staged here and copied into

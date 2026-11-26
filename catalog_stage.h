@@ -43,6 +43,9 @@ enum {
 
 int catalog_stage_path_is_safe(const char *path);
 int catalog_stage_snapshot_validate(const catalog_stage_snapshot *snapshot);
+/* Append one path-validated record; validate the completed snapshot to reject duplicate stable keys. */
+int catalog_stage_snapshot_append(catalog_stage_snapshot *snapshot,
+                                  const catalog_stage_record *record);
 /* out must not alias either snapshot; it remains untouched when validation fails. */
 int catalog_stage_snapshot_diff(const catalog_stage_snapshot *old_snapshot,
                                 const catalog_stage_snapshot *new_snapshot,

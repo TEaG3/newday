@@ -49,6 +49,37 @@ static void test_path_and_validation(void)
     assert(catalog_stage_snapshot_find(&snapshot, 1, 0, 0, "DVD/Game.iso") == -1);
 }
 
+static void test_snapshot_append(void)
+{
+    catalog_stage_snapshot snapshot;
+    catalog_stage_record record;
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    set_record(&record, 1, 0, 0, "DVD/First.iso", 100, 11);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_OK);
+    assert(snapshot.count == 1);
+    assert(strcmp(snapshot.records[0].path, "DVD/First.iso") == 0);
+
+    set_record(&record, 1, 0, 0, "../escape.iso", 100, 11);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_ERR_PATH);
+    assert(snapshot.count == 1); /* invalid records never partially append */
+
+    set_record(&record, 1, 0, 0, "DVD/First.iso", 200, 22);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_OK);
+    assert(snapshot.count == 2);
+    assert(catalog_stage_snapshot_validate(&snapshot) == CATALOG_STAGE_ERR_DUPLICATE);
+
+    snapshot.count = CATALOG_STAGE_MAX_ITEMS;
+    set_record(&record, 1, 0, 0, "DVD/Overflow.iso", 1, 1);
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_ERR_CAPACITY);
+    assert(snapshot.count == CATALOG_STAGE_MAX_ITEMS);
+
+    snapshot.count = 0;
+    memset(record.path, 'X', sizeof(record.path)); /* missing NUL is rejected before copying */
+    assert(catalog_stage_snapshot_append(&snapshot, &record) == CATALOG_STAGE_ERR_PATH);
+    assert(snapshot.count == 0);
+}
+
 static void test_diff_and_stable_selection(void)
 {
     catalog_stage_diff diff;
@@ -444,9 +475,10 @@ int main(void)
 {
     test_staged_scan_builder();
     test_path_and_validation();
+    test_snapshot_append();
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
     test_download_gate();
-    puts("catalog stage: staged scan, path, validation, diff, selection, concurrent apply and download gates PASS");
+    puts("catalog stage: staged scan, append, path, validation, diff, selection, concurrent apply and download gates PASS");
     return 0;
 }
