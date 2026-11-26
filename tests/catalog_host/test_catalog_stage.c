@@ -829,13 +829,23 @@ static void test_safe_bundle_publish(void)
     active_snapshot.count = 1;
     active.count = 1;
 
-    /* Mismatched counts and aliased buffers are rejected without touching the guard. */
+    /* Invalid bundle shape cancels a pending request instead of leaving readers blocked. */
     candidate_snapshot.count = 1;
     candidate.count = 2;
+    assert(catalog_guard_request_apply(&guard));
     assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(!guard.apply_pending && !guard.applying);
     candidate.count = 1;
     candidate.sidecars = active.sidecars;
+    assert(catalog_guard_request_apply(&guard));
     assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(!guard.apply_pending && !guard.applying);
+    candidate.sidecars = candidate_sidecars;
+    candidate.items = active.items;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(!guard.apply_pending && !guard.applying);
+    candidate.items = candidate_items;
     assert(active.items == active_items && active.sidecars == active_sidecars);
 
     /* Gameplay/storage activity prevents a bundle apply. */
