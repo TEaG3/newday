@@ -112,7 +112,7 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertIn('"TEa.G3 OPL-only manual"', self.site_i18n)
 
     def test_acceptance_record_matches_current_opl_only_and_monitoring_state(self):
-        self.assertIn("arabic-v1.3.8", self.acceptance)
+        self.assertIn("arabic-v1.3.10", self.acceptance)
         self.assertIn("OPL هو محرك ألعاب PS2 الوحيد", self.acceptance)
         self.assertIn("المراقبة الحية غير مفعّلة", self.acceptance)
         self.assertNotIn("دمج OPL وNeutrino داخل نقطة تشغيل واحدة", self.acceptance)
