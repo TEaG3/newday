@@ -134,6 +134,8 @@ int catalog_stage_sidecar_migrate(const catalog_stage_snapshot *old_snapshot,
     const unsigned char *old_bytes = (const unsigned char *)old_state;
     unsigned char *new_bytes = (unsigned char *)new_state;
     size_t i;
+    size_t old_state_bytes, new_state_bytes;
+    uintptr_t old_begin, new_begin;
     int status;
 
     if (!old_snapshot || !new_snapshot || !state_size ||
@@ -145,6 +147,15 @@ int catalog_stage_sidecar_migrate(const catalog_stage_snapshot *old_snapshot,
     if (old_snapshot->count > (size_t)-1 / state_size ||
         new_snapshot->count > (size_t)-1 / state_size)
         return CATALOG_STAGE_ERR_CAPACITY;
+    old_state_bytes = old_snapshot->count * state_size;
+    new_state_bytes = new_snapshot->count * state_size;
+    old_begin = (uintptr_t)old_state;
+    new_begin = (uintptr_t)new_state;
+    if (old_state_bytes && new_state_bytes) {
+        if ((old_begin <= new_begin && new_begin - old_begin < old_state_bytes) ||
+            (new_begin < old_begin && old_begin - new_begin < new_state_bytes))
+            return CATALOG_STAGE_ERR_ARGUMENT;
+    }
 
     /* Validate both snapshots before touching candidate state. */
     status = build_index(new_snapshot, slots);

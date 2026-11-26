@@ -150,6 +150,15 @@ static void test_sidecar_migration(void)
                                          sizeof(test_sidecar_state)) == CATALOG_STAGE_ERR_CAPACITY);
     assert(new_state[0].cover_token == 77 && new_state[1].cover_token == 77 && new_state[2].cover_token == 77);
 
+    {
+        unsigned char overlapping[sizeof(test_sidecar_state) * 3 + 1];
+        memset(overlapping, 0x5a, sizeof(overlapping));
+        assert(catalog_stage_sidecar_migrate(&old_snapshot, &new_snapshot,
+                                             overlapping, 3, overlapping + 1, 3,
+                                             sizeof(test_sidecar_state)) == CATALOG_STAGE_ERR_ARGUMENT);
+        for (size_t i = 0; i < sizeof(overlapping); i++) assert(overlapping[i] == 0x5a);
+    }
+
     set_record(&new_snapshot.records[2], 1, 0, 0, "DVD/Alpha.iso", 999, 99);
     assert(catalog_stage_sidecar_migrate(&old_snapshot, &new_snapshot,
                                          old_state, 3, new_state, 3,
