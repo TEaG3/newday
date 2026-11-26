@@ -66,7 +66,8 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("dl_busy", body)
         self.assertIn("dl_state == 1 || dl_state == 2", body)
         self.assertIn("cover_busy", body)
-        self.assertIn("return !cover_busy", body)
+        self.assertIn("icon_busy", body)
+        self.assertIn("return !cover_busy && !icon_busy", body)
 
         launch_start = self.launcher.index("static void launch(int i)")
         self.assertLess(
@@ -87,6 +88,29 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("i < ncv && !ra_launching", body)
         self.assertIn("background_work_end(&cover_busy)", body)
 
+    def test_icon_worker_is_quiesced_before_iop_reset(self):
+        start = self.launcher.index("static void icon_thread(void *arg)")
+        end = self.launcher.index("// ---- covers ----", start)
+        body = self.launcher[start:end]
+        self.assertIn("background_work_begin(&icon_busy)", body)
+        self.assertIn("background_work_end(&icon_busy)", body)
+        self.assertIn("SignalSema(icon_sema)", body)
+        self.assertIn("DelayThread(10000)", body)
+
+        work_start = body.index("if (stub_install == 1)")
+        work_end = body.index("background_work_end(&icon_busy)", work_start)
+        work = body[work_start:work_end]
+        for operation in ("install_stub()", "wiz_job();", 'fopen(STATE_INI, "w")',
+                          "vmc_load(i)", "newest_save(i, &port)", "load_icon(i)"):
+            self.assertIn(operation, work)
+        self.assertNotIn("continue;", work)
+
+        loader_start = self.launcher.index("static void loader(void *arg)")
+        lock = self.launcher.index("cover_lock = CreateSema", loader_start)
+        worker = self.launcher.index("ee_thread_t it = { .func = icon_thread", loader_start)
+        self.assertLess(lock, worker)
+        self.assertIn("cover_lock >= 0 && icon_sema >= 0 ? CreateThread(&it)", self.launcher[worker:])
+
     def test_background_gate_reopens_only_after_tracked_workers_are_idle(self):
         start = self.launcher.index("static void background_resume_if_idle(void)")
         end = self.launcher.index("static void ra_log(", start)
@@ -97,6 +121,7 @@ class LauncherHandoffTests(unittest.TestCase):
         self.assertIn("dl_busy", body)
         self.assertIn("dl_state != 1 && dl_state != 2", body)
         self.assertIn("cover_busy", body)
+        self.assertIn("icon_busy", body)
         self.assertIn("ra_abort = 0", body)
         self.assertIn("Background work is still active; try again", self.launcher)
         self.assertIn(
