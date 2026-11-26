@@ -8,6 +8,7 @@
 - [x] Add the PS2 semaphore adapter with fail-closed `WaitSema`/`DeleteSema` handling; compile it with the PS2 EE compiler and host-test lock failures plus concurrent readers.
 - [ ] Verify semaphore lifecycle and concurrent-reader behavior on a real PS2 target.
 - [x] Gate cover-cache reads, OPL ART import, cover downloads, update checks, and achievements/VMC work through a shared semaphore; refuse IOP hand-off until tracked workers are idle.
+- [x] Gate the icon worker's memory-card installation, setup writes, local VMC reads, and save-icon I/O through the same semaphore; start it only after the gate exists.
 - [ ] Convert every cv[] reader and every storage/network worker to short-lived leases/activity reporting.
 - [ ] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
 - [ ] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
