@@ -29,23 +29,27 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         loop = LAUNCHER.index("for (int f = 0;; f++) {")
         flip = LAUNCHER.index("gfx_flip();", loop)
         release = LAUNCHER.index("catalog_reader_end();", flip)
-        self.assertLess(loop, LAUNCHER.index("catalog_reader_try_begin()", loop))
-        self.assertLess(LAUNCHER.index("catalog_reader_try_begin()", loop), flip)
+        reader = LAUNCHER.index("catalog_reader_try_begin()", loop)
+        pad = LAUNCHER.index("pad_buttons()", loop)
+        self.assertLess(loop, reader)
+        self.assertLess(reader, pad)
+        self.assertLess(pad, flip)
         self.assertLess(flip, release)
 
     def test_background_workers_hold_and_release_reader_leases(self):
         begin = function_body(
             LAUNCHER,
-            "static int background_work_begin(volatile int *busy)",
-            "static void background_work_end(volatile int *busy)",
+            "static int background_work_begin(volatile int *busy)\n{",
+            "static void background_work_end(volatile int *busy)\n{",
         )
         end = function_body(
             LAUNCHER,
-            "static void background_work_end(volatile int *busy)",
+            "static void background_work_end(volatile int *busy)\n{",
             "static void cover_thread(void *arg)",
         )
         self.assertIn("catalog_reader_wait_begin();", begin)
         self.assertIn("catalog_activity_update(0)", begin)
+        self.assertIn("catalog_guard_set_activity(&catalog_live_guard, playing, io_busy)", LAUNCHER)
         self.assertIn("catalog_activity_update(ra_launching)", end)
         self.assertIn("catalog_reader_end();", end)
 
