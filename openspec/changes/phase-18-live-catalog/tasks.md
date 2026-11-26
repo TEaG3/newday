@@ -3,6 +3,7 @@
 - [x] Add bounded snapshot validation with safe relative paths and duplicate stable-key rejection.
 - [x] Add stable-key add/remove/change diff that ignores ordering-only changes.
 - [x] Capture the boot-time catalogue from every enabled source adapter into a validated stable-key baseline; use source type/unit and an OPL UL-name CRC key rather than the `ul.cfg` row number. Live refresh remains disabled.
+- [x] Add a bounded old-to-new index map by stable key; changed entries retain identity mapping but remain distinguishable by size/metadata diff for sidecar reset decisions.
 - [x] Add reader leases, scan cancellation, and a quiescent apply gate with caller-supplied locking.
 - [x] Add host tests including a real concurrent reader held across an apply request.
 - [x] Cross-compile the inactive core with the PS2 EE compiler and enforce an 8 KiB maximum stack frame.
