@@ -69,8 +69,9 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("src[source_index].type", capture)
         self.assertIn("src[source_index].unit", capture)
         self.assertIn("ul_name_crc32(item->ul_name)", capture)
-        self.assertIn("if (item->engine != ENGINE_OPL_UL)", capture)
         self.assertIn("catalog_stage_snapshot_append(snapshot, &record)", capture)
+        fingerprint = function_body(LAUNCHER, "static uint32_t catalog_entry_fingerprint(", "static int catalog_snapshot_capture(")
+        self.assertIn("if (item->engine != ENGINE_OPL_UL)", fingerprint)
         self.assertIn("catalog_stage_snapshot_validate(snapshot)", capture)
 
     def test_live_scan_and_apply_are_still_disabled(self):
