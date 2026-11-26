@@ -22,8 +22,8 @@ def verify_runtime_manifest(root: Path | str, manifest_path: Path | str | None =
     if manifest.is_symlink():
         raise ValueError("runtime manifest must not be a symlink")
     manifest = manifest.resolve(strict=True)
-    if not manifest.is_relative_to(root_path) or not manifest.is_file():
-        raise ValueError("runtime manifest is missing or outside the runtime root")
+    if not manifest.is_file():
+        raise ValueError("runtime manifest is missing or not a regular file")
 
     lines = manifest.read_text(encoding="utf-8").splitlines()
     if len(lines) < 3:
