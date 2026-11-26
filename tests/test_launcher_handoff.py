@@ -166,7 +166,7 @@ class LauncherHandoffTests(unittest.TestCase):
 
 
     def test_shared_worker_gate_serializes_start_against_quiesce(self):
-        start = self.launcher.index("static int background_work_begin(")
+        start = self.launcher.index("static int background_work_begin(volatile int *busy)\n{")
         end = self.launcher.index("static void background_work_end(", start)
         body = self.launcher[start:end]
         self.assertIn("WaitSema(cover_lock)", body)
