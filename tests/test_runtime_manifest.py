@@ -27,6 +27,35 @@ class RuntimeManifestTests(unittest.TestCase):
             self.assertEqual(count, 1)
             self.assertEqual(len(bundle), 16)
 
+    def test_accepts_manifest_outside_runtime_asset_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            root = base / "runtime"
+            root.mkdir()
+            self.write_valid(root)
+            manifest = base / "runtime-manifest.txt"
+            manifest.write_bytes((root / "runtime-manifest.txt").read_bytes())
+            (root / "runtime-manifest.txt").unlink()
+            bundle, count = verify_runtime_manifest(root, manifest)
+            self.assertEqual(count, 1)
+            self.assertEqual(len(bundle), 16)
+
+    def test_rejects_symlinked_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            root = base / "runtime"
+            root.mkdir()
+            self.write_valid(root)
+            external = base / "external-manifest.txt"
+            external.write_bytes((root / "runtime-manifest.txt").read_bytes())
+            (root / "runtime-manifest.txt").unlink()
+            try:
+                (root / "runtime-manifest.txt").symlink_to(external)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlinks are unavailable on this runner")
+            with self.assertRaisesRegex(ValueError, "must not be a symlink"):
+                verify_runtime_manifest(root, root / "runtime-manifest.txt")
+
     def test_rejects_size_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
