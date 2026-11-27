@@ -148,6 +148,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(body.rindex("fileXioDclose(fd)"), body.index("if (cb) cb("))
         self.assertIn("SRC_HDL_SCAN_ERR_MEMORY", SOURCES_HEADER)
         self.assertIn("SRC_HDL_SCAN_ERR_METADATA", SOURCES_HEADER)
+        self.assertIn("u64 base_size_kb", body)
+        self.assertIn("u64 add_kb64", body)
 
     def test_hdl_scanner_has_a_real_host_c_fixture(self):
         self.assertIn("sources_hdl.c tests/catalog_host/test_sources_hdl_scan.c", WORKFLOW)
