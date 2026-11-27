@@ -170,6 +170,7 @@ static void test_sidecar_migration(void)
 typedef struct {
     int vmc_releases;
     int icon_releases;
+    int cover_releases;
 } sidecar_release_counts;
 
 static catalog_stage_sidecar_set sidecar_old;
@@ -191,6 +192,14 @@ static void release_icon_resource(void *resource, void *opaque)
     free(resource);
 }
 
+static void release_cover_resource(void *resource, void *opaque)
+{
+    sidecar_release_counts *counts = (sidecar_release_counts *)opaque;
+    assert(resource != NULL && counts != NULL);
+    ++counts->cover_releases;
+    free(resource);
+}
+
 static void *test_resource(void)
 {
     void *resource = malloc(1);
@@ -201,8 +210,10 @@ static void *test_resource(void)
 static void test_typed_sidecar_set_migration_and_retirement(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
-    sidecar_release_counts releases = {0, 0};
+    sidecar_release_counts releases = {0, 0, 0};
     void *old_a_vmc, *old_a_icon;
+    void *old_a_cover_big, *old_a_cover_small, *old_a_cover_half;
+    void *old_busy_cover_half;
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
     memset(&new_snapshot, 0, sizeof(new_snapshot));
@@ -223,6 +234,9 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
 
     old_a_vmc = sidecar_old.vmc_dir[0] = test_resource();
     old_a_icon = sidecar_old.gicon[0] = test_resource();
+    old_a_cover_big = sidecar_old.cover_big[0] = test_resource();
+    old_a_cover_small = sidecar_old.cover_small[0] = test_resource();
+    old_a_cover_half = sidecar_old.cover_half[0] = test_resource();
     sidecar_old.vmc_n[0] = 8;
     sidecar_old.vmc_state[0] = 2;
     sidecar_old.gicon_state[0] = 2;
@@ -235,12 +249,15 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
 
     sidecar_old.vmc_dir[1] = test_resource();
     sidecar_old.gicon[1] = test_resource();
+    sidecar_old.cover_big[1] = test_resource();
     sidecar_old.vmc_n[1] = 16;
     sidecar_old.ra_count[1] = 9;
     sidecar_old.vmc_dir[2] = test_resource();
     sidecar_old.gicon[2] = test_resource();
+    sidecar_old.cover_small[2] = test_resource();
     sidecar_old.vmc_dir[3] = test_resource();
     sidecar_old.gicon[3] = test_resource();
+    old_busy_cover_half = sidecar_old.cover_half[3] = test_resource();
     sidecar_old.vmc_state[3] = 1;
     sidecar_old.gicon_state[3] = 1;
     sidecar_old.ra_state[3] = 1;
@@ -251,6 +268,10 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
                                              &sidecar_old, 4, &sidecar_new, 4) == CATALOG_STAGE_OK);
     assert(sidecar_new.vmc_dir[1] == old_a_vmc && sidecar_new.gicon[1] == old_a_icon);
+    assert(sidecar_new.cover_big[1] == old_a_cover_big);
+    assert(sidecar_new.cover_small[1] == old_a_cover_small);
+    assert(sidecar_new.cover_half[1] == old_a_cover_half);
+    assert(sidecar_new.cover_half[3] == old_busy_cover_half);
     assert(sidecar_new.vmc_n[1] == 8 && sidecar_new.vmc_state[1] == 2);
     assert(sidecar_new.gicon_state[1] == 2);
     assert(sidecar_new.cover_req[1] == 0); /* pending worker request is never migrated */
@@ -265,24 +286,30 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
 
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 4, &sidecar_new, 4,
-                                            release_vmc_resource, release_icon_resource,
+                                            release_vmc_resource, release_icon_resource, release_cover_resource,
                                             &releases) == CATALOG_STAGE_OK);
-    assert(releases.vmc_releases == 3 && releases.icon_releases == 3);
+    assert(releases.vmc_releases == 3 && releases.icon_releases == 3 && releases.cover_releases == 2);
     assert(sidecar_old.vmc_dir[0] == NULL && sidecar_old.gicon[0] == NULL);
     assert(sidecar_old.vmc_dir[1] == NULL && sidecar_old.gicon[1] == NULL);
     assert(sidecar_old.vmc_dir[2] == NULL && sidecar_old.gicon[2] == NULL);
+    assert(sidecar_old.cover_big[0] == NULL && sidecar_old.cover_small[0] == NULL && sidecar_old.cover_half[0] == NULL);
+    assert(sidecar_old.cover_big[1] == NULL && sidecar_old.cover_small[2] == NULL && sidecar_old.cover_half[3] == NULL);
     assert(sidecar_new.vmc_dir[1] == old_a_vmc && sidecar_new.gicon[1] == old_a_icon);
 
     free(sidecar_new.vmc_dir[1]);
     free(sidecar_new.gicon[1]);
+    free(sidecar_new.cover_big[1]);
+    free(sidecar_new.cover_small[1]);
+    free(sidecar_new.cover_half[1]);
+    free(sidecar_new.cover_half[3]);
     catalog_stage_sidecar_set_discard(&sidecar_new);
 }
 
 static void test_typed_sidecar_set_discard_and_fail_closed(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
-    sidecar_release_counts releases = {0, 0};
-    void *vmc_resource, *icon_resource;
+    sidecar_release_counts releases = {0, 0, 0};
+    void *vmc_resource, *icon_resource, *cover_resource;
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
     memset(&new_snapshot, 0, sizeof(new_snapshot));
@@ -294,30 +321,32 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
     set_record(&new_snapshot.records[0], 1, 0, 0, "DVD/Keep.iso", 100, 7);
     vmc_resource = sidecar_old.vmc_dir[0] = test_resource();
     icon_resource = sidecar_old.gicon[0] = test_resource();
+    cover_resource = sidecar_old.cover_big[0] = test_resource();
 
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
                                              &sidecar_old, 1, &sidecar_new, 1) == CATALOG_STAGE_OK);
     catalog_stage_sidecar_set_discard(&sidecar_new); /* candidate aliases active resources */
-    assert(sidecar_new.vmc_dir[0] == NULL && sidecar_new.gicon[0] == NULL);
-    assert(sidecar_old.vmc_dir[0] == vmc_resource && sidecar_old.gicon[0] == icon_resource);
-    assert(releases.vmc_releases == 0 && releases.icon_releases == 0);
+    assert(sidecar_new.vmc_dir[0] == NULL && sidecar_new.gicon[0] == NULL && sidecar_new.cover_big[0] == NULL);
+    assert(sidecar_old.vmc_dir[0] == vmc_resource && sidecar_old.gicon[0] == icon_resource && sidecar_old.cover_big[0] == cover_resource);
+    assert(releases.vmc_releases == 0 && releases.icon_releases == 0 && releases.cover_releases == 0);
     free(vmc_resource);
     free(icon_resource);
+    free(cover_resource);
 
     memset(&sidecar_old, 0, sizeof(sidecar_old));
     memset(&sidecar_new, 0, sizeof(sidecar_new));
-    sidecar_new.gicon[4] = (void *)1;
+    sidecar_new.cover_big[4] = (void *)1;
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
                                              &sidecar_old, 1, &sidecar_new, 1) == CATALOG_STAGE_ERR_ARGUMENT);
-    assert(sidecar_new.gicon[4] == (void *)1);
+    assert(sidecar_new.cover_big[4] == (void *)1);
     catalog_stage_sidecar_set_discard(&sidecar_new);
 
     /* Stale pointers outside the old snapshot must be retired before migration. */
-    sidecar_old.vmc_dir[5] = test_resource();
-    icon_resource = sidecar_old.vmc_dir[5];
+    sidecar_old.cover_small[5] = test_resource();
+    icon_resource = sidecar_old.cover_small[5];
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
                                              &sidecar_old, 1, &sidecar_new, 1) == CATALOG_STAGE_ERR_ARGUMENT);
-    assert(sidecar_old.vmc_dir[5] == icon_resource);
+    assert(sidecar_old.cover_small[5] == icon_resource);
     free(icon_resource);
     catalog_stage_sidecar_set_discard(&sidecar_old);
 
@@ -348,23 +377,23 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
     old_snapshot.count = 1;
     new_snapshot.count = 0;
     set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Removed.iso", 100, 8);
-    sidecar_old.gicon[0] = test_resource();
-    icon_resource = sidecar_old.gicon[0];
+    sidecar_old.cover_half[0] = test_resource();
+    icon_resource = sidecar_old.cover_half[0];
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 1, &sidecar_new, 0,
-                                            NULL, NULL, &releases) == CATALOG_STAGE_ERR_ARGUMENT);
-    assert(sidecar_old.gicon[0] == icon_resource); /* missing destructor never loses ownership */
+                                            NULL, NULL, NULL, &releases) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(sidecar_old.cover_half[0] == icon_resource); /* missing destructor never loses ownership */
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 1, &sidecar_new, 0,
-                                            release_vmc_resource, release_icon_resource,
+                                            release_vmc_resource, release_icon_resource, release_cover_resource,
                                             &releases) == CATALOG_STAGE_OK);
-    assert(releases.icon_releases == 1);
+    assert(releases.cover_releases == 1);
 }
 
 static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
-    sidecar_release_counts releases = {0, 0};
+    sidecar_release_counts releases = {0, 0, 0};
     void *shared, *vmc, *icon, *rogue;
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
@@ -382,10 +411,11 @@ static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
     shared = test_resource();
     sidecar_old.vmc_dir[0] = shared;
     sidecar_old.gicon[1] = shared;
+    sidecar_old.cover_big[1] = shared;
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
                                              &sidecar_old, 2, &sidecar_new, 2) ==
            CATALOG_STAGE_ERR_ARGUMENT);
-    assert(sidecar_old.vmc_dir[0] == shared && sidecar_old.gicon[1] == shared);
+    assert(sidecar_old.vmc_dir[0] == shared && sidecar_old.gicon[1] == shared && sidecar_old.cover_big[1] == shared);
     assert(sidecar_new.vmc_dir[0] == NULL && sidecar_new.gicon[1] == NULL);
     free(shared);
 
@@ -403,28 +433,30 @@ static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
 
     /* A foreign candidate pointer must never survive retirement of the old generation. */
     rogue = test_resource();
-    sidecar_new.gicon[0] = rogue;
+    sidecar_new.cover_big[0] = rogue;
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 1, &sidecar_new, 1,
-                                            release_vmc_resource, release_icon_resource,
+                                            release_vmc_resource, release_icon_resource, release_cover_resource,
                                             &releases) == CATALOG_STAGE_ERR_ARGUMENT);
     assert(sidecar_old.vmc_dir[0] == vmc && sidecar_old.gicon[0] == icon);
-    assert(releases.vmc_releases == 0 && releases.icon_releases == 0);
+    assert(releases.vmc_releases == 0 && releases.icon_releases == 0 && releases.cover_releases == 0);
+    sidecar_new.cover_big[0] = NULL;
     free(rogue);
 
     /* Aliased candidate slots are rejected before any resource can be released. */
-    sidecar_new.gicon[0] = sidecar_new.vmc_dir[0];
+    sidecar_new.cover_big[0] = sidecar_new.vmc_dir[0];
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 1, &sidecar_new, 1,
-                                            release_vmc_resource, release_icon_resource,
+                                            release_vmc_resource, release_icon_resource, release_cover_resource,
                                             &releases) == CATALOG_STAGE_ERR_ARGUMENT);
     assert(sidecar_old.vmc_dir[0] == vmc && sidecar_old.gicon[0] == icon);
     assert(releases.vmc_releases == 0 && releases.icon_releases == 0);
 
+    sidecar_new.cover_big[0] = NULL;
     sidecar_new.gicon[0] = icon;
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 1, &sidecar_new, 1,
-                                            release_vmc_resource, release_icon_resource,
+                                            release_vmc_resource, release_icon_resource, release_cover_resource,
                                             &releases) == CATALOG_STAGE_OK);
     assert(sidecar_old.vmc_dir[0] == NULL && sidecar_old.gicon[0] == NULL);
     assert(sidecar_new.vmc_dir[0] == vmc && sidecar_new.gicon[0] == icon);

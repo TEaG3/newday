@@ -116,7 +116,6 @@ typedef struct {
 	unsigned size; /* downloadable application size */
 	uint64_t catalog_size; /* validated local image size in bytes */
 	u32 hdl_start_sector, hdl_size_kb, hdl_disc_type;
-	void *big, *small, *half;
 } entry;
 static entry catalog_boot_items[MAXC];
 /* Every launcher reader resolves through this descriptor; a future safe apply swaps the whole bundle. */
@@ -188,6 +187,9 @@ static catalog_stage_sidecar_set catalog_sidecar_boot;
 #define cover_req  (catalog_sidecars->cover_req)
 #define cover_done (catalog_sidecars->cover_done)
 #define cover_seen (catalog_sidecars->cover_seen)
+#define cover_big  (catalog_sidecars->cover_big)
+#define cover_small (catalog_sidecars->cover_small)
+#define cover_half (catalog_sidecars->cover_half)
 #define ra_state   (catalog_sidecars->ra_state)
 #define ra_count   (catalog_sidecars->ra_count)
 #define ra_gid     (catalog_sidecars->ra_gid)
@@ -584,10 +586,11 @@ static void cover_files(const char *serial, int sq, void **big, void **small) //
 	if (!*small) free(*big), *big = NULL;
 }
 
-static void load_covers(entry *e) // the disc's: the grid's half from the big one
+static void load_covers(const entry *e, void **big, void **small, void **half)
 {
-	cover_files(e->serial, sq_e(e), &e->big, &e->small);
-	e->half = e->big ? make_half(e->big, sq_e(e)) : NULL;
+	*big = *small = *half = NULL;
+	cover_files(e->serial, sq_e(e), big, small);
+	*half = *big ? make_half(*big, sq_e(e)) : NULL;
 }
 
 // ---- covers on demand (#3): the render thread asks for the size it draws, the cover thread reads that file from the
@@ -616,7 +619,7 @@ static void cover_set(int i, void *im[3], int bits) // cover and download thread
 		for (int k = 0; k < 3; k++) free(im[k]);
 		return;
 	}
-	void **slot[3] = {&cv[i].half, &cv[i].small, &cv[i].big};
+	void **slot[3] = {&cover_half[i], &cover_small[i], &cover_big[i]};
 	for (int k = 0; k < 3; k++)
 		if (im[k] && !*slot[k]) *slot[k] = im[k], im[k] = NULL, bits |= 1 << k;
 	cover_done[i] |= bits, cover_req[i] &= ~bits;
@@ -632,15 +635,15 @@ static void cover_evict(void) // render thread, between frames (the GS is done w
 	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
 	int kb = 0, old = -1;
 	for (int i = 1; i < ncv; i++)
-		if ((cv[i].half || cv[i].small || cv[i].big) &&
-		    (kb += (cv[i].half ? 46 : 0) + (cv[i].small ? 95 : 0) + (cv[i].big ? 184 : 0), cover_seen[i] < frame_n - 1) &&
+		if ((cover_half[i] || cover_small[i] || cover_big[i]) &&
+		    (kb += (cover_half[i] ? 46 : 0) + (cover_small[i] ? 95 : 0) + (cover_big[i] ? 184 : 0), cover_seen[i] < frame_n - 1) &&
 		    (old < 0 || cover_seen[i] < cover_seen[old])) old = i;
 	if (kb <= COVER_KB || old < 0) {
 		(void)SignalSema(cover_lock);
 		return;
 	}
-	void *b = cv[old].big, *s = cv[old].small, *h = cv[old].half;
-	cv[old].big = NULL, cv[old].small = cv[old].half = NULL, cover_req[old] = cover_done[old] = 0;
+	void *b = cover_big[old], *s = cover_small[old], *h = cover_half[old];
+	cover_big[old] = cover_small[old] = cover_half[old] = NULL, cover_req[old] = cover_done[old] = 0;
 	if (SignalSema(cover_lock) < 0) return; // keep detached buffers allocated if the lock cannot be released
 	free(b), free(s), free(h);
 }
@@ -1419,6 +1422,7 @@ static void load_games(void) // publish the initial scan only after a complete c
 // cv[0] by the render thread between frames, so cv[0] has one writer after boot ----
 static volatile int disc_new, disc_tid = -1;
 static entry disc_stage;
+static void *disc_cover_big, *disc_cover_small, *disc_cover_half;
 static u8 disc_stack[0x8000] __attribute__((aligned(16)));
 
 static int disc_state(int t)
@@ -1473,7 +1477,7 @@ static void disc_thread(void *arg)
 		snprintf(d->title, sizeof(d->title), "%s", what);
 		for (int i = 1; i < ncv && *d->serial; i++) // the same game on the USB lends its title
 			if (!strcmp(cv[i].serial, d->serial)) snprintf(d->title, sizeof(d->title), "%s", cv[i].title);
-		load_covers(d); // by serial, if the USB has them
+		load_covers(d, &disc_cover_big, &disc_cover_small, &disc_cover_half); // by serial, if the USB has them
 		printf("disc: state %d, %s %s boot %s\n", st, d->serial, d->title, d->boot);
 		last = st;
 		disc_new = 1;
@@ -1946,9 +1950,11 @@ static void disc_apply_pending(void)
 	if (!disc_new || background_workers_busy() || cover_lock < 0) return;
 	if (PollSema(cover_lock) < 0) return;
 	if (disc_new && !background_workers_busy()) {
-		old_big = cv[0].big, old_small = cv[0].small, old_half = cv[0].half;
+		old_big = cover_big[0], old_small = cover_small[0], old_half = cover_half[0];
 		old_icon = gicon[0];
 		cv[0] = disc_stage;
+		cover_big[0] = disc_cover_big, cover_small[0] = disc_cover_small, cover_half[0] = disc_cover_half;
+		disc_cover_big = disc_cover_small = disc_cover_half = NULL;
 		gicon[0] = NULL, gicon_state[0] = 0;
 		disc_new = 0;
 		applied = 1;
@@ -2447,7 +2453,7 @@ static void draw_cover(int i)
 	int k = w > SW ? 2 : w > COVER_HW ? 1 : 0, request_bit = 0;
 	if (cover_lock >= 0 && WaitSema(cover_lock) >= 0) {
 		cover_seen[i] = frame_n;
-		im[0] = cv[i].half, im[1] = cv[i].small, im[2] = cv[i].big;
+		im[0] = cover_half[i], im[1] = cover_small[i], im[2] = cover_big[i];
 		if (i && cover_sema >= 0 && !im[k] && !((cover_done[i] | cover_req[i]) & 1 << k)) {
 			request_bit = 1 << k;
 			cover_req[i] |= request_bit;
