@@ -574,5 +574,24 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn(r'live refresh remains disabled\n");', LAUNCHER)
         self.assertNotIn(r'live refresh remains disabled\\\\n");', LAUNCHER)
 
+    def test_retirement_failure_restores_active_generation_and_discards_candidate(self):
+        publish = function_body(
+            STAGE,
+            "int catalog_stage_bundle_publish_prepared_retire(",
+            "int catalog_stage_bundle_publish_prepared(",
+        )
+        self.assertGreaterEqual(publish.count("previous = *active;"), 2)
+        self.assertIn("*active = *candidate;", publish)
+        self.assertIn("*candidate = previous;", publish)
+
+        apply = function_body(
+            LAUNCHER,
+            "static int catalog_live_apply_frame(void)",
+            "static void catalog_live_monitor_thread",
+        )
+        self.assertIn("catalog_live_candidate_discard();", apply)
+        self.assertIn("old generation restored", apply)
+
+
 if __name__ == "__main__":
     unittest.main()
