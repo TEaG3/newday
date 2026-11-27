@@ -68,7 +68,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("void **slot[3] = {&cover_half[i], &cover_small[i], &cover_big[i]};", LAUNCHER)
         self.assertIn("im[0] = cover_half[i], im[1] = cover_small[i], im[2] = cover_big[i];", LAUNCHER)
         self.assertIn("catalog_active_bundle.count = (size_t)count;", load)
-        self.assertLess(load.index("catalog_active_bundle.count = (size_t)count;"), load.index("ncv = count;"))
+        self.assertIn("#define ncv ((int)catalog_active_bundle.count)", LAUNCHER)
+        self.assertNotIn("ncv = count;", load)
         self.assertLess(main.index("catalog_bundle_init();"), main.index("StartThread(tid, NULL);"))
 
     def test_ps2_guard_is_linked_into_launcher(self):
@@ -193,7 +194,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("entry *candidate = malloc(sizeof(entry) * MAXC)", publish)
         self.assertIn("count = load_games_into(candidate, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL)", publish)
         self.assertIn("catalog_active_snapshot_ready = snapshot_ready;", publish)
-        self.assertLess(publish.index("memcpy(cv, candidate"), publish.index("ncv = count"))
+        self.assertLess(publish.index("memcpy(cv, candidate"), publish.index("catalog_active_bundle.count = (size_t)count;"))
+        self.assertNotIn("ncv = count;", publish)
         self.assertIn("free(candidate)", publish)
         self.assertIn("load_games_into(cv, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL)", publish)
 
