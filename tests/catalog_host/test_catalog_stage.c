@@ -461,7 +461,7 @@ static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 1, &sidecar_new, 1,
                                             release_vmc_resource, release_icon_resource,
-                                            &releases) == CATALOG_STAGE_ERR_ARGUMENT);
+                                            release_cover_resource, &releases) == CATALOG_STAGE_ERR_ARGUMENT);
     assert(sidecar_old.vmc_dir[0] == vmc && sidecar_old.gicon[0] == icon);
     assert(releases.vmc_releases == 0 && releases.icon_releases == 0);
     free(rogue);
