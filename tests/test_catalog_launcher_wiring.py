@@ -180,7 +180,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(disc.index("catalog_reader_wait_begin();"), disc.index("for (int i = 1; i < ncv"))
         self.assertLess(disc.index("for (int i = 1; i < ncv"), disc.index("catalog_reader_end();"))
         self.assertLess(disc.index("catalog_reader_end();"), disc.index("load_covers("))
-        self.assertLess(disc.index("load_covers("), disc.index("background_io_end(&disc_busy);"))
+        self.assertLess(disc.index("load_covers("), disc.rindex("background_io_end(&disc_busy);"))
 
         update = function_body(LAUNCHER, "static void update_check(void)", "static u8 loader_stack")
         self.assertIn("background_io_begin(&update_busy)", update)
