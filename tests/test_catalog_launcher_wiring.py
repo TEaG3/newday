@@ -33,6 +33,12 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertNotIn("'", inner)
 
 
+    def test_iso_and_ul_source_selftests_are_executed_in_ci(self):
+        self.assertIn("cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST iso.c -o /tmp/iso_selftest", WORKFLOW)
+        self.assertIn("/tmp/iso_selftest", WORKFLOW)
+        self.assertIn("cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST ul.c -o /tmp/ul_selftest", WORKFLOW)
+        self.assertIn("/tmp/ul_selftest", WORKFLOW)
+
     def test_active_catalog_entries_are_pointer_backed_for_generation_swap(self):
         self.assertIn("static entry catalog_boot_items[MAXC];", LAUNCHER)
         self.assertIn("static catalog_stage_bundle catalog_active_bundle;", LAUNCHER)
