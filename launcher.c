@@ -720,7 +720,10 @@ static int background_io_begin(volatile int *busy)
 	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return 0;
 	int allowed = !ra_launching;
 	if (allowed) *busy = 1;
-	if (SignalSema(cover_lock) < 0) return 0; // retain busy state on lock failure
+	if (SignalSema(cover_lock) < 0) {
+		(void)catalog_activity_update(0);
+		return 0; // retain busy state and publish I/O activity on lock failure
+	}
 	if (!allowed) return 0;
 	while (!catalog_activity_update(0)) usleep(1000);
 	return 1;
@@ -730,7 +733,11 @@ static void background_io_end(volatile int *busy)
 {
 	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
 	*busy = 0;
-	if (SignalSema(cover_lock) < 0) { *busy = 1; return; }
+	if (SignalSema(cover_lock) < 0) {
+		*busy = 1;
+		(void)catalog_activity_update(ra_launching);
+		return;
+	}
 	while (!catalog_activity_update(ra_launching)) usleep(1000);
 }
 
