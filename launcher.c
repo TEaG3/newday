@@ -105,8 +105,8 @@ static float span(int t, int a, int b) { return clampf((float)(t - a) / (b - a))
 // one entry per runnable thing (phase 11): cv[0] is the disc drive; then PS2 ISOs (DVD/, CD/ of every source, OPL
 // layout; HD Loader partitions, phase 14), PS1 VCDs (mass0:/POPS) and apps (mass0:/APPS), sorted by title.
 // serial = "SLUS-20946" (dash form, as cover files and save dirs use it; "" if none); path relative to the source's
-// root (src[e.src].root; the USB is mass0:), or the partition name for HD Loader; big/small = covers/<serial>.c16 /
-// _s.c16 on the USB, NULL = drawn card
+// root (src[e.src].root; the USB is mass0:), or the partition name for HD Loader. Cover images are owned by the
+// typed catalog sidecar set, keyed by the same stable snapshot entry.
 enum { K_PS2, K_PS1, K_APP, K_DISC };
 typedef struct {
 	char title[64], serial[16], path[160], boot[64]; // boot: disc path or PS2 startup ID
