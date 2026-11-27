@@ -52,7 +52,7 @@
     heading.textContent = screen.heading;
     source.textContent = "المصدر: " + screen.source;
     current.textContent = "المحدد: " + selected().ar;
-    list.innerHTML = "";
+    list.replaceChildren();
     screen.rows.forEach((row,index) => {
       const button = document.createElement("button");
       button.type = "button";
