@@ -176,3 +176,15 @@
 - [x] فُكّت حزم Launcher وOPL محلياً وفُحصت: `TEa.G3.ELF` ملف ELF 32-bit MIPS N32 حجمه 9,568,564 بايت، و`OPL.ELF` ملف ELF 32-bit MIPS N32 حجمه 5,792,496 بايت. بيان التشغيل يحتوي مورداً واحداً فقط (OPL.ELF)، CRC32 `aa490716` مطابق.
 - [ ] لم يُنشأ Release جديد ولم تتغير روابط الموقع؛ لا يوجد دليل تشغيل فعلي على جهاز PS2. المزامنة تصلح Snapshot التمهيدي، لكنها لا تفعّل المسح الحي أو التبديل المرحلي.
 
+
+
+## 7. Fail-closed source-root guard (PR #176)
+
+- [x] Added `catalog_source_root_probe.c/.h`. The candidate scanner checks every configured local source root before and after scanning; a missing optional DVD/CD/POPS directory is accepted as empty only when its device root still opens. HDL and the remote UDPFS app catalogue retain their source-specific paths.
+- [x] Added a host C test for mounted, missing, non-directory, and overlong roots, plus launcher-wiring regression tests. Updated the existing directory-scan test to require the new root probe rather than the previous ENOENT-only condition.
+- [x] PR #176 head `b36f3fae02324bb9388c83b51f25409bb74d1582`, merged to `master` as `5a2bbe6d7c112707973b5120cf4f56e041bdb05d`.
+- [x] PR CI: [PS2 launcher build #46042068016](https://github.com/TEaG3/newday/actions/runs/46042068016) and [CodeQL #46042067896](https://github.com/TEaG3/newday/actions/runs/46042067896) succeeded. Host run: 103 Python tests; ZSO raw/compressed and EE scanner, HDL scanner, source-root probe, catalog stage, PS2 semaphore adapter, ISO/UL selftests, and 12-case OPL-only site matrix passed.
+- [x] Post-merge master CI: [PS2 launcher build #46042504485](https://github.com/TEaG3/newday/actions/runs/46042504485) and [CodeQL #46042504505](https://github.com/TEaG3/newday/actions/runs/46042504505) succeeded.
+- [x] Downloaded and verified post-merge artifacts: launcher artifact `15221581206` (4,286,551 bytes; SHA-256 `b1bf55211876890ffb72d440a40326df1090d1a90474a48db350a4472772ea6a`); OPL artifact `15220023718` (2,539,789 bytes; SHA-256 `bd573f05795956b5e71244d895f8e434ad974b0e5ca0420d9054e63fb7e9fd13`); integration bundle `15220009019` (17,780,614 bytes; SHA-256 `e096f2e1514c4a0add776a299034da060c07ffa0a6ea4934ec1a625b3a2bfb57`); build log `15220976732` (1,864 bytes; SHA-256 `2df8dd49e688de14e796b3e351ebcd798da1e75080e1e99003796266a64460be`).
+- [x] ZIP integrity passed. `TEa.G3.ELF` is ELF32 MIPS N32, 9,569,140 bytes; `OPL.ELF` is ELF32 MIPS N32, 5,792,496 bytes. Runtime manifest contains exactly one game engine resource, `OPL.ELF`, with CRC32 `aa490716`. The packaged `TEa.G3-Complete-Package.zip` is 6,707,474 bytes, SHA-256 `81dccb4b9aeebcf0241fea1467529cdfe52038d3fc95ac549e82fc5dfe8b13a0`; its embedded `SHA256SUMS.txt` matches both package and launcher ELF hashes.
+- [ ] This probe does not detect a rapid media replacement at the same mount point and does not implement periodic polling. Candidate/apply wiring remains disabled; no new Release or website download-link change was made. Hardware validation is still required before live refresh can be enabled.
