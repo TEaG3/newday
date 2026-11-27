@@ -137,6 +137,7 @@
   const gameGrid = document.getElementById("gameGrid");
   const gameDetail = document.getElementById("gameDetail");
   const libraryCount = document.getElementById("libraryCount");
+  const oplStatus = document.getElementById("oplStatus");
   const gameSearch = document.getElementById("gameSearch");
   const genreFilter = document.getElementById("genreFilter");
   const sortGames = document.getElementById("sortGames");
@@ -184,6 +185,7 @@
       libraryState.selectedId = shown[0]?.id || null;
     }
     libraryCount.textContent = shown.length + " / " + games.length + " لعبة";
+    if (oplStatus) oplStatus.textContent = (libraryState.storage === "all" ? "USB / HDD" : libraryState.storage) + " · " + shown.length + " GAMES";
     gameGrid.replaceChildren();
     gameGrid.classList.toggle("is-list",libraryState.view === "list");
     gameGrid.classList.toggle("is-opl",libraryState.view === "opl");
@@ -233,6 +235,7 @@
       card.addEventListener("click",() => {
         libraryState.selectedId = game.id;
         renderLibrary();
+        if (state.screen === "games" || state.screen === "hdd") note.textContent = "المحدد الآن: " + game.title + " · " + game.serial + " — عرض OPL فقط.";
       });
       gameGrid.appendChild(card);
     });
@@ -290,6 +293,7 @@
     actions.append(launch,favorite);
     gameDetail.append(title,description,meta,actions);
     if (current) current.textContent = "المحدد: " + game.title;
+    if (oplStatus && game) oplStatus.textContent = game.storage + " · SELECTED · " + game.serial;
   }
 
   const state = {screen:"games",index:0,history:[]};
