@@ -299,6 +299,29 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
     assert(sidecar_new.gicon[4] == (void *)1);
     catalog_stage_sidecar_set_discard(&sidecar_new);
 
+    /* Stale pointers outside the old snapshot must be retired before migration. */
+    sidecar_old.vmc_dir[5] = test_resource();
+    icon_resource = sidecar_old.vmc_dir[5];
+    assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
+                                             &sidecar_old, 1, &sidecar_new, 1) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(sidecar_old.vmc_dir[5] == icon_resource);
+    free(icon_resource);
+    catalog_stage_sidecar_set_discard(&sidecar_old);
+
+    /* Partial overlap is rejected before either sidecar generation is touched. */
+    {
+        union {
+            void *align;
+            unsigned char bytes[sizeof(catalog_stage_sidecar_set) * 2];
+        } storage;
+        catalog_stage_sidecar_set *overlap_old = (catalog_stage_sidecar_set *)(void *)storage.bytes;
+        catalog_stage_sidecar_set *overlap_new =
+            (catalog_stage_sidecar_set *)(void *)(storage.bytes + sizeof(catalog_stage_sidecar_set) - sizeof(void *));
+        memset(&storage, 0, sizeof(storage));
+        assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
+                                                 overlap_old, 1, overlap_new, 1) == CATALOG_STAGE_ERR_ARGUMENT);
+    }
+
     new_snapshot.records[0].path[0] = 'X';
     new_snapshot.records[1] = new_snapshot.records[0];
     new_snapshot.count = 2;
