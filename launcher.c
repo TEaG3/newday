@@ -1479,7 +1479,7 @@ static void load_games(void) // publish the initial scan only after a complete c
 
 	if (!candidate) {
 		/* Boot is still single-writer before stage 3; keep a safe low-memory fallback. */
-		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\\\\n");
+		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\n");
 		count = load_games_into(cv, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL);
 	} else {
 		count = load_games_into(candidate, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL);
