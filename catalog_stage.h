@@ -104,8 +104,8 @@ int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot
                                       size_t old_state_capacity,
                                       catalog_stage_sidecar_set *new_state,
                                       size_t new_state_capacity);
-/* After a successful bundle swap, release old resources not transferred to new_state,
-   then clear old_state. Missing release callbacks are rejected before any mutation. */
+/* After a successful bundle swap, retire an old set previously migrated into new_state:
+   release resources not transferred, then clear old_state. Missing destructors fail closed. */
 int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
                                      const catalog_stage_snapshot *new_snapshot,
                                      catalog_stage_sidecar_set *old_state,
