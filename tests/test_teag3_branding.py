@@ -125,5 +125,14 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn("Neutrino يفتح اللعبة", self.acceptance)
 
 
+    def test_site_arabic_video_and_usb_copy_guidance_matches_current_build(self):
+        self.assertIn("يكون إخراج الفيديو الافتراضي 480i/576i عبر AV وS-Video وRGB SCART وComponent.", self.site_i18n)
+        self.assertIn("يبدّل الاختصار L2+R2 إلى 720p للشاشات المتوافقة مع Component/HDMI", self.site_i18n)
+        self.assertNotIn("نمط الفيديو (480p أو 1080i)، وخيارات توافق OPL للألعاب التي تحتاج إليها", self.site_i18n)
+        self.assertIn("Copy the zip's contents to the root of a FAT32 drive.", self.site_i18n)
+        self.assertIn("جذر وحدة تخزين مهيأة بنظام FAT32", self.site_i18n)
+        self.assertNotIn("FAT32 or FAT32 drive", self.site_i18n)
+
+
 if __name__ == "__main__":
     unittest.main()
