@@ -176,6 +176,16 @@ typedef struct {
 static catalog_stage_sidecar_set sidecar_old;
 static catalog_stage_sidecar_set sidecar_new;
 
+static void init_sidecar_set(catalog_stage_sidecar_set *state)
+{
+    memset(state, 0, sizeof(*state));
+    state->icon_want = -1;
+    state->vmc_net_want = -1;
+    state->ra_want = -1;
+    state->ra_list_want = -1;
+    state->ra_list_for = -1;
+}
+
 static void release_vmc_resource(void *resource, void *opaque)
 {
     sidecar_release_counts *counts = (sidecar_release_counts *)opaque;
@@ -217,8 +227,8 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
     memset(&new_snapshot, 0, sizeof(new_snapshot));
-    memset(&sidecar_old, 0, sizeof(sidecar_old));
-    memset(&sidecar_new, 0, sizeof(sidecar_new));
+    init_sidecar_set(&sidecar_old);
+    init_sidecar_set(&sidecar_new);
 
     old_snapshot.count = 4;
     set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Alpha.iso", 100, 11);
@@ -264,6 +274,11 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
     sidecar_old.vmc_n[3] = 64;
     sidecar_old.ra_count[3] = 5;
     sidecar_old.ra_gid[3] = 55;
+    sidecar_old.icon_want = 0;       /* Alpha is unchanged and moves to index 1. */
+    sidecar_old.vmc_net_want = 1;    /* Beta changed content; cancel the stale request. */
+    sidecar_old.ra_want = 2;         /* Removed game; cancel the stale request. */
+    sidecar_old.ra_list_want = 3;    /* Busy is unchanged and remains at index 3. */
+    sidecar_old.ra_list_for = 0;     /* Cached list still belongs to Alpha at index 1. */
 
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
                                              &sidecar_old, 4, &sidecar_new, 4) == CATALOG_STAGE_OK);
@@ -277,6 +292,9 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
     assert(sidecar_new.cover_req[1] == 0); /* pending worker request is never migrated */
     assert(sidecar_new.cover_done[1] == 3 && sidecar_new.cover_seen[1] == 22);
     assert(sidecar_new.ra_state[1] == 4 && sidecar_new.ra_count[1] == 7 && sidecar_new.ra_gid[1] == 1234);
+    assert(sidecar_new.icon_want == 1);
+    assert(sidecar_new.vmc_net_want == -1 && sidecar_new.ra_want == -1);
+    assert(sidecar_new.ra_list_want == 3 && sidecar_new.ra_list_for == 1);
     assert(sidecar_new.vmc_dir[0] == NULL && sidecar_new.gicon[0] == NULL);
     assert(sidecar_new.vmc_n[0] == 0 && sidecar_new.ra_count[0] == 0);
     assert(sidecar_new.vmc_dir[2] == NULL && sidecar_new.gicon[2] == NULL);
@@ -313,12 +331,17 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
     memset(&new_snapshot, 0, sizeof(new_snapshot));
-    memset(&sidecar_old, 0, sizeof(sidecar_old));
-    memset(&sidecar_new, 0, sizeof(sidecar_new));
+    init_sidecar_set(&sidecar_old);
+    init_sidecar_set(&sidecar_new);
     old_snapshot.count = 1;
     new_snapshot.count = 1;
     set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Keep.iso", 100, 7);
     set_record(&new_snapshot.records[0], 1, 0, 0, "DVD/Keep.iso", 100, 7);
+    sidecar_old.icon_want = 1; /* Out-of-range queued indices reject migration before touching the candidate. */
+    assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
+                                             &sidecar_old, 1, &sidecar_new, 1) == CATALOG_STAGE_ERR_INDEX);
+    assert(sidecar_new.icon_want == -1 && sidecar_new.vmc_dir[0] == NULL);
+    sidecar_old.icon_want = -1;
     vmc_resource = sidecar_old.vmc_dir[0] = test_resource();
     icon_resource = sidecar_old.gicon[0] = test_resource();
     cover_resource = sidecar_old.cover_big[0] = test_resource();
@@ -327,14 +350,16 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
                                              &sidecar_old, 1, &sidecar_new, 1) == CATALOG_STAGE_OK);
     catalog_stage_sidecar_set_discard(&sidecar_new); /* candidate aliases active resources */
     assert(sidecar_new.vmc_dir[0] == NULL && sidecar_new.gicon[0] == NULL && sidecar_new.cover_big[0] == NULL);
+    assert(sidecar_new.icon_want == -1 && sidecar_new.vmc_net_want == -1 && sidecar_new.ra_want == -1);
+    assert(sidecar_new.ra_list_want == -1 && sidecar_new.ra_list_for == -1);
     assert(sidecar_old.vmc_dir[0] == vmc_resource && sidecar_old.gicon[0] == icon_resource && sidecar_old.cover_big[0] == cover_resource);
     assert(releases.vmc_releases == 0 && releases.icon_releases == 0 && releases.cover_releases == 0);
     free(vmc_resource);
     free(icon_resource);
     free(cover_resource);
 
-    memset(&sidecar_old, 0, sizeof(sidecar_old));
-    memset(&sidecar_new, 0, sizeof(sidecar_new));
+    init_sidecar_set(&sidecar_old);
+    init_sidecar_set(&sidecar_new);
     sidecar_new.cover_big[4] = (void *)1;
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
                                              &sidecar_old, 1, &sidecar_new, 1) == CATALOG_STAGE_ERR_ARGUMENT);
@@ -373,7 +398,7 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
     memset(&new_snapshot, 0, sizeof(new_snapshot));
-    memset(&sidecar_old, 0, sizeof(sidecar_old));
+    init_sidecar_set(&sidecar_old);
     old_snapshot.count = 1;
     new_snapshot.count = 0;
     set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Removed.iso", 100, 8);
@@ -398,8 +423,8 @@ static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
     memset(&new_snapshot, 0, sizeof(new_snapshot));
-    memset(&sidecar_old, 0, sizeof(sidecar_old));
-    memset(&sidecar_new, 0, sizeof(sidecar_new));
+    init_sidecar_set(&sidecar_old);
+    init_sidecar_set(&sidecar_new);
     old_snapshot.count = 2;
     new_snapshot.count = 2;
     set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Alpha.iso", 100, 11);
@@ -419,8 +444,8 @@ static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
     assert(sidecar_new.vmc_dir[0] == NULL && sidecar_new.gicon[1] == NULL);
     free(shared);
 
-    memset(&sidecar_old, 0, sizeof(sidecar_old));
-    memset(&sidecar_new, 0, sizeof(sidecar_new));
+    init_sidecar_set(&sidecar_old);
+    init_sidecar_set(&sidecar_new);
     old_snapshot.count = 1;
     new_snapshot.count = 1;
     set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Keep.iso", 100, 7);
@@ -1266,6 +1291,6 @@ int main(void)
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
     test_download_gate();
-    puts("catalog stage: staged scan, append, map, sidecar migration, path, validation, diff, selection, safe snapshot publish, concurrent apply and download gates PASS");
+    puts("catalog stage: staged scan, append, map, sidecar and pending-index migration, path, validation, diff, selection, safe snapshot publish, concurrent apply and download gates PASS");
     return 0;
 }
