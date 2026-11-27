@@ -6,7 +6,7 @@
 
 ## 0. آخر تحقق بعد PR #185 وPR #186 — 27 نوفمبر 2026
 
-- [x] `master` الحالي هو `7b9e3c2813370f02525633d6f3f6ae355724bbfd`، بعد دمج PR #185 بالالتزام `9506e69fa7ae553faaecdcdab43ce260cd11d6a5` وPR #186 بالالتزام الحالي.
+- [x] `master` الحالي هو `7b9e3c2813370f02525633d6f3f6ae355724bbfd`، بعد دمج PR #185 بالالتزام `9506e69fa7ae553faaecdcdab43ce260cd11d6a5` وPR #186 بالالتزام `7b9e3c2813370f02525633d6f3f6ae355724bbfd`.
 - [x] PR #185 **net: make network initialization cancellation-aware**: أضاف `net_up_cancelable` مع إبقاء `net_up` غلاف توافق؛ يستخدم EE semaphore من PS2SDK لتسلسل التهيئة والإيقاف، ويفحص الإلغاء بين استدعاءات تحميل الوحدات غير القابلة للمقاطعة، ويراقب Link وDHCP كل 20ms بمهلة 10 ثوانٍ، ويتراجع عن حالة `ps2ip/netman` عند الإلغاء أو انتهاء المهلة. لا تزال اختبارات دورة حياة semaphore والشبكة على جهاز PS2 مطلوبة.
 - [x] سبب فشل محاولة الربط الأولى في run `46059449682` كان الرمز غير المدعوم `__sync_lock_test_and_set_4` في هدف MIPS. استُبدل بقفل PS2SDK semaphore؛ ثم نجح بناء PR #185 ونجح التحقق بعد الدمج.
 - [x] PR #186 **package: include complete Arabic and English readmes**: استبدل README العربي القصير بالدليل الكامل، وأضاف README إنجليزياً كاملاً، وأبقى دليلي التثبيت. أضاف اختباراً يمنع عودة README القصير أو فقدان إحدى اللغتين.
