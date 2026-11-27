@@ -356,6 +356,24 @@ int main(void)
         sema_created = 0;
     }
 
+    /* The exported callback treats guard lock failures and requested scan cancellation as stop signals. */
+    {
+        catalog_guard callback_guard;
+        catalog_guard_ps2_context callback_context;
+        catalog_guard_ps2_context_init(&callback_context);
+        assert(catalog_guard_ps2_init(&callback_guard, &callback_context));
+        assert(catalog_guard_scan_begin(&callback_guard));
+        assert(!catalog_guard_ps2_scan_cancelled(&callback_guard));
+        fail_wait = 1;
+        assert(catalog_guard_ps2_scan_cancelled(&callback_guard));
+        fail_wait = 0;
+        assert(!catalog_guard_set_activity(&callback_guard, 1, 0));
+        assert(catalog_guard_ps2_scan_cancelled(&callback_guard));
+        assert(!catalog_guard_scan_end(&callback_guard));
+        assert(catalog_guard_set_activity(&callback_guard, 0, 0));
+        assert(catalog_guard_ps2_destroy(&callback_guard, &callback_context));
+    }
+
     puts("catalog PS2 semaphore adapter host concurrency: PASS");
     return 0;
 }

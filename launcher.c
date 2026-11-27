@@ -713,30 +713,77 @@ static int count_dir(const char *root, const char *dir, const char *ext)
 
 static unsigned src_want; // config [juegos] origen (phase 14)
 
-static int ul_part_exists(void *context, const char *filename)
+static int scan_cancelled(src_hdl_cancel_fn cancelled, void *cancel_context)
 {
-    const char *root = (const char *)context;
-    char path[320];
-    int n;
-    if (!root || !filename || !*filename) return 0;
-    n = snprintf(path, sizeof(path), "%s/%s", root, filename);
-    if (n < 0 || n >= (int)sizeof(path)) return 0;
-    int fd = fileXioOpen(path, FIO_O_RDONLY);
-    if (fd < 0) return 0;
-    s64 size = fileXioLseek64(fd, 0, FIO_SEEK_END);
-    int closed = fileXioClose(fd);
-    return size > 0 && closed >= 0;
+    return cancelled != NULL && cancelled(cancel_context);
 }
 
-static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
+typedef struct {
+    const char *root;
+    src_hdl_cancel_fn cancelled;
+    void *cancel_context;
+    int *cancelled_out;
+    int *io_error;
+} ul_part_context;
+
+static int ul_part_exists(void *context, const char *filename)
 {
+    ul_part_context *scan = (ul_part_context *)context;
+    char path[320];
+    int n;
+    int fd;
+    s64 size;
+    int closed;
+
+    if (!scan || !scan->root || !filename || !*filename) return 0;
+    if (scan_cancelled(scan->cancelled, scan->cancel_context)) {
+        if (scan->cancelled_out) *scan->cancelled_out = 1;
+        return 0;
+    }
+    n = snprintf(path, sizeof(path), "%s/%s", scan->root, filename);
+    if (n < 0 || n >= (int)sizeof(path)) return 0;
+    fd = fileXioOpen(path, FIO_O_RDONLY);
+    if (fd < 0) {
+        if (scan_cancelled(scan->cancelled, scan->cancel_context) && scan->cancelled_out)
+            *scan->cancelled_out = 1;
+        return 0;
+    }
+    if (scan_cancelled(scan->cancelled, scan->cancel_context)) {
+        (void)fileXioClose(fd);
+        if (scan->cancelled_out) *scan->cancelled_out = 1;
+        return 0;
+    }
+    size = fileXioLseek64(fd, 0, FIO_SEEK_END);
+    closed = fileXioClose(fd);
+    if (size < 0 || closed < 0) {
+        if (scan->io_error) *scan->io_error = 1;
+        return 0;
+    }
+    if (scan_cancelled(scan->cancelled, scan->cancel_context)) {
+        if (scan->cancelled_out) *scan->cancelled_out = 1;
+        return 0;
+    }
+    return size > 0;
+}
+
+static int scan_ul(entry *items, int s, int n, src_hdl_cancel_fn cancelled,
+                   void *cancel_context, int *cancelled_out) // OPL USBExtreme catalogue: ul.cfg plus every split part
+{
+    if (cancelled_out) *cancelled_out = 0;
     if (s < 0 || s >= nsrc || src[s].type != SRC_USB || n < 1) return n;
     if (n > MAXC) return -1;
+    if (scan_cancelled(cancelled, cancel_context)) {
+        if (cancelled_out) *cancelled_out = 1;
+        return -1;
+    }
     char cfg_path[300];
     int path_len = snprintf(cfg_path, sizeof(cfg_path), "%s/ul.cfg", src[s].root);
-    if (path_len < 0 || path_len >= (int)sizeof(cfg_path)) return n;
+    if (path_len < 0 || path_len >= (int)sizeof(cfg_path)) return -1;
     int fd = fileXioOpen(cfg_path, FIO_O_RDONLY);
-    if (fd < 0) return n; /* no ul.cfg is a valid source with no UL games */
+    if (fd < 0) {
+        if (scan_cancelled(cancelled, cancel_context) && cancelled_out) *cancelled_out = 1;
+        return cancelled_out && *cancelled_out ? -1 : n; /* no ul.cfg is a valid source with no UL games */
+    }
     s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
     if (end < 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
         printf("UL: invalid ul.cfg size %lld\n", end);
@@ -744,7 +791,13 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
         return -1;
     }
     if (end == 0) {
-        return fileXioClose(fd) < 0 ? -1 : n;
+        int closed = fileXioClose(fd);
+        if (closed < 0) return -1;
+        if (scan_cancelled(cancelled, cancel_context)) {
+            if (cancelled_out) *cancelled_out = 1;
+            return -1;
+        }
+        return n;
     }
     if (fileXioLseek64(fd, 0, FIO_SEEK_SET) < 0) {
         (void)fileXioClose(fd);
@@ -752,17 +805,36 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
     }
     int records = (int)(end / UL_CFG_RECORD_SIZE);
     int failed = 0;
+    int cancelled_seen = 0;
+    int io_error = 0;
     int previous_done = done_n, previous_total = total_n;
+    ul_part_context part_context = {src[s].root, cancelled, cancel_context, &cancelled_seen, &io_error};
     for (int r = 0; r < records; r++) {
         unsigned char raw[UL_CFG_RECORD_SIZE];
         ul_game game;
+        if (scan_cancelled(cancelled, cancel_context)) {
+            cancelled_seen = 1;
+            failed = 1;
+            break;
+        }
         int got = fileXioRead(fd, raw, sizeof(raw));
+        if (scan_cancelled(cancelled, cancel_context)) {
+            cancelled_seen = 1;
+            failed = 1;
+            break;
+        }
         if (got != (int)sizeof(raw)) {
             printf("UL: short read at record %d (%d/%u)\n", r, got, (unsigned)sizeof(raw));
             failed = 1;
             break;
         }
-        if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
+        int valid = ul_decode_record(raw, &game, ul_part_exists, &part_context);
+        if (cancelled_seen || io_error || scan_cancelled(cancelled, cancel_context)) {
+            if (scan_cancelled(cancelled, cancel_context)) cancelled_seen = 1;
+            failed = 1;
+            break;
+        }
+        if (!valid) continue;
         if (!ul_catalog_capacity_fits(1u, (unsigned)n, MAXC)) {
             printf("UL: catalogue capacity exceeded at record %d\n", r);
             failed = 1;
@@ -780,23 +852,37 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
         e->src = s;
         e->engine = ENGINE_OPL_UL;
         e->parts = game.parts;
-        n++, done_n++, total_n++;
+        n++;
+        if (!cancelled) done_n++, total_n++;
     }
     if (fileXioClose(fd) < 0) failed = 1;
+    if (scan_cancelled(cancelled, cancel_context)) {
+        cancelled_seen = 1;
+        failed = 1;
+    }
     if (failed) {
         done_n = previous_done;
         total_n = previous_total;
+        if (cancelled_out) *cancelled_out = cancelled_seen;
         return -1;
     }
     return n;
 }
 
-static int scan_dir(entry *items, int s, int k, int n, int *incomplete) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS) of source s
+static int scan_dir(entry *items, int s, int k, int n, int *incomplete,
+                    src_hdl_cancel_fn cancelled, void *cancel_context,
+                    int *cancelled_out) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS)
 {
     static const char *dirs[3] = {"DVD", "CD", "POPS"};
     struct dirent *e;
     char path[300], raw[16];
+    if (cancelled_out) *cancelled_out = 0;
     if (!incomplete || s < 0 || s >= nsrc || k < 0 || k >= 3 || n < 1) return n;
+    if (scan_cancelled(cancelled, cancel_context)) {
+        *incomplete = 1;
+        if (cancelled_out) *cancelled_out = 1;
+        return n;
+    }
     if (n > MAXC) {
         *incomplete = 1;
         return n;
@@ -813,10 +899,20 @@ static int scan_dir(entry *items, int s, int k, int n, int *incomplete) // ISOs 
         return n;
     }
     for (;;) {
+        if (scan_cancelled(cancelled, cancel_context)) {
+            *incomplete = 1;
+            if (cancelled_out) *cancelled_out = 1;
+            break;
+        }
         errno = 0;
         e = readdir(d);
         if (!e) {
             if (errno != 0) *incomplete = 1;
+            break;
+        }
+        if (scan_cancelled(cancelled, cancel_context)) {
+            *incomplete = 1;
+            if (cancelled_out) *cancelled_out = 1;
             break;
         }
         int ps1 = k == 2;
@@ -848,6 +944,12 @@ static int scan_dir(entry *items, int s, int k, int n, int *incomplete) // ISOs 
             *incomplete = 1;
             continue;
         }
+        if (scan_cancelled(cancelled, cancel_context)) {
+            (void)fileXioClose(fd);
+            *incomplete = 1;
+            if (cancelled_out) *cancelled_out = 1;
+            break;
+        }
         bytes = fileXioLseek64(fd, 0, FIO_SEEK_END);
         if (bytes > 0) {
             if (zso_file) {
@@ -861,7 +963,12 @@ static int scan_dir(entry *items, int s, int k, int n, int *incomplete) // ISOs 
             printf("scan: close failed: %s\n", path);
             *incomplete = 1;
         }
-        done_n++;
+        if (scan_cancelled(cancelled, cancel_context)) {
+            *incomplete = 1;
+            if (cancelled_out) *cancelled_out = 1;
+            break;
+        }
+        if (!cancelled) done_n++;
         if (bytes <= 0) {
             printf("scan: unreadable or empty game image: %s\n", path);
             *incomplete = 1;
@@ -889,6 +996,10 @@ static int scan_dir(entry *items, int s, int k, int n, int *incomplete) // ISOs 
     if (closedir(d) < 0) {
         printf("scan: directory close failed: %s\n", path);
         *incomplete = 1;
+    }
+    if (scan_cancelled(cancelled, cancel_context)) {
+        *incomplete = 1;
+        if (cancelled_out) *cancelled_out = 1;
     }
     return n;
 }
@@ -968,7 +1079,7 @@ static int catalog_load(entry *items, int s, int n)
 	return n;
 }
 
-typedef struct { int s, n; entry *items; } hdl_ctx;
+typedef struct { int s, n; entry *items; int report_progress; } hdl_ctx;
 static void hdl_add(void *p, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd) // one HD Loader game
 {
 	hdl_ctx *c = p;
@@ -980,7 +1091,7 @@ static void hdl_add(void *p, const char *part, const char *title, const char *st
 	serial_dash(startup, e->serial);
 	snprintf(e->boot, sizeof(e->boot), "%s", startup);
 	e->kind = K_PS2, e->src = c->s, e->cd = is_cd, e->hdl_start_sector = start_sector, e->hdl_size_kb = total_size_kb, e->hdl_disc_type = disc_type;
-	done_n++, total_n++; // as the catalog: not counted beforehand
+	if (c->report_progress) done_n++, total_n++; // as the catalog: not counted beforehand
 }
 
 
@@ -1078,58 +1189,122 @@ static int by_title(const void *a, const void *b) // then by source
 	return c ? c : x->src - y->src;
 }
 
-static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS2 ISOs of every source, PS1 VCDs and apps of the USB: serial, title, covers
+static int load_games_into(entry *items, catalog_stage_snapshot *snapshot,
+                           int *snapshot_ready, int *scan_status,
+                           src_hdl_cancel_fn cancelled, void *cancel_context) // build an isolated source candidate
 {
 	static ini cfg_app; // APPS/<dir>/title.cfg: "title=" and "boot=" (OPL)
 	struct dirent *e;
 	char path[300];
 	int n = 1; // items[0]: the disc drive, filled in by the disc thread
 	int incomplete = 0;
+	int was_cancelled = 0;
+	int snapshot_result;
+
+	if (!items || !snapshot || !snapshot_ready || !scan_status) return 1;
+	*snapshot_ready = 0;
+	*scan_status = CATALOG_STAGE_SCAN_OK;
 	memset(&items[0], 0, sizeof(items[0]));
 	items[0].kind = K_DISC, items[0].disc = D_NONE;
 	snprintf(items[0].title, sizeof(items[0].title), L("No disc"));
-	total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
-	for (int s = 0; s < nsrc; s++)
-		if (src[s].type != SRC_HDL && src[s].type != SRC_SMB && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
-			total_n += count_dir(src[s].root, "DVD", ".iso") + count_dir(src[s].root, "DVD", ".zso") +
-			           count_dir(src[s].root, "CD", ".iso") + count_dir(src[s].root, "CD", ".zso");
-	for (int s = 0; s < nsrc; s++) {
+
+	/* The HTTP app catalogue has no cooperative cancellation API yet. Never omit it
+	   from a cancellable candidate and accidentally publish a catalogue without it. */
+	if (cancelled && udpfs_cat) {
+		snapshot->count = 0;
+		*scan_status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+		printf("catalog: cancellable refresh deferred while remote app catalogue is enabled\n");
+		return n;
+	}
+
+	/* Live candidates do not write to the boot splash progress counters. */
+	if (!cancelled) {
+		total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
+		for (int s = 0; s < nsrc; s++)
+			if (src[s].type != SRC_HDL && src[s].type != SRC_SMB && !(src[s].type == SRC_UDPFS && udpfs_cat) && (s || src_want & 1u << src[0].type))
+				total_n += count_dir(src[s].root, "DVD", ".iso") + count_dir(src[s].root, "DVD", ".zso") +
+				           count_dir(src[s].root, "CD", ".iso") + count_dir(src[s].root, "CD", ".zso");
+	}
+
+	for (int s = 0; s < nsrc && !was_cancelled; s++) {
+		if (scan_cancelled(cancelled, cancel_context)) {
+			was_cancelled = 1;
+			incomplete = 1;
+			break;
+		}
 		if (src[s].type == SRC_HDL) {
-			hdl_ctx c = {s, n, items};
-			int hdl_status = src_hdl_scan(hdl_add, &c);
+			hdl_ctx c = {s, n, items, cancelled == NULL};
+			int hdl_status = src_hdl_scan_cancelable(hdl_add, &c, cancelled, cancel_context);
 			if (hdl_status < 0) {
 				printf("HDL: source scan incomplete (%d); stable snapshot disabled\n", hdl_status);
+				if (hdl_status == SRC_HDL_SCAN_ERR_CANCELLED || scan_cancelled(cancelled, cancel_context))
+					was_cancelled = 1;
 				incomplete = 1;
-			} else n = c.n;
-		} else if (src[s].type == SRC_UDPFS && udpfs_cat)
+				if (was_cancelled) break;
+				continue;
+			}
+			n = c.n;
+		} else if (src[s].type == SRC_UDPFS && udpfs_cat) {
+			/* Reached only during boot: cancellable refresh was rejected above. */
 			n = catalog_load(items, s, n);
-		else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
-			n = scan_dir(items, s, 0, n, &incomplete);
-			n = scan_dir(items, s, 1, n, &incomplete);
+		} else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
+			int source_cancelled = 0;
+			n = scan_dir(items, s, 0, n, &incomplete, cancelled, cancel_context, &source_cancelled);
+			if (source_cancelled) {
+				was_cancelled = 1;
+				break;
+			}
+			n = scan_dir(items, s, 1, n, &incomplete, cancelled, cancel_context, &source_cancelled);
+			if (source_cancelled) {
+				was_cancelled = 1;
+				break;
+			}
 			if (src[s].type == SRC_USB) {
-				int ul_count = scan_ul(items, s, n);
+				int ul_cancelled = 0;
+				int ul_count = scan_ul(items, s, n, cancelled, cancel_context, &ul_cancelled);
 				if (ul_count < 0) {
 					printf("UL: source scan incomplete; stable snapshot disabled\n");
+					if (ul_cancelled) {
+						was_cancelled = 1;
+						break;
+					}
 					incomplete = 1;
-				} else n = ul_count;
+					continue;
+				}
+				n = ul_count;
 			}
 		}
 	}
-	if (src[0].type == SRC_USB) n = scan_dir(items, 0, 2, n, &incomplete); // PS1: POPStarter reads mass:
+
+	if (!was_cancelled && src[0].type == SRC_USB) {
+		int source_cancelled = 0;
+		n = scan_dir(items, 0, 2, n, &incomplete, cancelled, cancel_context, &source_cancelled); // PS1: POPStarter reads mass:
+		if (source_cancelled) was_cancelled = 1;
+	}
 	int apps_path_len = snprintf(path, sizeof(path), "%s/APPS", homedev);
 	DIR *d = NULL;
-	if (apps_path_len < 0 || apps_path_len >= (int)sizeof(path)) {
+	if (!was_cancelled && (apps_path_len < 0 || apps_path_len >= (int)sizeof(path))) {
 		incomplete = 1;
-	} else {
+	} else if (!was_cancelled) {
 		errno = 0;
 		d = opendir(path);
 		if (!d && errno != ENOENT) incomplete = 1;
 	}
-	while (d) {
+	while (d && !was_cancelled) {
+		if (scan_cancelled(cancelled, cancel_context)) {
+			was_cancelled = 1;
+			incomplete = 1;
+			break;
+		}
 		errno = 0;
 		e = readdir(d);
 		if (!e) {
 			if (errno != 0) incomplete = 1;
+			break;
+		}
+		if (scan_cancelled(cancelled, cancel_context)) {
+			was_cancelled = 1;
+			incomplete = 1;
 			break;
 		}
 		if (e->d_name[0] == '.') continue;
@@ -1139,7 +1314,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 			break;
 		}
 		memset(&items[n], 0, sizeof(items[n]));
-		done_n++;
+		if (!cancelled) done_n++;
 		if (has_ext(e->d_name, ".elf")) { // a loose ELF: titled by its name
 			int app_len = snprintf(items[n].path, sizeof(items[n].path), "APPS/%s", e->d_name);
 			if (app_len < 0 || app_len >= (int)sizeof(items[n].path)) {
@@ -1154,6 +1329,11 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 				continue;
 			}
 			if (!ini_load(&cfg_app, path) || !*ini_get(&cfg_app, "", "boot", "")) continue;
+			if (scan_cancelled(cancelled, cancel_context)) {
+				was_cancelled = 1;
+				incomplete = 1;
+				break;
+			}
 			int app_len = snprintf(items[n].path, sizeof(items[n].path), "APPS/%s/%s", e->d_name, ini_get(&cfg_app, "", "boot", ""));
 			if (app_len < 0 || app_len >= (int)sizeof(items[n].path)) {
 				incomplete = 1;
@@ -1166,19 +1346,25 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 		n++;
 	}
 	if (d && closedir(d) < 0) incomplete = 1;
+	if (scan_cancelled(cancelled, cancel_context)) {
+		was_cancelled = 1;
+		incomplete = 1;
+	}
 	if (n > MAXC) n = MAXC, incomplete = 1;
-	qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
-	int snapshot_status;
+	if (!was_cancelled)
+		qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
 	if (incomplete) {
 		snapshot->count = 0;
-		snapshot_status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+		snapshot_result = was_cancelled ? CATALOG_STAGE_SCAN_CANCELLED : CATALOG_STAGE_SCAN_ERR_SOURCE;
 	} else {
-		snapshot_status = catalog_snapshot_capture(items, n, snapshot);
+		snapshot_result = catalog_snapshot_capture(items, n, snapshot);
+		if (snapshot_result != CATALOG_STAGE_OK) snapshot_result = CATALOG_STAGE_SCAN_ERR_RECORD;
 	}
-	catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK;
-	if (!catalog_active_snapshot_ready) {
+	*snapshot_ready = snapshot_result == CATALOG_STAGE_SCAN_OK;
+	*scan_status = snapshot_result;
+	if (!*snapshot_ready) {
 		snapshot->count = 0;
-		printf("catalog snapshot: rejected (%d); live refresh remains disabled\n", snapshot_status);
+		printf("catalog snapshot: rejected (%d); live refresh remains disabled\n", snapshot_result);
 	} else {
 		printf("catalog snapshot: %u stable source keys captured; live refresh remains disabled\n",
 		       (unsigned)snapshot->count);
@@ -1190,16 +1376,19 @@ static void load_games(void) // publish the initial scan only after a complete c
 {
 	entry *candidate = malloc(sizeof(entry) * MAXC);
 	int count;
+	int snapshot_ready = 0;
+	int scan_status = CATALOG_STAGE_SCAN_OK;
 
 	if (!candidate) {
 		/* Boot is still single-writer before stage 3; keep a safe low-memory fallback. */
-		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\\n");
-		count = load_games_into(cv, &catalog_active_snapshot);
+		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\\\\n");
+		count = load_games_into(cv, &catalog_active_snapshot, &snapshot_ready, &scan_status, NULL, NULL);
 	} else {
-		count = load_games_into(candidate, &catalog_active_snapshot);
+		count = load_games_into(candidate, &catalog_active_snapshot, &snapshot_ready, &scan_status, NULL, NULL);
 		memcpy(cv, candidate, (size_t)count * sizeof(*cv));
 		free(candidate);
 	}
+	catalog_active_snapshot_ready = snapshot_ready;
 	/* Expose the new count only after all active records and their snapshot are ready. */
 	ncv = count;
 }
