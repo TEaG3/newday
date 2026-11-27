@@ -416,9 +416,10 @@ static int stub_file(int port, const char *path, int create) // 1 if written now
 {
 	int n;
 	u8 *old = mc_read(port, path, &n);
+	int missing = old == NULL;
 	int same = old && n == (int)size_boot_elf && !memcmp(old, boot_elf, n);
 	free(old);
-	if (same || (!old && !create)) return 0;
+	if (same || (missing && !create)) return 0;
 	int ok = mc_write(port, path, boot_elf, size_boot_elf);
 	printf("boot stub to mc%d:%s: %s\n", port, path, ok ? "ok" : "FAILED");
 	return ok ? 1 : -1;

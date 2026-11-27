@@ -22,6 +22,17 @@ class DiscStageGateTests(unittest.TestCase):
         self.assertIn("if (PollSema(cover_lock) < 0) return;", self.launcher)
         self.assertIn("disc_apply_pending();", self.launcher)
 
+
+    def test_stub_file_does_not_read_pointer_after_free(self):
+        start = self.launcher.index("static int stub_file(")
+        end = self.launcher.index("static int stub_write(", start)
+        body = self.launcher[start:end]
+        self.assertIn("int missing = old == NULL;", body)
+        self.assertLess(body.index("int missing = old == NULL;"), body.index("free(old);"))
+        after_free = body[body.index("free(old);") + len("free(old);"):]
+        self.assertNotRegex(after_free, r"\bold\b")
+        self.assertIn("(missing && !create)", after_free)
+
     def test_heap_icon_destruction_reclaims_nested_buffers(self):
         self.assertIn("void icon_destroy(icon *ic);", self.icon_h)
         self.assertIn("void icon_destroy(icon *ic)", self.icon_c)
