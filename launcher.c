@@ -209,6 +209,7 @@ static void catalog_bundle_init(void)
 	catalog_active_bundle.sidecars = &catalog_sidecar_boot;
 	catalog_active_bundle.sidecars_capacity = CATALOG_STAGE_MAX_ITEMS;
 	catalog_active_bundle.count = 0;
+	catalog_active_bundle.selected_index = -1;
 	catalog_active_bundle.snapshot = &catalog_boot_snapshot;
 }
 
@@ -1419,6 +1420,7 @@ static void load_games(void) // publish the initial scan only after a complete c
 		free(candidate);
 	}
 	catalog_active_bundle.count = (size_t)count;
+	catalog_active_bundle.selected_index = count > 0 ? 0 : -1;
 	catalog_active_snapshot_ready = snapshot_ready;
 	/* ncv reads the count from this active bundle; no parallel count can drift. */
 }
@@ -3330,7 +3332,12 @@ int main(int argc, char *argv[])
 	char text[1536];
 
 	for (int f = 0;; f++) {
-		/* A future candidate apply belongs here, before this frame's reader lease. */
+		/* Apply only between frames; restore the generation's stable-key selection before reading it. */
+		if (catalog_active_bundle.selected_index >= 0 &&
+		    (size_t)catalog_active_bundle.selected_index < catalog_active_bundle.count)
+			sel = catalog_active_bundle.selected_index;
+		else if (catalog_active_bundle.count == 0 || sel < 0 ||
+		         (size_t)sel >= catalog_active_bundle.count) sel = 0;
 		if (!catalog_reader_try_begin()) { usleep(1000); continue; }
 		unsigned b = pad_buttons(), pressed = b & ~prev;
 		prev = b;
@@ -3472,6 +3479,7 @@ int main(int argc, char *argv[])
 		build[n] = to_us(cycles() - t0);
 
 		gfx_flip();
+		catalog_active_bundle.selected_index = ncv > 0 && sel >= 0 && sel < ncv ? sel : -1;
 		catalog_reader_end();
 		u32 now = cycles();
 		if (n > 0 && to_us(now - last_vsync) > FRAME_US * 3 / 2) missed++; // n == 0: gap includes the file write
