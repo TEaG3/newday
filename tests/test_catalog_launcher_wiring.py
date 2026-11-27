@@ -437,6 +437,15 @@ class CatalogLauncherWiringTests(unittest.TestCase):
 
 
 
+
+    def test_network_init_semaphore_is_created_before_loader_thread(self):
+        main = LAUNCHER[LAUNCHER.index("int main(int argc, char *argv[])"):]
+        self.assertIn("net_init_sync_init()", main)
+        self.assertLess(main.index("net_init_sync_init()"), main.index("StartThread(tid, NULL)"))
+        self.assertIn("CreateSema(&sema)", NET)
+        self.assertIn("PollSema(net_init_sema)", NET)
+        self.assertIn("WaitSema(net_init_sema)", NET)
+
     def test_remote_catalog_network_initialization_is_cancellable(self):
         self.assertIn("net_up_cancelable", NET_HEADER)
         self.assertIn("net_wait_ready_cancelable", NET)
