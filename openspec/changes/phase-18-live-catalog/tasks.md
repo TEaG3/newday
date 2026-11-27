@@ -16,7 +16,7 @@
 - [x] Gate the icon worker's memory-card installation, setup writes, local VMC reads, and save-icon I/O through the same semaphore; start it only after the gate exists.
 - [x] Gate disc detection, libcdvd reads, catalog title lookup, and disc-cover I/O; wait for it to finish before IOP hand-off.
 - [x] Wire render-frame and background-worker reader leases into the launcher; report worker I/O and IOP/game handoff through the guard activity state.
-- [ ] Narrow long-running network-worker leases to per-entry scopes before enabling staged catalog apply.
+- [x] Narrow long-running ART import and cover-download leases to one catalog entry at a time; re-read the current generation for each entry and keep the feature disabled until end-to-end apply tests pass.
 - [ ] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
 - [ ] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
 - [ ] Add source polling with cancellation and source-specific mount checks; never assume hotplug notifications.
