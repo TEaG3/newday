@@ -35,11 +35,26 @@ class CatalogLauncherWiringTests(unittest.TestCase):
 
     def test_active_catalog_entries_are_pointer_backed_for_generation_swap(self):
         self.assertIn("static entry catalog_boot_items[MAXC];", LAUNCHER)
-        self.assertIn("static entry *catalog_items = catalog_boot_items;", LAUNCHER)
-        self.assertIn("#define cv catalog_items", LAUNCHER)
+        self.assertIn("static catalog_stage_bundle catalog_active_bundle;", LAUNCHER)
+        self.assertIn("#define cv ((entry *)catalog_active_bundle.items)", LAUNCHER)
+        self.assertNotIn("static entry *catalog_items", LAUNCHER)
         self.assertNotIn("static entry cv[MAXC];", LAUNCHER)
         self.assertNotIn("sizeof(cv)", LAUNCHER)
         self.assertNotIn("sizeof cv", LAUNCHER)
+
+    def test_active_bundle_binds_items_sidecars_count_and_snapshot(self):
+        init = function_body(LAUNCHER, "static void catalog_bundle_init(void)", "static void scan_cards(void)")
+        load = function_body(LAUNCHER, "static void load_games(void)", "// ---- disc drive")
+        main = LAUNCHER[LAUNCHER.index("int main(int argc, char *argv[])"):]
+        self.assertIn("catalog_active_bundle.items = catalog_boot_items;", init)
+        self.assertIn("catalog_active_bundle.items_capacity = MAXC;", init)
+        self.assertIn("catalog_active_bundle.sidecars = &catalog_sidecar_boot;", init)
+        self.assertIn("catalog_active_bundle.sidecars_capacity = CATALOG_STAGE_MAX_ITEMS;", init)
+        self.assertIn("catalog_active_bundle.snapshot = &catalog_boot_snapshot;", init)
+        self.assertIn("#define catalog_sidecars ((catalog_stage_sidecar_set *)catalog_active_bundle.sidecars)", LAUNCHER)
+        self.assertIn("catalog_active_bundle.count = (size_t)count;", load)
+        self.assertLess(load.index("catalog_active_bundle.count = (size_t)count;"), load.index("ncv = count;"))
+        self.assertLess(main.index("catalog_bundle_init();"), main.index("StartThread(tid, NULL);"))
 
     def test_ps2_guard_is_linked_into_launcher(self):
         self.assertIn('#include "catalog_guard_ps2.h"', LAUNCHER)
@@ -161,11 +176,11 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("qsort(items + 1", builder)
         self.assertIn("catalog_snapshot_capture(items, n, snapshot)", builder)
         self.assertIn("entry *candidate = malloc(sizeof(entry) * MAXC)", publish)
-        self.assertIn("count = load_games_into(candidate, &catalog_active_snapshot, &snapshot_ready, &scan_status, NULL, NULL)", publish)
+        self.assertIn("count = load_games_into(candidate, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL)", publish)
         self.assertIn("catalog_active_snapshot_ready = snapshot_ready;", publish)
         self.assertLess(publish.index("memcpy(cv, candidate"), publish.index("ncv = count"))
         self.assertIn("free(candidate)", publish)
-        self.assertIn("load_games_into(cv, &catalog_active_snapshot, &snapshot_ready, &scan_status, NULL, NULL)", publish)
+        self.assertIn("load_games_into(cv, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL)", publish)
 
     def test_hdl_scan_rejects_partial_directory_reads_and_closes_before_callbacks(self):
         start = SOURCES_HDL.index("int src_hdl_scan_cancelable(")
