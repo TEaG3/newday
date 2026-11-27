@@ -446,6 +446,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (remote_status == CATALOG_STAGE_SCAN_CANCELLED)", builder)
         self.assertNotIn("cancellable refresh deferred", builder)
         self.assertIn("http_read_cancelable", NET)
+        self.assertIn("http_body_length_valid", NET)
+        self.assertIn("require_content_length", NET)
         self.assertIn("NET_ERR_CANCELLED", NET_HEADER)
         self.assertIn("http_req_cancelable", NET_HEADER)
         self.assertIn("test_http_read_cancellation();", NET)

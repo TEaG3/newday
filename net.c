@@ -26,6 +26,14 @@ int http_parse(const char *buf, int n, int *status, int *body, int *clen)
 typedef int (*http_recv_fn)(void *context, int socket, void *buffer, int length, int flags);
 typedef void (*http_wait_fn)(void *context, unsigned milliseconds);
 
+
+static int http_body_length_valid(int status, int content_length, int body_length, int required)
+{
+    if (status != 200) return 1;
+    if (content_length < 0) return !required;
+    return content_length == body_length;
+}
+
 static int http_read_cancelable(int socket, char *buffer, int capacity, int *received,
                                 net_cancel_fn cancelled, void *cancel_context,
                                 http_recv_fn recv_fn, http_wait_fn wait_fn, void *io_context,
@@ -302,9 +310,9 @@ static void http_socket_wait(void *context, unsigned milliseconds)
     usleep(milliseconds * 1000);
 }
 
-int http_req_cancelable(const char *method, const char *ip, int port, const char *path,
-                        char *buf, int max, int *body, int *len,
-                        net_cancel_fn cancelled, void *cancel_context)
+static int http_req_impl(const char *method, const char *ip, int port, const char *path,
+                         char *buf, int max, int *body, int *len, int require_content_length,
+                         net_cancel_fn cancelled, void *cancel_context)
 {
     struct sockaddr_in a = {0};
     int s, r, n, st = NET_ERR_PROTO;
@@ -352,15 +360,22 @@ int http_req_cancelable(const char *method, const char *ip, int port, const char
     }
     if (http_parse(buf, n, &st, body, &r)) {
         *len = n - *body;
-        if (st == 200 && r >= 0 && r != *len) st = NET_ERR_PROTO;
+        if (!http_body_length_valid(st, r, *len, require_content_length)) st = NET_ERR_PROTO;
     } else st = NET_ERR_PROTO;
     close(s);
     return st;
 }
 
+int http_req_cancelable(const char *method, const char *ip, int port, const char *path,
+                        char *buf, int max, int *body, int *len,
+                        net_cancel_fn cancelled, void *cancel_context)
+{
+    return http_req_impl(method, ip, port, path, buf, max, body, len, 1, cancelled, cancel_context);
+}
+
 int http_req(const char *method, const char *ip, int port, const char *path, char *buf, int max, int *body, int *len)
 {
-    return http_req_cancelable(method, ip, port, path, buf, max, body, len, NULL, NULL);
+    return http_req_impl(method, ip, port, path, buf, max, body, len, 0, NULL, NULL);
 }
 // a URL, following up to 4 redirects (GitHub's release downloads go to another host); same contract as https_get
 int net_fetch(const char *url, char *buf, int max, int *body, int *len)
@@ -403,6 +418,16 @@ static void fixture_wait(void *context, unsigned milliseconds)
     f->waits++;
     if (f->cancel_on_wait) f->cancelled = 1;
 }
+
+static void test_http_length_policy(void)
+{
+    assert(http_body_length_valid(200, 5, 5, 1));
+    assert(!http_body_length_valid(200, 4, 5, 1));
+    assert(!http_body_length_valid(200, -1, 5, 1));
+    assert(http_body_length_valid(200, -1, 5, 0));
+    assert(http_body_length_valid(404, -1, 0, 1));
+}
+
 static void test_http_read_cancellation(void)
 {
     char buffer[8] = {0};
@@ -425,6 +450,7 @@ static void test_http_read_cancellation(void)
 
 int main(void)
 {
+	test_http_length_policy();
 	test_http_read_cancellation();
 	static const char ok[] = "HTTP/1.0 200 OK\r\nServer: x\r\ncontent-length: 5\r\n\r\nhello";
 	int st, body, clen;
