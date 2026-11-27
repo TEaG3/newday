@@ -2,34 +2,117 @@
   "use strict";
   const screenshots = {
     games: {
-      title: "قائمة ألعاب USB", heading: "USB Games", source: "دليل مستخدم OPL",
+      title: "قائمة ألعاب USB", heading: "USB Games", source: "دليل OPL",
       url: "https://www.ps2homebrew.org/Open-PS2-Loader-User-Guide/_images/3341986682-usb.png",
+      sourceUrl: "https://www.ps2homebrew.org/Open-PS2-Loader-User-Guide/usb-mode.html",
       alt: "OPL USB Games list with God of War II, Okami and Resident Evil 4",
-      rows: [{ar:"God of War II",en:"SCES_542.06",value:"اللعبة المحددة"},{ar:"Okami",en:"USB GAME",value:"متاحة"},{ar:"Resident Evil 4",en:"USB GAME",value:"متاحة"}]
+      rows: [
+        {ar:"God of War II",en:"SCES_542.06",value:"المحدد"},
+        {ar:"Okami",en:"USB GAME"},
+        {ar:"Resident Evil 4",en:"USB GAME"}
+      ]
+    },
+    hdd: {
+      title: "ألعاب القرص الداخلي", heading: "HDD Games", source: "Le Crabe Info",
+      url: "https://lecrabeinfo.net/app/uploads/2020/12/jeux-hdd-disque-dur-sans-covers-open-ps2-loader-opl_ps2ss1-6405e53f42fe6-6405e53f84643.jpg",
+      sourceUrl: "https://lecrabeinfo.net/tutoriels/ps2-installer-et-configurer-open-ps2-loader-opl/",
+      alt: "Real OPL HDD Games list screenshot",
+      rows: [
+        {ar:"Devil May Cry",en:"HDD GAME"},
+        {ar:"Final Fantasy X",en:"HDD GAME",value:"المحدد"},
+        {ar:"Gran Turismo 4",en:"HDD GAME"},
+        {ar:"Grand Theft Auto: Vice City",en:"HDD GAME"},
+        {ar:"Grand Theft Auto III",en:"HDD GAME"},
+        {ar:"Kingdom Hearts II",en:"HDD GAME"},
+        {ar:"Pro Evolution Soccer",en:"HDD GAME"},
+        {ar:"Silent Hill 2",en:"HDD GAME"},
+        {ar:"Silent Hill 3",en:"HDD GAME"}
+      ]
     },
     menu: {
       title: "القائمة الرئيسية", heading: "Main Menu", source: "Le Crabe Info",
       url: "https://lecrabeinfo.net/app/uploads/2020/12/menu-open-ps2-loader-opl_ps2ss1-6404b96c40956-6404b96c805c9.jpg",
+      sourceUrl: "https://lecrabeinfo.net/tutoriels/ps2-installer-et-configurer-open-ps2-loader-opl/",
       alt: "Real OPL main menu screenshot",
-      rows: [{ar:"الإعدادات",en:"Settings"},{ar:"إعدادات العرض",en:"Display Settings"},{ar:"إعدادات الصوت",en:"Audio Settings"},{ar:"إعدادات وحدة التحكم",en:"Controller Settings"},{ar:"إعدادات الرقابة الأبوية",en:"Parental Lock Settings"},{ar:"إعدادات الشبكة",en:"Network Settings"},{ar:"تحديث الشبكة",en:"Network Update"},{ar:"حول",en:"About"},{ar:"حفظ التغييرات",en:"Save Changes"},{ar:"خروج",en:"Exit"},{ar:"إيقاف التشغيل",en:"Power Off"}]
+      rows: [
+        {ar:"الإعدادات",en:"Settings"},
+        {ar:"إعدادات العرض",en:"Display Settings"},
+        {ar:"إعدادات الصوت",en:"Audio Settings"},
+        {ar:"إعدادات وحدة التحكم",en:"Controller Settings"},
+        {ar:"إعدادات الرقابة الأبوية",en:"Parental Lock Settings"},
+        {ar:"إعدادات الشبكة",en:"Network Settings"},
+        {ar:"تحديث الشبكة",en:"Network Update"},
+        {ar:"حول",en:"About"},
+        {ar:"حفظ التغييرات",en:"Save Changes"},
+        {ar:"خروج",en:"Exit"},
+        {ar:"إيقاف التشغيل",en:"Power Off"}
+      ]
     },
     settings: {
-      title: "إعدادات الأجهزة", heading: "Settings", source: "Le Crabe Info",
+      title: "الإعدادات الرئيسية", heading: "Settings", source: "Le Crabe Info",
       url: "https://lecrabeinfo.net/app/uploads/2020/12/bdm-device-start-mode-on-settings-open-ps2-loader-opl_ps2ss1-640618bce374e-640618bd30980-768x576.jpg",
-      alt: "Real OPL settings screenshot showing BDM, HDD and ETH start modes",
-      rows: [{ar:"وضع بدء جهاز USB",en:"BDM Start Mode",value:"Auto"},{ar:"وضع بدء القرص الداخلي",en:"HDD Device Start Mode",value:"Off"},{ar:"وضع بدء الشبكة",en:"ETH Device Start Mode",value:"Off"},{ar:"وضع بدء التطبيقات",en:"Applications Start Mode",value:"Off"},{ar:"القائمة الافتراضية",en:"Default Menu",value:"BDM Games"},{ar:"فحص تجزئة USB",en:"USB Fragmentation",value:"On"}]
+      sourceUrl: "https://lecrabeinfo.net/tutoriels/ps2-installer-et-configurer-open-ps2-loader-opl/",
+      alt: "Real OPL main settings screen with device start modes",
+      rows: [
+        {ar:"تعطيل ألوان التشخيص",en:"Disable Debug Colors",value:"Off"},
+        {ar:"مسار إعادة التشغيل داخل اللعبة",en:"IGR Path",value:"غير محدد"},
+        {ar:"السماح بعمليات الكتابة",en:"Enable write operations",value:"Off"},
+        {ar:"تذكّر آخر لعبة",en:"Remember last played game",value:"Off"},
+        {ar:"فحص تجزئة USB",en:"Check USB Game Fragmentation",value:"On"},
+        {ar:"مسارات USB وETH",en:"USB / ETH Prefix Paths",value:"غير محدد"},
+        {ar:"إيقاف القرص تلقائيًا",en:"Automatic HDD spin down",value:"20 min"},
+        {ar:"بدء جهاز USB",en:"USB device start mode",value:"Auto"},
+        {ar:"بدء القرص الداخلي",en:"HDD device start mode",value:"Off"},
+        {ar:"بدء الشبكة",en:"ETH device start mode",value:"Off"},
+        {ar:"بدء التطبيقات",en:"Applications start mode",value:"Off"},
+        {ar:"القائمة الافتراضية",en:"Default menu",value:"USB Games"}
+      ]
     },
     display: {
-      title: "إعدادات العرض", heading: "Display Settings", source: "Le Crabe Info",
-      url: "https://lecrabeinfo.net/app/uploads/2020/12/cover-art-on-display-settings-open-ps2-loader-opl_ps2ss1-6405e500adb0a-6405e500ed733-768x576.jpg",
+      title: "إعدادات العرض", heading: "Display Settings", source: "دليل مستخدم OPL",
+      url: "https://www.ps2homebrew.org/Open-PS2-Loader-User-Guide/_images/2489977405-display-settings.png",
+      sourceUrl: "https://www.ps2homebrew.org/Open-PS2-Loader-User-Guide/display-settings.html",
       alt: "Real OPL display settings screenshot",
-      rows: [{ar:"السمة",en:"Theme",value:"<OPL>"},{ar:"اللغة",en:"Language",value:"English (internal)"},{ar:"الترتيب التلقائي",en:"Automatic Sorting",value:"On"},{ar:"التحديث التلقائي",en:"Automatic Refresh",value:"Off"},{ar:"أغلفة الألعاب",en:"Cover Art",value:"On"},{ar:"الإشعارات",en:"Notifications",value:"On"},{ar:"نمط الفيديو",en:"Video Mode",value:"Auto"},{ar:"الشاشة العريضة",en:"Widescreen",value:"Off"}]
+      rows: [
+        {ar:"السمة",en:"Theme",value:"<OPL>"},
+        {ar:"اللغة",en:"Language",value:"English (internal)"},
+        {ar:"سرعة التمرير",en:"Scrolling",value:"Medium"},
+        {ar:"الترتيب التلقائي",en:"Automatic sorting",value:"On"},
+        {ar:"التحديث التلقائي",en:"Automatic Refresh",value:"Off"},
+        {ar:"إظهار أغلفة الألعاب",en:"Enable Cover Art",value:"On"},
+        {ar:"صفحة معلومات اللعبة",en:"Display info page",value:"Off"},
+        {ar:"لون النص",en:"Text color",value:"Default"},
+        {ar:"لون الحوار",en:"Dialog color",value:"Default"},
+        {ar:"لون التحديد",en:"Selected color",value:"Default"},
+        {ar:"لون الخلفية",en:"Background color",value:"Default"},
+        {ar:"نمط الفيديو",en:"Video Mode",value:"Auto"},
+        {ar:"الشاشة العريضة",en:"Wide screen",value:"Off"}
+      ]
     },
     game: {
-      title: "قائمة خيارات اللعبة", heading: "Final Fantasy X", source: "Le Crabe Info",
-      url: "https://lecrabeinfo.net/app/uploads/2020/12/game-settings-open-ps2-loader-opl_ps2ss1-6405e097178f9-6405e097597be.jpg",
-      alt: "Real OPL per-game options menu for Final Fantasy X",
-      rows: [{ar:"إعدادات اللعبة",en:"Game Settings"},{ar:"إعدادات الغش",en:"Cheat Settings"},{ar:"ضبط GSM",en:"Configure GSM"},{ar:"بطاقة الذاكرة الافتراضية",en:"Configure VMC"},{ar:"ضبط PADEMU",en:"Configure PADEMU"},{ar:"حفظ التغييرات",en:"Save Changes"},{ar:"اختبار التغييرات",en:"Test Changes"},{ar:"إزالة الإعدادات",en:"Remove Settings"}]
+      title: "خيارات اللعبة", heading: "Game Settings", source: "Le Crabe Info",
+      url: "https://lecrabeinfo.net/app/uploads/2020/12/modes-game-settings-open-ps2-loader-opl_ps2ss1-6405e0e3da87a-6405e0e412f36-1024x475.jpg",
+      sourceUrl: "https://lecrabeinfo.net/tutoriels/ps2-lire-des-jeux-ps2-depuis-une-cle-usb-avec-opl/",
+      alt: "Real OPL Game Settings screen showing compatibility mode toggles",
+      rows: [
+        {ar:"الوضع 1 — القراءة الدقيقة",en:"Mode 1 · Accurate Reads",value:"Off"},
+        {ar:"الوضع 2 — القراءة المتزامنة",en:"Mode 2 · Synchronous Mode",value:"Off"},
+        {ar:"الوضع 3 — إلغاء ربط Syscalls",en:"Mode 3 · Unhook Syscalls",value:"Off"},
+        {ar:"الوضع 4 — وضع PSS صفر",en:"Mode 4 · 0 PSS mode",value:"Off"},
+        {ar:"الوضع 5 — محاكاة DVD-DL",en:"Mode 5 · Emulate DVD-DL",value:"Off"},
+        {ar:"الوضع 6 — تعطيل IGR",en:"Mode 6 · Disable IGR",value:"Off"},
+        {ar:"الوضع 7 — تخزين الوحدات العالي",en:"Mode 7 · High module storage",value:"Off"},
+        {ar:"الوضع 8 — إخفاء DEV9",en:"Mode 8 · Hide DEV9 module",value:"Off"},
+        {ar:"إعداد GSM",en:"Configure GSM"},
+        {ar:"وضع DMA",en:"DMA mode",value:"غير محدد"},
+        {ar:"إعداد بطاقة الذاكرة الافتراضية",en:"Configure VMC"},
+        {ar:"معرّف اللعبة",en:"Game ID",value:"غير محدد"},
+        {ar:"ملف ELF مخصص",en:"Custom ELF",value:"غير محدد"},
+        {ar:"حفظ التغييرات",en:"Save Changes"},
+        {ar:"اختبار",en:"Test"},
+        {ar:"تنزيل الإعدادات الافتراضية",en:"Download defaults"},
+        {ar:"إزالة جميع الإعدادات",en:"Remove all settings"}
+      ]
     }
   };
   const state = {screen:"games",index:0,history:[]};
@@ -68,8 +151,15 @@
       list.appendChild(button);
     });
     switchButtons.forEach(button => button.setAttribute("aria-pressed",String(button.dataset.screen === state.screen)));
-    note.textContent = "المحدد: " + selected().ar + (selected().value ? " — " + selected().value : "") + ". استخدم × للاختيار و○ للرجوع.";
+    note.textContent = "المحدد: " + selected().ar + (selected().value ? " — " + selected().value : "") + ". " + controlHint();
   }
+
+  function controlHint() {
+    if (state.screen === "games" || state.screen === "hdd") return "↑↓ للقائمة، ←→ لتبديل USB/HDD، Start للقائمة، △ لخيارات اللعبة، × للتشغيل التجريبي.";
+    if (state.screen === "menu") return "↑↓ للتنقّل، × للدخول، ○ للعودة.";
+    return "↑↓ للتنقّل، ←→ لتغيير القيمة، × للتأكيد، ○ للعودة.";
+  }
+
   function setScreen(id,remember) {
     if (!screenshots[id]) return;
     if (remember && state.screen !== id) state.history.push(state.screen);
@@ -77,41 +167,69 @@
     state.index = 0;
     render();
   }
+
   function move(delta) {
     const length = data().rows.length;
     state.index = (state.index + delta + length) % length;
     render();
   }
-  function confirm() {
-    if (state.screen === "games") { setScreen("game",true); note.textContent = "تم فتح قائمة خيارات اللعبة. هذه محاكاة للواجهة فقط."; return; }
-    if (state.screen === "menu") {
-      if (state.index === 0) setScreen("settings",true);
-      else if (state.index === 1) setScreen("display",true);
-      else note.textContent = "تم اختيار: " + selected().ar + ". العرض داخل المتصفح فقط.";
+
+  function adjustValue(delta) {
+    const row = selected();
+    if (!row.value) {
+      note.textContent = "هذا العنصر يفتح صفحة فرعية في OPL؛ العرض التفاعلي يشرح القائمة ولا ينفّذ إعدادًا حقيقيًا.";
       return;
     }
-    if (state.screen === "game" && state.index === 0) { note.textContent = "فتحت إعدادات اللعبة — التنقل تجريبي ولا يغيّر إعدادات ملف حقيقي."; return; }
-    const row = selected();
-    if (row.value === "On") row.value = "Off";
-    else if (row.value === "Off") row.value = "On";
-    else if (row.value === "Auto") row.value = "Manual";
-    else if (row.value === "Manual") row.value = "Off";
-    else if (row.value === "BDM Games") row.value = "USB Games";
+    const choices = {
+      "Off":["Off","On"],
+      "On":["On","Off"],
+      "Auto":["Auto","Manual","Off"],
+      "Manual":["Manual","Auto","Off"],
+      "Medium":["Slot","Medium","Fast"],
+      "USB Games":["USB Games","HDD Games"],
+      "20 min":["0 min","5 min","10 min","15 min","20 min"]
+    };
+    const values = choices[row.value] || [row.value,"غير محدد"];
+    const idx = values.indexOf(row.value);
+    row.value = values[(idx + (delta < 0 ? values.length - 1 : 1)) % values.length];
     render();
-    note.textContent = "قيمة تجريبية في عرض المتصفح: " + row.ar + " = " + (row.value || row.en);
+    note.textContent = "قيمة عرض تجريبي فقط: " + row.ar + " = " + row.value + " — لا تُحفظ في ملفات OPL.";
   }
+
+  function confirm() {
+    if (state.screen === "games" || state.screen === "hdd") {
+      note.textContent = "محاكاة تشغيل: " + selected().ar + " — لا يتم تشغيل لعبة أو ملف ELF في المتصفح.";
+      return;
+    }
+    if (state.screen === "menu") {
+      const index = state.index;
+      if (index === 0) setScreen("settings",true);
+      else if (index === 1) setScreen("display",true);
+      else note.textContent = "تم تحديد " + selected().ar + " في قائمة OPL — هذا عرض تفاعلي فقط.";
+      return;
+    }
+    if (selected().value) adjustValue(1);
+    else note.textContent = "تم تحديد " + selected().ar + " — لم يتم تغيير ملفات أو إعدادات حقيقية.";
+  }
+
   function back() {
     const previous = state.history.pop();
     if (previous) setScreen(previous,false);
     else setScreen("games",false);
   }
+
   function input(key) {
-    if (key === "up" || key === "left") move(-1);
-    else if (key === "down" || key === "right") move(1);
+    if (key === "up") move(-1);
+    else if (key === "down") move(1);
+    else if (key === "left" || key === "right") {
+      if (state.screen === "games") setScreen("hdd",true);
+      else if (state.screen === "hdd") setScreen("games",true);
+      else adjustValue(key === "left" ? -1 : 1);
+    }
     else if (key === "cross") confirm();
     else if (key === "circle") back();
-    else if (key === "triangle") setScreen("game",true);
-    else if (key === "square") { state.index = 0; render(); note.textContent = "تم تحديث العرض التجريبي."; }
+    else if (key === "triangle" && (state.screen === "games" || state.screen === "hdd")) setScreen("game",true);
+    else if (key === "square") { state.index = 0; render(); note.textContent = "انتقلت إلى أول عنصر في القائمة."; }
     else if (key === "start") setScreen("menu",true);
   }
   switchButtons.forEach(button => button.addEventListener("click",() => setScreen(button.dataset.screen,true)));
