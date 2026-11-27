@@ -908,11 +908,13 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
     return CATALOG_STAGE_OK;
 }
 
-int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
-                                          catalog_stage_bundle *active,
-                                          catalog_stage_bundle *candidate,
-                                          catalog_stage_bundle_prepare_fn prepare,
-                                          void *prepare_context)
+int catalog_stage_bundle_publish_prepared_retire(catalog_guard *guard,
+                                                 catalog_stage_bundle *active,
+                                                 catalog_stage_bundle *candidate,
+                                                 catalog_stage_bundle_prepare_fn prepare,
+                                                 void *prepare_context,
+                                                 catalog_stage_bundle_retire_fn retire,
+                                                 void *retire_context)
 {
     catalog_stage_bundle previous;
     int16_t old_to_new[CATALOG_STAGE_MAX_ITEMS];
@@ -994,9 +996,31 @@ int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
     *active = *candidate;
     *candidate = previous;
 
+    /* Retire the old generation before reopening readers/workers. This prevents
+       a new-generation worker from mutating sidecars while the old set is inspected. */
+    if (retire != NULL) {
+        status = retire(active, candidate, retire_context);
+        if (status != CATALOG_STAGE_OK) {
+            if (!catalog_guard_finish_apply(guard))
+                return CATALOG_STAGE_ERR_GUARD;
+            return status;
+        }
+    }
+
     if (!catalog_guard_finish_apply(guard))
         return CATALOG_STAGE_ERR_GUARD;
     return CATALOG_STAGE_OK;
+}
+
+int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
+                                          catalog_stage_bundle *active,
+                                          catalog_stage_bundle *candidate,
+                                          catalog_stage_bundle_prepare_fn prepare,
+                                          void *prepare_context)
+{
+    return catalog_stage_bundle_publish_prepared_retire(guard, active, candidate,
+                                                         prepare, prepare_context,
+                                                         NULL, NULL);
 }
 
 int catalog_stage_bundle_publish(catalog_guard *guard,
