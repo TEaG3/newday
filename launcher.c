@@ -121,6 +121,8 @@ static entry catalog_boot_items[MAXC];
 /* Every launcher reader resolves through this descriptor; a future safe apply swaps the whole bundle. */
 static catalog_stage_bundle catalog_active_bundle;
 #define cv ((entry *)catalog_active_bundle.items)
+/* The bundle owns the authoritative count so it moves with items and sidecars. */
+#define ncv ((int)catalog_active_bundle.count)
 /* Stable-key baseline from the boot-time catalog; live rescans remain disabled. */
 static catalog_stage_snapshot catalog_boot_snapshot;
 static int catalog_active_snapshot_ready;
@@ -168,7 +170,7 @@ static void *make_half(const void *big, int sq) // 128x184 (128x128) grid tile f
 	if (h) cover_half(big, h, sq), SyncDCache(h, h + n);
 	return h; // NULL: the grid draws the small cover scaled instead
 }
-static volatile int ncv, stage, done_n, total_n, usb, load_ms; // written by the loader thread
+static volatile int stage, done_n, total_n, usb, load_ms; // written by the loader thread
 #define POPSTARTER "mass0:/POPS/POPSTARTER.ELF" // PS1 games only with TEa.G3 on the USB (POPStarter reads mass:)
 
 // ---- saves: root dirs of both cards, read once by the loader (design: phase-3-ui). mcn[p] < 0: no card ----
@@ -1414,8 +1416,7 @@ static void load_games(void) // publish the initial scan only after a complete c
 	}
 	catalog_active_bundle.count = (size_t)count;
 	catalog_active_snapshot_ready = snapshot_ready;
-	/* Expose the new count only after all active records and their snapshot are ready. */
-	ncv = count;
+	/* ncv reads the count from this active bundle; no parallel count can drift. */
 }
 
 // ---- disc drive (phase 11): polled once a second off the render thread; a change is staged here and copied into
