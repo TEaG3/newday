@@ -168,7 +168,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (icon_busy) continue;", icon)
 
     def test_disc_and_update_workers_do_not_pin_catalog_reader_for_storage_io(self):
-        disc = function_body(LAUNCHER, "static void disc_thread(void *arg)", "// ---- config")
+        disc = function_body(LAUNCHER, "static void disc_thread(void *arg)\\n{", "// ---- config")
         self.assertIn("background_io_begin(&disc_busy)", disc)
         self.assertIn("catalog_reader_wait_begin();", disc)
         self.assertIn("catalog_reader_end();", disc)
