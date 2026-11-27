@@ -119,10 +119,11 @@ typedef struct {
 	void *big, *small, *half;
 } entry;
 static entry catalog_boot_items[MAXC];
-static entry *catalog_items = catalog_boot_items;
-#define cv catalog_items /* active generation; future bundle swaps change this pointer only */
+/* Every launcher reader resolves through this descriptor; a future safe apply swaps the whole bundle. */
+static catalog_stage_bundle catalog_active_bundle;
+#define cv ((entry *)catalog_active_bundle.items)
 /* Stable-key baseline from the boot-time catalog; live rescans remain disabled. */
-static catalog_stage_snapshot catalog_active_snapshot;
+static catalog_stage_snapshot catalog_boot_snapshot;
 static int catalog_active_snapshot_ready;
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
@@ -178,7 +179,7 @@ static int mcn[2] = {-1, -1};
 /* Per-game state is grouped for a future generation swap. The launcher still uses
    one active set; live refresh remains disabled until every worker is wired to it. */
 static catalog_stage_sidecar_set catalog_sidecar_boot;
-static catalog_stage_sidecar_set *catalog_sidecars = &catalog_sidecar_boot;
+#define catalog_sidecars ((catalog_stage_sidecar_set *)catalog_active_bundle.sidecars)
 #define vdir       (catalog_sidecars->vmc_dir)
 #define vmc_n      (catalog_sidecars->vmc_n)
 #define vmc_state  (catalog_sidecars->vmc_state)
@@ -190,6 +191,16 @@ static catalog_stage_sidecar_set *catalog_sidecars = &catalog_sidecar_boot;
 #define ra_state   (catalog_sidecars->ra_state)
 #define ra_count   (catalog_sidecars->ra_count)
 #define ra_gid     (catalog_sidecars->ra_gid)
+
+static void catalog_bundle_init(void)
+{
+	catalog_active_bundle.items = catalog_boot_items;
+	catalog_active_bundle.items_capacity = MAXC;
+	catalog_active_bundle.sidecars = &catalog_sidecar_boot;
+	catalog_active_bundle.sidecars_capacity = CATALOG_STAGE_MAX_ITEMS;
+	catalog_active_bundle.count = 0;
+	catalog_active_bundle.snapshot = &catalog_boot_snapshot;
+}
 
 static void scan_cards(void)
 {
@@ -1392,12 +1403,13 @@ static void load_games(void) // publish the initial scan only after a complete c
 	if (!candidate) {
 		/* Boot is still single-writer before stage 3; keep a safe low-memory fallback. */
 		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\\\\n");
-		count = load_games_into(cv, &catalog_active_snapshot, &snapshot_ready, &scan_status, NULL, NULL);
+		count = load_games_into(cv, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL);
 	} else {
-		count = load_games_into(candidate, &catalog_active_snapshot, &snapshot_ready, &scan_status, NULL, NULL);
+		count = load_games_into(candidate, catalog_active_bundle.snapshot, &snapshot_ready, &scan_status, NULL, NULL);
 		memcpy(cv, candidate, (size_t)count * sizeof(*cv));
 		free(candidate);
 	}
+	catalog_active_bundle.count = (size_t)count;
 	catalog_active_snapshot_ready = snapshot_ready;
 	/* Expose the new count only after all active records and their snapshot are ready. */
 	ncv = count;
@@ -3211,6 +3223,7 @@ int main(int argc, char *argv[])
 	if (argc > 0 && !strncmp(argv[0], "mmce", 4)) // "mmce0:/TEa.G3.ELF" (#8); a bare "mmce:" = mmce0:
 		snprintf(homedev, sizeof(homedev), "mmce%c:", argv[0][4] == '1' ? '1' : '0');
 	home_paths();
+	catalog_bundle_init(); // bind the boot buffers before any loader or render thread can read the catalog
 	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/TEa.G3.ELF");
 	if (!gfx_init()) printf("gfx_init: VRAM pool too small\n");
 	splash_ver = TEAG3_VERSION + 1; // "1.2"
