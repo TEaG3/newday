@@ -79,7 +79,7 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
 .detail-actions .detail-launch{border-color:var(--select);background:var(--select);color:#15220a;font-weight:700}
 .detail-actions button:hover{border-color:var(--cyan)}
 .library-empty{grid-column:1/-1;padding:24px 12px;border:1px dashed var(--line);border-radius:4px;color:var(--muted);text-align:center;font-size:11px}
-.library-credit{margin:12px 0 0;color:#8096ae;font-size:9px}
+.opl-status{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0 0;padding:7px 9px;border:1px solid rgba(53,196,217,.18);background:#06111f;color:#8fa9bf;font:8px var(--head);direction:ltr}.opl-status b{color:var(--select)}.opl-status span{white-space:nowrap}.library-credit{margin:12px 0 0;color:#8096ae;font-size:9px}
 .library-credit a{color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .game-grid.is-opl{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:9px;border:1px solid rgba(53,196,217,.18);border-radius:4px;background:radial-gradient(ellipse at 50% 0%,rgba(29,105,143,.18),transparent 62%),#06101f;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
@@ -138,16 +138,17 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
       <button type="button" class="favorite-filter" id="favoritesOnly" aria-pressed="false">☆ المفضلة</button>
     </div>
   </div>
+  <div class="opl-status"><span>OPEN PS2 LOADER · BROWSER PREVIEW</span><b id="oplStatus">USB / 12 GAMES</b><span>SELECT: ↑ ↓ · OPEN: × · OPTIONS: △</span></div>
   <div class="library-layout">
     <div class="game-grid" id="gameGrid" role="listbox" aria-label="قائمة الألعاب"></div>
     <aside class="game-detail" id="gameDetail" aria-label="تفاصيل اللعبة المحددة" aria-live="polite">
-      <span class="detail-kicker">SELECTED GAME / OPL</span>
+      <span class="detail-kicker">SELECTED GAME / OPL BROWSER</span>
       <div class="detail-art"></div>
       <h4 class="detail-title">God of War II</h4>
       <p class="detail-description">اختر لعبة لعرض معلوماتها.</p>
     </aside>
   </div>
-  <p class="library-credit">الأغلفة من مجموعة <a href="https://github.com/xlenore/ps2-covers" target="_blank" rel="noopener">PS2 Covers Collection</a>. هذه عينة توضيحية وليست فحصاً لألعاب جهازك؛ لا يتم تشغيل ملفات أو ألعاب من المتصفح.</p>
+  <p class="library-credit">واجهة الموقع تحاكي أسلوب OPL بصرياً، بينما التشغيل الحقيقي غير متاح داخل المتصفح. الأغلفة من مجموعة <a href="https://github.com/xlenore/ps2-covers" target="_blank" rel="noopener">PS2 Covers Collection</a>. هذه عينة توضيحية وليست فحصاً لألعاب جهازك؛ لا يتم تشغيل ملفات أو ألعاب من المتصفح.</p>
 </div>
 
 <div class="simulator">
