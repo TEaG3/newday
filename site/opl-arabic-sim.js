@@ -113,6 +113,180 @@
       ]
     }
   };
+
+  const COVER_BASE = "https://raw.githubusercontent.com/xlenore/ps2-covers/main/covers/default/";
+  const games = [
+    {id:"gow2",title:"God of War II",serial:"SCES-54206",genre:"أكشن",storage:"USB",cover:COVER_BASE+"SCES-54206.jpg",description:"مغامرة أكشن أسطورية تدور حول كريتوس وصراعه مع آلهة الأولمب."},
+    {id:"okami",title:"Okami",serial:"SLES-54439",genre:"مغامرات",storage:"USB",cover:COVER_BASE+"SLES-54439.jpg",description:"مغامرة فنية بعالم مستوحى من الأساطير اليابانية ورسم يشبه الحبر."},
+    {id:"re4",title:"Resident Evil 4",serial:"SLES-53702",genre:"رعب",storage:"USB",cover:COVER_BASE+"SLES-53702.jpg",description:"رعب وبقاء مع استكشاف ومواجهات في قرية غامضة."},
+    {id:"dmc",title:"Devil May Cry",serial:"SLES-50358",genre:"أكشن",storage:"USB",cover:COVER_BASE+"SLES-50358.jpg",description:"قتال سريع بالسيوف والأسلحة مع دانتي في مواجهة قوى الشياطين."},
+    {id:"ffx",title:"Final Fantasy X",serial:"SLUS-20312",genre:"مغامرات",storage:"USB",cover:COVER_BASE+"SLUS-20312.jpg",description:"رحلة تقمّص أدوار وقصة سينمائية في عالم سبيرا."},
+    {id:"gt4",title:"Gran Turismo 4",serial:"SCES-51719",genre:"سباقات",storage:"HDD",cover:COVER_BASE+"SCES-51719.jpg",description:"محاكاة قيادة وسباقات تضم مجموعة واسعة من السيارات والحلبات."},
+    {id:"gtavc",title:"Grand Theft Auto: Vice City",serial:"SLES-51061",genre:"عالم مفتوح",storage:"HDD",cover:COVER_BASE+"SLES-51061.jpg",description:"مدينة مفتوحة بطابع الثمانينيات ومهام قيادة واستكشاف."},
+    {id:"gta3",title:"Grand Theft Auto III",serial:"SLES-50330",genre:"عالم مفتوح",storage:"HDD",cover:COVER_BASE+"SLES-50330.jpg",description:"تجربة عالم مفتوح في Liberty City مع مهام ومركبات متنوعة."},
+    {id:"kh2",title:"Kingdom Hearts II",serial:"SLES-54114",genre:"مغامرات",storage:"USB",cover:COVER_BASE+"SLES-54114.jpg",description:"مغامرة أكشن وتقمّص أدوار تجمع عوالم خيالية وشخصيات متعددة."},
+    {id:"sh2",title:"Silent Hill 2",serial:"SLES-50382",genre:"رعب",storage:"HDD",cover:COVER_BASE+"SLES-50382.jpg",description:"رعب نفسي يعتمد على الأجواء والغموض والاستكشاف."},
+    {id:"gow",title:"God of War",serial:"SCUS-97399",genre:"أكشن",storage:"USB",cover:COVER_BASE+"SCUS-97399.jpg",description:"بداية رحلة كريتوس في مغامرة أكشن ومواجهات أسطورية."},
+    {id:"gtasa",title:"Grand Theft Auto: San Andreas",serial:"SLES-52541",genre:"عالم مفتوح",storage:"HDD",cover:COVER_BASE+"SLES-52541.jpg",description:"عالم مفتوح واسع يتضمن القيادة والاستكشاف ومجموعة كبيرة من المهام."}
+  ];
+  const libraryState = {storage:"all",genre:"all",query:"",sort:"featured",view:"grid",favoritesOnly:false,selectedId:"gow2"};
+  const favorites = new Set();
+  const gameGrid = document.getElementById("gameGrid");
+  const gameDetail = document.getElementById("gameDetail");
+  const libraryCount = document.getElementById("libraryCount");
+  const gameSearch = document.getElementById("gameSearch");
+  const genreFilter = document.getElementById("genreFilter");
+  const sortGames = document.getElementById("sortGames");
+  const favoritesOnlyButton = document.getElementById("favoritesOnly");
+  const storageButtons = Array.from(document.querySelectorAll("[data-storage]"));
+  const viewButtons = Array.from(document.querySelectorAll("[data-library-view]"));
+  function visibleGames() {
+    const query = libraryState.query.trim().toLocaleLowerCase();
+    let result = games.filter(game =>
+      (libraryState.storage === "all" || game.storage === libraryState.storage) &&
+      (libraryState.genre === "all" || game.genre === libraryState.genre) &&
+      (!libraryState.favoritesOnly || favorites.has(game.id)) &&
+      (!query || (game.title + " " + game.serial + " " + game.genre).toLocaleLowerCase().includes(query))
+    );
+    if (libraryState.sort === "az") result = result.slice().sort((a,b) => a.title.localeCompare(b.title));
+    if (libraryState.sort === "za") result = result.slice().sort((a,b) => b.title.localeCompare(a.title));
+    return result;
+  }
+  function selectedGame() {
+    const shown = visibleGames();
+    return shown.find(game => game.id === libraryState.selectedId) || shown[0] || null;
+  }
+  function makeCover(game, className) {
+    const art = document.createElement("div");
+    art.className = className;
+    const img = document.createElement("img");
+    img.src = game.cover;
+    img.alt = "غلاف " + game.title;
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.addEventListener("error",() => {
+      art.classList.add("is-fallback");
+      img.remove();
+      const fallback = document.createElement("span");
+      fallback.textContent = game.title;
+      art.appendChild(fallback);
+    },{once:true});
+    art.appendChild(img);
+    return art;
+  }
+  function renderLibrary() {
+    if (!gameGrid || !gameDetail) return;
+    const shown = visibleGames();
+    if (!shown.some(game => game.id === libraryState.selectedId)) {
+      libraryState.selectedId = shown[0]?.id || null;
+    }
+    libraryCount.textContent = shown.length + " / " + games.length + " لعبة";
+    gameGrid.replaceChildren();
+    gameGrid.classList.toggle("is-list",libraryState.view === "list");
+    storageButtons.forEach(button => button.setAttribute("aria-pressed",String(button.dataset.storage === libraryState.storage)));
+    viewButtons.forEach(button => button.setAttribute("aria-pressed",String(button.dataset.libraryView === libraryState.view)));
+    favoritesOnlyButton.setAttribute("aria-pressed",String(libraryState.favoritesOnly));
+    if (!shown.length) {
+      const empty = document.createElement("div");
+      empty.className = "library-empty";
+      empty.textContent = libraryState.favoritesOnly ? "لا توجد ألعاب مضافة إلى المفضلة بعد." : "لا توجد ألعاب تطابق البحث أو عوامل التصفية.";
+      gameGrid.appendChild(empty);
+    }
+    shown.forEach(game => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "game-card";
+      card.setAttribute("role","option");
+      card.setAttribute("aria-pressed",String(game.id === libraryState.selectedId));
+      card.setAttribute("aria-label","اختيار " + game.title);
+      card.appendChild(makeCover(game,"game-card-art"));
+      const body = document.createElement("span");
+      body.className = "game-card-body";
+      const name = document.createElement("span");
+      name.className = "game-card-title";
+      name.textContent = game.title;
+      const meta = document.createElement("span");
+      meta.className = "game-card-meta";
+      const serial = document.createElement("span");
+      serial.textContent = game.serial;
+      const storage = document.createElement("span");
+      storage.textContent = game.storage;
+      meta.append(serial,storage);
+      const tags = document.createElement("span");
+      tags.className = "game-card-tags";
+      const genre = document.createElement("span");
+      genre.className = "game-tag";
+      genre.textContent = game.genre;
+      tags.appendChild(genre);
+      if (favorites.has(game.id)) {
+        const fav = document.createElement("span");
+        fav.className = "game-tag";
+        fav.textContent = "★ مفضلة";
+        tags.appendChild(fav);
+      }
+      body.append(name,meta,tags);
+      card.appendChild(body);
+      card.addEventListener("click",() => {
+        libraryState.selectedId = game.id;
+        renderLibrary();
+      });
+      gameGrid.appendChild(card);
+    });
+    gameDetail.replaceChildren();
+    const game = selectedGame();
+    const kicker = document.createElement("span");
+    kicker.className = "detail-kicker";
+    kicker.textContent = "SELECTED GAME / OPL";
+    gameDetail.appendChild(kicker);
+    if (!game) {
+      const empty = document.createElement("p");
+      empty.className = "detail-description";
+      empty.textContent = "اختر لعبة بعد إزالة عوامل التصفية.";
+      gameDetail.appendChild(empty);
+      return;
+    }
+    gameDetail.appendChild(makeCover(game,"detail-art"));
+    const title = document.createElement("h4");
+    title.className = "detail-title";
+    title.textContent = game.title;
+    const description = document.createElement("p");
+    description.className = "detail-description";
+    description.textContent = game.description;
+    const meta = document.createElement("div");
+    meta.className = "detail-meta";
+    [["رقم اللعبة",game.serial],["التخزين",game.storage],["التصنيف",game.genre]].forEach(([label,value]) => {
+      const row = document.createElement("div");
+      row.className = "detail-meta-row";
+      const l = document.createElement("span");
+      l.textContent = label;
+      const v = document.createElement("b");
+      v.textContent = value;
+      row.append(l,v);
+      meta.appendChild(row);
+    });
+    const actions = document.createElement("div");
+    actions.className = "detail-actions";
+    const launch = document.createElement("button");
+    launch.type = "button";
+    launch.className = "detail-launch";
+    launch.textContent = "اختيار اللعبة";
+    launch.addEventListener("click",() => {
+      note.textContent = "تم اختيار " + game.title + " للعرض التجريبي — لا يتم تشغيل لعبة فعلية من المتصفح.";
+      current.textContent = "المحدد: " + game.title;
+    });
+    const favorite = document.createElement("button");
+    favorite.type = "button";
+    favorite.textContent = favorites.has(game.id) ? "★ إزالة من المفضلة" : "☆ أضف للمفضلة";
+    favorite.addEventListener("click",() => {
+      if (favorites.has(game.id)) favorites.delete(game.id);
+      else favorites.add(game.id);
+      renderLibrary();
+    });
+    actions.append(launch,favorite);
+    gameDetail.append(title,description,meta,actions);
+    if (current) current.textContent = "المحدد: " + game.title;
+  }
+
   const state = {screen:"games",index:0,history:[]};
   const image = document.getElementById("mainScreen");
   const title = document.getElementById("screenTitle");
@@ -150,6 +324,7 @@
     });
     switchButtons.forEach(button => button.setAttribute("aria-pressed",String(button.dataset.screen === state.screen)));
     note.textContent = "المحدد: " + selected().ar + (selected().value ? " — " + selected().value : "") + ". " + controlHint();
+    renderLibrary();
   }
 
   function controlHint() {
@@ -167,6 +342,14 @@
   }
 
   function move(delta) {
+    const shown = visibleGames();
+    if ((state.screen === "games" || state.screen === "hdd") && shown.length) {
+      const index = shown.findIndex(game => game.id === libraryState.selectedId);
+      const next = shown[(index + delta + shown.length) % shown.length];
+      libraryState.selectedId = next.id;
+      renderLibrary();
+      return;
+    }
     const length = data().rows.length;
     state.index = (state.index + delta + length) % length;
     render();
@@ -196,7 +379,8 @@
 
   function confirm() {
     if (state.screen === "games" || state.screen === "hdd") {
-      note.textContent = "محاكاة تشغيل: " + selected().ar + " — لا يتم تشغيل لعبة أو ملف ELF في المتصفح.";
+      const game = selectedGame();
+      note.textContent = game ? "محاكاة اختيار: " + game.title + " — لا يتم تشغيل لعبة أو ملف ELF في المتصفح." : "لا توجد ألعاب مطابقة للعرض.";
       return;
     }
     if (state.screen === "menu") {
@@ -230,6 +414,32 @@
     else if (key === "square") note.textContent = "زر □: صفحة معلومات اللعبة ليست ضمن اللقطات المرجعية الحالية.";
     else if (key === "start") setScreen("menu",true);
   }
+
+  if (gameSearch) gameSearch.addEventListener("input",() => {
+    libraryState.query = gameSearch.value;
+    renderLibrary();
+  });
+  if (genreFilter) genreFilter.addEventListener("change",() => {
+    libraryState.genre = genreFilter.value;
+    renderLibrary();
+  });
+  if (sortGames) sortGames.addEventListener("change",() => {
+    libraryState.sort = sortGames.value;
+    renderLibrary();
+  });
+  storageButtons.forEach(button => button.addEventListener("click",() => {
+    libraryState.storage = button.dataset.storage;
+    renderLibrary();
+  }));
+  viewButtons.forEach(button => button.addEventListener("click",() => {
+    libraryState.view = button.dataset.libraryView;
+    renderLibrary();
+  }));
+  favoritesOnlyButton.addEventListener("click",() => {
+    libraryState.favoritesOnly = !libraryState.favoritesOnly;
+    renderLibrary();
+  });
+
   switchButtons.forEach(button => button.addEventListener("click",() => setScreen(button.dataset.screen,true)));
   document.querySelectorAll("[data-key]").forEach(button => button.addEventListener("click",() => input(button.dataset.key)));
   document.addEventListener("keydown",event => {

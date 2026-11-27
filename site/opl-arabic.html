@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#07172d">
 <meta name="description" content="استعراض عربي لواجهة Open PS2 Loader بلقطات حقيقية ومحاكاة تفاعلية لقوائم المشغّل.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://www.ps2homebrew.org https://lecrabeinfo.net; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://www.ps2homebrew.org https://lecrabeinfo.net https://raw.githubusercontent.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <title>OPL Arabic — استعراض واجهة المشغّل</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,6 +31,60 @@ h1,h2,h3,p{margin-top:0}h1,h2{font-family:var(--head)}h1{margin-bottom:17px;font
 .gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.gallery-card{overflow:hidden;text-align:right;border:1px solid var(--line);border-radius:5px;background:var(--panel)}.gallery-image{display:block;width:100%;padding:0;border:0;background:#061326}.gallery-image img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#061326}.gallery-card:hover{border-color:var(--cyan)}.gallery-caption{padding:10px 12px}.gallery-caption b{display:block;font-size:12px;margin-bottom:4px}.gallery-caption a{color:var(--cyan);font-size:10px}.notice{margin-top:15px;padding:12px 14px;border-right:3px solid var(--select);background:rgba(183,237,76,.06);color:#b9cadd;font-size:11px;line-height:2}
 .download{display:flex;justify-content:space-between;align-items:center;gap:25px;padding:28px;border:1px solid rgba(183,237,76,.3);border-radius:6px;background:linear-gradient(120deg,rgba(18,53,79,.78),rgba(11,25,43,.9))}.download h2{margin:8px 0;font-size:25px}.download p{margin:0;color:var(--muted);font-size:11px}.download-actions{display:flex;flex-wrap:wrap;gap:8px}
 footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding-block:23px;border-top:1px solid var(--line);color:#7f95ae;font-size:10px}.viewer{width:min(1000px,calc(100% - 24px));border:1px solid var(--line);border-radius:6px;background:#071426;color:var(--text);padding:12px}.viewer::backdrop{background:rgba(0,4,12,.87);backdrop-filter:blur(5px)}.viewer img{display:block;max-width:100%;max-height:78vh;margin:auto;object-fit:contain}.viewer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.viewer-head button{border:1px solid var(--line);background:#102642;padding:5px 10px;border-radius:3px}
+
+.game-library{margin:0 0 20px;padding:17px;border:1px solid var(--line);border-radius:6px;background:linear-gradient(145deg,rgba(11,27,47,.97),rgba(5,15,29,.97))}
+.library-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:15px}
+.library-head h3{margin:5px 0 2px;font:700 clamp(19px,2.2vw,25px) var(--head)}
+.library-head p{margin:0;color:var(--muted);font-size:11px}
+.library-count{flex:0 0 auto;padding:6px 10px;border:1px solid rgba(53,196,217,.3);border-radius:3px;color:#9feaf2;background:rgba(53,196,217,.07);font-size:10px}
+.library-toolbar,.library-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.library-toolbar label{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:10px}
+.library-toolbar input,.library-toolbar select{height:36px;min-width:150px;max-width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:3px;background:#07172b;color:var(--text);font:11px var(--ui)}
+.library-toolbar input{flex:1 1 210px}
+.library-toolbar input::placeholder{color:#7189a4}
+.library-toolbar select{min-width:125px}
+.library-tools{justify-content:space-between;padding:8px 0 12px;border-bottom:1px solid var(--line)}
+.storage-filter,.view-toggle{display:flex;flex-wrap:wrap;gap:5px}
+.storage-filter button,.view-toggle button,.favorite-filter{min-height:31px;padding:5px 10px;border:1px solid var(--line);border-radius:3px;background:transparent;color:var(--muted);font:10px var(--ui)}
+.storage-filter button[aria-pressed="true"],.view-toggle button[aria-pressed="true"],.favorite-filter[aria-pressed="true"]{border-color:rgba(183,237,76,.6);background:rgba(183,237,76,.1);color:var(--select)}
+.library-layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:13px;align-items:start;padding-top:13px}
+.game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px;min-width:0}
+.game-card{min-width:0;display:flex;flex-direction:column;overflow:hidden;padding:0;text-align:right;border:1px solid rgba(139,177,210,.18);border-radius:4px;background:rgba(15,34,56,.75);transition:border-color .18s,transform .18s,background .18s}
+.game-card:hover{border-color:rgba(53,196,217,.7);transform:translateY(-2px)}
+.game-card[aria-pressed="true"]{border-color:var(--select);background:rgba(183,237,76,.08);box-shadow:0 0 0 1px rgba(183,237,76,.16)}
+.game-card-art{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:3/4;padding:8px;background:radial-gradient(ellipse at 50% 40%,rgba(54,108,150,.23),transparent 70%),#071321}
+.game-card-art img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 9px rgba(0,0,0,.35))}
+.game-card-art.is-fallback{color:#cce3f5;text-align:center;font:700 12px/1.6 var(--head);background:linear-gradient(145deg,#16466a,#061329)}
+.game-card-body{display:grid;gap:5px;padding:8px 9px 10px}
+.game-card-title{display:block;overflow:hidden;color:#f0f6fc;font-size:10px;font-weight:700;white-space:nowrap;text-overflow:ellipsis}
+.game-card-meta{display:flex;justify-content:space-between;gap:5px;color:var(--muted);font:8px var(--head);direction:ltr}
+.game-card-tags{display:flex;flex-wrap:wrap;gap:4px}
+.game-tag{display:inline-flex;align-items:center;padding:2px 5px;border:1px solid rgba(142,181,214,.16);border-radius:2px;color:#a9bfd4;background:rgba(3,12,24,.42);font-size:8px}
+.game-grid.is-list{grid-template-columns:1fr;gap:6px}
+.game-grid.is-list .game-card{flex-direction:row;align-items:stretch;min-height:104px}
+.game-grid.is-list .game-card-art{width:74px;min-width:74px;aspect-ratio:3/4;padding:5px}
+.game-grid.is-list .game-card-body{flex:1;align-content:center;gap:6px}
+.game-grid.is-list .game-card-title{white-space:normal;font-size:11px}
+.game-detail{position:sticky;top:84px;min-width:0;padding:12px;border:1px solid rgba(53,196,217,.24);border-radius:4px;background:linear-gradient(160deg,rgba(13,43,66,.92),rgba(6,20,38,.96))}
+.detail-kicker{color:#77dce7;font:600 8px var(--head);letter-spacing:.12em;direction:ltr}
+.detail-art{display:grid;place-items:center;height:172px;margin:8px 0 12px;padding:9px;border-radius:3px;background:radial-gradient(ellipse at center,rgba(55,126,164,.26),transparent 70%),#061225}
+.detail-art img{display:block;max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.4))}
+.detail-title{margin:0 0 5px;color:#f3f8ff;font:700 16px/1.45 var(--head)}
+.detail-description{min-height:44px;margin:0 0 10px;color:#a9bfd3;font-size:10px;line-height:1.9}
+.detail-meta{display:grid;gap:6px;padding:9px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.detail-meta-row{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:9px}
+.detail-meta-row b{color:#e2edf7;font:600 9px var(--head);direction:ltr}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.detail-actions button{min-height:34px;padding:6px 7px;border:1px solid var(--line);border-radius:3px;background:rgba(255,255,255,.025);color:var(--text);font:10px var(--ui)}
+.detail-actions .detail-launch{border-color:var(--select);background:var(--select);color:#15220a;font-weight:700}
+.detail-actions button:hover{border-color:var(--cyan)}
+.library-empty{grid-column:1/-1;padding:24px 12px;border:1px dashed var(--line);border-radius:4px;color:var(--muted);text-align:center;font-size:11px}
+.library-credit{margin:12px 0 0;color:#8096ae;font-size:9px}
+.library-credit a{color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:850px){.library-layout{grid-template-columns:minmax(0,1fr) 220px}.game-grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}}
+@media(max-width:620px){.game-library{padding:12px}.library-head{align-items:start}.library-head p{max-width:250px}.library-toolbar input{flex-basis:100%}.library-toolbar label{flex:1 1 100%;justify-content:space-between}.library-toolbar select{flex:1}.library-tools{align-items:flex-start}.library-layout{grid-template-columns:1fr}.game-detail{position:static;display:grid;grid-template-columns:105px minmax(0,1fr);gap:0 10px}.detail-kicker{grid-column:1/-1}.detail-art{grid-column:1;grid-row:2/6;height:140px}.detail-title,.detail-description,.detail-meta,.detail-actions{grid-column:2}.detail-title{align-self:end;font-size:13px}.detail-description{min-height:0}.detail-meta{padding:6px 0}.detail-actions{grid-template-columns:1fr 1fr}.game-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.game-card-body{padding:6px}.game-card-title{font-size:9px}.game-card-meta{font-size:7px}.game-grid.is-list{grid-template-columns:1fr}.game-grid.is-list .game-card-art{width:68px;min-width:68px}}
+
 @media(max-width:850px){.hero{grid-template-columns:1fr;gap:34px;padding-top:56px}.hero-shot{max-width:720px;width:100%;margin-inline:auto}.sim-layout{grid-template-columns:1fr}.menu-panel{min-height:250px}}
 @media(max-width:620px){.wrap{width:calc(100% - 26px)}.topbar{min-height:60px;padding-inline:13px}.nav-links{display:none}.hero{padding-block:45px 34px}.section{padding-block:23px 35px}.section-heading{display:block}.section-heading p{margin-top:8px}.gallery{grid-template-columns:1fr 1fr;gap:9px}.gallery-caption{padding:8px}.gallery-caption b{font-size:10px}.gallery-caption a{font-size:9px}.download{display:block;padding:20px}.download-actions{margin-top:18px}.controls{align-items:flex-start}.pad{margin-inline:auto}footer{display:block;line-height:2.2}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition-duration:.01ms!important}}
@@ -51,6 +105,41 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;paddin
 
 <section class="section" id="simulator">
 <div class="section-heading"><div><span class="kicker">01 / INTERACTIVE OPL UI</span><h2>محاكي واجهة المشغّل</h2></div><p>الشاشة تعرض لقطات أصلية من OPL. استخدم Start للقائمة، △ لخيارات اللعبة، و× لمحاكاة التشغيل.</p></div>
+
+<div class="game-library" id="gameLibrary">
+  <div class="library-head">
+    <div><span class="kicker">GAME BROWSER / DEMO CATALOG</span><h3>مكتبة الألعاب</h3><p>أغلفة أصلية، عرض شبكي أو قائمة، وبطاقة تفاصيل لكل لعبة.</p></div>
+    <span class="library-count" id="libraryCount" aria-live="polite">12 لعبة</span>
+  </div>
+  <div class="library-toolbar">
+    <label><span class="sr-only">البحث في الألعاب</span><input id="gameSearch" type="search" placeholder="ابحث باسم اللعبة أو رقمها..." autocomplete="off"></label>
+    <label><span>التصنيف</span><select id="genreFilter"><option value="all">كل التصنيفات</option><option value="أكشن">أكشن</option><option value="مغامرات">مغامرات</option><option value="سباقات">سباقات</option><option value="رعب">رعب</option><option value="عالم مفتوح">عالم مفتوح</option></select></label>
+    <label><span>الترتيب</span><select id="sortGames"><option value="featured">المقترحة</option><option value="az">الاسم: أ ← ي</option><option value="za">الاسم: ي ← أ</option></select></label>
+  </div>
+  <div class="library-tools">
+    <div class="storage-filter" role="group" aria-label="مصدر الألعاب">
+      <button type="button" data-storage="all" aria-pressed="true">الكل</button>
+      <button type="button" data-storage="USB" aria-pressed="false">USB</button>
+      <button type="button" data-storage="HDD" aria-pressed="false">HDD</button>
+    </div>
+    <div class="view-toggle" role="group" aria-label="طريقة عرض الألعاب">
+      <button type="button" data-library-view="grid" aria-pressed="true">شبكة</button>
+      <button type="button" data-library-view="list" aria-pressed="false">قائمة</button>
+      <button type="button" class="favorite-filter" id="favoritesOnly" aria-pressed="false">☆ المفضلة</button>
+    </div>
+  </div>
+  <div class="library-layout">
+    <div class="game-grid" id="gameGrid" role="listbox" aria-label="قائمة الألعاب"></div>
+    <aside class="game-detail" id="gameDetail" aria-label="تفاصيل اللعبة المحددة" aria-live="polite">
+      <span class="detail-kicker">SELECTED GAME / OPL</span>
+      <div class="detail-art"></div>
+      <h4 class="detail-title">God of War II</h4>
+      <p class="detail-description">اختر لعبة لعرض معلوماتها.</p>
+    </aside>
+  </div>
+  <p class="library-credit">الأغلفة من مجموعة <a href="https://github.com/xlenore/ps2-covers" target="_blank" rel="noopener">PS2 Covers Collection</a>. هذه عينة توضيحية وليست فحصاً لألعاب جهازك؛ لا يتم تشغيل ملفات أو ألعاب من المتصفح.</p>
+</div>
+
 <div class="simulator">
 <div class="sim-head"><strong id="screenTitle">قائمة ألعاب USB</strong><small>OPL STYLE / 4:3 REFERENCE</small></div>
 <div class="sim-layout">
