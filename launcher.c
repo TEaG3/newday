@@ -1749,7 +1749,7 @@ static int catalog_live_apply_frame(void)
 	if (status == CATALOG_STAGE_ERR_GUARD) {
 		/* The publisher may have swapped before a semaphore-release fault; never inspect either bundle. */
 		catalog_live_faulted = catalog_live_guard_faulted = 1;
-		printf("catalog live: apply guard failed; render thread stopped fail-closed\\n");
+		printf("catalog live: apply guard failed; render thread stopped fail-closed\n");
 		return -1;
 	}
 	if (status != CATALOG_STAGE_OK) {
@@ -1759,10 +1759,10 @@ static int catalog_live_apply_frame(void)
 			catalog_live_candidate_ready = 0;
 			catalog_live_apply_requested = 0;
 			catalog_live_faulted = 1;
-			printf("catalog live: old-generation retirement failed (%d); monitor stopped\\n", status);
+			printf("catalog live: old-generation retirement failed (%d); monitor stopped\n", status);
 			return 1;
 		}
-		printf("catalog live: apply rejected (%d); active generation kept\\n", status);
+		printf("catalog live: apply rejected (%d); active generation kept\n", status);
 		catalog_live_candidate_discard();
 		return 0;
 	}
