@@ -704,29 +704,40 @@ static void cover_thread(void *arg) // woken by draw_cover
 	(void)arg;
 	for (;;) {
 		if (cover_sema < 0 || WaitSema(cover_sema) < 0) { ExitThread(); return; }
-		if (!background_work_begin(&cover_busy)) {
-			if (ra_launching && cover_sema >= 0) SignalSema(cover_sema), usleep(10000);
-			continue;
+		/* Reacquire the current generation for each requested cover. A safe apply can
+		   therefore run between items without leaving this worker with a stale index. */
+		for (;;) {
+			if (!background_work_begin(&cover_busy)) {
+				if (ra_launching && cover_sema >= 0) SignalSema(cover_sema), usleep(10000);
+				break;
+			}
+			int selected = -1, requested = 0, scan_failed = 0;
+			for (int i = 1; i < ncv && !ra_launching; i++) {
+				if (cover_lock < 0 || WaitSema(cover_lock) < 0) { scan_failed = 1; break; }
+				int b = cover_req[i];
+				int stale = b && cover_seen[i] < frame_n - 2;
+				if (stale) cover_req[i] = 0; // scrolled past: asked again if drawn
+				if (SignalSema(cover_lock) < 0) { ExitThread(); return; }
+				if (b && !stale) { selected = i; requested = b; break; }
+			}
+			if (selected >= 0) {
+				void *im[3] = {NULL, NULL, NULL};
+				char path[160];
+				const char *id = *cv[selected].serial ? cv[selected].serial : cv[selected].title;
+				int sq = sq_e(&cv[selected]);
+				if (requested & 1) im[0] = half_file(id, sq, &im[2], &im[1]);
+				snprintf(path, sizeof(path), "%s/covers/%s_s.c16", homedev, id);
+				if (requested & 2 && !im[1]) im[1] = load_c16(path, SW, COVER_TALL(sq, SW, SH));
+				snprintf(path, sizeof(path), "%s/covers/%s.c16", homedev, id);
+				if (requested & 4 && !im[2]) im[2] = load_c16(path, LW, COVER_TALL(sq, LW, LH));
+				cover_set(selected, im, requested);
+			}
+			background_work_end(&cover_busy);
+			if (cover_busy || scan_failed || selected < 0) {
+				if (ra_launching && cover_sema >= 0) SignalSema(cover_sema);
+				break;
+			}
 		}
-		for (int i = 1; i < ncv && !ra_launching; i++) {
-			if (cover_lock < 0 || WaitSema(cover_lock) < 0) break;
-			int b = cover_req[i];
-			int stale = b && cover_seen[i] < frame_n - 2;
-			if (stale) cover_req[i] = 0; // scrolled past: asked again if drawn
-			if (SignalSema(cover_lock) < 0) { ExitThread(); return; }
-			if (!b || stale) continue;
-			void *im[3] = {NULL, NULL, NULL};
-			char path[160];
-			const char *id = *cv[i].serial ? cv[i].serial : cv[i].title; // apps: covers/<title>.c16 (no serial)
-			int sq = sq_e(&cv[i]);
-			if (b & 1) im[0] = half_file(id, sq, &im[2], &im[1]);
-			snprintf(path, sizeof(path), "%s/covers/%s_s.c16", homedev, id);
-			if (b & 2 && !im[1]) im[1] = load_c16(path, SW, COVER_TALL(sq, SW, SH));
-			snprintf(path, sizeof(path), "%s/covers/%s.c16", homedev, id);
-			if (b & 4 && !im[2]) im[2] = load_c16(path, LW, COVER_TALL(sq, LW, LH));
-			cover_set(i, im, b);
-		}
-		background_work_end(&cover_busy);
 	}
 }
 

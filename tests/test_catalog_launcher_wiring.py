@@ -348,6 +348,19 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (!dl_busy && background_work_begin(&dl_busy))", download)
         self.assertNotIn("entry *", download)
 
+        cover = function_body(LAUNCHER, "static void cover_thread(void *arg)", "static int count_dir(")
+        inner = cover.index("for (;;) {", cover.index("WaitSema(cover_sema)"))
+        begin_cover = cover.index("background_work_begin(&cover_busy)")
+        scan_cover = cover.index("for (int i = 1; i < ncv && !ra_launching; i++)")
+        load_cover = cover.index("cover_set(selected, im, requested)")
+        end_cover = cover.index("background_work_end(&cover_busy)")
+        self.assertLess(inner, begin_cover)
+        self.assertLess(begin_cover, scan_cover)
+        self.assertLess(scan_cover, load_cover)
+        self.assertLess(load_cover, end_cover)
+        self.assertIn("if (cover_busy || scan_failed || selected < 0)", cover)
+        self.assertIn("Reacquire the current generation for each requested cover", cover)
+
     def test_live_scan_and_apply_are_still_disabled(self):
         self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
         self.assertNotIn("catalog_guard_request_apply(", LAUNCHER)
