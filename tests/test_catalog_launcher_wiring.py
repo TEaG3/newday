@@ -6,6 +6,7 @@ LAUNCHER = (ROOT / "launcher.c").read_text(encoding="utf-8")
 STAGE = (ROOT / "catalog_stage.c").read_text(encoding="utf-8")
 STAGE_HEADER = (ROOT / "catalog_stage.h").read_text(encoding="utf-8")
 SOURCES = (ROOT / "sources.c").read_text(encoding="utf-8")
+SOURCES_HDL = (ROOT / "sources_hdl.c").read_text(encoding="utf-8")
 SOURCES_HEADER = (ROOT / "sources.h").read_text(encoding="utf-8")
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github" / "workflows" / "build-ps2.yml").read_text(encoding="utf-8")
@@ -34,6 +35,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         objects = next(line for line in MAKEFILE.splitlines() if line.startswith("EE_OBJS ="))
         self.assertIn("catalog_stage.o", objects)
         self.assertIn("catalog_guard_ps2.o", objects)
+        self.assertIn("sources_hdl.o", objects)
 
     def test_guard_initializes_before_loader_releases_splash_gate(self):
         init = LAUNCHER.index("catalog_guard_ps2_init(&catalog_live_guard, &catalog_live_context)")
@@ -133,9 +135,9 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("load_games_into(cv, &catalog_active_snapshot)", publish)
 
     def test_hdl_scan_rejects_partial_directory_reads_and_closes_before_callbacks(self):
-        start = SOURCES.index("int src_hdl_scan(")
-        end = SOURCES.index("\n}", start) + 2
-        body = SOURCES[start:end]
+        start = SOURCES_HDL.index("int src_hdl_scan(")
+        end = SOURCES_HDL.index("\n}", start) + 2
+        body = SOURCES_HDL[start:end]
         self.assertIn("SRC_HDL_SCAN_ERR_OPEN", body)
         self.assertIn("SRC_HDL_SCAN_ERR_READ", body)
         self.assertIn("SRC_HDL_SCAN_ERR_CLOSE", body)
@@ -146,6 +148,13 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(body.rindex("fileXioDclose(fd)"), body.index("if (cb) cb("))
         self.assertIn("SRC_HDL_SCAN_ERR_MEMORY", SOURCES_HEADER)
         self.assertIn("SRC_HDL_SCAN_ERR_METADATA", SOURCES_HEADER)
+        self.assertIn("u64 base_size_kb", body)
+        self.assertIn("u64 add_kb64", body)
+
+    def test_hdl_scanner_has_a_real_host_c_fixture(self):
+        self.assertIn("sources_hdl.c tests/catalog_host/test_sources_hdl_scan.c", WORKFLOW)
+        self.assertIn("/tmp/sources_hdl_test", WORKFLOW)
+        self.assertIn("SRC_HDL_SCAN_ERR_READ", SOURCES_HEADER)
 
     def test_ul_short_reads_and_close_failures_invalidate_the_stable_snapshot(self):
         ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
