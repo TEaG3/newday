@@ -25,4 +25,7 @@ int catalog_guard_ps2_init(catalog_guard *guard,
 int catalog_guard_ps2_destroy(catalog_guard *guard,
                               catalog_guard_ps2_context *context);
 
+/* Callback for load_games_into(): a failed semaphore read is treated as cancellation. */
+int catalog_guard_ps2_scan_cancelled(void *guard_context);
+
 #endif
