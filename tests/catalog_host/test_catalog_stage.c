@@ -708,7 +708,7 @@ static void test_safe_snapshot_publish(void)
     memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
     set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
     active_snapshot.count = 1;
-    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
+    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/New.iso", 200, 2);
     candidate_snapshot.count = 1;
 
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
@@ -795,7 +795,7 @@ static void test_safe_bundle_publish(void)
     memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
     set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
     active_snapshot.count = 1;
-    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/New.iso", 200, 2);
+    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
     candidate_snapshot.count = 1;
 
     active.items = active_items;
@@ -857,7 +857,7 @@ static void test_safe_bundle_publish(void)
     assert(active.snapshot == &active_snapshot);
 
     /* A duplicate candidate is rejected before any part of the active bundle changes. */
-    set_record(&candidate_snapshot.records[1], 1, 0, 1, "DVD/New.iso", 300, 3);
+    set_record(&candidate_snapshot.records[1], 1, 0, 1, "DVD/Old.iso", 300, 3);
     candidate_snapshot.count = 2;
     candidate.count = 2;
     assert(catalog_guard_request_apply(&guard));
