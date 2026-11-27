@@ -586,9 +586,11 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
     return CATALOG_STAGE_OK;
 }
 
-int catalog_stage_bundle_publish(catalog_guard *guard,
-                                 catalog_stage_bundle *active,
-                                 catalog_stage_bundle *candidate)
+int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
+                                          catalog_stage_bundle *active,
+                                          catalog_stage_bundle *candidate,
+                                          catalog_stage_bundle_prepare_fn prepare,
+                                          void *prepare_context)
 {
     catalog_stage_bundle previous;
     int status;
@@ -630,11 +632,21 @@ int catalog_stage_bundle_publish(catalog_guard *guard,
         return status;
     }
 
-    /* The apply gate blocks new readers while the complete generation is swapped. */
+    /* Close the reader gate before preparing index-keyed state. The callback must
+       only write the inactive candidate; active resources remain owned by active. */
     if (!catalog_guard_try_apply(guard)) {
         if (catalog_guard_scan_cancelled(guard) < 0)
             return CATALOG_STAGE_ERR_GUARD;
         return CATALOG_STAGE_ERR_BUSY;
+    }
+
+    if (prepare != NULL) {
+        status = prepare(active, candidate, prepare_context);
+        if (status != CATALOG_STAGE_OK) {
+            if (!catalog_guard_finish_apply(guard))
+                return CATALOG_STAGE_ERR_GUARD;
+            return status;
+        }
     }
 
     previous = *active;
@@ -644,4 +656,11 @@ int catalog_stage_bundle_publish(catalog_guard *guard,
     if (!catalog_guard_finish_apply(guard))
         return CATALOG_STAGE_ERR_GUARD;
     return CATALOG_STAGE_OK;
+}
+
+int catalog_stage_bundle_publish(catalog_guard *guard,
+                                 catalog_stage_bundle *active,
+                                 catalog_stage_bundle *candidate)
+{
+    return catalog_stage_bundle_publish_prepared(guard, active, candidate, NULL, NULL);
 }

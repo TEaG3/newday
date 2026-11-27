@@ -33,6 +33,12 @@ typedef struct {
     catalog_stage_snapshot *snapshot;
 } catalog_stage_bundle;
 
+/* Called under the apply gate after all readers drain and before any bundle pointer moves.
+   The callback may populate candidate sidecars but must not mutate the active bundle. */
+typedef int (*catalog_stage_bundle_prepare_fn)(const catalog_stage_bundle *active,
+                                               catalog_stage_bundle *candidate,
+                                               void *context);
+
 typedef struct {
     size_t added_count;
     size_t removed_count;
@@ -131,6 +137,11 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
 /* Atomically publish one complete generation; candidate receives the previous active bundle.
    If ERR_GUARD is returned after the swap, the guard is fail-closed; do not read either bundle
    until the guard is reinitialized. */
+int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
+                                          catalog_stage_bundle *active,
+                                          catalog_stage_bundle *candidate,
+                                          catalog_stage_bundle_prepare_fn prepare,
+                                          void *prepare_context);
 int catalog_stage_bundle_publish(catalog_guard *guard,
                                  catalog_stage_bundle *active,
                                  catalog_stage_bundle *candidate);

@@ -752,6 +752,32 @@ static void test_safe_snapshot_publish(void)
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
+typedef struct {
+    catalog_guard *guard;
+    int fail;
+    int calls;
+} bundle_prepare_context;
+
+static int migrate_bundle_sidecars(const catalog_stage_bundle *active,
+                                   catalog_stage_bundle *candidate,
+                                   void *opaque)
+{
+    bundle_prepare_context *context = (bundle_prepare_context *)opaque;
+    int status;
+
+    assert(context != NULL && context->guard != NULL);
+    assert(context->guard->applying);
+    assert(context->guard->readers == 0);
+    ++context->calls;
+
+    status = catalog_stage_sidecar_migrate(active->snapshot, candidate->snapshot,
+                                           active->sidecars, active->sidecars_capacity,
+                                           candidate->sidecars, candidate->sidecars_capacity,
+                                           sizeof(int));
+    if (status != CATALOG_STAGE_OK) return status;
+    return context->fail ? CATALOG_STAGE_ERR_ARGUMENT : CATALOG_STAGE_OK;
+}
+
 static void test_safe_bundle_publish(void)
 {
     catalog_guard guard;
@@ -760,12 +786,13 @@ static void test_safe_bundle_publish(void)
     int active_items[3] = {1, 2, 3}, candidate_items[2] = {3, 4};
     int active_sidecars[3] = {10, 20, 30}, candidate_sidecars[2] = {30, 40};
     catalog_stage_bundle active, candidate;
+    bundle_prepare_context prepare_context;
 
     memset(&active_snapshot, 0, sizeof(active_snapshot));
     memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
     set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
     active_snapshot.count = 1;
-    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/New.iso", 200, 2);
+    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
     candidate_snapshot.count = 1;
 
     active.items = active_items;
@@ -783,6 +810,9 @@ static void test_safe_bundle_publish(void)
 
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+    prepare_context.guard = &guard;
+    prepare_context.fail = 0;
+    prepare_context.calls = 0;
 
     /* The whole bundle stays unchanged until an explicit safe-point request. */
     assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
@@ -791,21 +821,35 @@ static void test_safe_bundle_publish(void)
 
     assert(catalog_guard_request_apply(&guard));
     assert(!catalog_guard_read_begin(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(catalog_stage_bundle_publish_prepared(&guard, &active, &candidate,
+                                                  migrate_bundle_sidecars, &prepare_context) == CATALOG_STAGE_OK);
+    assert(prepare_context.calls == 1);
     assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
     assert(candidate.items == active_items && candidate.sidecars == active_sidecars);
     assert(active.count == 1 && candidate.count == 1);
     assert(active.items_capacity == 2 && active.sidecars_capacity == 2);
     assert(candidate.items_capacity == 3 && candidate.sidecars_capacity == 3);
     assert(active.snapshot == &candidate_snapshot && candidate.snapshot == &active_snapshot);
-    assert(((int *)active.items)[0] == 3 && ((int *)active.sidecars)[0] == 30);
+    assert(((int *)active.items)[0] == 3 && ((int *)active.sidecars)[0] == 10);
     assert(((int *)candidate.items)[0] == 1 && ((int *)candidate.sidecars)[0] == 10);
     assert(!guard.apply_pending && !guard.applying);
+
+    /* A failed prepare releases the gate and never swaps active storage. */
+    prepare_context.fail = 1;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish_prepared(&guard, &active, &candidate,
+                                                  migrate_bundle_sidecars, &prepare_context) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(prepare_context.calls == 2);
+    assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
+    assert(!guard.apply_pending && !guard.applying);
+    prepare_context.fail = 0;
 
     /* Existing readers prevent the entire bundle from moving; retry after drain. */
     assert(catalog_guard_read_begin(&guard));
     assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(catalog_stage_bundle_publish_prepared(&guard, &active, &candidate,
+                                                  migrate_bundle_sidecars, &prepare_context) == CATALOG_STAGE_ERR_BUSY);
+    assert(prepare_context.calls == 2); /* preparation never runs while a reader is active */
     assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
     assert(active.snapshot == &candidate_snapshot);
     assert(catalog_guard_read_end(&guard));
@@ -815,7 +859,7 @@ static void test_safe_bundle_publish(void)
     assert(active.snapshot == &active_snapshot);
 
     /* A duplicate candidate is rejected before any part of the active bundle changes. */
-    set_record(&candidate_snapshot.records[1], 1, 0, 1, "DVD/New.iso", 300, 3);
+    set_record(&candidate_snapshot.records[1], 1, 0, 1, "DVD/Old.iso", 300, 3);
     candidate_snapshot.count = 2;
     candidate.count = 2;
     assert(catalog_guard_request_apply(&guard));
