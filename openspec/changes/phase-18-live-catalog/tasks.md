@@ -38,6 +38,7 @@
 - [x] Report candidate snapshot readiness/status through caller-owned outputs so a failed or cancelled candidate cannot invalidate the active boot snapshot.
 - [x] Fail closed for cancellable refresh while the remote UDPFS app catalogue is enabled; its HTTP transfer has no cooperative cancellation API yet.
 - [x] Probe every configured local source root before and after candidate scanning; treat ENOENT for an optional DVD/CD/POPS folder as empty only when the root still opens. Keep HDL and remote UDPFS on their source-specific paths. Host-test missing, non-directory, and overlong roots; this is not source polling or media-identity detection.
-- [ ] Migrate all index-keyed sidecars and add end-to-end candidate/apply tests before enabling live monitoring.
+- [x] Add a host end-to-end candidate/apply regression: a cancelled scan leaves the active bundle untouched; a successful scan exercises stable-key diff, typed sidecar migration, guarded bundle swap, selection/worker-index rebasing, and old-generation resource retirement.
+- [ ] Wire the typed sidecar set and derived render-cache rebuild/reset into the live launcher candidate/apply path; keep live monitoring disabled until render-thread and target validation pass.
 
 - [x] Reject partial HD Loader/APA and USBExtreme UL source scans on directory read, sector read, malformed-length, and close failures; never mark the stable snapshot ready after an incomplete source scan.
