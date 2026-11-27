@@ -68,8 +68,9 @@ typedef int (*catalog_stage_bundle_prepare_fn)(const catalog_stage_bundle *activ
                                                void *context);
 
 /* Called under the same apply gate after the bundle pointers swap: active is the new
-   generation and retired is the old one. Must be failure-atomic; readers and workers
-   remain blocked until this callback returns. */
+   generation and retired is the old one. Must be failure-atomic; on error the publisher
+   restores the old active bundle before reopening readers. Readers and workers remain
+   blocked until this callback returns. */
 typedef int (*catalog_stage_bundle_retire_fn)(const catalog_stage_bundle *active,
                                               catalog_stage_bundle *retired,
                                               void *context);

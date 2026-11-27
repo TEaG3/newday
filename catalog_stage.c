@@ -1001,6 +1001,11 @@ int catalog_stage_bundle_publish_prepared_retire(catalog_guard *guard,
     if (retire != NULL) {
         status = retire(active, candidate, retire_context);
         if (status != CATALOG_STAGE_OK) {
+            /* Retirement is required to be failure-atomic. Restore the old active
+               generation before readers can enter if its ownership preflight fails. */
+            previous = *active;
+            *active = *candidate;
+            *candidate = previous;
             if (!catalog_guard_finish_apply(guard))
                 return CATALOG_STAGE_ERR_GUARD;
             return status;

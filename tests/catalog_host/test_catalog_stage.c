@@ -1555,7 +1555,7 @@ static int fail_bundle_retire_after_swap(const catalog_stage_bundle *active,
     return CATALOG_STAGE_ERR_ARGUMENT;
 }
 
-static void test_bundle_retire_failure_reopens_gate(void)
+static void test_bundle_retire_failure_rolls_back_and_reopens_gate(void)
 {
     mutex_context mutex;
     catalog_guard guard;
@@ -1589,13 +1589,17 @@ static void test_bundle_retire_failure_reopens_gate(void)
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
     assert(catalog_guard_request_apply(&guard));
-    /* Retirement failure is reported after the swap, but the gate is always reopened. */
+    /* A failure-atomic retirement callback must leave the old generation active.
+       The publisher rolls the bundle swap back before reopening the reader gate. */
     assert(catalog_stage_bundle_publish_prepared_retire(
         &guard, &active, &candidate, NULL, NULL,
         fail_bundle_retire_after_swap, &context) == CATALOG_STAGE_ERR_ARGUMENT);
     assert(context.calls == 1);
-    assert(active.items == candidate_items && candidate.items == active_items);
-    assert(active.snapshot == &candidate_snapshot && candidate.snapshot == &active_snapshot);
+    assert(active.items == active_items && candidate.items == candidate_items);
+    assert(active.sidecars == active_sidecars && candidate.sidecars == candidate_sidecars);
+    assert(active.snapshot == &active_snapshot && candidate.snapshot == &candidate_snapshot);
+    assert(active.count == 1 && candidate.count == 1);
+    assert(active.selected_index == 0 && candidate.selected_index == 0);
     assert(!guard.apply_pending && !guard.applying);
     assert(catalog_guard_read_begin(&guard));
     assert(catalog_guard_read_end(&guard));
@@ -1657,7 +1661,7 @@ int main(void)
     test_safe_snapshot_publish();
     test_safe_bundle_publish();
     test_end_to_end_candidate_apply();
-    test_bundle_retire_failure_reopens_gate();
+    test_bundle_retire_failure_rolls_back_and_reopens_gate();
     test_bundle_selection_rebase();
     test_path_and_validation();
     test_snapshot_append();
