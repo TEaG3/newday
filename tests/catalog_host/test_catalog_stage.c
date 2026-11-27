@@ -1379,7 +1379,6 @@ static void test_end_to_end_candidate_apply(void)
     sidecar_release_counts releases = {0, 0, 0};
     void *alpha_vmc, *alpha_icon, *alpha_cover;
     void *beta_vmc, *beta_icon, *beta_cover;
-    void *removed_vmc, *removed_icon, *removed_cover;
 
     memset(&active_snapshot, 0, sizeof(active_snapshot));
     memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
@@ -1396,9 +1395,9 @@ static void test_end_to_end_candidate_apply(void)
     beta_vmc = active_sidecars.vmc_dir[1] = test_resource();
     beta_icon = active_sidecars.gicon[1] = test_resource();
     beta_cover = active_sidecars.cover_small[1] = test_resource();
-    removed_vmc = active_sidecars.vmc_dir[2] = test_resource();
-    removed_icon = active_sidecars.gicon[2] = test_resource();
-    removed_cover = active_sidecars.cover_half[2] = test_resource();
+    active_sidecars.vmc_dir[2] = test_resource();
+    active_sidecars.gicon[2] = test_resource();
+    active_sidecars.cover_half[2] = test_resource();
     for (int i = 0; i < 3; ++i) {
         active_sidecars.vmc_state[i] = 2;
         active_sidecars.gicon_state[i] = 2;
@@ -1501,9 +1500,6 @@ static void test_end_to_end_candidate_apply(void)
     assert(active_sidecars.vmc_dir[2] == NULL && active_sidecars.gicon[2] == NULL);
     assert(active_sidecars.cover_half[2] == NULL);
     assert(candidate_sidecars.vmc_dir[2] == NULL && candidate_sidecars.gicon[2] == NULL);
-    assert(removed_vmc != active_sidecars.vmc_dir[2]);
-    assert(removed_icon != active_sidecars.gicon[2]);
-    assert(removed_cover != active_sidecars.cover_half[2]);
 
     free(alpha_vmc);
     free(alpha_icon);
