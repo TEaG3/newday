@@ -51,6 +51,14 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertIn("User-Agent: TEa.G3", self.net)
         self.assertNotIn("User-Agent: ORBIT", self.net)
 
+    def test_active_site_copy_hides_legacy_brand_but_preserves_data_migration(self):
+        self.assertNotIn("legacy NULD", self.site_i18n)
+        self.assertNotIn("nuld (legacy key shown as Classic)", self.site_i18n)
+        self.assertIn("Upgrading from an older launcher?", self.site_i18n)
+        self.assertIn("from orbit/ or nuld/ into tea_g3/", self.site_i18n)
+        self.assertIn('"torres, Classic, cristal, aurora', self.site_i18n)
+        self.assertIn("المظهر الكلاسيكي باسم Classic", self.site_i18n)
+
     def test_site_package_translation_describes_single_opl_runtime(self):
         self.assertIn("تتضمن الحزمة ملف TEa.G3.ELF ومحرك OPL الوحيد المضمّن", self.site_i18n)
         self.assertIn("tea_g3/runtime/OPL.ELF", self.site_i18n)
