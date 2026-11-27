@@ -1555,7 +1555,7 @@ static int fail_bundle_retire_after_swap(const catalog_stage_bundle *active,
     return CATALOG_STAGE_ERR_ARGUMENT;
 }
 
-static void test_bundle_retire_failure_reopens_gate(void)
+static void test_bundle_retire_failure_rolls_back_and_reopens_gate(void)
 {
     mutex_context mutex;
     catalog_guard guard;
