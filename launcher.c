@@ -5,6 +5,7 @@
 // gfx_flip sleeps on a vsync semaphore, so the loader runs in between. Frame time = COP0.Count (ps2tek:1117-1121)
 // from gfx_begin to the GS FINISH of gfx_end; the first 3 windows of 600 frames go to mass0:/launcher.txt.
 #include <stdio.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -790,47 +791,85 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
     return n;
 }
 
-static int scan_dir(entry *items, int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS, the USB only) of source s
+static int scan_dir(entry *items, int s, int k, int n, int *incomplete) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS) of source s
 {
     static const char *dirs[3] = {"DVD", "CD", "POPS"};
     struct dirent *e;
     char path[300], raw[16];
-    if (s < 0 || s >= nsrc || k < 0 || k >= 3 || n < 1 || n >= MAXC) return n;
+    if (!incomplete || s < 0 || s >= nsrc || k < 0 || k >= 3 || n < 1) return n;
+    if (n > MAXC) {
+        *incomplete = 1;
+        return n;
+    }
     int path_len = snprintf(path, sizeof(path), "%s/%s", src[s].root, dirs[k]);
-    if (path_len < 0 || path_len >= (int)sizeof(path)) return n;
+    if (path_len < 0 || path_len >= (int)sizeof(path)) {
+        *incomplete = 1;
+        return n;
+    }
+    errno = 0;
     DIR *d = opendir(path);
-    if (!d) return n;
-    while ((e = readdir(d)) != NULL && n < MAXC) {
+    if (!d) {
+        if (errno != ENOENT) *incomplete = 1; // an absent optional folder is a valid empty source
+        return n;
+    }
+    for (;;) {
+        errno = 0;
+        e = readdir(d);
+        if (!e) {
+            if (errno != 0) *incomplete = 1;
+            break;
+        }
         int ps1 = k == 2;
         if (!has_ext(e->d_name, ps1 ? ".vcd" : ".iso") &&
             (ps1 || !has_ext(e->d_name, ".zso"))) continue;
+        if (n >= MAXC) {
+            printf("scan: catalogue capacity exceeded in %s\n", path);
+            *incomplete = 1;
+            break;
+        }
         entry *item = &items[n];
         memset(item, 0, sizeof(*item));
         int rel_len = snprintf(item->path, sizeof(item->path), "%s/%s", dirs[k], e->d_name);
-        if (rel_len < 0 || rel_len >= (int)sizeof(item->path)) continue;
+        if (rel_len < 0 || rel_len >= (int)sizeof(item->path)) {
+            *incomplete = 1;
+            continue;
+        }
         path_len = snprintf(path, sizeof(path), "%s/%s", src[s].root, item->path);
-        if (path_len < 0 || path_len >= (int)sizeof(path)) continue;
+        if (path_len < 0 || path_len >= (int)sizeof(path)) {
+            *incomplete = 1;
+            continue;
+        }
         int fd = fileXioOpen(path, FIO_O_RDONLY);
         int zso_file = !ps1 && has_ext(e->d_name, ".zso");
         int ok = 0;
         s64 bytes = -1;
-        if (fd >= 0) {
-            bytes = fileXioLseek64(fd, 0, FIO_SEEK_END);
-            if (bytes > 0) {
-                if (zso_file) {
-                    if (zso_ee_open(fd) == 1) ok = iso_serial(zso_fx_read, &fd, 0, raw);
-                    zso_ee_close();
-                } else {
-                    ok = iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw);
-                }
-            }
-            if (fileXioClose(fd) < 0) printf("scan: close failed: %s\n", path);
+        if (fd < 0) {
+            printf("scan: cannot open game image: %s\n", path);
+            *incomplete = 1;
+            continue;
         }
-        /* OPL's canonical filename can supply a serial when SYSTEM.CNF is absent,
-           but a missing, empty, or unreadable file is never listed. */
+        bytes = fileXioLseek64(fd, 0, FIO_SEEK_END);
+        if (bytes > 0) {
+            if (zso_file) {
+                if (zso_ee_open(fd) == 1) ok = iso_serial(zso_fx_read, &fd, 0, raw);
+                zso_ee_close();
+            } else {
+                ok = iso_serial(ps1 ? vcd_read : fx_read, &fd, ps1, raw);
+            }
+        }
+        if (fileXioClose(fd) < 0) {
+            printf("scan: close failed: %s\n", path);
+            *incomplete = 1;
+        }
         done_n++;
         if (bytes <= 0) {
             printf("scan: unreadable or empty game image: %s\n", path);
+            *incomplete = 1;
+            continue;
+        }
+        if (zso_file && !ok) {
+            printf("scan: invalid or unreadable ZSO image: %s\n", path);
+            *incomplete = 1;
             continue;
         }
         if (!ok && !zso_file) ok = name_serial(e->d_name, raw);
@@ -847,7 +886,10 @@ static int scan_dir(entry *items, int s, int k, int n) // ISOs (k 0 DVD, 1 CD) o
         item->catalog_size = (uint64_t)bytes;
         n++;
     }
-    closedir(d);
+    if (closedir(d) < 0) {
+        printf("scan: directory close failed: %s\n", path);
+        *incomplete = 1;
+    }
     return n;
 }
 
@@ -1062,7 +1104,8 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 		} else if (src[s].type == SRC_UDPFS && udpfs_cat)
 			n = catalog_load(items, s, n);
 		else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
-			n = scan_dir(items, s, 1, scan_dir(items, s, 0, n));
+			n = scan_dir(items, s, 0, n, &incomplete);
+			n = scan_dir(items, s, 1, n, &incomplete);
 			if (src[s].type == SRC_USB) {
 				int ul_count = scan_ul(items, s, n);
 				if (ul_count < 0) {
@@ -1072,26 +1115,58 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 			}
 		}
 	}
-	if (src[0].type == SRC_USB) n = scan_dir(items, 0, 2, n); // PS1: POPStarter reads mass:
-	snprintf(path, sizeof(path), "%s/APPS", homedev);
-	DIR *d = opendir(path);
-	while (d && (e = readdir(d)) && n < MAXC) {
+	if (src[0].type == SRC_USB) n = scan_dir(items, 0, 2, n, &incomplete); // PS1: POPStarter reads mass:
+	int apps_path_len = snprintf(path, sizeof(path), "%s/APPS", homedev);
+	DIR *d = NULL;
+	if (apps_path_len < 0 || apps_path_len >= (int)sizeof(path)) {
+		incomplete = 1;
+	} else {
+		errno = 0;
+		d = opendir(path);
+		if (!d && errno != ENOENT) incomplete = 1;
+	}
+	while (d) {
+		errno = 0;
+		e = readdir(d);
+		if (!e) {
+			if (errno != 0) incomplete = 1;
+			break;
+		}
 		if (e->d_name[0] == '.') continue;
+		if (n >= MAXC) {
+			printf("scan: catalogue capacity exceeded in APPS\n");
+			incomplete = 1;
+			break;
+		}
 		memset(&items[n], 0, sizeof(items[n]));
 		done_n++;
 		if (has_ext(e->d_name, ".elf")) { // a loose ELF: titled by its name
-			snprintf(items[n].path, sizeof(items[n].path), "APPS/%s", e->d_name);
+			int app_len = snprintf(items[n].path, sizeof(items[n].path), "APPS/%s", e->d_name);
+			if (app_len < 0 || app_len >= (int)sizeof(items[n].path)) {
+				incomplete = 1;
+				continue;
+			}
 			iso_title(e->d_name, items[n].title, sizeof(items[n].title));
 		} else { // a folder with title.cfg
-			snprintf(path, sizeof(path), "%s/APPS/%s/title.cfg", homedev, e->d_name);
+			int cfg_len = snprintf(path, sizeof(path), "%s/APPS/%s/title.cfg", homedev, e->d_name);
+			if (cfg_len < 0 || cfg_len >= (int)sizeof(path)) {
+				incomplete = 1;
+				continue;
+			}
 			if (!ini_load(&cfg_app, path) || !*ini_get(&cfg_app, "", "boot", "")) continue;
-			snprintf(items[n].path, sizeof(items[n].path), "APPS/%s/%s", e->d_name, ini_get(&cfg_app, "", "boot", ""));
-			snprintf(items[n].title, sizeof(items[n].title), "%s", ini_get(&cfg_app, "", "title", e->d_name));
+			int app_len = snprintf(items[n].path, sizeof(items[n].path), "APPS/%s/%s", e->d_name, ini_get(&cfg_app, "", "boot", ""));
+			if (app_len < 0 || app_len >= (int)sizeof(items[n].path)) {
+				incomplete = 1;
+				continue;
+			}
+			if (snprintf(items[n].title, sizeof(items[n].title), "%s", ini_get(&cfg_app, "", "title", e->d_name)) >= (int)sizeof(items[n].title))
+				incomplete = 1;
 		}
 		items[n].kind = K_APP, items[n].src = 0;
 		n++;
 	}
-	if (d) closedir(d);
+	if (d && closedir(d) < 0) incomplete = 1;
+	if (n > MAXC) n = MAXC, incomplete = 1;
 	qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
 	int snapshot_status;
 	if (incomplete) {

@@ -105,6 +105,24 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (!record.size) record.flags |= 0x80u;", capture)
 
 
+    def test_directory_and_app_scans_fail_closed_on_capacity_and_io_errors(self):
+        scan = function_body(LAUNCHER, "static int scan_dir(", "// phase 17:")
+        self.assertIn("int *incomplete", scan)
+        self.assertIn("if (n >= MAXC)", scan)
+        self.assertIn("if (n > MAXC)", scan)
+        self.assertIn("errno = 0", scan)
+        self.assertIn("if (errno != ENOENT)", scan)
+        self.assertIn("if (closedir(d) < 0)", scan)
+        self.assertIn("fileXioClose(fd) < 0", scan)
+        self.assertIn("*incomplete = 1", scan)
+        apps = function_body(LAUNCHER, "int apps_path_len =", "qsort(items + 1")
+        self.assertIn("if (n >= MAXC)", apps)
+        self.assertIn("if (errno != 0) incomplete = 1;", apps)
+        self.assertIn("if (d && closedir(d) < 0)", apps)
+        self.assertIn("incomplete = 1;", apps)
+        builder = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
+        self.assertIn("if (n > MAXC) n = MAXC, incomplete = 1;", builder)
+
     def test_all_source_scanners_write_only_to_the_supplied_candidate_buffer(self):
         ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
         iso = function_body(LAUNCHER, "static int scan_dir(", "// phase 17:")
@@ -125,7 +143,10 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         builder = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
         publish = function_body(LAUNCHER, "static void load_games(void)", "// ---- disc drive")
         self.assertIn("memset(&items[0], 0, sizeof(items[0]))", builder)
-        self.assertIn("scan_dir(items, s, 1, scan_dir(items, s, 0, n))", builder)
+        self.assertIn("scan_dir(items, s, 0, n, &incomplete)", builder)
+        self.assertIn("scan_dir(items, s, 1, n, &incomplete)", builder)
+        self.assertIn("scan_dir(items, 0, 2, n, &incomplete)", builder)
+        self.assertNotIn("scan_dir(items, s, 1, scan_dir", builder)
         self.assertIn("scan_ul(items, s, n)", builder)
         self.assertIn("qsort(items + 1", builder)
         self.assertIn("catalog_snapshot_capture(items, n, snapshot)", builder)
