@@ -2042,6 +2042,14 @@ static void disc_apply_pending(void)
 		cover_big[0] = disc_cover_big, cover_small[0] = disc_cover_small, cover_half[0] = disc_cover_half;
 		disc_cover_big = disc_cover_small = disc_cover_half = NULL;
 		gicon[0] = NULL, gicon_state[0] = 0;
+		/* cv[0] is part of the stable snapshot too. Keep its disc-state fingerprint
+		   aligned with the entry before any future candidate can migrate sidecars. */
+		if (catalog_active_snapshot_ready && catalog_active_bundle.snapshot &&
+		    catalog_active_bundle.count > 0 &&
+		    catalog_snapshot_capture(cv, ncv, catalog_active_bundle.snapshot) != CATALOG_STAGE_OK) {
+			catalog_active_snapshot_ready = 0;
+			printf("disc: active catalog snapshot invalidated after disc-state update; refresh remains disabled\\n");
+		}
 		disc_new = 0;
 		applied = 1;
 	}
