@@ -188,6 +188,15 @@ static int sidecar_record_unchanged(const catalog_stage_record *old_record,
            old_record->fingerprint == new_record->fingerprint;
 }
 
+static int sidecar_sets_overlap(const catalog_stage_sidecar_set *a,
+                                  const catalog_stage_sidecar_set *b)
+{
+    uintptr_t a_begin = (uintptr_t)a;
+    uintptr_t b_begin = (uintptr_t)b;
+    if (a_begin <= b_begin) return b_begin - a_begin < sizeof(*a);
+    return a_begin - b_begin < sizeof(*b);
+}
+
 static int sidecar_set_has_resources(const catalog_stage_sidecar_set *state,
                                      size_t start, size_t end)
 {
@@ -228,7 +237,7 @@ int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot
     int status;
 
     if (old_snapshot == NULL || new_snapshot == NULL || old_state == NULL ||
-        new_state == NULL || old_state == new_state ||
+        new_state == NULL || sidecar_sets_overlap(old_state, new_state) ||
         old_snapshot == new_snapshot)
         return CATALOG_STAGE_ERR_ARGUMENT;
     if (old_state_capacity > CATALOG_STAGE_MAX_ITEMS ||
@@ -292,7 +301,8 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
         old_snapshot->count > old_state_capacity ||
         new_snapshot->count > new_state_capacity)
         return CATALOG_STAGE_ERR_CAPACITY;
-    if (sidecar_set_has_resources(old_state, old_snapshot->count, CATALOG_STAGE_MAX_ITEMS))
+    if (sidecar_set_has_resources(old_state, old_snapshot->count, CATALOG_STAGE_MAX_ITEMS) ||
+        sidecar_set_has_resources(new_state, new_snapshot->count, CATALOG_STAGE_MAX_ITEMS))
         return CATALOG_STAGE_ERR_ARGUMENT;
 
     status = catalog_stage_snapshot_map(old_snapshot, new_snapshot,
