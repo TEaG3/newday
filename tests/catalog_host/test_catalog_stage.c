@@ -847,7 +847,9 @@ static void test_safe_bundle_publish(void)
     /* Existing readers prevent the entire bundle from moving; retry after drain. */
     assert(catalog_guard_read_begin(&guard));
     assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
+    assert(catalog_stage_bundle_publish_prepared(&guard, &active, &candidate,
+                                                  migrate_bundle_sidecars, &prepare_context) == CATALOG_STAGE_ERR_BUSY);
+    assert(prepare_context.calls == 2); /* preparation never runs while a reader is active */
     assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
     assert(active.snapshot == &candidate_snapshot);
     assert(catalog_guard_read_end(&guard));
