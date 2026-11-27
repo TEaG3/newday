@@ -1832,7 +1832,7 @@ static void art_import(void)
 {
 	char path[64];
 	int got = 0, max = 1 << 20;
-	char *net = NULL; // retained between entries, never across a catalog lease
+	char *net = NULL; // response buffer only; no catalog-entry pointer survives a lease
 	if (!background_work_begin(&art_busy)) return;
 	if (!ra_launching) {
 		snprintf(path, sizeof(path), "%s/covers", homedev);
