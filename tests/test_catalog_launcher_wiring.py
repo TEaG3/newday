@@ -139,9 +139,10 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("((entry *)catalog_candidate_bundle.items)[0] = cv[0];", apply)
         self.assertIn("catalog_snapshot_capture", apply)
         self.assertIn("catalog_stage_snapshot_diff", apply)
-        self.assertIn("catalog_stage_bundle_publish_prepared", apply)
-        self.assertIn("catalog_stage_sidecar_set_retire", apply)
-        self.assertIn("catalog_live_release_resource", apply)
+        self.assertIn("catalog_stage_bundle_publish_prepared_retire", apply)
+        self.assertIn("catalog_live_bundle_retire", apply)
+        self.assertIn("catalog_stage_sidecar_set_retire", LAUNCHER)
+        self.assertIn("catalog_live_release_resource", LAUNCHER)
         self.assertIn("if (catalog_live_guard_faulted) return -1;", apply)
         main = LAUNCHER[LAUNCHER.index("int main(int argc, char *argv[])"):]
         self.assertLess(main.index("catalog_live_apply_frame()"), main.index("catalog_reader_try_begin()"))
