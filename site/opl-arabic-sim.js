@@ -37,13 +37,12 @@
       rows: [
         {ar:"الإعدادات",en:"Settings"},
         {ar:"إعدادات العرض",en:"Display Settings"},
-        {ar:"إعدادات الصوت",en:"Audio Settings"},
-        {ar:"إعدادات وحدة التحكم",en:"Controller Settings"},
-        {ar:"إعدادات الرقابة الأبوية",en:"Parental Lock Settings"},
-        {ar:"إعدادات الشبكة",en:"Network Settings"},
+        {ar:"إعداد الشبكة",en:"Network Config"},
         {ar:"تحديث الشبكة",en:"Network Update"},
-        {ar:"حول",en:"About"},
         {ar:"حفظ التغييرات",en:"Save Changes"},
+        {ar:"بدء خادم HDL",en:"Start HDL Server"},
+        {ar:"إعدادات الغش",en:"Cheat Settings"},
+        {ar:"حول",en:"About"},
         {ar:"خروج",en:"Exit"},
         {ar:"إيقاف التشغيل",en:"Power Off"}
       ]
@@ -229,7 +228,7 @@
     else if (key === "cross") confirm();
     else if (key === "circle") back();
     else if (key === "triangle" && (state.screen === "games" || state.screen === "hdd")) setScreen("game",true);
-    else if (key === "square") { state.index = 0; render(); note.textContent = "انتقلت إلى أول عنصر في القائمة."; }
+    else if (key === "square") note.textContent = "زر □: صفحة معلومات اللعبة ليست ضمن اللقطات المرجعية الحالية.";
     else if (key === "start") setScreen("menu",true);
   }
   switchButtons.forEach(button => button.addEventListener("click",() => setScreen(button.dataset.screen,true)));
