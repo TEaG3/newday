@@ -128,7 +128,7 @@ static catalog_stage_bundle catalog_active_bundle;
 #define cv ((entry *)catalog_active_bundle.items)
 /* The bundle owns the authoritative count so it moves with items and sidecars. */
 #define ncv ((int)catalog_active_bundle.count)
-/* Stable-key baseline from the boot-time catalog; live rescans remain disabled. */
+/* Stable-key baseline for the active generation; the periodic monitor is default-off. */
 static catalog_stage_snapshot catalog_boot_snapshot;
 static volatile int catalog_active_snapshot_ready;
 /* The inactive generation is fully separate from cv[] and remains unpublished until a frame-safe apply. */
@@ -139,6 +139,7 @@ static catalog_stage_bundle catalog_candidate_bundle;
 static catalog_stage_sidecar_set catalog_sidecar_candidate;
 static volatile int catalog_live_candidate_ready;
 static volatile int catalog_live_faulted;
+static volatile int catalog_live_guard_faulted; /* guard state unknown: render thread must not inspect either bundle */
 static int catalog_live_apply_requested;
 static int catalog_live_apply_retry;
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
@@ -1609,7 +1610,7 @@ static int catalog_live_scan_once(void)
 		return 0;
 	if (!catalog_guard_scan_begin(&catalog_live_guard)) {
 		if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0)
-			catalog_live_faulted = 1;
+			catalog_live_faulted = catalog_live_guard_faulted = 1;
 		return 0;
 	}
 
@@ -1620,7 +1621,7 @@ static int catalog_live_scan_once(void)
 	                        catalog_guard_ps2_scan_cancelled, &catalog_live_guard);
 	scan_end = catalog_guard_scan_end(&catalog_live_guard);
 	if (scan_end < 0) {
-		catalog_live_faulted = 1;
+		catalog_live_faulted = catalog_live_guard_faulted = 1;
 		printf("catalog live: scan guard failed; monitor stopped\n");
 		catalog_live_candidate_discard();
 		return 0;
@@ -1660,6 +1661,7 @@ static int catalog_live_apply_frame(void)
 {
 	int status;
 
+	if (catalog_live_guard_faulted) return -1;
 	if (!catalog_live_ready || !catalog_live_candidate_ready || catalog_live_faulted)
 		return 0;
 	if (!catalog_live_apply_requested && catalog_live_apply_retry > 0) {
@@ -1701,8 +1703,10 @@ static int catalog_live_apply_frame(void)
 	/* A pending request is retried without taking a new reader lease. If gameplay or I/O
 	   cancelled it, request_apply() fails and the next attempt refreshes the disc and diff. */
 	if (!catalog_guard_request_apply(&catalog_live_guard)) {
-		if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0)
-			catalog_live_faulted = 1;
+		if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0) {
+			catalog_live_faulted = catalog_live_guard_faulted = 1;
+			return -1;
+		}
 		catalog_live_apply_requested = 0;
 		catalog_live_apply_retry = 30;
 		return 0;
@@ -1715,8 +1719,10 @@ static int catalog_live_apply_frame(void)
 	if (status == CATALOG_STAGE_ERR_BUSY) {
 		/* Keep the candidate while existing reader leases drain. */
 		if (!catalog_guard_request_apply(&catalog_live_guard)) {
-			if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0)
-				catalog_live_faulted = 1;
+			if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0) {
+				catalog_live_faulted = catalog_live_guard_faulted = 1;
+				return -1;
+			}
 			catalog_live_apply_requested = 0;
 			catalog_live_apply_retry = 30;
 		}
@@ -1724,9 +1730,9 @@ static int catalog_live_apply_frame(void)
 	}
 	if (status == CATALOG_STAGE_ERR_GUARD) {
 		/* The publisher may have swapped before a semaphore-release fault; never inspect either bundle. */
-		catalog_live_faulted = 1;
-		printf("catalog live: apply guard failed; monitor stopped fail-closed\n");
-		return 0;
+		catalog_live_faulted = catalog_live_guard_faulted = 1;
+		printf("catalog live: apply guard failed; render thread stopped fail-closed\n");
+		return -1;
 	}
 	if (status != CATALOG_STAGE_OK) {
 		printf("catalog live: apply rejected (%d); active generation kept\n", status);
@@ -1766,6 +1772,7 @@ static void catalog_live_monitor_thread(void *arg)
 	(void)arg;
 	for (;;) {
 		sleep(CATALOG_LIVE_MONITOR_INTERVAL_SEC);
+		if (catalog_live_guard_faulted) break;
 		if (!catalog_live_ready || !catalog_active_snapshot_ready || ra_launching ||
 		    catalog_live_candidate_ready || catalog_live_faulted)
 			continue;
@@ -3723,7 +3730,9 @@ int main(int argc, char *argv[])
 
 	for (int f = 0;; f++) {
 		/* The optional monitor can publish only here, after the previous frame released its reader lease. */
-		if (catalog_live_apply_frame()) {
+		int live_apply_status = catalog_live_apply_frame();
+		if (live_apply_status < 0) { usleep(1000); continue; } /* fail-closed: do not inspect either bundle */
+		if (live_apply_status > 0) {
 			sel = catalog_active_bundle.selected_index >= 0 ? catalog_active_bundle.selected_index : 0;
 			s = 0;
 			gtop = ltop = 0;
