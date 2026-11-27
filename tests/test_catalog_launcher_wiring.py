@@ -5,6 +5,8 @@ ROOT = Path(__file__).resolve().parents[1]
 LAUNCHER = (ROOT / "launcher.c").read_text(encoding="utf-8")
 STAGE = (ROOT / "catalog_stage.c").read_text(encoding="utf-8")
 STAGE_HEADER = (ROOT / "catalog_stage.h").read_text(encoding="utf-8")
+SOURCES = (ROOT / "sources.c").read_text(encoding="utf-8")
+SOURCES_HEADER = (ROOT / "sources.h").read_text(encoding="utf-8")
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github" / "workflows" / "build-ps2.yml").read_text(encoding="utf-8")
 
@@ -129,6 +131,35 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(publish.index("memcpy(cv, candidate"), publish.index("ncv = count"))
         self.assertIn("free(candidate)", publish)
         self.assertIn("load_games_into(cv, &catalog_active_snapshot)", publish)
+
+    def test_hdl_scan_rejects_partial_directory_reads_and_closes_before_callbacks(self):
+        start = SOURCES.index("int src_hdl_scan(")
+        end = SOURCES.index("\\n}", start) + 2
+        body = SOURCES[start:end]
+        self.assertIn("SRC_HDL_SCAN_ERR_OPEN", body)
+        self.assertIn("SRC_HDL_SCAN_ERR_READ", body)
+        self.assertIn("SRC_HDL_SCAN_ERR_CLOSE", body)
+        self.assertIn("while ((read_result = fileXioDread(fd, &de)) > 0)", body)
+        self.assertIn("if (read_result < 0)", body)
+        self.assertIn("if (fileXioDclose(fd) < 0", body)
+        self.assertIn("hdl_scan_free(head);", body)
+        self.assertLess(body.rindex("fileXioDclose(fd)"), body.index("if (cb) cb("))
+        self.assertIn("SRC_HDL_SCAN_ERR_MEMORY", SOURCES_HEADER)
+        self.assertIn("SRC_HDL_SCAN_ERR_METADATA", SOURCES_HEADER)
+
+    def test_ul_short_reads_and_close_failures_invalidate_the_stable_snapshot(self):
+        ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
+        self.assertIn("if (got != (int)sizeof(raw))", ul)
+        self.assertIn("failed = 1;", ul)
+        self.assertIn("if (fileXioClose(fd) < 0) failed = 1;", ul)
+        self.assertIn("return failed ? -1 : n;", ul)
+        load = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
+        self.assertIn("if (hdl_status < 0)", load)
+        self.assertIn("if (ul_count < 0)", load)
+        self.assertIn("int snapshot_status;", load)
+        self.assertIn("snapshot->count = 0;", load)
+        self.assertIn("CATALOG_STAGE_SCAN_ERR_SOURCE", load)
+        self.assertIn("catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK", load)
 
     def test_safe_publish_primitive_is_host_tested_but_not_enabled_in_launcher(self):
         self.assertIn("catalog_stage_snapshot_publish", STAGE)
