@@ -26,7 +26,9 @@ typedef struct {
    move together while the catalog guard blocks readers at the frame safe point. */
 typedef struct {
     void *items;
+    size_t items_capacity; /* entry slots available in items */
     void *sidecars;
+    size_t sidecars_capacity; /* entry slots available in sidecars */
     size_t count;
     catalog_stage_snapshot *snapshot;
 } catalog_stage_bundle;
