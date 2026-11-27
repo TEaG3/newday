@@ -44,6 +44,6 @@
 - [ ] Target-test module initialization, TCP connect/send, and semaphore lifecycle on a real PS2 before enabling live refresh.
 - [x] Probe every configured local source root before and after candidate scanning; treat ENOENT for an optional DVD/CD/POPS folder as empty only when the root still opens. Keep HDL and remote UDPFS on their source-specific paths. Host-test missing, non-directory, and overlong roots; this is not source polling or media-identity detection.
 - [x] Add a host end-to-end candidate/apply regression: a cancelled scan leaves the active bundle untouched; a successful scan exercises stable-key diff, typed sidecar migration, guarded bundle swap, selection/worker-index rebasing, and old-generation resource retirement.
-- [ ] Wire the typed sidecar set and derived render-cache rebuild/reset into the live launcher candidate/apply path; keep live monitoring disabled until render-thread and target validation pass.
+- [x] Wire the typed sidecar set and derived render-cache rebuild/reset into the live launcher candidate/apply path; keep live monitoring disabled until render-thread and target validation pass.
 
 - [x] Reject partial HD Loader/APA and USBExtreme UL source scans on directory read, sector read, malformed-length, and close failures; never mark the stable snapshot ready after an incomplete source scan.
