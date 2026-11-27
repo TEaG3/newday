@@ -858,28 +858,28 @@ static void test_safe_bundle_publish(void)
     /* Capacity metadata is part of the bundle contract; undersized buffers never swap. */
     candidate.items_capacity = 0;
     assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_CAPACITY);
     assert(active.items == active_items && active.sidecars == active_sidecars);
     assert(!guard.apply_pending && !guard.applying);
     candidate.items_capacity = 2;
 
     candidate.sidecars_capacity = 0;
     assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_CAPACITY);
     assert(active.items == active_items && active.sidecars == active_sidecars);
     assert(!guard.apply_pending && !guard.applying);
     candidate.sidecars_capacity = 2;
 
     active.items_capacity = 0;
     assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_CAPACITY);
     assert(active.items == active_items && active.sidecars == active_sidecars);
     assert(!guard.apply_pending && !guard.applying);
     active.items_capacity = 3;
 
     active.sidecars_capacity = 0;
     assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_CAPACITY);
     assert(active.items == active_items && active.sidecars == active_sidecars);
     assert(!guard.apply_pending && !guard.applying);
     active.sidecars_capacity = 3;
