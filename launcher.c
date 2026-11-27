@@ -1916,12 +1916,12 @@ static void art_import(void)
 	char path[64];
 	int got = 0, max = 1 << 20;
 	char *net = NULL; // response buffer only; no catalog-entry pointer survives a lease
-	if (!background_work_begin(&art_busy)) return;
+	if (!background_io_begin(&art_busy)) return;
 	if (!ra_launching) {
 		snprintf(path, sizeof(path), "%s/covers", homedev);
 		mkdir(path, 0777);
 	}
-	background_work_end(&art_busy);
+	background_io_end(&art_busy);
 	if (art_busy) return;
 
 	/* Each item owns its own reader/I/O lease. A safe apply may occur between items. */
@@ -1993,11 +1993,11 @@ static void download_covers(void)
 	int ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
 	printf("covers: %d of %d downloaded in %d ms, state %d\n", dl_got, dl_total, ms, dl_state);
 	/* The summary file is also storage I/O, so give it a short independent lease. */
-	if (!dl_busy && background_work_begin(&dl_busy)) {
+	if (!dl_busy && background_io_begin(&dl_busy)) {
 		FILE *fp = fopen(LOG_TXT, "a");
 		if (fp) fprintf(fp, "TEa.G3 covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n",
 		                dl_got, dl_total, ms, dl_got ? ms / dl_got : 0, dl_state, net_why, net_ip()), fclose(fp);
-		background_work_end(&dl_busy);
+		background_io_end(&dl_busy);
 	}
 }
 
