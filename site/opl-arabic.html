@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="استعرض واجهة OPL العربية بمحاكاة تفاعلية داخل المتصفح ومعرض لقطات من المحاكي.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <title>OPL Arabic — محاكي واستعراض المشغّل</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+@font-face {
+  font-family: "Neo Sans Arabic";
+  src: local("Neo Sans Arabic"), local("Neo Sans Arabic Regular"), local("Neo Sans Arabic Medium");
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+}
+:root {
+  --bg: #080b12;
+  --bg-soft: #0d111b;
+  --panel: rgba(17, 23, 36, .86);
+  --panel-solid: #111724;
+  --line: rgba(175, 194, 224, .12);
+  --line-strong: rgba(175, 194, 224, .22);
+  --text: #f4f6fb;
+  --muted: #9ba8ba;
+  --muted-2: #718096;
+  --lime: #c8ff2e;
+  --lime-soft: rgba(200, 255, 46, .13);
+  --cyan: #4de1f2;
+  --font-ui: "Neo Sans Arabic", "Alexandria", "Noto Sans Arabic", Tahoma, sans-serif;
+  --font-display: "Alexandria", "Neo Sans Arabic", "Noto Sans Arabic", Tahoma, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 92px; }
+body {
+  margin: 0; color: var(--text); background: var(--bg);
+  font: 16px/1.75 var(--font-ui); overflow-x: hidden;
+  background-image: radial-gradient(ellipse at 15% 8%, rgba(37, 87, 115, .18), transparent 42%), radial-gradient(ellipse at 88% 24%, rgba(105, 124, 36, .09), transparent 36%);
+}
+button, a { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-decoration: none; }
+button { color: inherit; font: inherit; }
+button:focus-visible, a:focus-visible, canvas:focus-visible { outline: 2px solid var(--lime); outline-offset: 4px; }
+::selection { color: #080b12; background: var(--lime); }
+.ambient { position: fixed; z-index: -1; width: 34rem; height: 34rem; border-radius: 50%; filter: blur(115px); opacity: .11; pointer-events: none; }
+.ambient-one { background: #20acc5; top: 12%; left: -20rem; }
+.ambient-two { background: #9dc52c; bottom: 7%; right: -22rem; }
+.section-wrap { width: min(1180px, calc(100% - 48px)); margin-inline: auto; }
+
+/* Navigation */
+.site-nav { position: sticky; top: 0; z-index: 20; min-height: 76px; padding-inline: max(24px, calc((100vw - 1180px) / 2)); display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); background: rgba(8, 11, 18, .78); backdrop-filter: blur(18px); }
+.brand { display: inline-flex; align-items: center; gap: 12px; white-space: nowrap; }
+.brand-mark { width: 28px; height: 28px; position: relative; display: inline-block; border: 2px solid #eff4fb; border-radius: 50%; transform: rotate(-38deg); }
+.brand-mark span { position: absolute; left: 11px; top: -2px; height: 28px; width: 2px; background: var(--lime); }
+.brand-mark span:nth-child(2) { left: 5px; opacity: .65; height: 13px; top: 6px; }
+.brand-mark span:nth-child(3) { left: 17px; opacity: .65; height: 13px; top: 6px; }
+.brand-name { font: 700 14px/1.2 var(--font-display); letter-spacing: .08em; direction: ltr; }
+.brand-name b { color: var(--lime); font-weight: 500; }
+.nav-links { display: flex; align-items: center; gap: clamp(18px, 3vw, 38px); color: #b4c0cf; font-size: 13px; }
+.nav-links a { transition: color .2s; }
+.nav-links a:hover { color: var(--lime); }
+.nav-cta { padding: 9px 15px; border: 1px solid var(--line-strong); border-radius: 4px; font-size: 12px; color: var(--lime); transition: background .2s, border-color .2s; }
+.nav-cta:hover { background: var(--lime-soft); border-color: rgba(200,255,46,.45); }
+.nav-cta span { margin-right: 8px; }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: .85fr 1.15fr; align-items: center; gap: clamp(42px, 8vw, 100px); padding-block: clamp(78px, 10vw, 140px) 112px; }
+.hero-copy { position: relative; z-index: 1; }
+.eyebrow, .section-kicker { color: var(--lime); font: 600 10px/1.5 var(--font-display); letter-spacing: .16em; direction: ltr; }
+.eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.eyebrow-dot, .pulse-dot { width: 7px; height: 7px; display: inline-block; border-radius: 50%; background: var(--lime); box-shadow: 0 0 16px rgba(200,255,46,.75); }
+h1, h2, h3, p { margin-top: 0; }
+h1, h2 { font-family: var(--font-display); }
+.hero h1 { margin-bottom: 22px; font-size: clamp(48px, 6.8vw, 88px); line-height: 1.2; font-weight: 700; letter-spacing: -.055em; }
+.hero h1 em, .download-panel h2 em { color: var(--lime); font-style: normal; }
+.hero-copy > p { color: #aeb9c9; max-width: 480px; font-size: 15px; line-height: 2.05; margin-bottom: 31px; }
+.hero-actions, .download-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.button { min-height: 48px; padding: 11px 19px; display: inline-flex; justify-content: center; align-items: center; gap: 16px; border: 1px solid transparent; border-radius: 4px; font-size: 13px; font-weight: 700; transition: transform .2s, background .2s, border-color .2s; }
+.button:hover { transform: translateY(-2px); }
+.button-primary { background: var(--lime); color: #11170a; box-shadow: 0 8px 34px rgba(200,255,46,.12); }
+.button-primary:hover { background: #d8ff68; }
+.button-quiet { border-color: var(--line-strong); color: var(--text); }
+.button-quiet:hover, .button-outline:hover { border-color: var(--lime); color: var(--lime); }
+.hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 44px; color: var(--muted-2); font-size: 11px; }
+.meta-line { width: 25px; height: 1px; background: var(--lime); }
+.meta-sep { color: var(--lime); }
+.hero-art { position: relative; min-width: 0; }
+.hero-glow { position: absolute; inset: 12% 8%; background: rgba(63, 192, 208, .16); filter: blur(65px); }
+.hero-screen-frame { position: relative; z-index: 1; padding: 13px; border: 1px solid rgba(175, 194, 224, .2); border-radius: 10px; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.012)); box-shadow: 0 34px 90px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12); transform: perspective(1200px) rotateY(-4deg) rotateX(2deg); }
+.screen-topline { height: 30px; display: flex; align-items: center; justify-content: space-between; color: #8291a6; font: 9px var(--font-display); letter-spacing: .14em; direction: ltr; }
+.screen-topline > span:first-child { color: var(--lime); font-size: 13px; font-weight: 800; }
+.screen-live { display: flex; align-items: center; gap: 6px; color: #bac6d4; }
+.screen-live i { width: 5px; height: 5px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
+#heroScreen { width: 100%; display: block; aspect-ratio: 16 / 9; border: 1px solid rgba(120, 160, 196, .18); border-radius: 3px; background: #061226; }
+.screen-reflection { position: absolute; inset: 42px 13px 13px; pointer-events: none; background: linear-gradient(124deg, rgba(255,255,255,.08), transparent 24%, transparent 72%, rgba(255,255,255,.025)); }
+.floating-chip { position: absolute; z-index: 3; padding: 8px 12px; border: 1px solid rgba(175,194,224,.2); border-radius: 4px; background: rgba(11,17,28,.88); color: #d3dce8; box-shadow: 0 12px 30px rgba(0,0,0,.25); font: 10px var(--font-display); letter-spacing: .08em; direction: ltr; }
+.chip-top { top: -20px; right: -17px; }
+.chip-bottom { bottom: -20px; left: -14px; }
+.chip-bottom b { color: var(--lime); margin-left: 8px; }
+.chip-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; background: var(--lime); }
+
+/* Section headings */
+.simulator-section, .gallery-section, .feature-section { padding-top: 70px; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 28px; }
+.section-heading h2 { margin: 12px 0 0; font-size: clamp(26px, 3.5vw, 38px); line-height: 1.4; font-weight: 700; }
+.section-heading > p { max-width: 450px; color: var(--muted); font-size: 13px; line-height: 2; margin-bottom: 3px; }
+
+/* Simulator */
+.simulator-card { overflow: hidden; border: 1px solid var(--line-strong); border-radius: 9px; background: #0b111d; box-shadow: 0 25px 70px rgba(0,0,0,.32); }
+.simulator-bar { min-height: 52px; padding: 0 19px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: #101827; }
+.simulator-title { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.pulse-dot { width: 6px; height: 6px; }
+.sim-version { color: var(--muted-2); font: 9px var(--font-display); direction: ltr; }
+.sim-toolbar { display: flex; align-items: center; gap: 12px; color: var(--muted-2); font: 9px var(--font-display); direction: ltr; }
+.toolbar-sep { width: 1px; height: 12px; background: var(--line-strong); }
+.console-screen-wrap { position: relative; background: #071329; }
+#mainScreen { display: block; width: 100%; aspect-ratio: 16/9; outline-offset: -4px; }
+.screen-scanlines { position: absolute; inset: 0; pointer-events: none; opacity: .1; background: repeating-linear-gradient(to bottom, transparent 0, transparent 3px, rgba(0,0,0,.32) 4px); mix-blend-mode: multiply; }
+.simulator-footer { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 8px 18px; background: #101827; border-top: 1px solid var(--line); }
+.screen-tabs { display: flex; gap: 7px; }
+.screen-tab { cursor: pointer; border: 1px solid transparent; border-radius: 4px; background: transparent; padding: 8px 15px; font-size: 12px; color: #aab6c6; }
+.screen-tab:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.screen-tab.is-active { color: var(--lime); border-color: rgba(200,255,46,.3); background: var(--lime-soft); }
+.status-line { font-size: 10px; color: var(--muted-2); }
+.control-deck { padding: 23px 2px 0; display: flex; align-items: center; justify-content: space-between; gap: 26px; }
+.control-help { max-width: 570px; }
+.control-label { color: var(--lime); font: 10px var(--font-display); letter-spacing: .12em; }
+.control-help p { margin: 8px 0 10px; color: var(--muted); font-size: 12px; }
+.keycaps { display: flex; flex-wrap: wrap; gap: 5px; direction: ltr; }
+kbd { min-width: 26px; padding: 3px 7px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; color: #b8c4d2; background: #111927; font: 10px var(--font-display); text-align: center; }
+.virtual-pad { display: flex; align-items: center; gap: 24px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 50px; background: rgba(16,24,39,.72); }
+.dpad { position: relative; width: 82px; height: 82px; }
+.dpad button, .face-buttons button { position: absolute; display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid rgba(175,194,224,.17); border-radius: 6px; background: #1a2537; color: #c5d0de; cursor: pointer; font-size: 11px; }
+.dpad button:active, .face-buttons button:active { transform: scale(.91); border-color: var(--lime); color: var(--lime); }
+.dpad [data-input="up"] { top: 0; left: 27px; }
+.dpad [data-input="down"] { bottom: 0; left: 27px; }
+.dpad [data-input="left"] { left: 0; top: 27px; }
+.dpad [data-input="right"] { right: 0; top: 27px; }
+.face-buttons { position: relative; width: 92px; height: 82px; }
+.face-buttons button { width: 29px; height: 29px; border-radius: 50%; background: #192434; font-size: 14px; }
+.face-triangle { top: 0; left: 31px; color: #95d9ac !important; }
+.face-square { top: 27px; left: 0; color: #e0a9ec !important; }
+.face-circle { top: 27px; right: 0; color: #eb9298 !important; }
+.face-cross { bottom: 0; left: 31px; color: #91baf2 !important; }
+
+/* Gallery */
+.gallery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.gallery-item { min-width: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; text-align: right; background: var(--panel); cursor: pointer; transition: border-color .25s, transform .25s, box-shadow .25s; }
+.gallery-item:hover { transform: translateY(-4px); border-color: rgba(200,255,46,.38); box-shadow: 0 18px 40px rgba(0,0,0,.22); }
+.gallery-canvas-wrap { display: block; position: relative; overflow: hidden; background: #071329; }
+.gallery-canvas-wrap canvas { width: 100%; display: block; aspect-ratio: 16/9; }
+.expand-icon { position: absolute; left: 13px; top: 12px; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; background: rgba(5,9,15,.6); color: var(--lime); font-size: 17px; opacity: .8; }
+.gallery-caption { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 16px; }
+.gallery-caption b { font-size: 13px; }
+.gallery-caption small { color: var(--muted-2); font: 9px var(--font-display); letter-spacing: .1em; direction: ltr; }
+.gallery-note { display: flex; align-items: center; gap: 9px; margin: 17px 0 0; color: var(--muted-2); font-size: 11px; }
+.gallery-note span { width: 17px; height: 17px; display: inline-grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--lime); font: 10px var(--font-display); }
+
+/* Features */
+.feature-section { padding-bottom: 108px; }
+.feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.feature-card { min-height: 188px; padding: 20px; border: 1px solid var(--line); border-radius: 6px; background: linear-gradient(150deg, rgba(18,27,43,.78), rgba(11,16,26,.48)); }
+.feature-number { color: var(--lime); font: 10px var(--font-display); }
+.feature-card h3 { margin: 28px 0 8px; font-family: var(--font-display); font-size: 15px; }
+.feature-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 2; }
+
+/* Download */
+.download-section { padding-bottom: 82px; }
+.download-panel { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 30px; min-height: 330px; padding: clamp(30px, 6vw, 60px); border: 1px solid rgba(200,255,46,.22); border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at 78% 50%, rgba(116,150,36,.13), transparent 42%), linear-gradient(120deg, #121b2a, #0e1420 56%, #101824); }
+.download-copy { position: relative; z-index: 1; }
+.download-panel h2 { margin: 14px 0 12px; font-size: clamp(28px, 4vw, 43px); line-height: 1.45; }
+.download-panel p { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+.button-outline { border-color: var(--line-strong); background: rgba(255,255,255,.02); }
+.download-mark { position: relative; width: min(28vw, 245px); height: min(28vw, 245px); min-width: 140px; min-height: 140px; display: grid; place-items: center; border: 1px solid rgba(200,255,46,.25); border-radius: 50%; color: rgba(200,255,46,.8); font: 800 clamp(32px, 5vw, 58px) var(--font-display); direction: ltr; transform: rotate(-14deg); }
+.download-mark::before, .download-mark::after { content: ""; position: absolute; inset: 15%; border: 1px solid rgba(200,255,46,.17); border-radius: 50%; }
+.download-mark::after { inset: 29%; border-color: rgba(77,225,242,.28); }
+.download-mark b { position: absolute; bottom: 22%; right: 13%; font-size: 11px; letter-spacing: .15em; color: var(--text); }
+.download-mark i { position: absolute; width: 8px; height: 8px; top: 12%; left: 26%; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 18px var(--cyan); }
+.download-footnote { color: var(--muted-2); font-size: 10px; text-align: center; margin: 16px 0 0; }
+.site-footer { min-height: 84px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); color: var(--muted-2); font-size: 10px; }
+.site-footer .brand { color: var(--text); }
+.site-footer > a:last-child { color: var(--lime); }
+
+/* Screenshot lightbox */
+.shot-dialog { width: min(1040px, calc(100% - 28px)); max-width: none; padding: 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: #0a101a; color: var(--text); box-shadow: 0 30px 100px rgba(0,0,0,.65); }
+.shot-dialog::backdrop { background: rgba(2,5,10,.82); backdrop-filter: blur(7px); }
+.dialog-toolbar, .dialog-controls { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 6px 12px; color: #c7d2df; font-size: 12px; }
+.dialog-toolbar button, .dialog-controls button { padding: 7px 13px; border: 1px solid var(--line-strong); border-radius: 4px; background: #141e2d; color: var(--text); cursor: pointer; font-size: 11px; }
+.dialog-toolbar button:hover, .dialog-controls button:hover { border-color: var(--lime); color: var(--lime); }
+#largeShot { width: 100%; display: block; aspect-ratio: 16/9; background: #071329; border: 1px solid var(--line); }
+.dialog-controls { justify-content: center; padding: 12px 6px 3px; }
+.dialog-controls span { min-width: 48px; text-align: center; color: var(--muted-2); font: 10px var(--font-display); }
+
+@media (max-width: 850px) {
+  .hero { grid-template-columns: 1fr; gap: 62px; padding-top: 70px; }
+  .hero-copy { max-width: 650px; }
+  .hero-art { width: min(100%, 720px); margin-inline: auto; }
+  .hero-screen-frame { transform: none; }
+  .section-heading { align-items: start; flex-direction: column; gap: 9px; }
+  .section-heading > p { margin: 0; }
+  .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .section-wrap { width: min(100% - 30px, 1180px); }
+  .site-nav { min-height: 66px; padding-inline: 15px; gap: 10px; }
+  .nav-links { display: none; }
+  .nav-cta { font-size: 10px; padding: 7px 10px; }
+  .brand-name { font-size: 12px; }
+  .hero { padding-block: 66px 76px; }
+  .hero h1 { font-size: clamp(43px, 13vw, 66px); }
+  .hero-copy > p { font-size: 13px; }
+  .hero-meta { margin-top: 28px; }
+  .chip-top { right: -5px; }
+  .chip-bottom { left: -4px; }
+  .simulator-section, .gallery-section, .feature-section { padding-top: 48px; }
+  .simulator-bar { min-height: 45px; padding-inline: 10px; }
+  .simulator-title { gap: 6px; font-size: 10px; }
+  .sim-toolbar { gap: 6px; font-size: 8px; }
+  .simulator-footer { align-items: start; flex-direction: column; padding: 10px; gap: 4px; }
+  .screen-tabs { width: 100%; }
+  .screen-tab { flex: 1; padding: 7px 5px; font-size: 10px; }
+  .status-line { display: none; }
+  .control-deck { align-items: start; flex-direction: column; }
+  .virtual-pad { align-self: center; }
+  .gallery-grid { grid-template-columns: 1fr; gap: 13px; }
+  .gallery-caption { padding: 10px 12px; }
+  .feature-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .feature-card { min-height: 180px; padding: 14px; }
+  .feature-card h3 { font-size: 12px; margin-top: 22px; }
+  .feature-card p { font-size: 10px; }
+  .download-panel { min-height: 0; padding: 28px 20px; }
+  .download-mark { display: none; }
+  .download-panel h2 { font-size: 30px; }
+  .download-actions { align-items: stretch; flex-direction: column; }
+  .site-footer { min-height: 100px; flex-wrap: wrap; justify-content: space-between; padding-block: 17px; }
+  .site-footer > span { order: 3; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+  </style>
+  <script>
+(function () {
+  "use strict";
+
+  const W = 1280, H = 720;
+  const COLORS = {
+    bg: "#071329", panel: "#10213b", panel2: "#152b49", line: "rgba(177,209,244,.2)",
+    text: "#edf5ff", muted: "#a1b6cf", subtle: "#718ba9", lime: "#c8ff2e", cyan: "#55d8f0", blue: "#3479bf"
+  };
+  const games = [
+    { title: "مغامرة الظلال", id: "SLUS-00001", type: "DVD", color: ["#112f53", "#1f8a9c"], mark: "01" },
+    { title: "سباق السرعة", id: "SLUS-00002", type: "DVD", color: ["#3c1d3e", "#c84d53"], mark: "02" },
+    { title: "عالم الأبطال", id: "SLUS-00003", type: "DVD", color: ["#1e392e", "#79a944"], mark: "03" },
+    { title: "كرة القدم", id: "SLUS-00004", type: "DVD", color: ["#202f52", "#557aca"], mark: "04" },
+    { title: "رحلة فضائية", id: "SLUS-00005", type: "CD", color: ["#241b4d", "#8b65c4"], mark: "05" }
+  ];
+  const appItems = ["مشغّل التطبيقات", "إدارة وحدات التخزين", "معلومات النظام", "إعدادات OPL"];
+  const settingItems = ["إعدادات العرض", "إعدادات اللغة", "إعدادات الشبكة", "إعدادات الأجهزة", "إعدادات الواجهة"];
+  const optionItems = ["أوضاع التوافق", "وضع الفيديو (GSM)", "بطاقة الذاكرة الافتراضية (VMC)", "إعدادات الغش (Cheats)", "إعدادات اللعبة"];
+  const labels = { games: "الألعاب", apps: "التطبيقات", settings: "الإعدادات", options: "خيارات اللعبة" };
+  const state = { tab: "games", index: 2, source: "USB", optionsOpen: false, optionIndex: 0, pulse: 0 };
+  const main = document.getElementById("mainScreen");
+  const hero = document.getElementById("heroScreen");
+  const status = document.getElementById("simStatus");
+  const ctx = main.getContext("2d");
+  const hctx = hero.getContext("2d");
+  let lastGamepad = [];
+  let shotIndex = 0;
+
+  const font = (size, weight = 500, display = false) => `${weight} ${size}px "${display ? "Alexandria" : "Neo Sans Arabic"}", "Alexandria", "Noto Sans Arabic Local", sans-serif`;
+  function rounded(c, x, y, w, h, r, fill, stroke) {
+    c.beginPath(); c.roundRect(x, y, w, h, r);
+    if (fill) { c.fillStyle = fill; c.fill(); }
+    if (stroke) { c.strokeStyle = stroke; c.stroke(); }
+  }
+  function txt(c, value, x, y, size, color, align = "right", weight = 500, display = false) {
+    c.save(); c.direction = "rtl"; c.textAlign = align; c.textBaseline = "middle";
+    c.font = font(size, weight, display); c.fillStyle = color; c.fillText(value, x, y); c.restore();
+  }
+  function ltr(c, value, x, y, size, color, align = "left", weight = 500) {
+    c.save(); c.direction = "ltr"; c.textAlign = align; c.textBaseline = "middle";
+    c.font = `${weight} ${size}px "Alexandria", sans-serif`; c.fillStyle = color; c.fillText(value, x, y); c.restore();
+  }
+  function cover(c, game, x, y, w, h, selected) {
+    const g = c.createLinearGradient(x, y, x + w, y + h);
+    g.addColorStop(0, game.color[0]); g.addColorStop(1, game.color[1]);
+    c.save();
+    rounded(c, x, y, w, h, 12, g, selected ? COLORS.lime : "rgba(205,225,247,.14)");
+    c.save(); c.beginPath(); c.roundRect(x, y, w, h, 12); c.clip();
+    const glow = c.createRadialGradient(x + w * .68, y + h * .3, 3, x + w * .68, y + h * .3, w * .8);
+    glow.addColorStop(0, "rgba(255,255,255,.3)"); glow.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = glow; c.fillRect(x, y, w, h);
+    c.globalAlpha = .18; c.strokeStyle = "#fff"; c.lineWidth = 2;
+    for (let i = -h; i < w + h; i += 28) { c.beginPath(); c.moveTo(x + i, y); c.lineTo(x + i + h * .72, y + h); c.stroke(); }
+    c.globalAlpha = 1;
+    c.fillStyle = "rgba(4,10,20,.26)"; c.beginPath(); c.arc(x + w * .53, y + h * .44, w * .29, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "rgba(255,255,255,.45)"; c.lineWidth = 2; c.beginPath(); c.arc(x + w * .53, y + h * .44, w * .22, -.5, Math.PI * 1.2); c.stroke();
+    ltr(c, game.mark, x + w - 17, y + 24, 11, "rgba(255,255,255,.8)", "right", 700);
+    txt(c, game.title, x + w - 16, y + h - 28, Math.max(12, w * .085), "#fff", "right", 700);
+    c.restore();
+    if (selected) {
+      c.strokeStyle = COLORS.lime; c.lineWidth = 3; c.beginPath(); c.roundRect(x - 3, y - 3, w + 6, h + 6, 14); c.stroke();
+      rounded(c, x + w - 36, y - 14, 44, 22, 7, COLORS.lime, null);
+      ltr(c, "PICK", x + w - 14, y - 3, 8, "#101809", "center", 800);
+    }
+    c.restore();
+  }
+  function drawBase(c, p = {}) {
+    const g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#07172e"); g.addColorStop(.55, "#0b2545"); g.addColorStop(1, "#061126");
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    c.save(); c.globalAlpha = .13; c.strokeStyle = "#6fb6e8"; c.lineWidth = 1;
+    for (let x = 0; x <= W; x += 42) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke(); }
+    for (let y = 0; y <= H; y += 42) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
+    c.restore();
+    const halo = c.createRadialGradient(160, 100, 10, 160, 100, 600); halo.addColorStop(0, "rgba(56,151,204,.19)"); halo.addColorStop(1, "rgba(56,151,204,0)"); c.fillStyle = halo; c.fillRect(0, 0, W, H);
+    rounded(c, 28, 24, W - 56, H - 48, 18, "rgba(3,11,24,.52)", "rgba(185,215,246,.24)");
+    c.fillStyle = "rgba(200,255,46,.11)"; c.fillRect(52, 112, W - 104, 1);
+    ltr(c, "OPL", 84, 70, 29, COLORS.lime, "left", 800);
+    ltr(c, "OPEN PS2 LOADER", 84, 94, 9, "#8fa7c3", "left", 500);
+    txt(c, "مشغّل ألعاب PlayStation 2", W - 82, 66, 20, COLORS.text, "right", 700, true);
+    txt(c, "واجهة عربية تجريبية", W - 82, 92, 11, COLORS.muted, "right", 400);
+    const tabs = ["الألعاب", "التطبيقات", "الإعدادات"];
+    const keys = ["games", "apps", "settings"];
+    let x = W - 74;
+    for (let i = 0; i < tabs.length; i++) {
+      const width = i === 0 ? 110 : 124;
+      const active = (p.tab || "games") === keys[i];
+      rounded(c, x - width, 126, width, 42, 8, active ? "rgba(200,255,46,.16)" : "rgba(140,174,211,.04)", active ? "rgba(200,255,46,.52)" : "rgba(175,205,238,.12)");
+      txt(c, tabs[i], x - width / 2, 147, 14, active ? COLORS.lime : "#b5c6da", "center", active ? 700 : 500);
+      x -= width + 10;
+    }
+    ltr(c, "USB     HDD     ETH", 83, 147, 10, "#91a8c4", "left", 600);
+  }
+  function drawGames(c, p = {}) {
+    txt(c, "قائمة الألعاب", W - 84, 205, 18, COLORS.text, "right", 700, true);
+    txt(c, "اختر اللعبة لعرض التفاصيل والخيارات", W - 84, 232, 10, COLORS.muted, "right", 400);
+    const order = Array.from({ length: games.length }, (_, n) => (n + games.length) % games.length);
+    const cw = 168, ch = 240, gap = 31, total = games.length * cw + (games.length - 1) * gap;
+    const start = (W - total) / 2;
+    for (let i = 0; i < games.length; i++) {
+      const x = start + i * (cw + gap); const selected = i === (p.index ?? 2);
+      const y = selected ? 275 : 294;
+      cover(c, games[order[i]], x, y, cw, selected ? ch : ch - 38, selected);
+    }
+    rounded(c, 82, 555, W - 164, 66, 10, "rgba(16,37,66,.94)", "rgba(173,206,239,.18)");
+    const game = games[p.index ?? 2];
+    txt(c, `المحدد: ${game.title}`, W - 106, 580, 14, COLORS.text, "right", 700);
+    txt(c, `المصدر ${p.source || "USB"}  •  النوع ${game.type}  •  المعرّف ${game.id}`, W - 106, 603, 10, COLORS.muted, "right", 400);
+    txt(c, "× اختيار", 118, 654, 10, COLORS.lime, "left", 600);
+    txt(c, "△ خيارات اللعبة", 306, 654, 10, "#aac0d9", "left", 500);
+    txt(c, "○ رجوع", W - 118, 654, 10, "#aac0d9", "right", 500);
+    txt(c, "OPL Arabic Preview", W / 2, 654, 9, "#66819e", "center", 400);
+  }
+  function drawList(c, p, items, title, note) {
+    txt(c, title, W - 84, 205, 18, COLORS.text, "right", 700, true);
+    txt(c, note, W - 84, 232, 10, COLORS.muted, "right", 400);
+    const x = 155, y0 = 270, rowH = 66, width = W - 310;
+    items.forEach((item, i) => {
+      const y = y0 + i * (rowH + 10); const selected = i === (p.index ?? 0);
+      rounded(c, x, y, width, rowH, 9, selected ? "rgba(200,255,46,.13)" : "rgba(21,43,73,.88)", selected ? "rgba(200,255,46,.56)" : "rgba(174,206,239,.12)");
+      rounded(c, W - 220, y + 14, 38, 38, 8, selected ? "rgba(200,255,46,.16)" : "rgba(122,170,218,.12)", null);
+      txt(c, String(i + 1).padStart(2, "0"), W - 201, y + 33, 10, selected ? COLORS.lime : COLORS.muted, "center", 700);
+      txt(c, item, W - 245, y + 33, 14, selected ? COLORS.lime : COLORS.text, "right", selected ? 700 : 500);
+      txt(c, selected ? "محدد" : "اضغط × للاختيار", x + 24, y + 33, 9, selected ? COLORS.lime : COLORS.subtle, "left", 400);
+    });
+    rounded(c, 82, 584, W - 164, 43, 8, "rgba(11,26,47,.9)", "rgba(173,206,239,.13)");
+    txt(c, "× اختيار", W - 105, 605, 10, COLORS.lime, "right", 600);
+    txt(c, "↑ ↓ تنقّل", 105, 605, 10, COLORS.muted, "left", 500);
+  }
+  function drawOptions(c, p) {
+    c.fillStyle = "rgba(0,4,12,.68)"; c.fillRect(28, 24, W - 56, H - 48);
+    const x = 270, y = 155, w = 740, h = 410;
+    rounded(c, x, y, w, h, 15, "#10213a", "rgba(200,255,46,.56)");
+    rounded(c, x, y, w, 61, 14, "#172e4e", null);
+    txt(c, "خيارات اللعبة", x + w - 28, y + 34, 18, COLORS.lime, "right", 700, true);
+    txt(c, "إعدادات خاصة باللعبة المحددة", x + w - 28, y + 84, 10, COLORS.muted, "right", 400);
+    optionItems.forEach((item, i) => {
+      const yy = y + 115 + i * 48; const selected = i === p.optionIndex;
+      rounded(c, x + 28, yy, w - 56, 39, 7, selected ? "rgba(200,255,46,.13)" : "rgba(255,255,255,.025)", selected ? "rgba(200,255,46,.45)" : "rgba(160,195,228,.09)");
+      txt(c, item, x + w - 48, yy + 20, 12, selected ? COLORS.lime : COLORS.text, "right", selected ? 700 : 500);
+      txt(c, selected ? "فتح" : "›", x + 54, yy + 20, 10, selected ? COLORS.lime : COLORS.muted, "left", 600);
+    });
+    txt(c, "Enter اختيار    •    Esc رجوع", W / 2, y + h - 22, 10, COLORS.muted, "center", 400);
+  }
+  function render(c, p = {}) {
+    c.clearRect(0, 0, W, H); drawBase(c, p);
+    if (p.tab === "apps") drawList(c, p, appItems, "التطبيقات", "تصفّح تطبيقات وملفات ELF المتاحة");
+    else if (p.tab === "settings") drawList(c, p, settingItems, "إعدادات OPL", "تخصيص مظهر المشغّل وسلوكه");
+    else drawGames(c, p);
+    if (p.optionsOpen) drawOptions(c, p);
+  }
+  function updateStatus() {
+    if (status) status.textContent = state.optionsOpen ? "القائمة المفتوحة: خيارات اللعبة" : `القسم الحالي: ${labels[state.tab]}`;
+    document.querySelectorAll("[data-tab]").forEach(b => {
+      const active = b.dataset.tab === state.tab;
+      b.classList.toggle("is-active", active); b.setAttribute("aria-pressed", String(active));
+    });
+  }
+  function paint() {
+    state.pulse += 1;
+    render(ctx, state);
+    render(hctx, { tab: "games", index: 2, source: "USB" });
+    updateStatus();
+  }
+  function setTab(tab) {
+    if (!Object.prototype.hasOwnProperty.call(labels, tab) || tab === "options") return;
+    state.tab = tab; state.index = 0; state.optionsOpen = false; paint();
+  }
+  function move(delta) {
+    if (state.optionsOpen) state.optionIndex = (state.optionIndex + delta + optionItems.length) % optionItems.length;
+    else {
+      const max = state.tab === "games" ? games.length : state.tab === "apps" ? appItems.length : settingItems.length;
+      state.index = (state.index + delta + max) % max;
+    }
+    paint();
+  }
+  function confirm() {
+    if (state.optionsOpen) {
+      state.optionsOpen = false;
+      if (status) status.textContent = `تم اختيار: ${optionItems[state.optionIndex]} (عرض تجريبي)`;
+    } else if (state.tab === "games") state.optionsOpen = true;
+    else if (status) status.textContent = `تم اختيار: ${(state.tab === "apps" ? appItems : settingItems)[state.index]} (عرض تجريبي)`;
+    paint();
+  }
+  function back() {
+    if (state.optionsOpen) { state.optionsOpen = false; paint(); return; }
+    if (state.tab !== "games") setTab("games");
+  }
+  function input(action) {
+    switch (action) {
+      case "left": move(-1); break;
+      case "right": move(1); break;
+      case "up": if (state.optionsOpen) move(-1); else setTab(state.tab === "settings" ? "apps" : state.tab === "apps" ? "games" : "settings"); break;
+      case "down": if (state.optionsOpen) move(1); else setTab(state.tab === "games" ? "apps" : state.tab === "apps" ? "settings" : "games"); break;
+      case "cross": confirm(); break;
+      case "circle": back(); break;
+      case "triangle": if (!state.optionsOpen && state.tab === "games") { state.optionsOpen = true; paint(); } break;
+      case "square": state.index = 0; state.optionIndex = 0; paint(); break;
+    }
+  }
+
+  document.querySelectorAll("[data-tab]").forEach(button => button.addEventListener("click", () => setTab(button.dataset.tab)));
+  document.querySelectorAll("[data-input]").forEach(button => button.addEventListener("click", () => input(button.dataset.input)));
+  document.addEventListener("keydown", event => {
+    const tag = event.target && event.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    const keys = {
+      ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down",
+      Enter: "cross", Escape: "circle", Backspace: "circle", x: "cross", X: "cross",
+      o: "circle", O: "circle", q: "triangle", Q: "triangle", " ": "square"
+    };
+    if (keys[event.key]) { event.preventDefault(); input(keys[event.key]); }
+    else if (event.key === "PageUp") { event.preventDefault(); setTab("games"); }
+    else if (event.key === "PageDown") { event.preventDefault(); setTab(state.tab === "games" ? "apps" : "settings"); }
+  });
+  main.addEventListener("click", event => {
+    const rect = main.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width * W;
+    const y = (event.clientY - rect.top) / rect.height * H;
+    if (y > 270 && y < 550 && state.tab === "games") {
+      const start = (W - (games.length * 168 + (games.length - 1) * 31)) / 2;
+      const n = Math.round((x - start - 84) / 199);
+      state.index = Math.max(0, Math.min(games.length - 1, n)); paint();
+    }
+  });
+
+  // Standard browser Gamepad API mapping: Cross, Circle, Square, Triangle and D-pad.
+  function pollGamepad() {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const pad = Array.from(pads).find(Boolean);
+    if (pad) {
+      const mapping = [[0, "cross"], [1, "circle"], [2, "square"], [3, "triangle"], [12, "up"], [13, "down"], [14, "left"], [15, "right"]];
+      mapping.forEach(([index, action]) => {
+        const pressed = !!(pad.buttons[index] && pad.buttons[index].pressed);
+        if (pressed && !lastGamepad[index]) input(action);
+        lastGamepad[index] = pressed;
+      });
+      const left = pad.axes[0] < -.65, right = pad.axes[0] > .65, up = pad.axes[1] < -.65, down = pad.axes[1] > .65;
+      [[16, left, "left"], [17, right, "right"], [18, up, "up"], [19, down, "down"]].forEach(([index, pressed, action]) => {
+        if (pressed && !lastGamepad[index]) input(action);
+        lastGamepad[index] = pressed;
+      });
+    } else lastGamepad = [];
+    requestAnimationFrame(pollGamepad);
+  }
+
+  // Build gallery previews from the same renderer used by the live simulator.
+  const shots = [
+    { id: "games", title: "قائمة الألعاب", state: { tab: "games", index: 2, source: "USB" } },
+    { id: "apps", title: "التطبيقات", state: { tab: "apps", index: 1 } },
+    { id: "settings", title: "إعدادات OPL", state: { tab: "settings", index: 2 } },
+    { id: "options", title: "خيارات اللعبة", state: { tab: "games", index: 2, source: "USB", optionsOpen: true, optionIndex: 1 } }
+  ];
+  shots.forEach(shot => {
+    const canvas = document.querySelector(`[data-gallery-canvas="${shot.id}"]`);
+    if (canvas) render(canvas.getContext("2d"), shot.state);
+  });
+  const dialog = document.getElementById("shotDialog");
+  const largeShot = document.getElementById("largeShot");
+  const largeCtx = largeShot.getContext("2d");
+  const titleEl = document.getElementById("shotTitle");
+  const countEl = document.getElementById("shotCount");
+  function showShot(index) {
+    shotIndex = (index + shots.length) % shots.length;
+    const shot = shots[shotIndex];
+    render(largeCtx, shot.state);
+    titleEl.textContent = shot.title;
+    countEl.textContent = `${shotIndex + 1} / ${shots.length}`;
+  }
+  document.querySelectorAll("[data-shot]").forEach((button, i) => button.addEventListener("click", () => { showShot(i); dialog.showModal(); }));
+  document.getElementById("closeShot").addEventListener("click", () => dialog.close());
+  document.getElementById("prevShot").addEventListener("click", () => showShot(shotIndex - 1));
+  document.getElementById("nextShot").addEventListener("click", () => showShot(shotIndex + 1));
+  dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
+  dialog.addEventListener("keydown", event => {
+    if (event.key === "ArrowRight") { showShot(shotIndex + 1); event.preventDefault(); }
+    if (event.key === "ArrowLeft") { showShot(shotIndex - 1); event.preventDefault(); }
+  });
+
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(paint).catch(paint);
+  paint();
+  requestAnimationFrame(pollGamepad);
+})();
+
+  </script>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <nav class="site-nav" aria-label="التنقل الرئيسي">
+    <a class="brand" href="#home" aria-label="OPL Arabic — الرئيسية">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="brand-name">OPL <b>ARABIC</b></span>
+    </a>
+    <div class="nav-links">
+      <a href="#simulator">المحاكي</a>
+      <a href="#gallery">لقطات الشاشة</a>
+      <a href="#download">التنزيل</a>
+    </div>
+    <a class="nav-cta" href="#simulator">ابدأ الاستعراض <span aria-hidden="true">↙</span></a>
+  </nav>
+
+  <main id="home">
+    <section class="hero section-wrap">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> PLAYSTATION 2 / ARABIC EDITION</div>
+        <h1>واجهة OPL،<br><em>بلغتك.</em></h1>
+        <p>استكشف المشغّل العربي وتصفّح قوائمه كما لو كنت أمام شاشة جهازك، من خلال محاكاة تفاعلية صُممت للويب.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#simulator">استعرض المحاكي <span aria-hidden="true">←</span></a>
+          <a class="button button-quiet" href="#gallery">شاهد اللقطات</a>
+        </div>
+        <div class="hero-meta"><span class="meta-line"></span><span>واجهة استعراضية مستقلة</span><span class="meta-sep">•</span><span>لا تعدّل المشغّل</span></div>
+      </div>
+      <div class="hero-art" aria-label="شاشة OPL داخل إطار عرض">
+        <div class="hero-glow"></div>
+        <div class="floating-chip chip-top"><span class="chip-dot"></span> OPL / 1.2.0</div>
+        <div class="floating-chip chip-bottom">ARABIC UI <b>RTL</b></div>
+        <div class="hero-screen-frame">
+          <div class="screen-topline"><span>OPL</span><span>PLAYSTATION 2</span><span class="screen-live"><i></i> LIVE PREVIEW</span></div>
+          <canvas id="heroScreen" width="1280" height="720" role="img" aria-label="معاينة مرسومة لقائمة ألعاب OPL العربية"></canvas>
+          <div class="screen-reflection"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="simulator-section section-wrap" id="simulator">
+      <div class="section-heading">
+        <div><span class="section-kicker">01 / INTERACTIVE PREVIEW</span><h2>جرّب الواجهة بنفسك</h2></div>
+        <p>تنقّل بين الأقسام والألعاب وافتح خيارات اللعبة. يدعم المحاكي لوحة المفاتيح وأزرار التحكم.</p>
+      </div>
+
+      <div class="simulator-card">
+        <div class="simulator-bar">
+          <div class="simulator-title"><span class="pulse-dot"></span><strong>OPL Browser Simulator</strong><span class="sim-version">v1.2.0 UI</span></div>
+          <div class="sim-toolbar"><span>16:9</span><span class="toolbar-sep"></span><span>RTL</span><span class="toolbar-sep"></span><span>1280 × 720</span></div>
+        </div>
+        <div class="console-screen-wrap">
+          <canvas id="mainScreen" width="1280" height="720" tabindex="0" role="img" aria-label="محاكي واجهة OPL. استخدم الأسهم وEnter وEscape للتنقل."></canvas>
+          <div class="screen-scanlines" aria-hidden="true"></div>
+        </div>
+        <div class="simulator-footer">
+          <div class="screen-tabs" role="group" aria-label="أقسام المحاكي">
+            <button type="button" class="screen-tab is-active" data-tab="games" aria-pressed="true">الألعاب</button>
+            <button type="button" class="screen-tab" data-tab="apps" aria-pressed="false">التطبيقات</button>
+            <button type="button" class="screen-tab" data-tab="settings" aria-pressed="false">الإعدادات</button>
+          </div>
+          <div class="status-line" id="simStatus" aria-live="polite">القسم الحالي: الألعاب</div>
+        </div>
+      </div>
+
+      <div class="control-deck">
+        <div class="control-help">
+          <span class="control-label">طريقة التحكم</span>
+          <p>استخدم الأسهم للتنقّل، Enter للاختيار، وEscape للعودة. يمكن أيضًا استخدام يد تحكم متصلة بالحاسوب.</p>
+          <div class="keycaps"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd><kbd>Enter</kbd><kbd>Esc</kbd></div>
+        </div>
+        <div class="virtual-pad" aria-label="أزرار تحكم افتراضية">
+          <div class="dpad">
+            <button type="button" data-input="up" aria-label="أعلى">▲</button>
+            <button type="button" data-input="left" aria-label="يسار">◀</button>
+            <button type="button" data-input="right" aria-label="يمين">▶</button>
+            <button type="button" data-input="down" aria-label="أسفل">▼</button>
+          </div>
+          <div class="face-buttons">
+            <button type="button" class="face-triangle" data-input="triangle" aria-label="مثلث">△</button>
+            <button type="button" class="face-square" data-input="square" aria-label="مربع">□</button>
+            <button type="button" class="face-circle" data-input="circle" aria-label="دائرة">○</button>
+            <button type="button" class="face-cross" data-input="cross" aria-label="إكس">×</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery-section section-wrap" id="gallery">
+      <div class="section-heading">
+        <div><span class="section-kicker">02 / SCREEN GALLERY</span><h2>لقطات من المحاكي</h2></div>
+        <p>صور المعرض تُنشأ مباشرة من نفس واجهة المحاكاة، ويمكن فتح كل لقطة بحجم كامل.</p>
+      </div>
+      <div class="gallery-grid">
+        <button class="gallery-item gallery-wide" type="button" data-shot="games" aria-label="فتح لقطة قائمة الألعاب">
+          <span class="gallery-canvas-wrap"><canvas width="1280" height="720" data-gallery-canvas="games"></canvas><span class="expand-icon">↗</span></span>
+          <span class="gallery-caption"><b>قائمة الألعاب</b><small>GAME LIST / USB</small></span>
+        </button>
+        <button class="gallery-item" type="button" data-shot="apps" aria-label="فتح لقطة التطبيقات">
+          <span class="gallery-canvas-wrap"><canvas width="1280" height="720" data-gallery-canvas="apps"></canvas><span class="expand-icon">↗</span></span>
+          <span class="gallery-caption"><b>التطبيقات</b><small>APPLICATIONS</small></span>
+        </button>
+        <button class="gallery-item" type="button" data-shot="settings" aria-label="فتح لقطة الإعدادات">
+          <span class="gallery-canvas-wrap"><canvas width="1280" height="720" data-gallery-canvas="settings"></canvas><span class="expand-icon">↗</span></span>
+          <span class="gallery-caption"><b>إعدادات المشغّل</b><small>SYSTEM SETTINGS</small></span>
+        </button>
+        <button class="gallery-item gallery-wide" type="button" data-shot="options" aria-label="فتح لقطة خيارات اللعبة">
+          <span class="gallery-canvas-wrap"><canvas width="1280" height="720" data-gallery-canvas="options"></canvas><span class="expand-icon">↗</span></span>
+          <span class="gallery-caption"><b>خيارات اللعبة</b><small>GAME OPTIONS</small></span>
+        </button>
+      </div>
+      <p class="gallery-note"><span>i</span> هذه معاينات مُولّدة من المحاكي داخل المتصفح، وليست صورًا ملتقطة من جهاز PS2.</p>
+    </section>
+
+    <section class="feature-section section-wrap">
+      <div class="section-heading">
+        <div><span class="section-kicker">03 / BUILT FOR OPL</span><h2>استعراض واضح، دون المساس بالمشغّل</h2></div>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card"><span class="feature-number">01</span><h3>واجهة عربية RTL</h3><p>عرض القوائم والنصوص من اليمين إلى اليسار ضمن تصميم متناسق.</p></article>
+        <article class="feature-card"><span class="feature-number">02</span><h3>تفاعل داخل المتصفح</h3><p>تنقّل بين الألعاب والتطبيقات والإعدادات مع لوحة تحكم افتراضية.</p></article>
+        <article class="feature-card"><span class="feature-number">03</span><h3>معرض قابل للاستعراض</h3><p>افتح لقطات من حالات مختلفة للواجهة وتصفّحها بحجم أكبر.</p></article>
+        <article class="feature-card"><span class="feature-number">04</span><h3>المشغّل كما هو</h3><p>الموقع منفصل عن ملف التشغيل ولا يغيّر أي ملف داخل PS2L.ELF.</p></article>
+      </div>
+    </section>
+
+    <section class="download-section section-wrap" id="download">
+      <div class="download-panel">
+        <div class="download-copy">
+          <span class="section-kicker">04 / ARABIC EDITION</span>
+          <h2>جاهز لتجربة<br><em>OPL Arabic؟</em></h2>
+          <p>حمّل إصدار المشغّل العربي المضمّن، أو افتح دليل التثبيت المختصر.</p>
+          <div class="download-actions">
+            <a class="button button-primary" href="https://github.com/TEaG3/OPL/releases/download/v1.2.0-arabic-embedded/PS2L.ELF">تحميل PS2L.ELF <span aria-hidden="true">↓</span></a>
+            <a class="button button-outline" href="https://github.com/TEaG3/OPL/releases/download/v1.2.0-arabic-embedded/INSTALL_ARABIC.txt" target="_blank" rel="noopener">دليل التثبيت</a>
+          </div>
+        </div>
+        <div class="download-mark" aria-hidden="true"><span>OPL</span><b>AR</b><i></i></div>
+      </div>
+      <p class="download-footnote">المحاكي للعرض والتجربة فقط؛ لا يشغّل ألعاب PS2 أو ملفات ELF داخل المتصفح.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer section-wrap">
+    <a class="brand" href="#home"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-name">OPL <b>ARABIC</b></span></a>
+    <span>واجهة عربية مستقلة لاستعراض OPL</span>
+    <a href="#home">العودة للأعلى ↑</a>
+  </footer>
+
+  <dialog class="shot-dialog" id="shotDialog" aria-label="عرض لقطة الشاشة">
+    <div class="dialog-toolbar"><span id="shotTitle">لقطة الشاشة</span><button type="button" id="closeShot" aria-label="إغلاق">✕</button></div>
+    <canvas id="largeShot" width="1280" height="720"></canvas>
+    <div class="dialog-controls"><button type="button" id="prevShot">السابق</button><span id="shotCount">1 / 4</span><button type="button" id="nextShot">التالي</button></div>
+  </dialog>
+</body>
+</html>
