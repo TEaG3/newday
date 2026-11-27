@@ -261,6 +261,7 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
     assert(sidecar_new.vmc_dir[2] == NULL && sidecar_new.gicon[2] == NULL);
     assert(sidecar_new.vmc_dir[3] == NULL && sidecar_new.gicon[3] == NULL);
     assert(sidecar_new.vmc_state[3] == 0 && sidecar_new.gicon_state[3] == 0 && sidecar_new.ra_state[3] == 0);
+    assert(sidecar_new.vmc_n[3] == 0 && sidecar_new.ra_count[3] == 0 && sidecar_new.ra_gid[3] == 0);
 
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 3, &sidecar_new, 3,
