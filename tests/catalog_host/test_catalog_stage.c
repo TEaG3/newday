@@ -757,8 +757,8 @@ static void test_safe_bundle_publish(void)
     catalog_guard guard;
     mutex_context mutex;
     catalog_stage_snapshot active_snapshot, candidate_snapshot;
-    int active_items[2] = {1, 2}, candidate_items[2] = {3, 4};
-    int active_sidecars[2] = {10, 20}, candidate_sidecars[2] = {30, 40};
+    int active_items[3] = {1, 2, 3}, candidate_items[2] = {3, 4};
+    int active_sidecars[3] = {10, 20, 30}, candidate_sidecars[2] = {30, 40};
     catalog_stage_bundle active, candidate;
 
     memset(&active_snapshot, 0, sizeof(active_snapshot));
@@ -769,11 +769,15 @@ static void test_safe_bundle_publish(void)
     candidate_snapshot.count = 1;
 
     active.items = active_items;
+    active.items_capacity = 3;
     active.sidecars = active_sidecars;
+    active.sidecars_capacity = 3;
     active.count = 1;
     active.snapshot = &active_snapshot;
     candidate.items = candidate_items;
+    candidate.items_capacity = 2;
     candidate.sidecars = candidate_sidecars;
+    candidate.sidecars_capacity = 2;
     candidate.count = 1;
     candidate.snapshot = &candidate_snapshot;
 
@@ -791,6 +795,8 @@ static void test_safe_bundle_publish(void)
     assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
     assert(candidate.items == active_items && candidate.sidecars == active_sidecars);
     assert(active.count == 1 && candidate.count == 1);
+    assert(active.items_capacity == 2 && active.sidecars_capacity == 2);
+    assert(candidate.items_capacity == 3 && candidate.sidecars_capacity == 3);
     assert(active.snapshot == &candidate_snapshot && candidate.snapshot == &active_snapshot);
     assert(((int *)active.items)[0] == 3 && ((int *)active.sidecars)[0] == 30);
     assert(((int *)candidate.items)[0] == 1 && ((int *)candidate.sidecars)[0] == 10);
@@ -805,6 +811,7 @@ static void test_safe_bundle_publish(void)
     assert(catalog_guard_read_end(&guard));
     assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
     assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(active.items_capacity == 3 && active.sidecars_capacity == 3);
     assert(active.snapshot == &active_snapshot);
 
     /* A duplicate candidate is rejected before any part of the active bundle changes. */
@@ -847,6 +854,35 @@ static void test_safe_bundle_publish(void)
     assert(!guard.apply_pending && !guard.applying);
     candidate.items = candidate_items;
     assert(active.items == active_items && active.sidecars == active_sidecars);
+
+    /* Capacity metadata is part of the bundle contract; undersized buffers never swap. */
+    candidate.items_capacity = 0;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(!guard.apply_pending && !guard.applying);
+    candidate.items_capacity = 2;
+
+    candidate.sidecars_capacity = 0;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(!guard.apply_pending && !guard.applying);
+    candidate.sidecars_capacity = 2;
+
+    active.items_capacity = 0;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(!guard.apply_pending && !guard.applying);
+    active.items_capacity = 3;
+
+    active.sidecars_capacity = 0;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(active.items == active_items && active.sidecars == active_sidecars);
+    assert(!guard.apply_pending && !guard.applying);
+    active.sidecars_capacity = 3;
 
     /* Gameplay/storage activity prevents a bundle apply. */
     candidate.sidecars = candidate_sidecars;
