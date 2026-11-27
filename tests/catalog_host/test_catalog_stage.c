@@ -210,7 +210,7 @@ static void *test_resource(void)
 static void test_typed_sidecar_set_migration_and_retirement(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
-    sidecar_release_counts releases = {0, 0};
+    sidecar_release_counts releases = {0, 0, 0};
     void *old_a_vmc, *old_a_icon;
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
@@ -321,7 +321,7 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
 static void test_typed_sidecar_set_discard_and_fail_closed(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
-    sidecar_release_counts releases = {0, 0};
+    sidecar_release_counts releases = {0, 0, 0};
     void *vmc_resource, *icon_resource;
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
@@ -407,6 +407,7 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
                                             &sidecar_old, 1, &sidecar_new, 0,
                                             NULL, NULL, NULL, &releases) == CATALOG_STAGE_ERR_ARGUMENT);
     assert(sidecar_old.gicon[0] == icon_resource); /* missing destructor never loses ownership */
+    assert(sidecar_old.cover_big[0] != NULL);
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
                                             &sidecar_old, 1, &sidecar_new, 0,
                                             release_vmc_resource, release_icon_resource,
@@ -417,7 +418,7 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
 static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
-    sidecar_release_counts releases = {0, 0};
+    sidecar_release_counts releases = {0, 0, 0};
     void *shared, *vmc, *icon, *rogue;
 
     memset(&old_snapshot, 0, sizeof(old_snapshot));
