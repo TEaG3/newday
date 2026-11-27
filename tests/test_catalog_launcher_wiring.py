@@ -551,9 +551,13 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (cover_busy || scan_failed || selected < 0)", cover)
         self.assertIn("Reacquire the current generation for each requested cover", cover)
 
-    def test_live_scan_and_apply_are_still_disabled(self):
-        self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
-        self.assertNotIn("catalog_guard_request_apply(", LAUNCHER)
+    def test_live_monitor_thread_is_not_started_unless_build_gate_is_enabled(self):
+        self.assertIn("#define CATALOG_LIVE_MONITOR_ENABLED 0", LAUNCHER)
+        loader = function_body(LAUNCHER, "static void loader(void *arg)", "static int vmc_net_ask")
+        self.assertIn("if (CATALOG_LIVE_MONITOR_ENABLED &&", loader)
+        self.assertIn("catalog_live_monitor_thread", loader)
+        self.assertIn("catalog_guard_scan_begin(", LAUNCHER)
+        self.assertIn("catalog_guard_request_apply(", LAUNCHER)
 
 
     def test_boot_only_fallback_log_uses_a_real_newline(self):
