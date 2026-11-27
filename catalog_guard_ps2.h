@@ -19,8 +19,8 @@ int catalog_guard_ps2_init(catalog_guard *guard,
  * Destroy only after all callers have stopped using the guard. The function
  * also refuses while readers, scans, downloads, applies, gameplay or storage
  * I/O remain active. The launcher uses it for render-frame and worker leases
- * plus activity reporting; staged scanning/apply remain disabled until the
- * candidate builder and device-removal tests are complete.
+ * plus activity reporting; the candidate/apply path is present but the periodic
+ * monitor remains disabled until target concurrency and device-removal tests pass.
  */
 int catalog_guard_ps2_destroy(catalog_guard *guard,
                               catalog_guard_ps2_context *context);
