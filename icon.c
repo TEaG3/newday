@@ -41,6 +41,13 @@ void icon_free(icon *ic)
 	ic->pos = ic->nrm = ic->uv = NULL, ic->rgba = NULL, ic->frames = NULL, ic->tex = NULL;
 }
 
+void icon_destroy(icon *ic)
+{
+	if (!ic) return;
+	icon_free(ic);
+	free(ic);
+}
+
 static int rle(rd *r, unsigned short *tex) // u32 size, then u16 codes: bit 15 -> literals, else a repeated u16
 {
 	if (!need(r, 4)) return 0;
@@ -241,6 +248,18 @@ int main(int argc, char **argv)
 	icon_draw_list(&ic, 5, 0, 100, 200, 56, out);                   // t = 5: shape 1 only, twice as wide
 	assert(fabsf(out[0].x - 128 - (x5 - 128) * 2) < 1e-3f);
 	icon_free(&ic);
+	icon *heap = calloc(1, sizeof(*heap));
+	assert(heap);
+	heap->nframes = 1;
+	heap->frames = calloc(1, sizeof(*heap->frames));
+	assert(heap->frames);
+	heap->frames[0].t = malloc(sizeof(float));
+	heap->frames[0].v = malloc(sizeof(float));
+	heap->pos = malloc(sizeof(short));
+	heap->tex = malloc(sizeof(unsigned short));
+	assert(heap->frames[0].t && heap->frames[0].v && heap->pos && heap->tex);
+	icon_destroy(heap);
+	icon_destroy(NULL);
 	for (int k = 0; k < n; k++) assert(!icon_parse(b, k, &ic));     // every truncation rejected
 	assert(!icon_parse(b, synth(b, 1), &ic));                        // RLE past 128x128 rejected
 
