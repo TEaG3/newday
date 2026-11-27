@@ -33,6 +33,14 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertNotIn("'", inner)
 
 
+    def test_active_catalog_entries_are_pointer_backed_for_generation_swap(self):
+        self.assertIn("static entry catalog_boot_items[MAXC];", LAUNCHER)
+        self.assertIn("static entry *catalog_items = catalog_boot_items;", LAUNCHER)
+        self.assertIn("#define cv catalog_items", LAUNCHER)
+        self.assertNotIn("static entry cv[MAXC];", LAUNCHER)
+        self.assertNotIn("sizeof(cv)", LAUNCHER)
+        self.assertNotIn("sizeof cv", LAUNCHER)
+
     def test_ps2_guard_is_linked_into_launcher(self):
         self.assertIn('#include "catalog_guard_ps2.h"', LAUNCHER)
         objects = next(line for line in MAKEFILE.splitlines() if line.startswith("EE_OBJS ="))
