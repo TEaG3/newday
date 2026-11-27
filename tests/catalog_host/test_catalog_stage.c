@@ -1343,6 +1343,49 @@ static void test_safe_bundle_publish(void)
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
+static void test_disc_slot_fingerprint_resets_only_disc_sidecars(void)
+{
+    catalog_stage_snapshot old_snapshot, new_snapshot;
+    catalog_stage_diff diff;
+    sidecar_release_counts releases = {0, 0, 0};
+    memset(&old_snapshot, 0, sizeof(old_snapshot));
+    memset(&new_snapshot, 0, sizeof(new_snapshot));
+    init_sidecar_set(&sidecar_old);
+    init_sidecar_set(&sidecar_new);
+
+    old_snapshot.count = 2;
+    set_record(&old_snapshot.records[0], 0xffu, 0, 3, "DISC", 0, 1); /* no disc */
+    set_record(&old_snapshot.records[1], 1, 0, 0, "DVD/Game.iso", 100, 11);
+    new_snapshot.count = 2;
+    set_record(&new_snapshot.records[0], 0xffu, 0, 3, "DISC", 0, 2); /* disc inserted/changed */
+    set_record(&new_snapshot.records[1], 1, 0, 0, "DVD/Game.iso", 100, 11);
+
+    assert(catalog_stage_snapshot_diff(&old_snapshot, &new_snapshot, &diff) == CATALOG_STAGE_OK);
+    assert(diff.changed_count == 1 && diff.changed_old[0] == 0 && diff.changed_new[0] == 0);
+
+    sidecar_old.cover_big[0] = test_resource();
+    sidecar_old.cover_small[0] = test_resource();
+    sidecar_old.cover_half[0] = test_resource();
+    sidecar_old.gicon[0] = test_resource();
+    sidecar_old.gicon_state[0] = 2;
+    sidecar_old.cover_big[1] = test_resource();
+    sidecar_old.gicon[1] = test_resource();
+    sidecar_old.gicon_state[1] = 2;
+
+    assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
+                                              &sidecar_old, 2, &sidecar_new, 2) == CATALOG_STAGE_OK);
+    assert(sidecar_new.cover_big[0] == NULL && sidecar_new.gicon[0] == NULL);
+    assert(sidecar_new.cover_big[1] == sidecar_old.cover_big[1]);
+    assert(sidecar_new.gicon[1] == sidecar_old.gicon[1]);
+    assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
+                                             &sidecar_old, 2, &sidecar_new, 2,
+                                             release_vmc_resource, release_icon_resource,
+                                             release_cover_resource, &releases) == CATALOG_STAGE_OK);
+    assert(releases.cover_releases == 3 && releases.icon_releases == 1);
+    assert(sidecar_old.cover_big[0] == NULL && sidecar_old.gicon[0] == NULL);
+    catalog_stage_sidecar_set_discard(&sidecar_new);
+}
+
 int main(void)
 {
     test_staged_scan_builder();
@@ -1357,6 +1400,7 @@ int main(void)
     test_typed_sidecar_set_migration_and_retirement();
     test_typed_sidecar_set_discard_and_fail_closed();
     test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows();
+    test_disc_slot_fingerprint_resets_only_disc_sidecars();
     test_diff_detects_large_file_size_changes();
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
