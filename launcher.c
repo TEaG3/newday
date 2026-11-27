@@ -1786,93 +1786,136 @@ static int cover_store(int i, const unsigned char *img, int n) // a JPG / PNG ->
 // OPL's art (README "ART"): ART/<SLUS_209.46>_COV.jpg|png for games, ART/<ELF file>_COV.png for apps, in the root of
 // the launcher's device or of the game's source, or for the server's games its catalog's GET /art/ (#19: the art
 // lives next to the games); turned into the .c16 pair once, before any download. Loader thread: the network's owner
+static int art_import_one(int i, char **net, int max)
+{
+	char path[300], name[80];
+	if (has_cover(i)) return 0;
+	if (*cv[i].serial) // dash form back to OPL's: SLUS-20946 -> SLUS_209.46
+		snprintf(name, sizeof(name), "%.4s_%.3s.%.2s", cv[i].serial, cv[i].serial + 5, cv[i].serial + 8);
+	else if (cv[i].kind == K_APP) // a server app's URL-quoted name only matches without spaces
+		snprintf(name, sizeof(name), "%s", strrchr(cv[i].path, '/') + 1);
+	else return 0;
+
+	const char *roots[2] = {homedev, src[(int)cv[i].src].root};
+	FILE *f = NULL;
+	for (int r = 0; r < 2 && !f; r++)
+		for (int e = 0; e < 2 && !f; e++) {
+			if (r && (!strcmp(roots[1], homedev) || src[(int)cv[i].src].type == SRC_HDL || on_catalog(i))) break;
+			snprintf(path, sizeof(path), "%s/ART/%s_COV.%s", roots[r], name, e ? "jpg" : "png");
+			f = fopen(path, "rb");
+		}
+	if (!f && on_catalog(i) && (*net || (*net = malloc(max)))) {
+		int st = 0, body = 0, len = 0;
+		for (int e = 0; e < 2 && st != 200 && !ra_launching; e++) {
+			snprintf(path, sizeof(path), "/art/%s_COV.%s", name, e ? "jpg" : "png");
+			st = http_get(ini_get(&cfg, "juegos", "servidor", ""), 18290, path, *net, max, &body, &len);
+		}
+		if (st == 200) {
+			int ok = cover_store(i, (unsigned char *)*net + body, len);
+			if (!ok) printf("server %s: not a cover OPL art could make\n", path);
+			return ok;
+		}
+		return 0;
+	}
+	if (!f) return 0;
+	fseek(f, 0, SEEK_END);
+	long n = ftell(f);
+	unsigned char *buf = n > 0 && n < (4 << 20) ? malloc((size_t)n) : NULL;
+	fseek(f, 0, SEEK_SET);
+	int ok = buf && fread(buf, (size_t)n, 1, f) == 1 && cover_store(i, buf, (int)n);
+	fclose(f), free(buf);
+	if (!ok) printf("%s: not a cover OPL art could make\n", path);
+	return ok;
+}
+
 static void art_import(void)
 {
-	if (!background_work_begin(&art_busy)) return;
-	char path[300], name[80];
+	char path[64];
 	int got = 0, max = 1 << 20;
-	char *net = NULL; // the server's answers
-	snprintf(path, sizeof(path), "%s/covers", homedev);
-	mkdir(path, 0777);
+	char *net = NULL; // response buffer only; no catalog-entry pointer survives a lease
+	if (!background_work_begin(&art_busy)) return;
+	if (!ra_launching) {
+		snprintf(path, sizeof(path), "%s/covers", homedev);
+		mkdir(path, 0777);
+	}
+	background_work_end(&art_busy);
+	if (art_busy) return;
+
+	/* Each item owns its own reader/I/O lease. A safe apply may occur between items. */
 	for (int i = 1; i < ncv && !ra_launching; i++) {
-		if (has_cover(i)) continue;
-		if (*cv[i].serial) // dash form back to OPL's: SLUS-20946 -> SLUS_209.46
-			snprintf(name, sizeof(name), "%.4s_%.3s.%.2s", cv[i].serial, cv[i].serial + 5, cv[i].serial + 8);
-		else if (cv[i].kind == K_APP) // ponytail: a server app's URL-quoted name only matches without spaces
-			snprintf(name, sizeof(name), "%s", strrchr(cv[i].path, '/') + 1);
-		else continue;
-		const char *roots[2] = {homedev, src[(int)cv[i].src].root};
-		FILE *f = NULL;
-		for (int r = 0; r < 2 && !f; r++)
-			for (int e = 0; e < 2 && !f; e++) {
-				if (r && (!strcmp(roots[1], homedev) || src[(int)cv[i].src].type == SRC_HDL || on_catalog(i))) break; // not mounted
-				snprintf(path, sizeof(path), "%s/ART/%s_COV.%s", roots[r], name, e ? "jpg" : "png");
-				f = fopen(path, "rb");
-			}
-		if (!f && on_catalog(i) && (net || (net = malloc(max)))) { // the server's ART/ (name URL-quoted for apps)
-			int st = 0, body, len;
-			for (int e = 0; e < 2 && st != 200 && !ra_launching; e++) {
-				snprintf(path, sizeof(path), "/art/%s_COV.%s", name, e ? "jpg" : "png");
-				st = http_get(ini_get(&cfg, "juegos", "servidor", ""), 18290, path, net, max, &body, &len);
-			}
-			if (st == 200) {
-				int ok = cover_store(i, (unsigned char *)net + body, len);
-				got += ok;
-				if (!ok) printf("server %s: not a cover OPL art could make\n", path);
-			}
-			continue;
-		}
-		if (!f) continue;
-		fseek(f, 0, SEEK_END);
-		long n = ftell(f);
-		unsigned char *buf = n > 0 && n < (4 << 20) ? malloc(n) : NULL;
-		fseek(f, 0, SEEK_SET);
-		int ok = buf && fread(buf, n, 1, f) == 1 && cover_store(i, buf, n);
-		fclose(f), free(buf);
-		got += ok;
-		if (!ok) printf("%s: not a cover OPL art could make\n", path);
+		if (!background_work_begin(&art_busy)) break;
+		if (!ra_launching && i < ncv) got += art_import_one(i, &net, max);
+		background_work_end(&art_busy);
+		if (art_busy) break; // a failed semaphore release leaves the guard fail-closed
 	}
 	free(net);
 	printf("art: %d covers from OPL's ART/\n", got);
-	background_work_end(&art_busy);
+}
+
+static int download_cover_one(int i, char *buf, int max)
+{
+	char path[96];
+	int body = 0, len = 0;
+	snprintf(path, sizeof(path), COVER_PATH, cv[i].kind == K_PS1 ? "psx-covers" : "ps2-covers", cv[i].serial);
+	int st = https_get(COVER_HOST, path, buf, max, &body, &len);
+	if (st == NET_ERR_CONNECT && !dl_done && !ra_launching) {
+		sleep(2);
+		if (!ra_launching) st = https_get(COVER_HOST, path, buf, max, &body, &len);
+	}
+	if (st < 0) {
+		dl_state = st;
+		return 0;
+	}
+	if (st == 200 && cover_store(i, (unsigned char *)buf + body, len)) dl_got++;
+	dl_done++;
+	return 1;
 }
 
 static void download_covers(void)
 {
 	if (strcasecmp(ini_get(&cfg, "portadas", "descargar", "si"), "si")) return;
 	if (!background_work_begin(&dl_busy)) return;
-	for (int i = 1; i < ncv; i++) dl_total += wants_cover(i); // not the disc entry: its covers come from the USB
-	if (!dl_total) { background_work_end(&dl_busy); return; }
+	dl_total = dl_done = dl_got = 0;
+	for (int i = 1; i < ncv && !ra_launching; i++)
+		dl_total += wants_cover(i); // not the disc entry: its covers come from the USB
+	if (!dl_total || ra_launching) {
+		background_work_end(&dl_busy);
+		return;
+	}
 	dl_state = 1;
 	int r = net_ready();
-	if (r < 0) { dl_state = r; background_work_end(&dl_busy); return; }
-	dl_state = 2;
-	int max = 1 << 20; // a JPG + headers; xlenore covers are about 135 KB (SLUS-21376)
-	char *buf = malloc(max);
 	char dir[24];
 	snprintf(dir, sizeof(dir), "%s/covers", homedev);
-	mkdir(dir, 0777);
+	if (r >= 0 && !ra_launching) mkdir(dir, 0777);
+	background_work_end(&dl_busy);
+	if (dl_busy) return;
+	if (ra_launching) { dl_state = 3; return; }
+	if (r < 0) { dl_state = r; return; }
+	dl_state = 2;
+
+	int max = 1 << 20; // a JPG + headers; xlenore covers are about 135 KB (SLUS-21376)
+	char *buf = malloc(max);
 	clock_t c0 = clock();
-	for (int i = 0; buf && i < ncv && dl_state == 2 && !ra_launching; i++) { // a server app's launch needs the network
-		if (i == 0 || !wants_cover(i)) continue;
-		char path[96];
-		int body, len;
-		snprintf(path, sizeof(path), COVER_PATH, cv[i].kind == K_PS1 ? "psx-covers" : "ps2-covers", cv[i].serial);
-		int st = https_get(COVER_HOST, path, buf, max, &body, &len);
-		if (st == NET_ERR_CONNECT && !dl_done && !ra_launching) // retry only while the background gate remains open
-			sleep(2), st = https_get(COVER_HOST, path, buf, max, &body, &len);
-		if (st < 0) { dl_state = st; break; } // network or TLS: the rest would fail the same way
-		if (st == 200 && cover_store(i, (unsigned char *)buf + body, len)) dl_got++; // 404: the generic one stays
-		dl_done++;
+	/* Re-read the current generation under each short lease; never retain an entry pointer across items. */
+	for (int i = 1; buf && i < ncv && dl_state == 2 && !ra_launching; i++) {
+		if (!background_work_begin(&dl_busy)) break;
+		int keep_going = 1;
+		if (!ra_launching && i < ncv && wants_cover(i))
+			keep_going = download_cover_one(i, buf, max);
+		background_work_end(&dl_busy);
+		if (dl_busy || !keep_going) break;
 	}
 	free(buf);
+	if (dl_state == 2) dl_state = 3;
 	int ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
 	printf("covers: %d of %d downloaded in %d ms, state %d\n", dl_got, dl_total, ms, dl_state);
-	FILE *fp = fopen(LOG_TXT, "a"); // gate: time per pair
-	if (fp) fprintf(fp, "TEa.G3 covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n", dl_got, dl_total,
-	                ms, dl_got ? ms / dl_got : 0, dl_state, net_why, net_ip()), fclose(fp);
-	if (dl_state == 2) dl_state = 3;
-	background_work_end(&dl_busy);
+	/* The summary file is also storage I/O, so give it a short independent lease. */
+	if (!dl_busy && background_work_begin(&dl_busy)) {
+		FILE *fp = fopen(LOG_TXT, "a");
+		if (fp) fprintf(fp, "TEa.G3 covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n",
+		                dl_got, dl_total, ms, dl_got ? ms / dl_got : 0, dl_state, net_why, net_ip()), fclose(fp);
+		background_work_end(&dl_busy);
+	}
 }
 
 // ---- achievements (phase 16, step 1): the selected PS2 game's RetroAchievements hash, cached in

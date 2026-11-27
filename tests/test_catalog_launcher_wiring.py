@@ -288,6 +288,25 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("return guard == NULL || catalog_guard_scan_cancelled(guard) != 0;", GUARD_PS2)
         self.assertIn("catalog_guard_ps2_scan_cancelled(void *guard_context)", GUARD_PS2_HEADER)
 
+    def test_network_worker_leases_are_scoped_per_catalog_entry(self):
+        art = function_body(LAUNCHER, "static void art_import(void)", "static int download_cover_one")
+        art_loop = art[art.index("for (int i = 1; i < ncv && !ra_launching; i++)"):]
+        self.assertLess(art.index("background_work_end(&art_busy);"), art.index("for (int i = 1; i < ncv && !ra_launching; i++)"))
+        self.assertLess(art_loop.index("background_work_begin(&art_busy)"), art_loop.index("art_import_one(i, &net, max)"))
+        self.assertIn("if (!ra_launching && i < ncv) got += art_import_one(i, &net, max);", art_loop)
+        self.assertLess(art_loop.index("art_import_one(i, &net, max)"), art_loop.index("background_work_end(&art_busy)"))
+
+        download = function_body(LAUNCHER, "static void download_covers(void)", "// ---- achievements")
+        download_loop = download[download.index("for (int i = 1; buf && i < ncv"): ]
+        self.assertLess(download.index("background_work_end(&dl_busy);"), download.index("for (int i = 1; buf && i < ncv"))
+        self.assertLess(download_loop.index("background_work_begin(&dl_busy)"), download_loop.index("download_cover_one(i, buf, max)"))
+        self.assertIn("if (!ra_launching && i < ncv && wants_cover(i))", download_loop)
+        self.assertLess(download_loop.index("download_cover_one(i, buf, max)"), download_loop.index("background_work_end(&dl_busy)"))
+        self.assertIn("if (!ra_launching) st = https_get", LAUNCHER)
+        self.assertIn("Re-read the current generation under each short lease", download)
+        self.assertIn("if (!dl_busy && background_work_begin(&dl_busy))", download)
+        self.assertNotIn("entry *", download)
+
     def test_live_scan_and_apply_are_still_disabled(self):
         self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
         self.assertNotIn("catalog_guard_request_apply(", LAUNCHER)
