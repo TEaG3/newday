@@ -4,7 +4,25 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
-## 0. آخر تحقق بعد PR #161 — 27 نوفمبر 2026
+## 0. آخر تحقق بعد PR #163 — 27 نوفمبر 2026 (master: bc8a918561557c598c854fdcd2304d568f0f041c)
+
+- [x] دُمج PR #163 بالالتزام `bc8a918561557c598c854fdcd2304d568f0f041c` بعد مراجعة الفرق والتأكد من عدم وجود تعارض. أزال التغيير نسخة العدد المنفصلة `ncv` وجعلها قراءة من `catalog_active_bundle.count`؛ بذلك ينتقل العدد مع عناصر الجيل وSidecars وSnapshot بدلاً من إمكان انجرافه عنهم. أضيفت اختبارات wiring تمنع إعادة تعريف العدد أو إسناده بصورة منفصلة.
+- [x] نجحت فحوص PR قبل الدمج: [PS2 build #45990633636](https://github.com/TEaG3/newday/actions/runs/45990633636) و[CodeQL #45990633648](https://github.com/TEaG3/newday/actions/runs/45990633648). سجل المضيف: `Ran 93 tests`، ونجحت ZSO host fixture وZSO EE scanner adapter وHDL/APA host scanner واختبارات catalog stage/sidecar migration/concurrent apply/download gates، إضافة إلى `iso selftest ok` و`ul selftest ok` وسياسة OPL-only.
+- [x] اكتمل CI بعد الدمج على master نفسه: [PS2 launcher build #45991245498](https://github.com/TEaG3/newday/actions/runs/45991245498) — الوظائف الأربع ناجحة، و[CodeQL #45991245489](https://github.com/TEaG3/newday/actions/runs/45991245489) — C/C++ وPython وJavaScript/TypeScript ناجحة.
+- [x] نُزّلت Artifacts الأربعة من بناء master بعد الدمج، وفُحصت محلياً. تطابقت SHA-256 المحلية مع digest المسجل في GitHub، ونجح `unzip -t` لكل أرشيف:
+  - Integration bundle — artifact `15194520053`, 17,772,512 بايت، SHA-256 `f268efd46367bb874edcb0b36d8692e5ea8521e50fa0e9bcff123d68ed6a7459`.
+  - OPL runtime — artifact `15194270350`, 2,539,789 بايت، SHA-256 `eca870d6480fff6c8c92af6466b7e89c08b10678f29d06369b7a1b0792dcca15`.
+  - Build log — artifact `15194150869`, 1,848 بايت، SHA-256 `c4bd8f48e2eb407816f2a4b9d5781ff0163557c02428f2b5b6fd75fed0110433`.
+  - TEa.G3 launcher — artifact `15193896673`, 4,283,757 بايت، SHA-256 `4817e6bf5515282ed80bf2935d493c7d89c3792348b557442f8efe8f0e7b3d3f`.
+- [x] فحص محتوى Integration bundle: `TEa.G3.ELF` حجمه 9,565,972 بايت و`OPL.ELF` حجمه 5,792,496 بايت؛ كلاهما ELF32/MIPS N32. الحزمة الداخلية `TEa.G3-Complete-Package.zip` حجمها 6,705,791 بايت وبصمتها `f4943d5099f30e07e4a78122a2bf1f171776de518598c625ca6196d73e3dd8a1`، وملف ELF الداخلي بصمته `63280f98dd2f58e74346a9a161db666d4c48e614f6dab2ce5472677d9deb34cb`؛ تحقق `SHA256SUMS.txt` الداخلي بنجاح. بيان runtime يعلن `files=1` وOPL فقط، وCRC32 لـ `OPL.ELF` هو `aa490716` مطابق للبيان.
+- [x] الإصدار المنشور ما زال `arabic-v1.3.13`، وGitHub API يؤكد أنه منشور وغير مسودة وغير تجريبي، مع الحزمة `TEa.G3-Complete-Package.zip` بحجم 6,702,711 بايت وdigest `a6b8b47dcc38cd6058e8255166bd3da0a9be84dddaaf96ada6478b6cb2ec1696`. لم يُنشأ إصدار جديد ولم تتغير روابط التنزيل لأن PR #163 تحسين داخلي لملكية العدد ولا يضيف ميزة تشغيل مختبرة على العتاد.
+- [x] فحص الهوية: `README.md` و`site/index.html` و`site/manual.html` و`site/opl-lab.html` و`site/release.js` لا تحتوي على Nuld/ORBIT. بقيت إشارات تاريخية/توافقية في `site/changelog.html` و`site/i18n.js` و`tools/nuld_catalog.py` و`tools/nuld_hash.c` و`tests/test_nuld_catalog.py` وأرشيفات OpenSpec القديمة؛ لم تُحذف لأنها توثق التاريخ أو تحافظ على ترحيل إعدادات المستخدمين. وصف مستودع GitHub ما زال `NULD (formerly ORBIT)` وHomepage ما زال `https://danielnuld.github.io/nuld/`.
+- [x] PR #29 مدمج، وبحث الفروع لم يجد `safety/io-and-runtime-guards`. بقيت PRs #6 و#72 و#93 مسودات مفتوحة ولم تُدمج لأنها قديمة/غير مكتملة.
+- [ ] المراقبة الحية ما زالت معطلة: لا يزال بناء candidate منفصل دائم وترحيل جميع Sidecars وربط `catalog_stage_bundle_publish()` بخيط العرض ونقطة آمنة واختبارات USB removal/reinsert غير مكتمل.
+- [ ] لا يوجد جهاز PS2 أو محاكي موثوق متاح هنا؛ لذلك لا يوجد إثبات إقلاع فعلي لألعاب ISO/ZSO/UL. SMB/UDPBD/UDPFS وMMCE game launching تبقى معطلة، وHDD/APA يحتاج اختبار عتاد.
+- [ ] إعدادات المستودع الإدارية لم تتغير: Rulesets فارغة، ووصف المستودع وHomepage قديمان. اتصال GitHub الحالي لا يتيح كتابة إعدادات المستودع، وقراءة branch protection تعيد 403 للتكامل؛ يلزم مالك المستودع لتفعيل حماية master وRequired Status Checks وتحديث الوصف وHomepage.
+
+## 0.1 سجل سابق بعد PR #161 — 27 نوفمبر 2026
 
 - [x] دُمج PR #161 بالالتزام `bbab2eb237bdc608a65ddbd09512b33de60c88d2`. أصلح ترجمة إخراج الفيديو العربية لتطابق 480i/576i الافتراضي والتبديل إلى 720p، وصحح تكرار FAT32 في تعليمات التثبيت الإنجليزية والعربية، وأضاف اختبار رجوع لهذه النصوص.
 - [x] نجحت فحوص PR قبل الدمج: [PS2 build #45979412267](https://github.com/TEaG3/newday/actions/runs/45979412267)، [CodeQL #45979412126](https://github.com/TEaG3/newday/actions/runs/45979412126)، و[Website validation #45979412050](https://github.com/TEaG3/newday/actions/runs/45979412050). سجل المضيف: `Ran 93 tests`، ونجح ZSO host fixture وHDL/APA host scanner وISO وUL.
@@ -22,7 +40,7 @@
 - [ ] لا يوجد إثبات إقلاع ألعاب ISO/ZSO/UL على PS2 أو محاكي موثوق. SMB/UDPBD/UDPFS وMMCE game launching ما زالت معطلة؛ HDD/APA يحتاج اختبار جهاز.
 - [ ] PR #29 مدمج والفرع `safety/io-and-runtime-guards` غير موجود. وصف المستودع وHomepage ما زالا يحملان NULD والرابط القديم؛ Rulesets فارغة، وقراءة branch protection أعادت 403 للتكامل، لذا يلزم ضبط الحماية إدارياً.
 
-## 1. الأدلة الآلية الحالية — 27 نوفمبر 2026 (master: 5d6c189)
+## 1. سجل سابق — الأدلة الآلية عند master 5d6c189
 
 ### الإصدار المنشور arabic-v1.3.13
 
