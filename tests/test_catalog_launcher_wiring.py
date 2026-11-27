@@ -118,6 +118,41 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(pad, flip)
         self.assertLess(flip, release)
 
+    def test_icon_worker_keeps_storage_only_io_outside_catalog_reader_lease(self):
+        io_begin = function_body(
+            LAUNCHER,
+            "static int background_io_begin(volatile int *busy)\\n{",
+            "static void background_io_end(volatile int *busy)\\n{",
+        )
+        io_end = function_body(
+            LAUNCHER,
+            "static void background_io_end(volatile int *busy)\\n{",
+            "static void cover_thread(void *arg)",
+        )
+        self.assertNotIn("catalog_reader_wait_begin()", io_begin)
+        self.assertNotIn("catalog_reader_end()", io_end)
+        self.assertIn("*busy = 1;", io_begin)
+        self.assertIn("catalog_activity_update(0)", io_begin)
+        self.assertIn("catalog_activity_update(ra_launching)", io_end)
+
+        icon = function_body(LAUNCHER, "static void icon_thread(void *arg)", "// ---- covers ----")
+        begin_io = icon.index("background_io_begin(&icon_busy)")
+        stub = icon.index("install_stub()")
+        wizard = icon.index("wiz_job()")
+        end_io = icon.index("background_io_end(&icon_busy)")
+        begin_catalog = icon.index("background_work_begin(&icon_busy)")
+        read_index = icon.index("int i = icon_want, port;")
+        read_sidecar = icon.index("vmc_state[i]")
+        end_catalog = icon.index("background_work_end(&icon_busy)")
+        self.assertLess(begin_io, stub)
+        self.assertLess(stub, wizard)
+        self.assertLess(wizard, end_io)
+        self.assertLess(end_io, begin_catalog)
+        self.assertLess(begin_catalog, read_index)
+        self.assertLess(read_index, read_sidecar)
+        self.assertLess(read_sidecar, end_catalog)
+        self.assertIn("if (icon_busy) continue;", icon)
+
     def test_background_workers_hold_and_release_reader_leases(self):
         begin = function_body(
             LAUNCHER,
