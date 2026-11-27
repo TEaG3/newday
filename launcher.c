@@ -1581,7 +1581,7 @@ static void disc_apply_pending(void)
 	/* The disc and icon workers read cv[0]. Freeze new work and wait for every
 	   tracked reader to drain before replacing the disc entry and its sidecars. */
 	if (!disc_new || background_workers_busy() || cover_lock < 0) return;
-	if (WaitSema(cover_lock) < 0) return;
+	if (PollSema(cover_lock) < 0) return;
 	if (disc_new && !background_workers_busy()) {
 		old_big = cv[0].big, old_small = cv[0].small, old_half = cv[0].half;
 		old_icon = gicon[0];
