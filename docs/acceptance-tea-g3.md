@@ -4,6 +4,24 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
+## 0. آخر تحقق بعد PR #161 — 27 نوفمبر 2026
+
+- [x] دُمج PR #161 بالالتزام `bbab2eb237bdc608a65ddbd09512b33de60c88d2`. أصلح ترجمة إخراج الفيديو العربية لتطابق 480i/576i الافتراضي والتبديل إلى 720p، وصحح تكرار FAT32 في تعليمات التثبيت الإنجليزية والعربية، وأضاف اختبار رجوع لهذه النصوص.
+- [x] نجحت فحوص PR قبل الدمج: [PS2 build #45979412267](https://github.com/TEaG3/newday/actions/runs/45979412267)، [CodeQL #45979412126](https://github.com/TEaG3/newday/actions/runs/45979412126)، و[Website validation #45979412050](https://github.com/TEaG3/newday/actions/runs/45979412050). سجل المضيف: `Ran 93 tests`، ونجح ZSO host fixture وHDL/APA host scanner وISO وUL.
+- [x] اكتمل CI بعد الدمج على master نفسه `bbab2eb237bdc608a65ddbd09512b33de60c88d2`: [PS2 launcher build #45979734826](https://github.com/TEaG3/newday/actions/runs/45979734826)، [CodeQL #45979734807](https://github.com/TEaG3/newday/actions/runs/45979734807)، و[Website + GitHub Pages deploy #45979734892](https://github.com/TEaG3/newday/actions/runs/45979734892) — جميعها `success`.
+- [x] سجل اللغة والخط بعد الدمج: 136 نصاً إنجليزياً و136 ترجمة عربية، صفر مفقود وصفر غير مستخدم؛ 38 رمزاً عربياً مغطى، واختبار الخط 509 رموز في 12 صفحة أطلس.
+- [x] نُزّلت Artifacts من بناء master بعد الدمج، وفُحصت محلياً. ZIP integrity ناجح للأرشيفات الأربعة، وSHA-256 المحلي:
+  - Integration bundle — 17,770,736 بايت: `d2725c87ed9b3ad5a205535b665980d49696f85d135ddf7f44b095549ecbaf97`.
+  - Launcher — 4,283,400 بايت: `149f768c381f207bb9d40566e38fb0322b0274438e5e7bcb7092c938807261c0`.
+  - OPL runtime — 2,539,789 بايت: `0a523bb8f8830819ff6403220aafe423cce2ce4154faef2e3bc02daace5ea19d`.
+  - Build log — 1,848 بايت: `5286c3930b52819907fdc3edde5cd79c1e40b9a7c1add33127ab971e8fbc1e1e`.
+- [x] فحص محتوى الحزمة: `TEa.G3.ELF` حجمه 9,565,716 بايت و`OPL.ELF` حجمه 5,792,496 بايت؛ كلاهما ELF 32-bit MIPS N32. بصمات `SHA256SUMS.txt` الداخلية للحزمة OK؛ الحزمة الكاملة 6,705,653 بايت وبصمتها `c3d13a390dee05b5beb8415679de817638486c1fdffc7af59d03bbf66e75cc19`. بيان runtime يعلن `files=1` وOPL فقط، وCRC32 هو `aa490716`.
+- [x] الإصدار المنشور ما زال `arabic-v1.3.13`؛ GitHub API يؤكد وجود `TEa.G3-Complete-Package.zip` بحجم 6,702,711 بايت وبصمة `a6b8b47dcc38cd6058e8255166bd3da0a9be84dddaaf96ada6478b6cb2ec1696`. لم يُنشأ إصدار جديد ولم تتغير روابط التنزيل لأن PR #161 تعديل ترجمة/توثيق واختبار ولا يغيّر runtime.
+- [x] صفحات الموقع تستخدم العربية افتراضياً عبر `site/i18n.js`، وتحافظ CSS على اتجاه النص العربي RTL مع إبقاء هندسة التنقل LTR. نُشر GitHub Pages بعد الدمج بنجاح.
+- [ ] المراقبة الحية ما زالت معطلة. بناء المرشح المنفصل وربط `catalog_stage_bundle_publish()` بخيط العرض وترحيل كل Sidecars واختبارات USB removal/reinsert لم تكتمل.
+- [ ] لا يوجد إثبات إقلاع ألعاب ISO/ZSO/UL على PS2 أو محاكي موثوق. SMB/UDPBD/UDPFS وMMCE game launching ما زالت معطلة؛ HDD/APA يحتاج اختبار جهاز.
+- [ ] PR #29 مدمج والفرع `safety/io-and-runtime-guards` غير موجود. وصف المستودع وHomepage ما زالا يحملان NULD والرابط القديم؛ Rulesets فارغة، وقراءة branch protection أعادت 403 للتكامل، لذا يلزم ضبط الحماية إدارياً.
+
 ## 1. الأدلة الآلية الحالية — 27 نوفمبر 2026 (master: 5d6c189)
 
 ### الإصدار المنشور arabic-v1.3.13
