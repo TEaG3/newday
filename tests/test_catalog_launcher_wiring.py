@@ -436,6 +436,24 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("catalog_load(items, s, n, cancelled, cancel_context, &remote_status)", apps)
 
 
+
+
+    def test_network_init_semaphore_is_created_before_loader_thread(self):
+        main = LAUNCHER[LAUNCHER.index("int main(int argc, char *argv[])"):]
+        self.assertIn("net_init_sync_init()", main)
+        self.assertLess(main.index("net_init_sync_init()"), main.index("StartThread(tid, NULL)"))
+        self.assertIn("CreateSema(&sema)", NET)
+        self.assertIn("PollSema(net_init_sema)", NET)
+        self.assertIn("WaitSema(net_init_sema)", NET)
+
+    def test_remote_catalog_network_initialization_is_cancellable(self):
+        self.assertIn("net_up_cancelable", NET_HEADER)
+        self.assertIn("net_wait_ready_cancelable", NET)
+        self.assertIn("test_net_wait_cancellation();", NET)
+        self.assertIn("net_ready_cancelable(cancelled, cancel_context)", LAUNCHER)
+        self.assertIn("if (r != NET_ERR_CANCELLED) net_res = r;", LAUNCHER)
+        self.assertIn("if (r == NET_ERR_CANCELLED || scan_cancelled(cancelled, cancel_context))", LAUNCHER)
+
     def test_remote_app_catalog_http_read_is_cancellable_and_partial_candidates_are_discarded(self):
         catalog = function_body(LAUNCHER, "static int catalog_load(", "typedef struct { int s, n; entry *items;")
         builder = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")

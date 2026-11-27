@@ -1123,6 +1123,7 @@ static int scan_dir(entry *items, int s, int k, int n, int *incomplete,
 // phase 17: downloadable applications from the HTTP catalogue on [juegos] servidor (port 18290), read with
 // the launcher's own network: udpfs is not mounted, so covers and achievements keep working for them
 static int net_ready(void);
+static int net_ready_cancelable(net_cancel_fn cancelled, void *cancel_context);
 static const char *net_err(int r) // a NET_ERR_* or an HTTP status, in words (#4: the SELECT overlay)
 {
 	static char http[16];
@@ -1175,10 +1176,14 @@ static int catalog_load(entry *items, int s, int n,
     } else if (!buf) {
         why = L("Not enough memory to download the app");
         status = CATALOG_STAGE_SCAN_ERR_SOURCE;
-    } else if ((r = net_ready()) < 0) {
-        snprintf(detail, sizeof(detail), L("No network (%s): the server's game catalog was not read"), net_err(r));
-        why = detail;
-        status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+    } else if ((r = net_ready_cancelable(cancelled, cancel_context)) < 0) {
+        if (r == NET_ERR_CANCELLED || scan_cancelled(cancelled, cancel_context)) {
+            status = CATALOG_STAGE_SCAN_CANCELLED;
+        } else {
+            snprintf(detail, sizeof(detail), L("No network (%s): the server's game catalog was not read"), net_err(r));
+            why = detail;
+            status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+        }
     } else if (scan_cancelled(cancelled, cancel_context)) {
         status = CATALOG_STAGE_SCAN_CANCELLED;
     } else if ((r = http_get_cancelable(host, 18290, "/catalog", buf, max - 1,
@@ -1905,12 +1910,22 @@ static int save_c16(const char *serial, const char *suffix, const void *px, unsi
 }
 
 static int net_res = 1; // net_ready's result, for the log; 1: not tried (declared above vmc_remote)
-static int net_ready(void) // loader thread: the network up once, for the covers and the achievements; 0 or NET_ERR_*
+static int net_ready_cancelable(net_cancel_fn cancelled, void *cancel_context)
 {
 	int r = net_res;
-	if (r == 1) net_res = r = net_up(ini_get(&cfg, "red", "ip", "dhcp"), ini_get(&cfg, "red", "mascara", "255.255.255.0"),
-	                       ini_get(&cfg, "red", "puerta", ""), ini_get(&cfg, "red", "dns", ""));
+	if (r == 1) {
+		r = net_up_cancelable(ini_get(&cfg, "red", "ip", "dhcp"), ini_get(&cfg, "red", "mascara", "255.255.255.0"),
+		                      ini_get(&cfg, "red", "puerta", ""), ini_get(&cfg, "red", "dns", ""),
+		                      cancelled, cancel_context);
+		/* A cancelled attempt rolls back the stack and must not poison later non-cancelled users. */
+		if (r != NET_ERR_CANCELLED) net_res = r;
+	}
 	return r;
+}
+
+static int net_ready(void) // loader thread: the network up once, for the covers and the achievements; 0 or NET_ERR_*
+{
+	return net_ready_cancelable(NULL, NULL);
 }
 
 static int cover_store(int i, const unsigned char *img, int n) // a JPG / PNG -> the .c16 pair on the USB and on screen
@@ -3427,6 +3442,7 @@ int main(int argc, char *argv[])
 		snprintf(homedev, sizeof(homedev), "mmce%c:", argv[0][4] == '1' ? '1' : '0');
 	home_paths();
 	catalog_bundle_init(); // bind the boot buffers before any loader or render thread can read the catalog
+	if (!net_init_sync_init()) printf("network init semaphore unavailable; network features disabled\n");
 	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/TEa.G3.ELF");
 	if (!gfx_init()) printf("gfx_init: VRAM pool too small\n");
 	splash_ver = TEAG3_VERSION + 1; // "1.2"
