@@ -244,6 +244,7 @@ static int netman_module_loaded;
 static int smap_module_loaded;
 static int netman_initialized;
 static int ps2ip_initialized;
+static volatile int net_init_lock;
 
 int net_dev9(void)
 {
@@ -267,6 +268,19 @@ static void network_wait_poll(void *context, unsigned milliseconds)
 	usleep(milliseconds * 1000u);
 }
 
+static int net_init_lock_acquire(net_cancel_fn cancelled, void *cancel_context)
+{
+	while (__sync_lock_test_and_set(&net_init_lock, 1)) {
+		if (cancelled && cancelled(cancel_context)) return 0;
+		usleep(20000);
+	}
+	if (cancelled && cancelled(cancel_context)) {
+		__sync_lock_release(&net_init_lock);
+		return 0;
+	}
+	return 1;
+}
+
 int ip4addr_aton(const char *cp, struct ip4_addr *addr); // libps2ip (lwIP), not declared by the installed headers
 
 static void net_abort_init(void)
@@ -282,8 +296,8 @@ static void net_abort_init(void)
 	net_on = 0;
 }
 
-int net_up_cancelable(const char *ip, const char *mask, const char *gw, const char *dns,
-                      net_cancel_fn cancelled, void *cancel_context)
+static int net_up_locked(const char *ip, const char *mask, const char *gw, const char *dns,
+                         net_cancel_fn cancelled, void *cancel_context)
 {
 	int dhcp;
 	struct ip4_addr a, m, g, d;
@@ -388,6 +402,16 @@ int net_up_cancelable(const char *ip, const char *mask, const char *gw, const ch
 	return 0;
 }
 
+int net_up_cancelable(const char *ip, const char *mask, const char *gw, const char *dns,
+                      net_cancel_fn cancelled, void *cancel_context)
+{
+	int result;
+	if (!net_init_lock_acquire(cancelled, cancel_context)) return NET_ERR_CANCELLED;
+	result = net_up_locked(ip, mask, gw, dns, cancelled, cancel_context);
+	__sync_lock_release(&net_init_lock);
+	return result;
+}
+
 int net_up(const char *ip, const char *mask, const char *gw, const char *dns)
 {
 	return net_up_cancelable(ip, mask, gw, dns, NULL, NULL);
@@ -407,8 +431,9 @@ const char *net_ip(void) // the address the interface has now (fixed or the DHCP
 // on every boot) Black never started; deregistering the EE side stops the copies
 void net_down(void)
 {
-	if (!net_on && !ps2ip_initialized && !netman_initialized) return;
-	net_abort_init();
+	while (__sync_lock_test_and_set(&net_init_lock, 1)) usleep(20000);
+	if (net_on || ps2ip_initialized || netman_initialized) net_abort_init();
+	__sync_lock_release(&net_init_lock);
 }
 
 static int tls_recv(WOLFSSL *ssl, char *b, int sz, void *ctx) // wolfSSL's reads: 8 s of silence and it gives up
