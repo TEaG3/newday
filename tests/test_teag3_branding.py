@@ -52,10 +52,13 @@ class TEaG3BrandingTests(unittest.TestCase):
         self.assertNotIn("User-Agent: ORBIT", self.net)
 
     def test_active_site_copy_hides_legacy_brand_but_preserves_data_migration(self):
-        self.assertNotIn("legacy NULD", self.site_i18n)
+        self.assertNotIn("NULD", self.site_i18n)
         self.assertNotIn("nuld (legacy key shown as Classic)", self.site_i18n)
+        self.assertNotIn("base = nuld", self.site_i18n)
         self.assertIn("Upgrading from an older launcher?", self.site_i18n)
         self.assertIn("from orbit/ or nuld/ into tea_g3/", self.site_i18n)
+        self.assertIn("base = classic", self.site_i18n)
+        self.assertIn('legacyLanguageKey = "nuld-site-lang"', self.site_i18n)
         self.assertIn('"torres, Classic, cristal, aurora', self.site_i18n)
         self.assertIn("المظهر الكلاسيكي باسم Classic", self.site_i18n)
 
