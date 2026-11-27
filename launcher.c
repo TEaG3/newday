@@ -173,10 +173,21 @@ static volatile int ncv, stage, done_n, total_n, usb, load_ms; // written by the
 #define MAXDIR 128
 static sceMcTblGetDir mcdir[2][MAXDIR];
 static int mcn[2] = {-1, -1};
-/* Legacy VMC UI is disabled in this OPL-only launcher (uses_vmc always returns 0). */
-static sceMcTblGetDir *vdir[MAXC];
-static int vmc_n[MAXC];
-static volatile char vmc_state[MAXC];
+/* Per-game state is grouped for a future generation swap. The launcher still uses
+   one active set; live refresh remains disabled until every worker is wired to it. */
+static catalog_stage_sidecar_set catalog_sidecar_boot;
+static catalog_stage_sidecar_set *catalog_sidecars = &catalog_sidecar_boot;
+#define vdir       (catalog_sidecars->vmc_dir)
+#define vmc_n      (catalog_sidecars->vmc_n)
+#define vmc_state  (catalog_sidecars->vmc_state)
+#define gicon      (catalog_sidecars->gicon)
+#define gicon_state (catalog_sidecars->gicon_state)
+#define cover_req  (catalog_sidecars->cover_req)
+#define cover_done (catalog_sidecars->cover_done)
+#define cover_seen (catalog_sidecars->cover_seen)
+#define ra_state   (catalog_sidecars->ra_state)
+#define ra_count   (catalog_sidecars->ra_count)
+#define ra_gid     (catalog_sidecars->ra_gid)
 
 static void scan_cards(void)
 {
@@ -322,8 +333,6 @@ static int save_info(int i, char *line1, char *line2, int n) // returns the save
 }
 
 // ---- 3D save icons (phase 9): newest save's icon.sys + list icon, loaded by the icon thread on first selection ----
-static icon *gicon[MAXC];
-static volatile char gicon_state[MAXC]; // 0 not asked, 1 loading, 2 done (gicon NULL if it failed)
 static volatile int icon_want = -1;
 static int icon_sema = -1;
 
@@ -573,8 +582,7 @@ static void load_covers(entry *e) // the disc's: the grid's half from the big on
 // tile (half, 46 KB, kept on the USB as <serial>_h.c16), 2 the small one (95 KB), 4 the big one (184 KB).
 // cv[0], the disc, keeps its own (disc thread) ----
 #define COVER_KB (16 << 10)
-static volatile char cover_req[MAXC], cover_done[MAXC]; // sizes asked and not read yet / read (or not on the USB)
-static int cover_seen[MAXC], frame_n; // render thread: the frame each cover was last drawn
+static int frame_n; // render thread: the frame each cover was last drawn
 static int cover_sema = -1, cover_lock = -1;
 static int save_c16(const char *serial, const char *suffix, const void *px, unsigned w, unsigned h);
 
@@ -1906,13 +1914,10 @@ static int catalog_activity_wait(int playing)
 	return catalog_activity_update(playing);
 }
 
-static volatile char ra_state[MAXC];                      // 0 not asked, 1 working, then RA_SET.. (achievements.h)
-static short ra_count[MAXC];
 // the Logros panel (○): one game's list at a time, loaded by the worker. st: 1 loading, 2 ready, -1 failed
 #define RA_LIST_MAX 400
 static ra_ach ra_list[RA_LIST_MAX];
 static volatile int ra_list_n, ra_list_for = -1, ra_list_st, ra_list_want = -1;
-static int ra_gid[MAXC]; // RetroAchievements' game id, asked once
 static int ach_row = -1; // the panel's cursor, -1 = closed
 // ponytail: HD Loader partitions and the disc drive have no ISO file to hash; a reader over them if wanted
 static int ra_game_ok(int i) { return ra_on && cv[i].kind == K_PS2 && src[(int)cv[i].src].type != SRC_HDL; }
