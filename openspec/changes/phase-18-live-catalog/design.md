@@ -29,6 +29,10 @@ catalog_guard is a portable state machine whose lock/unlock callbacks must be ba
 
 The bundle publisher may run a caller-supplied prepare callback after the apply gate is acquired and all active readers have drained, but before any active/candidate pointer moves. The callback may populate only candidate-side state (for example, migrate per-game sidecars by stable key). If preparation fails, the active bundle remains untouched and the apply gate is released; the candidate may be discarded or rebuilt. The callback must not mutate or free active resources. Ownership retirement remains the caller's responsibility after a successful swap.
 
+## Sidecar ownership
+
+The typed sidecar set groups VMC directory/count/state, save-icon pointer/state, cover request/completion/LRU state, and achievement state. Candidate migration copies state only for stable keys whose content metadata is unchanged; transient cover requests are reset. Pointer fields are borrowed into the candidate while the old bundle remains active. Only after a successful bundle swap may retirement clear transferred pointers in the old set and invoke the appropriate destructor for removed or changed resources. A failed/unpublished candidate is discarded by clearing borrowed pointers without freeing active resources. Missing destructors or stale pointers outside the old snapshot fail closed before ownership is changed.
+
 ## Monitoring policy
 
 - Poll only sources whose mount state can be safely queried. Use a conservative 3–5 second interval after device-specific behavior is verified; do not assume a PS2SDK hotplug event API exists.
