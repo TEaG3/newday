@@ -67,6 +67,13 @@ typedef int (*catalog_stage_bundle_prepare_fn)(const catalog_stage_bundle *activ
                                                catalog_stage_bundle *candidate,
                                                void *context);
 
+/* Called under the same apply gate after the bundle pointers swap: active is the new
+   generation and retired is the old one. Must be failure-atomic; readers and workers
+   remain blocked until this callback returns. */
+typedef int (*catalog_stage_bundle_retire_fn)(const catalog_stage_bundle *active,
+                                              catalog_stage_bundle *retired,
+                                              void *context);
+
 typedef struct {
     size_t added_count;
     size_t removed_count;
@@ -188,8 +195,17 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
                                    catalog_stage_snapshot **active,
                                    catalog_stage_snapshot **candidate);
 /* Atomically publish one complete generation; candidate receives the previous active bundle.
-   If ERR_GUARD is returned after the swap, the guard is fail-closed; do not read either bundle
-   until the guard is reinitialized. */
+   The retire callback runs after the swap but before the reader gate reopens. If it fails, the
+   new generation is active and candidate still owns the retired generation. If ERR_GUARD is
+   returned after the swap, do not read either bundle until the guard is reinitialized. */
+int catalog_stage_bundle_publish_prepared_retire(catalog_guard *guard,
+                                                 catalog_stage_bundle *active,
+                                                 catalog_stage_bundle *candidate,
+                                                 catalog_stage_bundle_prepare_fn prepare,
+                                                 void *prepare_context,
+                                                 catalog_stage_bundle_retire_fn retire,
+                                                 void *retire_context);
+/* Compatibility wrapper with no post-swap retirement callback. */
 int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
                                           catalog_stage_bundle *active,
                                           catalog_stage_bundle *candidate,
