@@ -190,7 +190,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
 
 
     def test_art_setup_and_download_summary_use_storage_io_gate(self):
-        art = function_body(LAUNCHER, "static void art_import(void)\\n{", "static void download_covers(void)")
+        art = function_body(LAUNCHER, "static void art_import(void)\n{", "static void download_covers(void)")
         art_begin = art.index("background_io_begin(&art_busy)")
         art_mkdir = art.index("mkdir(path, 0777)")
         art_end = art.index("background_io_end(&art_busy)")
@@ -199,7 +199,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(art_mkdir, art_end)
         self.assertLess(art_end, art_items)
 
-        download = function_body(LAUNCHER, "static void download_covers(void)\\n{", "// ---- achievements")
+        download = function_body(LAUNCHER, "static void download_covers(void)\n{", "// ---- achievements")
         self.assertIn("download_cover_one(i, buf, max)", download)
         summary_begin = download.rindex("background_io_begin(&dl_busy)")
         summary_end = download.rindex("background_io_end(&dl_busy)")
