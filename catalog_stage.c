@@ -206,6 +206,28 @@ static int sidecar_set_has_resources(const catalog_stage_sidecar_set *state,
     return 0;
 }
 
+/* Each owned allocation must appear in exactly one slot and resource class.
+   Otherwise post-swap retirement could invoke a destructor twice. */
+static int sidecar_set_has_aliases(const catalog_stage_sidecar_set *state,
+                                   size_t count)
+{
+    size_t i, j;
+    for (i = 0; i < count; ++i) {
+        void *vmc = state->vmc_dir[i];
+        void *icon = state->gicon[i];
+        if (vmc != NULL) {
+            if (vmc == icon) return 1;
+            for (j = 0; j < i; ++j)
+                if (vmc == state->vmc_dir[j] || vmc == state->gicon[j]) return 1;
+        }
+        if (icon != NULL) {
+            for (j = 0; j < i; ++j)
+                if (icon == state->vmc_dir[j] || icon == state->gicon[j]) return 1;
+        }
+    }
+    return 0;
+}
+
 void catalog_stage_sidecar_set_discard(catalog_stage_sidecar_set *state)
 {
     size_t i;
@@ -247,7 +269,8 @@ int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot
         return CATALOG_STAGE_ERR_CAPACITY;
     /* Never overwrite a candidate that still owns resources from an older generation. */
     if (sidecar_set_has_resources(new_state, 0, CATALOG_STAGE_MAX_ITEMS) ||
-        sidecar_set_has_resources(old_state, old_snapshot->count, CATALOG_STAGE_MAX_ITEMS))
+        sidecar_set_has_resources(old_state, old_snapshot->count, CATALOG_STAGE_MAX_ITEMS) ||
+        sidecar_set_has_aliases(old_state, old_snapshot->count))
         return CATALOG_STAGE_ERR_ARGUMENT;
 
     status = catalog_stage_snapshot_map(old_snapshot, new_snapshot,
@@ -297,6 +320,7 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
                                      void *release_context)
 {
     int16_t old_to_new[CATALOG_STAGE_MAX_ITEMS];
+    int16_t new_to_old[CATALOG_STAGE_MAX_ITEMS];
     size_t i;
     int status;
 
@@ -310,12 +334,38 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
         new_snapshot->count > new_state_capacity)
         return CATALOG_STAGE_ERR_CAPACITY;
     if (sidecar_set_has_resources(old_state, old_snapshot->count, CATALOG_STAGE_MAX_ITEMS) ||
-        sidecar_set_has_resources(new_state, new_snapshot->count, CATALOG_STAGE_MAX_ITEMS))
+        sidecar_set_has_resources(new_state, new_snapshot->count, CATALOG_STAGE_MAX_ITEMS) ||
+        sidecar_set_has_aliases(old_state, old_snapshot->count) ||
+        sidecar_set_has_aliases(new_state, new_snapshot->count))
         return CATALOG_STAGE_ERR_ARGUMENT;
 
     status = catalog_stage_snapshot_map(old_snapshot, new_snapshot,
                                         old_to_new, CATALOG_STAGE_MAX_ITEMS);
     if (status != CATALOG_STAGE_OK) return status;
+
+    for (i = 0; i < new_snapshot->count; ++i) new_to_old[i] = -1;
+    for (i = 0; i < old_snapshot->count; ++i)
+        if (old_to_new[i] >= 0) new_to_old[old_to_new[i]] = (int16_t)i;
+
+    /* A candidate may borrow only the exact resource from its unchanged old key.
+       Reject missing, foreign, changed-key, or in-flight pointer copies before
+       any destructor can run or old ownership can be cleared. */
+    for (i = 0; i < new_snapshot->count; ++i) {
+        int old_index = new_to_old[i];
+        void *expected_vmc = NULL;
+        void *expected_icon = NULL;
+        if (old_index >= 0 &&
+            sidecar_record_unchanged(&old_snapshot->records[old_index],
+                                     &new_snapshot->records[i])) {
+            if (old_state->vmc_state[old_index] != 1)
+                expected_vmc = old_state->vmc_dir[old_index];
+            if (old_state->gicon_state[old_index] != 1)
+                expected_icon = old_state->gicon[old_index];
+        }
+        if (new_state->vmc_dir[i] != expected_vmc ||
+            new_state->gicon[i] != expected_icon)
+            return CATALOG_STAGE_ERR_ARGUMENT;
+    }
 
     /* Preflight all destructors before touching ownership or clearing the old set. */
     for (i = 0; i < old_snapshot->count; ++i) {
