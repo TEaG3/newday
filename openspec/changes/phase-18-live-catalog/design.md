@@ -38,7 +38,7 @@ The typed sidecar set groups VMC directory/count/state, save-icon pointer/state,
 - Poll only sources whose mount state can be safely queried. Use a conservative 3–5 second interval after device-specific behavior is verified; do not assume a PS2SDK hotplug event API exists.
 - Scan only when the console is idle and the media-I/O gate is clear. Pause catalog scans, cover downloads, and nonessential network work while a game is launching or running.
 - Source disappearance or read errors do not mean that user data should be deleted. Preserve the last known-good snapshot and report the source as unavailable until a complete replacement scan succeeds.
-- Preserve per-game settings, cover cache, achievements, queued worker requests, and the selected item by stable identity. The sidecar migration primitive rebases worker request indices; the bundle publisher rebases the selected index and the render loop saves/restores it between frames. The live apply path itself remains disabled until candidate scanning and end-to-end target tests are complete. Never reset user state because an entry moved in sort order.
+- Preserve per-game settings, cover cache, achievements, queued worker requests, and the selected item by stable identity. The sidecar migration primitive rebases worker request indices; the bundle publisher rebases the selected index and the render loop saves/restores it between frames. The candidate scan/apply path is now wired into the launcher but remains disabled by default until end-to-end target and device-removal tests are complete. Never reset user state because an entry moved in sort order.
 
 ## Activation gates
 
