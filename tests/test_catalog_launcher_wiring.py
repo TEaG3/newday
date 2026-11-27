@@ -121,8 +121,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
     def test_icon_worker_keeps_storage_only_io_outside_catalog_reader_lease(self):
         io_begin = function_body(
             LAUNCHER,
-            "static int background_io_begin(volatile int *busy)\\n{",
-            "static void background_io_end(volatile int *busy)\\n{",
+            "static int background_io_begin(volatile int *busy)\n{",
+            "static void background_io_end(volatile int *busy)\n{",
         )
         io_end = function_body(
             LAUNCHER,
