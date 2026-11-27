@@ -82,6 +82,18 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("state->icon_want = -1;", STAGE)
         self.assertIn("sidecar_rebase_pending_index", STAGE)
 
+    def test_bundle_selection_is_saved_and_restored_between_frames(self):
+        init = function_body(LAUNCHER, "static void catalog_bundle_init(void)", "static void scan_cards(void)")
+        load = function_body(LAUNCHER, "static void load_games(void)", "// ---- disc drive")
+        main = LAUNCHER[LAUNCHER.index("int main(int argc, char *argv[])"):]
+        self.assertIn("int selected_index;", STAGE_HEADER)
+        self.assertIn("catalog_active_bundle.selected_index = -1;", init)
+        self.assertIn("catalog_active_bundle.selected_index = count > 0 ? 0 : -1;", load)
+        self.assertIn("catalog_active_bundle.selected_index = ncv > 0 && sel >= 0 && sel < ncv ? sel : -1;", main)
+        self.assertIn("catalog_active_bundle.selected_index >= 0", main)
+        self.assertIn("candidate->selected_index = next_selected;", STAGE)
+        self.assertIn("catalog_stage_snapshot_map(active->snapshot, candidate->snapshot", STAGE)
+
     def test_ps2_guard_is_linked_into_launcher(self):
         self.assertIn('#include "catalog_guard_ps2.h"', LAUNCHER)
         objects = next(line for line in MAKEFILE.splitlines() if line.startswith("EE_OBJS ="))
