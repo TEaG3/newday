@@ -20,9 +20,11 @@
 - [x] Wire render-frame and background-worker reader leases into the launcher; report worker I/O and IOP/game handoff through the guard activity state.
 - [x] Narrow long-running ART import and cover-download leases to one catalog entry at a time; re-read the current generation for each entry and keep the feature disabled until end-to-end apply tests pass.
 - [x] Refresh the active stable snapshot when the render thread applies an optical-disc change; invalidate snapshot readiness on recapture failure and test that only changed disc sidecars are retired.
-- [ ] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
-- [ ] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
-- [ ] Add source polling with cancellation and source-specific mount checks; never assume hotplug notifications.
+- [x] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
+- [x] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
+- [x] Add a five-second source poller with cancellation and pre/post mount-root checks; do not assume hotplug notifications.
+- [x] Wire typed sidecar migration/retirement and reset derived render caches after a successful generation swap.
+- [x] Keep the monitor behind CATALOG_LIVE_MONITOR_ENABLED=0 by default; the candidate/apply path is compiled but not activated.
 - [ ] Add target concurrency, USB removal/reinsert, HDD/APA, SMB and MMCE tests before enabling the monitor.
 - [ ] Keep the feature disabled until all target and hardware gates pass.
 
