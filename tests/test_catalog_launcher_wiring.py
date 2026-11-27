@@ -483,5 +483,9 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertNotIn("catalog_guard_request_apply(", LAUNCHER)
 
 
+    def test_boot_only_fallback_log_uses_a_real_newline(self):
+        self.assertIn(r'live refresh remains disabled\n");', LAUNCHER)
+        self.assertNotIn(r'live refresh remains disabled\\\\n");', LAUNCHER)
+
 if __name__ == "__main__":
     unittest.main()
