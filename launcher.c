@@ -374,7 +374,7 @@ static icon *load_icon(int i)
 	free(sys), free(ico);
 	if (!ok) {
 		printf("icon %s: %s not loaded (icon.sys or its list icon missing or invalid)\n", cv[i].serial, dir);
-		free(ic);
+		icon_destroy(ic);
 		return NULL;
 	}
 	if (ic->tex) SyncDCache(ic->tex, ic->tex + 128 * 128); // gfx_mesh DMAs it
@@ -1560,11 +1560,42 @@ static void download_covers(void)
 // thread does it after the covers, one game at a time, the latest selection first ----
 static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy; // ra_down: 1 no network, 2 no client (toast once)
 
+static int background_workers_busy(void)
+{
+	return ra_busy || art_busy || update_busy || dl_busy || icon_busy || disc_busy || cover_busy;
+}
+
 static int catalog_activity_update(int playing)
 {
 	if (!catalog_live_ready) return 1;
-	int io_busy = ra_busy || art_busy || update_busy || dl_busy || icon_busy || disc_busy || cover_busy;
-	return catalog_guard_set_activity(&catalog_live_guard, playing, io_busy);
+	return catalog_guard_set_activity(&catalog_live_guard, playing, background_workers_busy());
+}
+
+static void disc_apply_pending(void)
+{
+	void *old_big, *old_small, *old_half;
+	icon *old_icon;
+	int applied = 0, unlocked;
+
+	/* The disc and icon workers read cv[0]. Freeze new work and wait for every
+	   tracked reader to drain before replacing the disc entry and its sidecars. */
+	if (!disc_new || background_workers_busy() || cover_lock < 0) return;
+	if (WaitSema(cover_lock) < 0) return;
+	if (disc_new && !background_workers_busy()) {
+		old_big = cv[0].big, old_small = cv[0].small, old_half = cv[0].half;
+		old_icon = gicon[0];
+		cv[0] = disc_stage;
+		gicon[0] = NULL, gicon_state[0] = 0;
+		disc_new = 0;
+		applied = 1;
+	}
+	unlocked = SignalSema(cover_lock) >= 0;
+	if (applied && unlocked) {
+		free(old_big), free(old_small), free(old_half);
+		icon_destroy(old_icon);
+	} else if (applied) {
+		printf("disc: cover lock release failed; retired assets retained\n");
+	}
 }
 
 static int catalog_activity_wait(int playing)
@@ -2944,13 +2975,7 @@ int main(int argc, char *argv[])
 			if (cf) fwrite(out, 1, len, cf), fclose(cf);
 		}
 		cover_evict();
-		if (disc_new) { // the disc thread staged a change: apply it between frames (the GS is done with the old covers)
-			void *ob = cv[0].big, *os = cv[0].small, *oh = cv[0].half;
-			cv[0] = disc_stage;
-			free(ob), free(os), free(oh);
-			if (gicon_state[0] == 2) gicon_state[0] = 0, gicon[0] = NULL; // ponytail: the old icon leaks (rare, small)
-			disc_new = 0;
-		}
+		disc_apply_pending();
 		refilter();
 		if (nord && pos[sel] < 0) sel = order[0]; // e.g. the disc changed kind under a PS1 filter
 		if (stub_new) stub_new = 0, toast = 240, toast_msg = L("TEa.G3 boot stub installed: BOOT/TEa.G3.ELF");
