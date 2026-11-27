@@ -50,6 +50,12 @@ typedef struct {
     volatile char ra_state[CATALOG_STAGE_MAX_ITEMS];
     short ra_count[CATALOG_STAGE_MAX_ITEMS];
     int ra_gid[CATALOG_STAGE_MAX_ITEMS];
+    /* Queued worker/cache indices are generation-relative; migration rebases unchanged keys. */
+    volatile int icon_want;
+    volatile int vmc_net_want;
+    volatile int ra_want;
+    volatile int ra_list_want;
+    volatile int ra_list_for;
 } catalog_stage_sidecar_set;
 
 typedef void (*catalog_stage_sidecar_release_fn)(void *resource, void *context);
