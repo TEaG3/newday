@@ -302,6 +302,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(download_loop.index("download_cover_one(i, buf, max)"), download_loop.index("background_work_end(&dl_busy)"))
         self.assertIn("if (!ra_launching) st = https_get", LAUNCHER)
         self.assertIn("Re-read the current generation under each short lease", download)
+        self.assertIn("if (!dl_busy && background_work_begin(&dl_busy))", download)
         self.assertNotIn("entry *", download)
 
     def test_live_scan_and_apply_are_still_disabled(self):
