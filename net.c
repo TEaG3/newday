@@ -164,6 +164,27 @@ int http_location(const char *buf, int body, char *out, int n) // a redirect's "
 	return 0;
 }
 
+typedef int (*net_poll_ready_fn)(void *context);
+typedef void (*net_poll_wait_fn)(void *context, unsigned milliseconds);
+
+/* Returns 1 when ready, 0 on timeout, and -1 when cancelled. */
+static int net_wait_ready_cancelable(net_poll_ready_fn ready, void *ready_context,
+                                     net_cancel_fn cancelled, void *cancel_context,
+                                     net_poll_wait_fn wait, void *wait_context,
+                                     unsigned timeout_ms)
+{
+    unsigned elapsed_ms = 0;
+    if (!ready || !wait) return 0;
+    while (elapsed_ms < timeout_ms) {
+        if (cancelled && cancelled(cancel_context)) return -1;
+        if (ready(ready_context)) return 1;
+        wait(wait_context, 20);
+        elapsed_ms += 20;
+    }
+    if (cancelled && cancelled(cancel_context)) return -1;
+    return ready(ready_context) ? 1 : 0;
+}
+
 #ifndef SELFTEST
 #include <stdarg.h>
 #include <unistd.h>
@@ -219,6 +240,10 @@ int net_mtu;
 char net_why[64]; // the last https_get failure, for the log
 volatile int net_got; // bytes of the response so far (#15: the update's progress bar)
 static int net_on; // net_up succeeded: the EE stack is registered with netman
+static int netman_module_loaded;
+static int smap_module_loaded;
+static int netman_initialized;
+static int ps2ip_initialized;
 
 int net_dev9(void)
 {
@@ -228,50 +253,124 @@ int net_dev9(void)
 	return st == 1;
 }
 
-static int wait_for(int (*ok)(void)) // 10 s, as the ps2sdk sample
-{
-	for (int t = 0; t < 10; t++) {
-		if (ok()) return 1;
-		sleep(1);
-	}
-	return ok();
-}
 static int link_up(void) { return NetManIoctl(NETMAN_NETIF_IOCTL_GET_LINK_STATUS, NULL, 0, NULL, 0) == NETMAN_NETIF_ETH_LINK_STATE_UP; }
 static int dhcp_bound(void)
 {
 	t_ip_info ip;
 	return ps2ip_getconfig("sm0", &ip) >= 0 && ip.dhcp_status == DHCP_STATE_BOUND;
 }
+static int link_up_poll(void *context) { (void)context; return link_up(); }
+static int dhcp_bound_poll(void *context) { (void)context; return dhcp_bound(); }
+static void network_wait_poll(void *context, unsigned milliseconds)
+{
+	(void)context;
+	usleep(milliseconds * 1000u);
+}
 
 int ip4addr_aton(const char *cp, struct ip4_addr *addr); // libps2ip (lwIP), not declared by the installed headers
 
-int net_up(const char *ip, const char *mask, const char *gw, const char *dns)
+static void net_abort_init(void)
 {
-	struct { unsigned char *irx; unsigned *size; } mods[] = {{netman_irx, &size_netman_irx}, {smap_irx, &size_smap_irx}};
-	if (net_busy) return NET_ERR_BUSY; // udpbd / udpfs: Neutrino's smap already drives the adapter
-	if (!net_dev9()) return snprintf(net_why, sizeof(net_why), "ps2dev9"), NET_ERR_MODULES; // shared with the HDD (phase 14)
-	for (int i = 0; i < 2; i++) {
-		int r = 0, id = SifExecModuleBuffer(mods[i].irx, *mods[i].size, 0, NULL, &r);
-		if (id < 0 || r == 1)
-			return snprintf(net_why, sizeof(net_why), "%s id %d ret %d", i ? "smap" : "netman", id, r), NET_ERR_MODULES;
+	if (ps2ip_initialized) {
+		ps2ipDeinit();
+		ps2ip_initialized = 0;
 	}
-	NetManInit();
-	int dhcp = !strcasecmp(ip, "dhcp");
+	if (netman_initialized) {
+		NetManDeinit();
+		netman_initialized = 0;
+	}
+	net_on = 0;
+}
+
+int net_up_cancelable(const char *ip, const char *mask, const char *gw, const char *dns,
+                      net_cancel_fn cancelled, void *cancel_context)
+{
+	int dhcp;
 	struct ip4_addr a, m, g, d;
+	struct { unsigned char *irx; unsigned *size; } mods[] = {
+		{netman_irx, &size_netman_irx}, {smap_irx, &size_smap_irx}
+	};
+	if (!ip || !mask || !gw || !dns) return NET_ERR_PROTO;
+	if (net_busy) return NET_ERR_BUSY; // udpbd / udpfs: Neutrino's smap already drives the adapter
+	if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+	if (net_on) return 0;
+	if (!net_dev9()) return snprintf(net_why, sizeof(net_why), "ps2dev9"), NET_ERR_MODULES; // shared with the HDD
+	if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+
+	/* Module loads are synchronous PS2SDK calls and cannot be pre-empted. Sample
+	   cancellation between calls, and remember successful loads so a cancelled
+	   retry does not execute the same IOP module twice. */
+	if (!netman_module_loaded) {
+		int r = 0, id = SifExecModuleBuffer(mods[0].irx, *mods[0].size, 0, NULL, &r);
+		if (id < 0 || r == 1)
+			return snprintf(net_why, sizeof(net_why), "netman id %d ret %d", id, r), NET_ERR_MODULES;
+		netman_module_loaded = 1;
+	}
+	if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+	if (!smap_module_loaded) {
+		int r = 0, id = SifExecModuleBuffer(mods[1].irx, *mods[1].size, 0, NULL, &r);
+		if (id < 0 || r == 1)
+			return snprintf(net_why, sizeof(net_why), "smap id %d ret %d", id, r), NET_ERR_MODULES;
+		smap_module_loaded = 1;
+	}
+	if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+
+	NetManInit();
+	netman_initialized = 1;
+	if (cancelled && cancelled(cancel_context)) {
+		net_abort_init();
+		return NET_ERR_CANCELLED;
+	}
+
+	dhcp = !strcasecmp(ip, "dhcp");
 	ip4_addr_set_zero(&a), ip4_addr_set_zero(&m), ip4_addr_set_zero(&g), ip4_addr_set_zero(&d);
 	// lwIP's own parser: arpa/inet.h's inet_aton is libcglue_inet_aton, which goes through the socket glue that
 	// ps2ipInit installs, so before it every fixed address came out 0.0.0.0 and nothing left the PS2 (phase 16)
 	if (!dhcp) ip4addr_aton(ip, &a), ip4addr_aton(mask, &m), ip4addr_aton(gw, &g);
 	ps2ipInit(&a, &m, &g);
-	// applied again through setconfig, as ps2sdk's tcpip-dhcp sample (ethApplyIPConfig) does: with ps2ipInit's addresses
-	// alone a fixed IP stayed 0.0.0.0 (PCSX2, phase 16), and nothing left the PS2
+	ps2ip_initialized = 1;
+	if (cancelled && cancelled(cancel_context)) {
+		net_abort_init();
+		return NET_ERR_CANCELLED;
+	}
+	// applied again through setconfig, as ps2sdk's tcpip-dhcp sample (ethApplyIPConfig) does
 	t_ip_info info;
-	if (ps2ip_getconfig("sm0", &info) < 0) return NET_ERR_MODULES;
+	if (ps2ip_getconfig("sm0", &info) < 0) {
+		net_abort_init();
+		return NET_ERR_MODULES;
+	}
 	info.dhcp_enabled = dhcp; // the lease brings a DNS server too
 	if (!dhcp) memcpy(&info.ipaddr, &a, 4), memcpy(&info.netmask, &m, 4), memcpy(&info.gw, &g, 4);
 	ps2ip_setconfig(&info);
-	if (!wait_for(link_up)) return NET_ERR_LINK;
-	if (dhcp && !wait_for(dhcp_bound)) return NET_ERR_DHCP;
+
+	{
+		int ready = net_wait_ready_cancelable(link_up_poll, NULL, cancelled, cancel_context,
+		                                      network_wait_poll, NULL, 10000);
+		if (ready < 0) {
+			net_abort_init();
+			return NET_ERR_CANCELLED;
+		}
+		if (!ready) {
+			net_abort_init();
+			return NET_ERR_LINK;
+		}
+	}
+	if (dhcp) {
+		int ready = net_wait_ready_cancelable(dhcp_bound_poll, NULL, cancelled, cancel_context,
+		                                      network_wait_poll, NULL, 10000);
+		if (ready < 0) {
+			net_abort_init();
+			return NET_ERR_CANCELLED;
+		}
+		if (!ready) {
+			net_abort_init();
+			return NET_ERR_DHCP;
+		}
+	}
+	if (cancelled && cancelled(cancel_context)) {
+		net_abort_init();
+		return NET_ERR_CANCELLED;
+	}
 	// after the lease: [red] dns wins over the router's, and no DNS at all gets 1.1.1.1 (#7)
 	const ip_addr_t *cur = dns_getserver(0);
 	const char *use = *dns ? dns : !cur || ip_addr_isany(cur) ? "1.1.1.1" : NULL;
@@ -289,6 +388,11 @@ int net_up(const char *ip, const char *mask, const char *gw, const char *dns)
 	return 0;
 }
 
+int net_up(const char *ip, const char *mask, const char *gw, const char *dns)
+{
+	return net_up_cancelable(ip, mask, gw, dns, NULL, NULL);
+}
+
 const char *net_ip(void) // the address the interface has now (fixed or the DHCP lease), "" before net_up
 {
 	static char s[16];
@@ -303,10 +407,8 @@ const char *net_ip(void) // the address the interface has now (fixed or the DHCP
 // on every boot) Black never started; deregistering the EE side stops the copies
 void net_down(void)
 {
-	if (!net_on) return;
-	net_on = 0;
-	ps2ipDeinit();
-	NetManDeinit();
+	if (!net_on && !ps2ip_initialized && !netman_initialized) return;
+	net_abort_init();
 }
 
 static int tls_recv(WOLFSSL *ssl, char *b, int sz, void *ctx) // wolfSSL's reads: 8 s of silence and it gives up
@@ -638,6 +740,56 @@ static void fixture_wait(void *context, unsigned milliseconds)
     if (f->cancel_on_wait) f->cancelled = 1;
 }
 
+typedef struct {
+    int checks, ready_after, waits, cancel_after_wait, cancelled;
+} net_wait_fixture;
+
+static int net_wait_fixture_ready(void *context)
+{
+    net_wait_fixture *f = (net_wait_fixture *)context;
+    f->checks++;
+    return f->ready_after > 0 && f->checks >= f->ready_after;
+}
+
+static int net_wait_fixture_cancelled(void *context)
+{
+    return ((net_wait_fixture *)context)->cancelled;
+}
+
+static void net_wait_fixture_delay(void *context, unsigned milliseconds)
+{
+    net_wait_fixture *f = (net_wait_fixture *)context;
+    assert(milliseconds == 20);
+    f->waits++;
+    if (f->cancel_after_wait == f->waits) f->cancelled = 1;
+}
+
+static void test_net_wait_cancellation(void)
+{
+    net_wait_fixture f = {0};
+    f.ready_after = 2;
+    assert(net_wait_ready_cancelable(net_wait_fixture_ready, &f, net_wait_fixture_cancelled, &f,
+                                     net_wait_fixture_delay, &f, 10000) == 1);
+    assert(f.waits == 1);
+
+    f = (net_wait_fixture){0};
+    f.cancel_after_wait = 1;
+    assert(net_wait_ready_cancelable(net_wait_fixture_ready, &f, net_wait_fixture_cancelled, &f,
+                                     net_wait_fixture_delay, &f, 10000) == -1);
+    assert(f.waits == 1);
+
+    f = (net_wait_fixture){0};
+    assert(net_wait_ready_cancelable(net_wait_fixture_ready, &f, net_wait_fixture_cancelled, &f,
+                                     net_wait_fixture_delay, &f, 40) == 0);
+    assert(f.waits == 2);
+
+    f.cancelled = 1;
+    f.waits = 0;
+    assert(net_wait_ready_cancelable(net_wait_fixture_ready, &f, net_wait_fixture_cancelled, &f,
+                                     net_wait_fixture_delay, &f, 10000) == -1);
+    assert(f.waits == 0);
+}
+
 static void test_http_length_policy(void)
 {
     assert(http_body_length_valid(200, 5, 5, 1));
@@ -672,6 +824,7 @@ int main(void)
 	test_http_length_policy();
 	test_http_read_cancellation();
 	test_http_connect_send_cancellation();
+	test_net_wait_cancellation();
 	static const char ok[] = "HTTP/1.0 200 OK\r\nServer: x\r\ncontent-length: 5\r\n\r\nhello";
 	int st, body, clen;
 	assert(http_parse(ok, sizeof(ok) - 1, &st, &body, &clen) && st == 200 && clen == 5 && !memcmp(ok + body, "hello", 5));
