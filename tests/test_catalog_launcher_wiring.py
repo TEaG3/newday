@@ -128,7 +128,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
     def test_all_source_scanners_write_only_to_the_supplied_candidate_buffer(self):
         ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
         iso = function_body(LAUNCHER, "static int scan_dir(", "// phase 17:")
-        remote = function_body(LAUNCHER, "static int catalog_load(", "typedef struct { int s, n; entry *items; } hdl_ctx;")
+        remote = function_body(LAUNCHER, "static int catalog_load(", "typedef struct { int s, n; entry *items; int report_progress; } hdl_ctx;")
         hdl = function_body(LAUNCHER, "static void hdl_add(", "static uint32_t catalog_fingerprint_bytes")
         self.assertIn("entry *items", ul)
         self.assertIn("entry *e = &items[n]", ul)
@@ -157,7 +157,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("catalog_active_snapshot_ready = snapshot_ready;", publish)
         self.assertLess(publish.index("memcpy(cv, candidate"), publish.index("ncv = count"))
         self.assertIn("free(candidate)", publish)
-        self.assertIn("load_games_into(cv, &catalog_active_snapshot)", publish)
+        self.assertIn("load_games_into(cv, &catalog_active_snapshot, &snapshot_ready, &scan_status, NULL, NULL)", publish)
 
     def test_hdl_scan_rejects_partial_directory_reads_and_closes_before_callbacks(self):
         start = SOURCES_HDL.index("int src_hdl_scan_cancelable(")
@@ -201,10 +201,10 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         load = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
         self.assertIn("if (hdl_status < 0)", load)
         self.assertIn("if (ul_count < 0)", load)
-        self.assertIn("int snapshot_status;", load)
+        self.assertIn("int snapshot_result;", load)
         self.assertIn("snapshot->count = 0;", load)
         self.assertIn("CATALOG_STAGE_SCAN_ERR_SOURCE", load)
-        self.assertIn("catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK", load)
+        self.assertIn("*snapshot_ready = snapshot_result == CATALOG_STAGE_SCAN_OK", load)
 
     def test_ul_scan_rejects_valid_records_that_exceed_candidate_capacity(self):
         ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
