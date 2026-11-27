@@ -127,5 +127,3 @@ const char *src_init(unsigned mask, const char *ip, int udpfs_mount)
     return why;
 }
 
-// HD Loader metadata, matching upstream OPL's hddGetHDLGamelist() calculation.
-
