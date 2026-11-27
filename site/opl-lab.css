@@ -78,13 +78,13 @@
   .opl-gallery { grid-auto-columns: 92%; }
   .opl-home { padding-top: 70px; }
 }
-.nuld-rtl .opl-page :is(.opl-kicker, .opl-status, .opl-result-meta, .opl-sim-note, .opl-matrix th, .opl-source-grid strong, .opl-matrix code) {
+.tea-g3-rtl .opl-page :is(.opl-kicker, .opl-status, .opl-result-meta, .opl-sim-note, .opl-matrix th, .opl-source-grid strong, .opl-matrix code) {
   direction: ltr; unicode-bidi: isolate;
 }
-.nuld-rtl .opl-page :is(.opl-intro, .opl-caution, .opl-section-head, .opl-boundary, .opl-route-steps, .opl-note, .opl-source-grid span) {
+.tea-g3-rtl .opl-page :is(.opl-intro, .opl-caution, .opl-section-head, .opl-boundary, .opl-route-steps, .opl-note, .opl-source-grid span) {
   direction: rtl; text-align: right;
 }
-.nuld-rtl .opl-controls label { text-align: right; }
-.nuld-rtl .opl-route-steps li { direction: rtl; }
-.nuld-rtl .opl-route-steps .step-number { direction: ltr; }
-@media (max-width: 760px) { .nuld-rtl .opl-page .opl-result-head { direction: rtl; } }
+.tea-g3-rtl .opl-controls label { text-align: right; }
+.tea-g3-rtl .opl-route-steps li { direction: rtl; }
+.tea-g3-rtl .opl-route-steps .step-number { direction: ltr; }
+@media (max-width: 760px) { .tea-g3-rtl .opl-page .opl-result-head { direction: rtl; } }
