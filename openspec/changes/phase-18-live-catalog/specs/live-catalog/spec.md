@@ -13,4 +13,4 @@
 
 ## Current status
 
-The portable snapshot/diff and guard core is implemented and host-tested. The PS2 launcher now has an isolated candidate scanner, stable-key diff, typed sidecar migration/retirement, and render-frame bundle publication path. The monitor is compile-time disabled by default pending PS2 target concurrency and device-removal validation.
+The portable snapshot/diff and guard core is implemented and host-tested. The PS2 launcher now has an isolated candidate scanner, stable-key diff, typed sidecar migration, in-gate old-generation retirement, and render-frame bundle publication path. The monitor is compile-time disabled by default pending PS2 target concurrency and device-removal validation.
