@@ -44,6 +44,7 @@
 #include "runtime_install.h"
 #include "catalog_guard_ps2.h"
 #include "catalog_stage.h"
+#include "catalog_source_probe.h"
 #include "app_payload.h"
 
 #define TEAG3_VERSION "v1.3.13" // tag: arabic-v1.3.13
@@ -811,6 +812,21 @@ static int count_dir(const char *root, const char *dir, const char *ext)
 
 static unsigned src_want; // config [juegos] origen (phase 14)
 
+/* A missing optional DVD/CD/POPS folder is empty only while its device root is mounted.
+   HDL and the remote HTTP app catalogue have their own source-specific access paths. */
+static int catalog_source_roots_ready(void)
+{
+    for (int s = 0; s < nsrc; s++) {
+        if (src[s].type == SRC_HDL || (src[s].type == SRC_UDPFS && udpfs_cat))
+            continue;
+        if (!catalog_source_root_probe(src[s].root, !strncmp(src[s].root, "hdd", 3))) {
+            printf("catalog: source root %s unavailable; snapshot rejected\n", src[s].root);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int scan_cancelled(src_hdl_cancel_fn cancelled, void *cancel_context)
 {
     return cancelled != NULL && cancelled(cancel_context);
@@ -993,7 +1009,9 @@ static int scan_dir(entry *items, int s, int k, int n, int *incomplete,
     errno = 0;
     DIR *d = opendir(path);
     if (!d) {
-        if (errno != ENOENT) *incomplete = 1; // an absent optional folder is a valid empty source
+        /* ENOENT means an empty optional folder only when the source root still exists. */
+        if (errno != ENOENT || !catalog_source_root_probe(src[s].root, !strncmp(src[s].root, "hdd", 3)))
+            *incomplete = 1;
         return n;
     }
     for (;;) {
@@ -1315,6 +1333,9 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot,
 		return n;
 	}
 
+	/* Never publish a candidate if a configured local source disappeared between polls. */
+	if (!catalog_source_roots_ready()) incomplete = 1;
+
 	/* Live candidates do not write to the boot splash progress counters. */
 	if (!cancelled) {
 		total_n = (src[0].type == SRC_USB ? count_dir(homedev, "POPS", ".vcd") : 0) + count_dir(homedev, "APPS", NULL);
@@ -1448,6 +1469,9 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot,
 		was_cancelled = 1;
 		incomplete = 1;
 	}
+	/* Recheck after every adapter has closed its handles; an unplugged root must not
+	   be mistaken for a valid empty DVD/CD/POPS directory. */
+	if (!was_cancelled && !catalog_source_roots_ready()) incomplete = 1;
 	if (n > MAXC) n = MAXC, incomplete = 1;
 	if (!was_cancelled)
 		qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
