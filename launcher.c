@@ -1771,13 +1771,15 @@ static void catalog_live_monitor_thread(void *arg)
 {
 	(void)arg;
 	for (;;) {
+		if (catalog_live_guard_faulted || catalog_live_faulted) break;
 		sleep(CATALOG_LIVE_MONITOR_INTERVAL_SEC);
-		if (catalog_live_guard_faulted) break;
+		if (catalog_live_guard_faulted || catalog_live_faulted) break;
 		if (!catalog_live_ready || !catalog_active_snapshot_ready || ra_launching ||
-		    catalog_live_candidate_ready || catalog_live_faulted)
+		    catalog_live_candidate_ready)
 			continue;
 		(void)catalog_live_scan_once();
 	}
+	ExitThread();
 }
 
 
