@@ -223,6 +223,20 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("catalog_guard_try_apply(guard)", STAGE)
         self.assertNotIn("catalog_stage_snapshot_publish(", LAUNCHER)
 
+    def test_cover_cache_assets_are_owned_by_typed_sidecars(self):
+        self.assertIn("void *cover_big[CATALOG_STAGE_MAX_ITEMS];", STAGE_HEADER)
+        self.assertIn("void *cover_small[CATALOG_STAGE_MAX_ITEMS];", STAGE_HEADER)
+        self.assertIn("void *cover_half[CATALOG_STAGE_MAX_ITEMS];", STAGE_HEADER)
+        self.assertIn("release_cover", STAGE_HEADER)
+        self.assertNotIn("void *big, *small, *half;", LAUNCHER)
+        self.assertNotIn("cv[i].big", LAUNCHER)
+        self.assertNotIn("cv[i].small", LAUNCHER)
+        self.assertNotIn("cv[i].half", LAUNCHER)
+        self.assertIn("#define cover_big   (catalog_sidecars->cover_big)", LAUNCHER)
+        self.assertIn("cover_big[0] = disc_stage_cover_big", LAUNCHER)
+        self.assertIn("void **slot[3] = {&cover_half[i], &cover_small[i], &cover_big[i]};", LAUNCHER)
+        self.assertIn("release_cover(old_state->cover_big[i]", STAGE)
+
     def test_bundle_publish_moves_items_sidecars_count_and_snapshot_as_one_generation(self):
         header = STAGE_HEADER
         host_test = (ROOT / "tests" / "catalog_host" / "test_catalog_stage.c").read_text(encoding="utf-8")
