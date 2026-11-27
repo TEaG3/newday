@@ -180,6 +180,157 @@ int catalog_stage_sidecar_migrate(const catalog_stage_snapshot *old_snapshot,
     return CATALOG_STAGE_OK;
 }
 
+static int sidecar_record_unchanged(const catalog_stage_record *old_record,
+                                      const catalog_stage_record *new_record)
+{
+    return old_record->flags == new_record->flags &&
+           old_record->size == new_record->size &&
+           old_record->fingerprint == new_record->fingerprint;
+}
+
+static int sidecar_set_has_resources(const catalog_stage_sidecar_set *state,
+                                     size_t start, size_t end)
+{
+    size_t i;
+    for (i = start; i < end; ++i)
+        if (state->vmc_dir[i] != NULL || state->gicon[i] != NULL) return 1;
+    return 0;
+}
+
+void catalog_stage_sidecar_set_discard(catalog_stage_sidecar_set *state)
+{
+    size_t i;
+    if (state == NULL) return;
+    for (i = 0; i < CATALOG_STAGE_MAX_ITEMS; ++i) {
+        state->vmc_dir[i] = NULL;
+        state->vmc_n[i] = 0;
+        state->vmc_state[i] = 0;
+        state->gicon[i] = NULL;
+        state->gicon_state[i] = 0;
+        state->cover_req[i] = 0;
+        state->cover_done[i] = 0;
+        state->cover_seen[i] = 0;
+        state->ra_state[i] = 0;
+        state->ra_count[i] = 0;
+        state->ra_gid[i] = 0;
+    }
+}
+
+int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot,
+                                      const catalog_stage_snapshot *new_snapshot,
+                                      const catalog_stage_sidecar_set *old_state,
+                                      size_t old_state_capacity,
+                                      catalog_stage_sidecar_set *new_state,
+                                      size_t new_state_capacity)
+{
+    int16_t old_to_new[CATALOG_STAGE_MAX_ITEMS];
+    size_t i;
+    int status;
+
+    if (old_snapshot == NULL || new_snapshot == NULL || old_state == NULL ||
+        new_state == NULL || old_state == new_state ||
+        old_snapshot == new_snapshot)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (old_state_capacity > CATALOG_STAGE_MAX_ITEMS ||
+        new_state_capacity > CATALOG_STAGE_MAX_ITEMS ||
+        old_snapshot->count > old_state_capacity ||
+        new_snapshot->count > new_state_capacity)
+        return CATALOG_STAGE_ERR_CAPACITY;
+    /* Never overwrite a candidate that still owns resources from an older generation. */
+    if (sidecar_set_has_resources(new_state, 0, CATALOG_STAGE_MAX_ITEMS) ||
+        sidecar_set_has_resources(old_state, old_snapshot->count, CATALOG_STAGE_MAX_ITEMS))
+        return CATALOG_STAGE_ERR_ARGUMENT;
+
+    status = catalog_stage_snapshot_map(old_snapshot, new_snapshot,
+                                        old_to_new, CATALOG_STAGE_MAX_ITEMS);
+    if (status != CATALOG_STAGE_OK) return status;
+
+    catalog_stage_sidecar_set_discard(new_state);
+    for (i = 0; i < old_snapshot->count; ++i) {
+        int next_index = old_to_new[i];
+        const catalog_stage_record *old_record = &old_snapshot->records[i];
+        const catalog_stage_record *new_record;
+        if (next_index < 0) continue;
+        new_record = &new_snapshot->records[next_index];
+        if (!sidecar_record_unchanged(old_record, new_record)) continue;
+
+        new_state->vmc_dir[next_index] = old_state->vmc_dir[i];
+        new_state->vmc_n[next_index] = old_state->vmc_n[i];
+        new_state->vmc_state[next_index] = old_state->vmc_state[i];
+        new_state->gicon[next_index] = old_state->gicon[i];
+        new_state->gicon_state[next_index] = old_state->gicon_state[i];
+        /* cover_req is a transient request queue and intentionally remains zero. */
+        new_state->cover_done[next_index] = old_state->cover_done[i];
+        new_state->cover_seen[next_index] = old_state->cover_seen[i];
+        new_state->ra_state[next_index] = old_state->ra_state[i];
+        new_state->ra_count[next_index] = old_state->ra_count[i];
+        new_state->ra_gid[next_index] = old_state->ra_gid[i];
+    }
+    return CATALOG_STAGE_OK;
+}
+
+int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
+                                     const catalog_stage_snapshot *new_snapshot,
+                                     catalog_stage_sidecar_set *old_state,
+                                     size_t old_state_capacity,
+                                     const catalog_stage_sidecar_set *new_state,
+                                     size_t new_state_capacity,
+                                     catalog_stage_sidecar_release_fn release_vmc_dir,
+                                     catalog_stage_sidecar_release_fn release_gicon,
+                                     void *release_context)
+{
+    int16_t old_to_new[CATALOG_STAGE_MAX_ITEMS];
+    size_t i;
+    int status;
+
+    if (old_snapshot == NULL || new_snapshot == NULL || old_state == NULL ||
+        new_state == NULL || old_state == new_state ||
+        old_snapshot == new_snapshot)
+        return CATALOG_STAGE_ERR_ARGUMENT;
+    if (old_state_capacity > CATALOG_STAGE_MAX_ITEMS ||
+        new_state_capacity > CATALOG_STAGE_MAX_ITEMS ||
+        old_snapshot->count > old_state_capacity ||
+        new_snapshot->count > new_state_capacity)
+        return CATALOG_STAGE_ERR_CAPACITY;
+    if (sidecar_set_has_resources(old_state, old_snapshot->count, CATALOG_STAGE_MAX_ITEMS))
+        return CATALOG_STAGE_ERR_ARGUMENT;
+
+    status = catalog_stage_snapshot_map(old_snapshot, new_snapshot,
+                                        old_to_new, CATALOG_STAGE_MAX_ITEMS);
+    if (status != CATALOG_STAGE_OK) return status;
+
+    /* Preflight all destructors before touching ownership or clearing the old set. */
+    for (i = 0; i < old_snapshot->count; ++i) {
+        int next_index = old_to_new[i];
+        int unchanged = next_index >= 0 &&
+            sidecar_record_unchanged(&old_snapshot->records[i],
+                                     &new_snapshot->records[next_index]);
+        int keep_vmc = unchanged && old_state->vmc_dir[i] == new_state->vmc_dir[next_index];
+        int keep_icon = unchanged && old_state->gicon[i] == new_state->gicon[next_index];
+        if (old_state->vmc_dir[i] != NULL && !keep_vmc && release_vmc_dir == NULL)
+            return CATALOG_STAGE_ERR_ARGUMENT;
+        if (old_state->gicon[i] != NULL && !keep_icon && release_gicon == NULL)
+            return CATALOG_STAGE_ERR_ARGUMENT;
+    }
+
+    for (i = 0; i < old_snapshot->count; ++i) {
+        int next_index = old_to_new[i];
+        int unchanged = next_index >= 0 &&
+            sidecar_record_unchanged(&old_snapshot->records[i],
+                                     &new_snapshot->records[next_index]);
+        int keep_vmc = unchanged && old_state->vmc_dir[i] == new_state->vmc_dir[next_index];
+        int keep_icon = unchanged && old_state->gicon[i] == new_state->gicon[next_index];
+
+        if (old_state->vmc_dir[i] != NULL && !keep_vmc)
+            release_vmc_dir(old_state->vmc_dir[i], release_context);
+        if (old_state->gicon[i] != NULL && !keep_icon)
+            release_gicon(old_state->gicon[i], release_context);
+    }
+
+    catalog_stage_sidecar_set_discard(old_state);
+    return CATALOG_STAGE_OK;
+}
+
 int catalog_stage_snapshot_map(const catalog_stage_snapshot *old_snapshot,
                                const catalog_stage_snapshot *new_snapshot,
                                int16_t *old_to_new, size_t map_capacity)
