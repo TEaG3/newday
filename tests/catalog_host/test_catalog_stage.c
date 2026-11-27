@@ -1364,6 +1364,30 @@ static int migrate_typed_bundle_sidecars(const catalog_stage_bundle *active,
         (catalog_stage_sidecar_set *)candidate->sidecars, candidate->sidecars_capacity);
 }
 
+typedef struct {
+    catalog_guard *guard;
+    sidecar_release_counts *releases;
+    int calls;
+} typed_bundle_retire_context;
+
+static int retire_typed_bundle_sidecars(const catalog_stage_bundle *active,
+                                        catalog_stage_bundle *retired,
+                                        void *opaque)
+{
+    typed_bundle_retire_context *context = (typed_bundle_retire_context *)opaque;
+    assert(context != NULL && context->guard != NULL && context->releases != NULL);
+    assert(context->guard->applying && context->guard->apply_pending);
+    assert(context->guard->readers == 0);
+    /* The reader gate must stay closed while the retired set is inspected and freed. */
+    assert(!catalog_guard_read_begin(context->guard));
+    ++context->calls;
+    return catalog_stage_sidecar_set_retire(
+        retired->snapshot, active->snapshot,
+        (catalog_stage_sidecar_set *)retired->sidecars, retired->sidecars_capacity,
+        (const catalog_stage_sidecar_set *)active->sidecars, active->sidecars_capacity,
+        release_vmc_resource, release_icon_resource, release_cover_resource, context->releases);
+}
+
 static void test_end_to_end_candidate_apply(void)
 {
     mutex_context mutex;
@@ -1377,6 +1401,7 @@ static void test_end_to_end_candidate_apply(void)
     catalog_stage_bundle active, candidate;
     typed_bundle_prepare_context prepare = {&guard, 0};
     sidecar_release_counts releases = {0, 0, 0};
+    typed_bundle_retire_context retire = {&guard, &releases, 0};
     void *alpha_vmc, *alpha_icon, *alpha_cover;
     void *beta_vmc, *beta_icon, *beta_cover;
 
@@ -1468,9 +1493,10 @@ static void test_end_to_end_candidate_apply(void)
 
     /* The real typed sidecar migration runs only after the reader gate reaches the safe point. */
     assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish_prepared(&guard, &active, &candidate,
-                                                  migrate_typed_bundle_sidecars, &prepare) ==
-           CATALOG_STAGE_OK);
+    assert(catalog_stage_bundle_publish_prepared_retire(
+               &guard, &active, &candidate,
+               migrate_typed_bundle_sidecars, &prepare,
+               retire_typed_bundle_sidecars, &retire) == CATALOG_STAGE_OK);
     assert(prepare.calls == 1);
     assert(active.items == candidate_items && active.sidecars == &candidate_sidecars);
     assert(active.snapshot == &candidate_snapshot && active.count == 3);
@@ -1489,14 +1515,11 @@ static void test_end_to_end_candidate_apply(void)
     assert(candidate_sidecars.cover_done[1] == 4 && candidate_sidecars.cover_seen[1] == 5);
     assert(!guard.apply_pending && !guard.applying);
 
-    /* Retire the old generation: only the removed game's resources are released. */
-    assert(catalog_stage_sidecar_set_retire(
-        candidate.snapshot, active.snapshot,
-        (catalog_stage_sidecar_set *)candidate.sidecars, candidate.sidecars_capacity,
-        (const catalog_stage_sidecar_set *)active.sidecars, active.sidecars_capacity,
-        release_vmc_resource, release_icon_resource, release_cover_resource, &releases) ==
-        CATALOG_STAGE_OK);
+    /* Retirement ran inside the publisher while the apply gate was still closed. */
+    assert(retire.calls == 1);
     assert(releases.vmc_releases == 1 && releases.icon_releases == 1 && releases.cover_releases == 1);
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
     assert(active_sidecars.vmc_dir[2] == NULL && active_sidecars.gicon[2] == NULL);
     assert(active_sidecars.cover_half[2] == NULL);
     assert(candidate_sidecars.vmc_dir[2] == NULL && candidate_sidecars.gicon[2] == NULL);
