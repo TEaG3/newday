@@ -134,7 +134,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
 
     def test_hdl_scan_rejects_partial_directory_reads_and_closes_before_callbacks(self):
         start = SOURCES.index("int src_hdl_scan(")
-        end = SOURCES.index("\\n}", start) + 2
+        end = SOURCES.index("\n}", start) + 2
         body = SOURCES[start:end]
         self.assertIn("SRC_HDL_SCAN_ERR_OPEN", body)
         self.assertIn("SRC_HDL_SCAN_ERR_READ", body)
