@@ -602,6 +602,10 @@ int catalog_stage_bundle_publish(catalog_guard *guard,
         active->snapshot == candidate->snapshot ||
         active->count > CATALOG_STAGE_MAX_ITEMS ||
         candidate->count > CATALOG_STAGE_MAX_ITEMS ||
+        active->count > active->items_capacity ||
+        active->count > active->sidecars_capacity ||
+        candidate->count > candidate->items_capacity ||
+        candidate->count > candidate->sidecars_capacity ||
         active->count != active->snapshot->count ||
         candidate->count != candidate->snapshot->count) {
         if (!catalog_guard_cancel_apply(guard))
