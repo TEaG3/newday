@@ -3442,7 +3442,7 @@ int main(int argc, char *argv[])
 		snprintf(homedev, sizeof(homedev), "mmce%c:", argv[0][4] == '1' ? '1' : '0');
 	home_paths();
 	catalog_bundle_init(); // bind the boot buffers before any loader or render thread can read the catalog
-	if (!net_init_sync_init()) printf("network init semaphore unavailable; network features disabled\\n");
+	if (!net_init_sync_init()) printf("network init semaphore unavailable; network features disabled\n");
 	snprintf(self_path, sizeof(self_path), "%s", argc > 0 && strchr(argv[0], ':') ? argv[0] : "mass0:/TEa.G3.ELF");
 	if (!gfx_init()) printf("gfx_init: VRAM pool too small\n");
 	splash_ver = TEAG3_VERSION + 1; // "1.2"
