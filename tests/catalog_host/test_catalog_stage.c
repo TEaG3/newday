@@ -264,9 +264,6 @@ static void test_download_gate(void)
 
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
-    prepare_context.guard = &guard;
-    prepare_context.fail = 0;
-    prepare_context.calls = 0;
 
     /* Storage I/O must block new scans and downloads before either can start. */
     assert(catalog_guard_set_activity(&guard, 0, 1));
@@ -813,6 +810,9 @@ static void test_safe_bundle_publish(void)
 
     assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+    prepare_context.guard = &guard;
+    prepare_context.fail = 0;
+    prepare_context.calls = 0;
 
     /* The whole bundle stays unchanged until an explicit safe-point request. */
     assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_BUSY);
