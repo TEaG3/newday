@@ -70,6 +70,73 @@ static int http_read_cancelable(int socket, char *buffer, int capacity, int *rec
     return 0;
 }
 
+/* Socket callbacks keep the connect/send state machine host-testable. */
+enum { HTTP_IO_AGAIN = -2 };
+typedef struct {
+    int (*set_nonblocking)(void *context, int socket);
+    int (*connect)(void *context, int socket, const void *address, int address_length);
+    int (*wait_writable)(void *context, int socket, unsigned milliseconds);
+    int (*socket_error)(void *context, int socket);
+    int (*send)(void *context, int socket, const char *buffer, int length);
+} http_connect_ops;
+
+/* connect returns 0 when connected, 1 while pending, or a negative error.
+   wait_writable returns 1 when writable, 0 on timeout, or a negative error.
+   socket_error returns 0 when connected, 1 while pending, or a negative error.
+   send returns a byte count, HTTP_IO_AGAIN when it would block, or a negative error. */
+static int http_connect_send(int socket, const void *address, int address_length,
+                             const char *request, int request_length,
+                             net_cancel_fn cancelled, void *cancel_context,
+                             const http_connect_ops *ops, void *io_context)
+{
+    int r, connected = 0, sent = 0, elapsed_ms = 0;
+    if (!address || address_length <= 0 || !request || request_length <= 0 || !ops ||
+        !ops->set_nonblocking || !ops->connect || !ops->wait_writable ||
+        !ops->socket_error || !ops->send)
+        return NET_ERR_PROTO;
+    if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+    if (ops->set_nonblocking(io_context, socket) < 0) return NET_ERR_CONNECT;
+    if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+
+    r = ops->connect(io_context, socket, address, address_length);
+    if (r < 0) return NET_ERR_CONNECT;
+    if (r == 0) {
+        connected = 1;
+    } else {
+        while (elapsed_ms < 5000) {
+            if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+            r = ops->wait_writable(io_context, socket, 20);
+            if (r < 0) return NET_ERR_CONNECT;
+            if (r > 0) {
+                r = ops->socket_error(io_context, socket);
+                if (r == 0) {
+                    connected = 1;
+                    break;
+                }
+                if (r < 0) return NET_ERR_CONNECT;
+            }
+            elapsed_ms += 20;
+        }
+    }
+    if (!connected) return NET_ERR_CONNECT;
+
+    elapsed_ms = 0;
+    while (sent < request_length) {
+        if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+        r = ops->send(io_context, socket, request + sent, request_length - sent);
+        if (r > 0) {
+            if (r > request_length - sent) return NET_ERR_PROTO;
+            sent += r;
+            continue;
+        }
+        if (r != HTTP_IO_AGAIN || elapsed_ms >= 5000) return NET_ERR_CONNECT;
+        r = ops->wait_writable(io_context, socket, 20);
+        if (r < 0) return NET_ERR_CONNECT;
+        elapsed_ms += 20;
+    }
+    return cancelled && cancelled(cancel_context) ? NET_ERR_CANCELLED : 0;
+}
+
 // "https://host/path" or "http://host[:port]/path" (#15: update files) -> 1 https, 0 http, -1 not a URL
 int url_split(const char *url, char *host, int hn, int *port, char *path, int pn)
 {
@@ -310,10 +377,65 @@ static void http_socket_wait(void *context, unsigned milliseconds)
     usleep(milliseconds * 1000);
 }
 
+static int http_socket_set_nonblocking(void *context, int socket)
+{
+    (void)context;
+    return fcntl(socket, F_SETFL, O_NONBLOCK) < 0 ? -1 : 0;
+}
+
+static int http_socket_connect(void *context, int socket, const void *address, int address_length)
+{
+    (void)context;
+    int r = connect(socket, (const struct sockaddr *)address, (socklen_t)address_length);
+    if (r == 0) return 0;
+    if (errno == EINPROGRESS || errno == EALREADY || errno == EWOULDBLOCK) return 1;
+    return -1;
+}
+
+static int http_socket_wait_writable(void *context, int socket, unsigned milliseconds)
+{
+    fd_set writes;
+    struct timeval timeout;
+    int r;
+    (void)context;
+    FD_ZERO(&writes);
+    FD_SET(socket, &writes);
+    timeout.tv_sec = (long)(milliseconds / 1000u);
+    timeout.tv_usec = (long)((milliseconds % 1000u) * 1000u);
+    r = select(socket + 1, NULL, &writes, NULL, &timeout);
+    if (r < 0) return errno == EINTR ? 0 : -1;
+    return r > 0 && FD_ISSET(socket, &writes) ? 1 : 0;
+}
+
+static int http_socket_error(void *context, int socket)
+{
+    int error = 0;
+    socklen_t length = sizeof(error);
+    (void)context;
+    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, &error, &length) < 0) return -1;
+    if (error == 0) return 0;
+    if (error == EINPROGRESS || error == EALREADY || error == EWOULDBLOCK) return 1;
+    return -1;
+}
+
+static int http_socket_send(void *context, int socket, const char *buffer, int length)
+{
+    int r;
+    (void)context;
+    r = (int)send(socket, buffer, (size_t)length, MSG_DONTWAIT);
+    if (r >= 0) return r;
+    if (errno == EWOULDBLOCK || errno == EINTR) return HTTP_IO_AGAIN;
+    return -1;
+}
+
 static int http_req_impl(const char *method, const char *ip, int port, const char *path,
                          char *buf, int max, int *body, int *len, int require_content_length,
                          net_cancel_fn cancelled, void *cancel_context)
 {
+    static const http_connect_ops io = {
+        http_socket_set_nonblocking, http_socket_connect, http_socket_wait_writable,
+        http_socket_error, http_socket_send
+    };
     struct sockaddr_in a = {0};
     int s, r, n, st = NET_ERR_PROTO;
     if (!method || !ip || !path || !buf || max <= 0 || !body || !len)
@@ -323,34 +445,16 @@ static int http_req_impl(const char *method, const char *ip, int port, const cha
     a.sin_family = AF_INET, a.sin_port = htons(port), a.sin_addr.s_addr = inet_addr(ip);
     s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0) return NET_ERR_CONNECT;
-    r = connect(s, (struct sockaddr *)&a, sizeof(a));
-    if (r < 0) {
-        int result = cancelled && cancelled(cancel_context) ? NET_ERR_CANCELLED : NET_ERR_CONNECT;
-        close(s);
-        return result;
-    }
-    if (cancelled && cancelled(cancel_context)) {
-        close(s);
-        return NET_ERR_CANCELLED;
-    }
     n = snprintf(buf, max, "%s %s HTTP/1.0\r\nHost: %s\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
                  method, path, ip);
     if (n < 0 || n >= max) {
         close(s);
         return NET_ERR_PROTO;
     }
-    if (cancelled && cancelled(cancel_context)) {
+    r = http_connect_send(s, &a, sizeof(a), buf, n, cancelled, cancel_context, &io, NULL);
+    if (r != 0) {
         close(s);
-        return NET_ERR_CANCELLED;
-    }
-    if (send(s, buf, (size_t)n, 0) != n) {
-        int result = cancelled && cancelled(cancel_context) ? NET_ERR_CANCELLED : NET_ERR_CONNECT;
-        close(s);
-        return result;
-    }
-    if (cancelled && cancelled(cancel_context)) {
-        close(s);
-        return NET_ERR_CANCELLED;
+        return r;
     }
     r = http_read_cancelable(s, buf, max, &n, cancelled, cancel_context,
                              http_socket_recv, http_socket_wait, NULL, &net_got);
@@ -398,6 +502,121 @@ int net_fetch(const char *url, char *buf, int max, int *body, int *len)
 
 typedef struct { int cancelled, cancel_on_wait, calls, waits, mode; } http_fixture;
 static int fixture_cancel(void *context) { return ((http_fixture *)context)->cancelled; }
+
+typedef struct {
+    int cancelled, cancel_on_wait, waits, ready_after;
+    int connect_pending, socket_error_pending, send_again, send_chunk;
+    int nonblocking_calls, connect_calls, socket_error_calls, send_calls;
+    char sent[64];
+    int sent_length;
+} http_connect_fixture;
+
+static int connect_fixture_cancel(void *context)
+{
+    return ((http_connect_fixture *)context)->cancelled;
+}
+
+static int connect_fixture_nonblocking(void *context, int socket)
+{
+    http_connect_fixture *f = (http_connect_fixture *)context;
+    (void)socket;
+    f->nonblocking_calls++;
+    return 0;
+}
+
+static int connect_fixture_connect(void *context, int socket, const void *address, int address_length)
+{
+    http_connect_fixture *f = (http_connect_fixture *)context;
+    (void)socket; (void)address; (void)address_length;
+    f->connect_calls++;
+    return f->connect_pending ? 1 : 0;
+}
+
+static int connect_fixture_wait(void *context, int socket, unsigned milliseconds)
+{
+    http_connect_fixture *f = (http_connect_fixture *)context;
+    (void)socket;
+    assert(milliseconds == 20);
+    f->waits++;
+    if (f->cancel_on_wait == f->waits) f->cancelled = 1;
+    return f->ready_after > 0 && f->waits >= f->ready_after ? 1 : 0;
+}
+
+static int connect_fixture_socket_error(void *context, int socket)
+{
+    http_connect_fixture *f = (http_connect_fixture *)context;
+    (void)socket;
+    f->socket_error_calls++;
+    if (f->socket_error_pending > 0) {
+        f->socket_error_pending--;
+        return 1;
+    }
+    return 0;
+}
+
+static int connect_fixture_send(void *context, int socket, const char *buffer, int length)
+{
+    http_connect_fixture *f = (http_connect_fixture *)context;
+    int count = length;
+    (void)socket;
+    f->send_calls++;
+    if (f->send_again > 0) {
+        f->send_again--;
+        return HTTP_IO_AGAIN;
+    }
+    if (f->send_chunk > 0 && count > f->send_chunk) count = f->send_chunk;
+    if (count <= 0 || f->sent_length + count > (int)sizeof(f->sent)) return -1;
+    memcpy(f->sent + f->sent_length, buffer, (size_t)count);
+    f->sent_length += count;
+    return count;
+}
+
+static const http_connect_ops connect_fixture_ops = {
+    connect_fixture_nonblocking, connect_fixture_connect, connect_fixture_wait,
+    connect_fixture_socket_error, connect_fixture_send
+};
+
+static void test_http_connect_send_cancellation(void)
+{
+    static const char request[] = "GET /catalog";
+    http_connect_fixture f = {0};
+    f.connect_pending = 1;
+    f.ready_after = 1;
+    f.socket_error_pending = 1;
+    f.send_again = 1;
+    f.send_chunk = 4;
+    assert(http_connect_send(1, &f, sizeof(f), request, sizeof(request) - 1,
+                             connect_fixture_cancel, &f, &connect_fixture_ops, &f) == 0);
+    assert(f.nonblocking_calls == 1 && f.connect_calls == 1);
+    assert(f.socket_error_calls == 2 && f.sent_length == (int)sizeof(request) - 1);
+    assert(!memcmp(f.sent, request, sizeof(request) - 1));
+
+    f = (http_connect_fixture){0};
+    f.connect_pending = 1;
+    f.cancel_on_wait = 1;
+    assert(http_connect_send(1, &f, sizeof(f), request, sizeof(request) - 1,
+                             connect_fixture_cancel, &f, &connect_fixture_ops, &f) == NET_ERR_CANCELLED);
+    assert(f.waits == 1 && f.sent_length == 0);
+
+    f = (http_connect_fixture){0};
+    f.send_again = 1;
+    f.cancel_on_wait = 1;
+    assert(http_connect_send(1, &f, sizeof(f), request, sizeof(request) - 1,
+                             connect_fixture_cancel, &f, &connect_fixture_ops, &f) == NET_ERR_CANCELLED);
+    assert(f.waits == 1 && f.sent_length == 0);
+
+    f = (http_connect_fixture){0};
+    f.connect_pending = 1;
+    assert(http_connect_send(1, &f, sizeof(f), request, sizeof(request) - 1,
+                             connect_fixture_cancel, &f, &connect_fixture_ops, &f) == NET_ERR_CONNECT);
+    assert(f.waits == 250);
+
+    f = (http_connect_fixture){0};
+    f.cancelled = 1;
+    assert(http_connect_send(1, &f, sizeof(f), request, sizeof(request) - 1,
+                             connect_fixture_cancel, &f, &connect_fixture_ops, &f) == NET_ERR_CANCELLED);
+    assert(f.nonblocking_calls == 0 && f.connect_calls == 0);
+}
 static int fixture_recv(void *context, int socket, void *buffer, int length, int flags)
 {
     http_fixture *f = (http_fixture *)context;
@@ -452,6 +671,7 @@ int main(void)
 {
 	test_http_length_policy();
 	test_http_read_cancellation();
+	test_http_connect_send_cancellation();
 	static const char ok[] = "HTTP/1.0 200 OK\r\nServer: x\r\ncontent-length: 5\r\n\r\nhello";
 	int st, body, clen;
 	assert(http_parse(ok, sizeof(ok) - 1, &st, &body, &clen) && st == 200 && clen == 5 && !memcmp(ok + body, "hello", 5));
