@@ -422,7 +422,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
     def test_network_worker_leases_are_scoped_per_catalog_entry(self):
         art = function_body(LAUNCHER, "static void art_import(void)", "static int download_cover_one")
         art_loop = art[art.index("for (int i = 1; i < ncv && !ra_launching; i++)"):]
-        self.assertLess(art.index("background_work_end(&art_busy);"), art.index("for (int i = 1; i < ncv && !ra_launching; i++)"))
+        self.assertLess(art.index("background_io_end(&art_busy);"), art.index("for (int i = 1; i < ncv && !ra_launching; i++)"))
         self.assertLess(art_loop.index("background_work_begin(&art_busy)"), art_loop.index("art_import_one(i, &net, max)"))
         self.assertIn("if (!ra_launching && i < ncv) got += art_import_one(i, &net, max);", art_loop)
         self.assertLess(art_loop.index("art_import_one(i, &net, max)"), art_loop.index("background_work_end(&art_busy)"))
@@ -435,7 +435,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(download_loop.index("download_cover_one(i, buf, max)"), download_loop.index("background_work_end(&dl_busy)"))
         self.assertIn("if (!ra_launching) st = https_get", LAUNCHER)
         self.assertIn("Re-read the current generation under each short lease", download)
-        self.assertIn("if (!dl_busy && background_work_begin(&dl_busy))", download)
+        self.assertIn("if (!dl_busy && background_io_begin(&dl_busy))", download)
+        self.assertIn("background_io_end(&dl_busy);", download)
         self.assertNotIn("entry *", download)
 
         cover = function_body(LAUNCHER, "static void cover_thread(void *arg)", "static int count_dir(")
