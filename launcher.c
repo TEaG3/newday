@@ -1604,7 +1604,7 @@ static int catalog_live_scan_once(void)
 	int count;
 	int scan_end;
 
-	if (!catalog_live_ready || !catalog_active_snapshot_ready || !usb || ra_launching ||
+	if (!catalog_live_ready || !catalog_active_snapshot_ready || ra_launching ||
 	    catalog_live_candidate_ready || catalog_live_faulted)
 		return 0;
 	if (!catalog_guard_scan_begin(&catalog_live_guard)) {
