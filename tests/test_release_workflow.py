@@ -18,6 +18,20 @@ class ReleaseWorkflowRegressionTests(unittest.TestCase):
         self.assertIn("cp runtime-input/OPL-LICENSE.txt OPL-LICENSE.txt", workflow)
         self.assertIn("Stage OPL license for package validation", workflow)
 
+
+    def test_package_contains_full_bilingual_readmes(self) -> None:
+        packager = (ROOT / "tools/package_single_elf_release.py").read_text(encoding="utf-8")
+        arabic = (ROOT / "README.md").read_text(encoding="utf-8")
+        english = (ROOT / "README-EN.md").read_text(encoding="utf-8")
+        self.assertGreater(len(arabic), 1000)
+        self.assertGreater(len(english), 1000)
+        self.assertIn("README-AR.md", packager)
+        self.assertIn("README-EN.md", packager)
+        self.assertIn('ROOT / "README-EN.md"', packager)
+        self.assertNotIn("README-AR.txt", packager)
+        self.assertIn("OPL is the only PS2 game engine", english)
+        self.assertIn("does not prove", english)
+
     def test_release_version_is_synchronised(self) -> None:
         launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
         self.assertIn('#define TEAG3_VERSION "v1.3.13"', launcher)
