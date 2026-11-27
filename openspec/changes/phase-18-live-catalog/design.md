@@ -25,6 +25,10 @@ catalog_guard is a portable state machine whose lock/unlock callbacks must be ba
 - Starting a game or marking storage I/O busy cancels an active scan; the scanner checks the cancellation flag between directories and closes all open handles before discarding its candidate.
 - A pending apply can wait while a game is running; it must not block launch or change the visible catalog during gameplay.
 
+## Bundle preparation
+
+The bundle publisher may run a caller-supplied prepare callback after the apply gate is acquired and all active readers have drained, but before any active/candidate pointer moves. The callback may populate only candidate-side state (for example, migrate per-game sidecars by stable key). If preparation fails, the active bundle remains untouched and the apply gate is released; the candidate may be discarded or rebuilt. The callback must not mutate or free active resources. Ownership retirement remains the caller's responsibility after a successful swap.
+
 ## Monitoring policy
 
 - Poll only sources whose mount state can be safely queried. Use a conservative 3–5 second interval after device-specific behavior is verified; do not assume a PS2SDK hotplug event API exists.
