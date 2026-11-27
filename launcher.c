@@ -729,7 +729,8 @@ static int ul_part_exists(void *context, const char *filename)
 
 static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.cfg plus every split part
 {
-    if (s < 0 || s >= nsrc || src[s].type != SRC_USB || n < 1 || n >= MAXC) return n;
+    if (s < 0 || s >= nsrc || src[s].type != SRC_USB || n < 1) return n;
+    if (n > MAXC) return -1;
     char cfg_path[300];
     int path_len = snprintf(cfg_path, sizeof(cfg_path), "%s/ul.cfg", src[s].root);
     if (path_len < 0 || path_len >= (int)sizeof(cfg_path)) return n;
