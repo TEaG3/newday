@@ -209,7 +209,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
 
 
     def test_cover_download_releases_catalog_reader_during_network_setup(self):
-        download = function_body(LAUNCHER, "static void download_covers(void)\\n{", "// ---- achievements")
+        download = function_body(LAUNCHER, "static void download_covers(void)\n{", "// ---- achievements")
         reader_begin = download.index("background_work_begin(&dl_busy)")
         count = download.index("dl_total = dl_done = dl_got = 0")
         count_loop = download.index("dl_total += wants_cover(i)")
