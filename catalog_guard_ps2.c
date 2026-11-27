@@ -21,6 +21,12 @@ static int catalog_guard_ps2_unlock(void *opaque)
     return 1;
 }
 
+int catalog_guard_ps2_scan_cancelled(void *guard_context)
+{
+    catalog_guard *guard = (catalog_guard *)guard_context;
+    return guard == NULL || catalog_guard_scan_cancelled(guard) != 0;
+}
+
 void catalog_guard_ps2_context_init(catalog_guard_ps2_context *context)
 {
     if (context != NULL) {
