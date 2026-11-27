@@ -8,6 +8,7 @@
 - [x] Add reader leases, scan cancellation, and a quiescent apply gate with caller-supplied locking.
 - [x] Add an apply-time bundle prepare hook so index-keyed sidecars can be migrated only after readers drain and before the active/candidate bundle swap; failed preparation releases the gate without publishing.
 - [x] Add typed per-game sidecar migration, candidate discard, and post-swap resource retirement with explicit pointer ownership tests; keep launcher wiring disabled until every reader and worker is integrated.
+- [x] Move queued icon, VMC, achievements and achievements-list indices into the generation sidecar set; rebase only unchanged stable keys and clear removed/changed requests during migration.
 - [x] Add host tests including a real concurrent reader held across an apply request.
 - [x] Cross-compile the inactive core with the PS2 EE compiler and enforce an 8 KiB maximum stack frame.
 - [x] Add the PS2 semaphore adapter with fail-closed `WaitSema`/`DeleteSema` handling; compile it with the PS2 EE compiler and host-test lock failures plus concurrent readers.

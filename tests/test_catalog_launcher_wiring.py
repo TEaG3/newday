@@ -72,6 +72,16 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertNotIn("ncv = count;", load)
         self.assertLess(main.index("catalog_bundle_init();"), main.index("StartThread(tid, NULL);"))
 
+    def test_worker_request_indices_are_owned_by_the_active_generation(self):
+        for name in ("icon_want", "vmc_net_want", "ra_want", "ra_list_want", "ra_list_for"):
+            with self.subTest(name=name):
+                self.assertRegex(LAUNCHER, rf"(?m)^#define {name}\s+\(catalog_sidecars->{name}\)$")
+                self.assertNotIn(f"static volatile int {name}", LAUNCHER)
+        init = function_body(LAUNCHER, "static void catalog_bundle_init(void)", "static void scan_cards(void)")
+        self.assertIn("catalog_stage_sidecar_set_discard(&catalog_sidecar_boot);", init)
+        self.assertIn("state->icon_want = -1;", STAGE)
+        self.assertIn("sidecar_rebase_pending_index", STAGE)
+
     def test_ps2_guard_is_linked_into_launcher(self):
         self.assertIn('#include "catalog_guard_ps2.h"', LAUNCHER)
         objects = next(line for line in MAKEFILE.splitlines() if line.startswith("EE_OBJS ="))

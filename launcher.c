@@ -195,9 +195,15 @@ static catalog_stage_sidecar_set catalog_sidecar_boot;
 #define ra_state   (catalog_sidecars->ra_state)
 #define ra_count   (catalog_sidecars->ra_count)
 #define ra_gid     (catalog_sidecars->ra_gid)
+#define icon_want (catalog_sidecars->icon_want)
+#define vmc_net_want (catalog_sidecars->vmc_net_want)
+#define ra_want (catalog_sidecars->ra_want)
+#define ra_list_want (catalog_sidecars->ra_list_want)
+#define ra_list_for (catalog_sidecars->ra_list_for)
 
 static void catalog_bundle_init(void)
 {
+	catalog_stage_sidecar_set_discard(&catalog_sidecar_boot);
 	catalog_active_bundle.items = catalog_boot_items;
 	catalog_active_bundle.items_capacity = MAXC;
 	catalog_active_bundle.sidecars = &catalog_sidecar_boot;
@@ -350,7 +356,6 @@ static int save_info(int i, char *line1, char *line2, int n) // returns the save
 }
 
 // ---- 3D save icons (phase 9): newest save's icon.sys + list icon, loaded by the icon thread on first selection ----
-static volatile int icon_want = -1;
 static int icon_sema = -1;
 
 static void *mc_read(int port, const char *path, int *size) // whole file, 64-aligned; NULL if missing
@@ -476,7 +481,6 @@ static void install_stub(void)
 }
 
 static void wiz_job(void); // the setup wizard's memory card and config.ini work (#15), below
-static volatile int vmc_net_want = -1; // a server game's card for the loader thread (phase 20)
 static int vmc_net_ask(int i);         // asks for it; 0 if there is no loader thread to ask
 
 static u8 icon_stack[0x10000] __attribute__((aligned(16)));
@@ -1926,7 +1930,7 @@ static void download_covers(void)
 // ---- achievements (phase 16, step 1): the selected PS2 game's RetroAchievements hash, cached in
 // RA_DIR/<serial>.txt with the ISO size, then the client on the home server is asked about it; the loader
 // thread does it after the covers, one game at a time, the latest selection first ----
-static volatile int ra_want = -1, ra_sema = -1, ra_down, ra_busy; // ra_down: 1 no network, 2 no client (toast once)
+static volatile int ra_sema = -1, ra_down, ra_busy; // ra_down: 1 no network, 2 no client (toast once)
 
 static int background_workers_busy(void)
 {
@@ -1981,7 +1985,7 @@ static int catalog_activity_wait(int playing)
 // the Logros panel (○): one game's list at a time, loaded by the worker. st: 1 loading, 2 ready, -1 failed
 #define RA_LIST_MAX 400
 static ra_ach ra_list[RA_LIST_MAX];
-static volatile int ra_list_n, ra_list_for = -1, ra_list_st, ra_list_want = -1;
+static volatile int ra_list_n, ra_list_st;
 static int ach_row = -1; // the panel's cursor, -1 = closed
 // ponytail: HD Loader partitions and the disc drive have no ISO file to hash; a reader over them if wanted
 static int ra_game_ok(int i) { return ra_on && cv[i].kind == K_PS2 && src[(int)cv[i].src].type != SRC_HDL; }

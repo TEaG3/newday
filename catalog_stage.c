@@ -188,6 +188,33 @@ static int sidecar_record_unchanged(const catalog_stage_record *old_record,
            old_record->fingerprint == new_record->fingerprint;
 }
 
+/* A queued index may cross generations only when its stable key and content are unchanged. */
+static int sidecar_rebase_pending_index(int old_index,
+                                        const catalog_stage_snapshot *old_snapshot,
+                                        const catalog_stage_snapshot *new_snapshot,
+                                        const int16_t *old_to_new,
+                                        int *new_index)
+{
+    int next_index;
+
+    if (old_index == -1) {
+        *new_index = -1;
+        return CATALOG_STAGE_OK;
+    }
+    if (old_index < -1 || (size_t)old_index >= old_snapshot->count)
+        return CATALOG_STAGE_ERR_INDEX;
+
+    next_index = old_to_new[old_index];
+    if (next_index < 0 ||
+        !sidecar_record_unchanged(&old_snapshot->records[old_index],
+                                  &new_snapshot->records[next_index])) {
+        *new_index = -1;
+        return CATALOG_STAGE_OK;
+    }
+    *new_index = next_index;
+    return CATALOG_STAGE_OK;
+}
+
 static int sidecar_sets_overlap(const catalog_stage_sidecar_set *a,
                                   const catalog_stage_sidecar_set *b)
 {
@@ -263,6 +290,11 @@ void catalog_stage_sidecar_set_discard(catalog_stage_sidecar_set *state)
         state->ra_count[i] = 0;
         state->ra_gid[i] = 0;
     }
+    state->icon_want = -1;
+    state->vmc_net_want = -1;
+    state->ra_want = -1;
+    state->ra_list_want = -1;
+    state->ra_list_for = -1;
 }
 
 int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot,
@@ -275,6 +307,7 @@ int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot
     int16_t old_to_new[CATALOG_STAGE_MAX_ITEMS];
     size_t i;
     int status;
+    int pending_icon, pending_vmc, pending_ra, pending_ra_list, pending_ra_list_for;
 
     if (old_snapshot == NULL || new_snapshot == NULL || old_state == NULL ||
         new_state == NULL || sidecar_sets_overlap(old_state, new_state) ||
@@ -294,8 +327,28 @@ int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot
     status = catalog_stage_snapshot_map(old_snapshot, new_snapshot,
                                         old_to_new, CATALOG_STAGE_MAX_ITEMS);
     if (status != CATALOG_STAGE_OK) return status;
+    status = sidecar_rebase_pending_index(old_state->icon_want, old_snapshot, new_snapshot,
+                                          old_to_new, &pending_icon);
+    if (status != CATALOG_STAGE_OK) return status;
+    status = sidecar_rebase_pending_index(old_state->vmc_net_want, old_snapshot, new_snapshot,
+                                          old_to_new, &pending_vmc);
+    if (status != CATALOG_STAGE_OK) return status;
+    status = sidecar_rebase_pending_index(old_state->ra_want, old_snapshot, new_snapshot,
+                                          old_to_new, &pending_ra);
+    if (status != CATALOG_STAGE_OK) return status;
+    status = sidecar_rebase_pending_index(old_state->ra_list_want, old_snapshot, new_snapshot,
+                                          old_to_new, &pending_ra_list);
+    if (status != CATALOG_STAGE_OK) return status;
+    status = sidecar_rebase_pending_index(old_state->ra_list_for, old_snapshot, new_snapshot,
+                                          old_to_new, &pending_ra_list_for);
+    if (status != CATALOG_STAGE_OK) return status;
 
     catalog_stage_sidecar_set_discard(new_state);
+    new_state->icon_want = pending_icon;
+    new_state->vmc_net_want = pending_vmc;
+    new_state->ra_want = pending_ra;
+    new_state->ra_list_want = pending_ra_list;
+    new_state->ra_list_for = pending_ra_list_for;
     for (i = 0; i < old_snapshot->count; ++i) {
         int next_index = old_to_new[i];
         const catalog_stage_record *old_record = &old_snapshot->records[i];
