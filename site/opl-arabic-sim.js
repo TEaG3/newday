@@ -130,7 +130,10 @@
     {id:"gtasa",title:"Grand Theft Auto: San Andreas",serial:"SLES-52541",genre:"عالم مفتوح",storage:"HDD",cover:COVER_BASE+"SLES-52541.jpg",description:"عالم مفتوح واسع يتضمن القيادة والاستكشاف ومجموعة كبيرة من المهام."}
   ];
   const libraryState = {storage:"all",genre:"all",query:"",sort:"featured",view:"grid",favoritesOnly:false,selectedId:"gow2"};
-  const favorites = new Set();
+  const favorites = new Set(JSON.parse(localStorage.getItem("oplArabicFavorites") || "[]"));
+  function saveFavorites() {
+    try { localStorage.setItem("oplArabicFavorites",JSON.stringify(Array.from(favorites))); } catch (_) {}
+  }
   const gameGrid = document.getElementById("gameGrid");
   const gameDetail = document.getElementById("gameDetail");
   const libraryCount = document.getElementById("libraryCount");
@@ -183,6 +186,7 @@
     libraryCount.textContent = shown.length + " / " + games.length + " لعبة";
     gameGrid.replaceChildren();
     gameGrid.classList.toggle("is-list",libraryState.view === "list");
+    gameGrid.classList.toggle("is-opl",libraryState.view === "opl");
     storageButtons.forEach(button => button.setAttribute("aria-pressed",String(button.dataset.storage === libraryState.storage)));
     viewButtons.forEach(button => button.setAttribute("aria-pressed",String(button.dataset.libraryView === libraryState.view)));
     favoritesOnlyButton.setAttribute("aria-pressed",String(libraryState.favoritesOnly));
@@ -280,6 +284,7 @@
     favorite.addEventListener("click",() => {
       if (favorites.has(game.id)) favorites.delete(game.id);
       else favorites.add(game.id);
+      saveFavorites();
       renderLibrary();
     });
     actions.append(launch,favorite);
@@ -434,6 +439,7 @@
   viewButtons.forEach(button => button.addEventListener("click",() => {
     libraryState.view = button.dataset.libraryView;
     renderLibrary();
+    if (libraryState.view === "opl") note.textContent = "عرض OPL: اختر الغلاف، ثم استخدم × للمحاكاة أو △ لخيارات اللعبة.";
   }));
   favoritesOnlyButton.addEventListener("click",() => {
     libraryState.favoritesOnly = !libraryState.favoritesOnly;
