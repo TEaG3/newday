@@ -142,8 +142,11 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("catalog_stage_bundle_publish_prepared", apply)
         self.assertIn("catalog_stage_sidecar_set_retire", apply)
         self.assertIn("catalog_live_release_resource", apply)
+        self.assertIn("if (catalog_live_guard_faulted) return -1;", apply)
         main = LAUNCHER[LAUNCHER.index("int main(int argc, char *argv[])"):]
         self.assertLess(main.index("catalog_live_apply_frame()"), main.index("catalog_reader_try_begin()"))
+        self.assertIn("if (live_apply_status < 0)", main)
+        self.assertIn("do not inspect either bundle", main)
         self.assertIn("booted = 0;", main)
 
     def test_icon_worker_keeps_storage_only_io_outside_catalog_reader_lease(self):
