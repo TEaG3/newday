@@ -231,11 +231,15 @@ static int sidecar_set_has_aliases(const catalog_stage_sidecar_set *state,
         for (kind = 0; kind < 5; ++kind) {
             void *resource = sidecar_resource_at(state, i, kind);
             if (resource == NULL) continue;
-            for (previous_kind = 0; previous_kind < kind; ++previous_kind)
-                if (resource == sidecar_resource_at(state, i, previous_kind)) return 1;
+            for (previous_kind = 0; previous_kind < kind; ++previous_kind) {
+                void *previous = sidecar_resource_at(state, i, previous_kind);
+                if (previous != NULL && resource == previous) return 1;
+            }
             for (j = 0; j < i; ++j)
-                for (previous_kind = 0; previous_kind < 5; ++previous_kind)
-                    if (resource == sidecar_resource_at(state, j, previous_kind)) return 1;
+                for (previous_kind = 0; previous_kind < 5; ++previous_kind) {
+                    void *previous = sidecar_resource_at(state, j, previous_kind);
+                    if (previous != NULL && resource == previous) return 1;
+                }
         }
     }
     return 0;
