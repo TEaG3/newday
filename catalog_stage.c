@@ -263,17 +263,25 @@ int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot
         new_record = &new_snapshot->records[next_index];
         if (!sidecar_record_unchanged(old_record, new_record)) continue;
 
-        new_state->vmc_dir[next_index] = old_state->vmc_dir[i];
-        new_state->vmc_n[next_index] = old_state->vmc_n[i];
-        new_state->vmc_state[next_index] = old_state->vmc_state[i];
-        new_state->gicon[next_index] = old_state->gicon[i];
-        new_state->gicon_state[next_index] = old_state->gicon_state[i];
+        /* State 1 means a worker was in flight. Never carry a half-finished result
+           across generations; retirement releases any pointer it left behind. */
+        if (old_state->vmc_state[i] != 1) {
+            new_state->vmc_dir[next_index] = old_state->vmc_dir[i];
+            new_state->vmc_n[next_index] = old_state->vmc_n[i];
+            new_state->vmc_state[next_index] = old_state->vmc_state[i];
+        }
+        if (old_state->gicon_state[i] != 1) {
+            new_state->gicon[next_index] = old_state->gicon[i];
+            new_state->gicon_state[next_index] = old_state->gicon_state[i];
+        }
         /* cover_req is a transient request queue and intentionally remains zero. */
         new_state->cover_done[next_index] = old_state->cover_done[i];
         new_state->cover_seen[next_index] = old_state->cover_seen[i];
-        new_state->ra_state[next_index] = old_state->ra_state[i];
-        new_state->ra_count[next_index] = old_state->ra_count[i];
-        new_state->ra_gid[next_index] = old_state->ra_gid[i];
+        if (old_state->ra_state[i] != 1) {
+            new_state->ra_state[next_index] = old_state->ra_state[i];
+            new_state->ra_count[next_index] = old_state->ra_count[i];
+            new_state->ra_gid[next_index] = old_state->ra_gid[i];
+        }
     }
     return CATALOG_STAGE_OK;
 }
