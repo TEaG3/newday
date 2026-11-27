@@ -184,6 +184,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
 
     def test_ul_scan_rejects_valid_records_that_exceed_candidate_capacity(self):
         ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
+        self.assertNotIn("n >= MAXC", ul)
+        self.assertIn("if (n > MAXC) return -1;", ul)
         self.assertIn("for (int r = 0; r < records; r++)", ul)
         self.assertIn("ul_catalog_capacity_fits(1u, (unsigned)n, MAXC)", ul)
         self.assertIn("failed = 1;", ul)
