@@ -1134,7 +1134,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 		}
 		if (e->d_name[0] == '.') continue;
 		if (n >= MAXC) {
-			printf("scan: catalogue capacity exceeded in APPS\\n");
+			printf("scan: catalogue capacity exceeded in APPS\n");
 			incomplete = 1;
 			break;
 		}
