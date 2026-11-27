@@ -491,6 +491,8 @@ static catalog_guard_ps2_context catalog_live_context;
 static volatile int catalog_live_ready;
 static int background_work_begin(volatile int *busy);
 static void background_work_end(volatile int *busy);
+static int background_io_begin(volatile int *busy);
+static void background_io_end(volatile int *busy);
 static int catalog_activity_update(int playing);
 static int catalog_reader_try_begin(void);
 static void catalog_reader_wait_begin(void);
@@ -501,7 +503,9 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 	(void)arg;
 	for (;;) {
 		WaitSema(icon_sema);
-		if (!background_work_begin(&icon_busy)) {
+		/* Wizard, update and stub I/O do not read catalog entries. Keep gameplay
+		   quiesced, but release the catalog reader before doing that longer work. */
+		if (!background_io_begin(&icon_busy)) {
 			if (ra_launching) {
 				SignalSema(icon_sema);
 				usleep(10000);
@@ -515,6 +519,17 @@ static void icon_thread(void *arg) // the only libmc user after the boot scan; w
 			FILE *f = fopen(STATE_INI, "w");
 			if (f) fprintf(f, "; TEa.G3 - estado de la interfaz (lo escribe el launcher)\n[ui]\nvista = %s\n",
 			               view_key[view]), fclose(f);
+		}
+		background_io_end(&icon_busy);
+		if (icon_busy) continue; // a failed lock release keeps gameplay and apply fail-closed
+
+		/* Re-read icon_want only after acquiring the current generation's reader lease. */
+		if (!background_work_begin(&icon_busy)) {
+			if (ra_launching) {
+				SignalSema(icon_sema);
+				usleep(10000);
+			}
+			continue;
 		}
 		int i = icon_want, port;
 		if (i >= 0) {
@@ -697,6 +712,47 @@ static void background_work_end(volatile int *busy)
 	while (!catalog_activity_update(ra_launching)) usleep(1000);
 	if (SignalSema(cover_lock) < 0) { *busy = 1; return; }
 	catalog_reader_end();
+}
+
+/* Storage-only jobs keep launch/apply activity visible without pinning a catalog generation. */
+static int background_io_begin(volatile int *busy)
+{
+	for (;;) {
+		int allowed, updated;
+		if (cover_lock < 0 || WaitSema(cover_lock) < 0) return 0;
+		allowed = !ra_launching;
+		if (allowed) *busy = 1;
+		/* Publish busy while the worker-state lock is still held. Otherwise an
+		   apply could observe a stale idle guard between the flag and its update. */
+		updated = allowed ? catalog_activity_update(0) : 0;
+		if (SignalSema(cover_lock) < 0) {
+			if (allowed) (void)catalog_activity_update(0);
+			return 0; // retain busy state and fail closed
+		}
+		if (!allowed) return 0;
+		if (updated) return 1;
+		/* A cancelled scan/download must be allowed to drain without this lock. */
+		usleep(1000);
+	}
+}
+
+static void background_io_end(volatile int *busy)
+{
+	for (;;) {
+		int updated;
+		if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
+		*busy = 0;
+		/* Keep worker-state changes serialized until the guard sees the idle state. */
+		updated = catalog_activity_update(ra_launching);
+		if (SignalSema(cover_lock) < 0) {
+			*busy = 1;
+			(void)catalog_activity_update(ra_launching);
+			return;
+		}
+		if (updated) return;
+		/* Let cancelled background work acquire cover_lock and finish its cleanup. */
+		usleep(1000);
+	}
 }
 
 static void cover_thread(void *arg) // woken by draw_cover
