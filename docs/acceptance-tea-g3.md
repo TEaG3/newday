@@ -4,29 +4,31 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
-## 0. آخر تحقق بعد PR #181 — 27 نوفمبر 2026
+## 0. آخر تحقق بعد PR #183 — 27 نوفمبر 2026
 
-- [x] دُمج PR #181 **Make remote app catalogue scans cancellable** في master بالالتزام `b36c8ab30572d2937bfbcc7e94f49c89f04c5aa1`، من الفرع `fix/cancellable-remote-app-catalog-20261127`، انطلاقاً من `da44eb3a5d81b1ff65b3f5e2e5d3ba5314e9ba75`. التغيير يضيف قراءة HTTP قابلة للإلغاء، يغلق المقبس عند الإلغاء، ويرفض استجابة 200 بلا Content-Length أو باستجابة مبتورة؛ ويُبطل candidate بالكامل عند فشل المصدر أو الإلغاء.
-- [x] فحوص PR #181 قبل الدمج نجحت: PS2 build [46054843214](https://github.com/TEaG3/newday/actions/runs/46054843214) وCodeQL [46054843315](https://github.com/TEaG3/newday/actions/runs/46054843315). لا توجد مراجعة فاشلة أو تعارض دمج مسجل.
-- [x] تحقق CI بعد الدمج على master نفسه `b36c8ab30572d2937bfbcc7e94f49c89f04c5aa1`: [PS2 launcher build #46055235958](https://github.com/TEaG3/newday/actions/runs/46055235958) — الوظائف الأربع ناجحة، و[CodeQL #46055235966](https://github.com/TEaG3/newday/actions/runs/46055235966) — تحليلات C/C++ وPython وJavaScript/TypeScript الثلاث ناجحة.
-- [x] فحصت وظائف البناء: بناء OPL من المصدر المثبّت، ZSO host decoder fixture، بناء TEa.G3.ELF بمحرك OPL فقط، وتجميع integration test bundle؛ جميعها `success`. نجحت كذلك اختبارات المضيف المدرجة في workflow، بما فيها ISO وUL وZSO وHDL/APA وcatalog stage وPS2 semaphore ومصفوفة OPL-only.
-- [x] نُزّلت artifacts من تشغيل master وفُحصت محلياً. بصمات ZIP المحلية تطابق GitHub digest، و`unzip -t` نجح للأربعة:
-  - TEa.G3 launcher — artifact `15225928583`, الحجم 4,286,997 بايت، SHA-256 `d629ed4549ded8e5a9d8821e6b7bb69ecb2a4b1d6788ecfe7a8dd53cfc73f841`.
-  - OPL runtime — artifact `15225918848`, الحجم 2,539,789 بايت، SHA-256 `e6c197986e5865c7e534e8f972cd1b72de28a52617f296d35bf7a6eca7b19574`.
-  - Integration test bundle — artifact `15225739241`, الحجم 17,780,886 بايت، SHA-256 `16a685aa2556927d9a8e3ab3810886681c8e12ba585a1e4a9d1b8bcfb4618481`.
-  - Build log — artifact `15225559084`, الحجم 1,864 بايت، SHA-256 `9930f794e98462f8f8e7811ab187d04a1c50d7ae7f00ac97320134cc65258d93`.
-- [x] فُك integration bundle وفُحصت الملفات: `TEa.G3.ELF` حجمه 9,570,036 بايت، SHA-256 `8d1363b68c5423fe17ea5852b472bc5986267dde57c70b6af4dc08c4552d0f4b`؛ و`OPL.ELF` حجمه 5,792,496 بايت، SHA-256 `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`. بيان runtime يعلن `files=1` وOPL فقط، مع CRC32 `aa490716` مطابق للبيان.
-- [x] الحزمة الداخلية `TEa.G3-Complete-Package.zip` حجمها 6,707,707 بايت، وبصمتها المحلية `3108501ac01855e3b37ca65b678245e04c727892b1cb78de1e477fc1b4fe6716` مطابقة لـ `SHA256SUMS.txt`؛ بصمة ELF داخل الحزمة تطابق ملف ELF المستخرج.
-- [x] الحزمة مهيأة كـ OPL-only: ملف المستخدم الوحيد هو `TEa.G3.ELF`، و`OPL.ELF` داخل الحزمة ملف تشخيص مستقل. لا يوجد Neutrino runtime مضمّن أو مستخدم كمحرك ألعاب.
-- [x] PR #29 ما زال مدمجاً بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والبحث الحالي لا يجد الفرع `safety/io-and-runtime-guards`.
-- [x] الصفحات النشطة `site/index.html` و`site/manual.html` و`site/opl-lab.html` خالية من Nuld/ORBIT/danielnuld. تبقى مفاتيح ونصوص تاريخية في `site/i18n.js` ومسارات ترحيل داخل المصدر، ولم تُحذف حفاظاً على التوافق.
-- [ ] لا تزال بيانات المستودع الإدارية تعرض Description باسم `NULD (formerly ORBIT)` وHomepage باسم `https://danielnuld.github.io/nuld/`. كما أن حماية master غير مفعلة. يلزم تعديل إعدادات المستودع وتفعيل قواعد الحماية من حساب مالك/مدير المستودع.
-- [ ] إلغاء HTTP يغطي حالياً القراءة بين عمليات recv، لكنه لا يوقف syscall متزامناً أثناء TCP connect أو send؛ كما أن `net_ready()/net_up()` ما زالت تهيئة متزامنة وانتظار link/DHCP دون callback للإلغاء. PR #181 يذكر هذه الحدود صراحةً، لذلك لا تُعد الشبكة قابلة للإلغاء بالكامل بعد.
-- [ ] الفهرسة الحية ما زالت معطلة وغير مربوطة بالمشغّل. بناء candidate المنفصل، وإعادة بناء cache العرض `shown_box/wave/pos/order`، والتبديل على render thread بين الإطارات، وsource polling، واختبارات إزالة/إعادة USB ما زالت مطلوبة.
-- [ ] ISO وZSO وUL اجتازت اختبارات آلية فقط؛ وHDD/APA اجتاز اختبارات مضيف فقط. SMB/UDPBD/UDPFS وMMCE كمصادر ألعاب معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق لإثبات إقلاع الألعاب والقراءة المستمرة.
+- [x] دُمج PR #181 **Make remote app catalogue scans cancellable** بالالتزام `b36c8ab30572d2937bfbcc7e94f49c89f04c5aa1`، ثم دُمج PR #183 **net: bound cancellation during remote HTTP connect and send** بالالتزام `10acc3b71a4a3e419ba05a5833d5f5ac537a2234`. التغيير الأخير يجعل HTTP socket غير متزامن: TCP connect عبر `O_NONBLOCK` و`select/SO_ERROR` بفواصل 20ms وحد 5 ثوانٍ، وإرسال جزئي عبر `MSG_DONTWAIT` مع إلغاء بين الانتظارات. تبقى ملكية إغلاق المقبس عند المستدعي.
+- [x] فحوص PR #183 قبل الدمج نجحت: [PS2 build #46056538497](https://github.com/TEaG3/newday/actions/runs/46056538497) و[CodeQL #46056538480](https://github.com/TEaG3/newday/actions/runs/46056538480). لا توجد مراجعات أو خيوط مراجعة غير محسومة، وكان الدمج بلا تعارض.
+- [x] تحقق CI بعد الدمج على master commit `10acc3b71a4a3e419ba05a5833d5f5ac537a2234`: [PS2 launcher build #46056820483](https://github.com/TEaG3/newday/actions/runs/46056820483) — الوظائف الأربع ناجحة، و[CodeQL #46056820402](https://github.com/TEaG3/newday/actions/runs/46056820402) — تحليلات C/C++ وPython وJavaScript/TypeScript الثلاث ناجحة.
+- [x] سجل اختبارات المضيف بعد الدمج: `Ran 106 tests` ثم `OK`. نجحت ZSO host fixture وZSO EE scanner adapter وHDL/APA host scanner وcatalog source-root probe وcatalog stage/end-to-end candidate-apply وPS2 semaphore concurrency، ومصفوفة OPL-only ذات 12 تركيبة. سجل بناء EE أكد `net selftest ok` و`iso selftest ok` و`ul selftest ok`.
+- [x] تحقق التعريب في البناء: العربية هي اللغة الأولى والرجوع الافتراضي، جميع 38 محرفاً عربياً المطلوب مغطاة في glyph atlas، ونجح اختبار الخط ذي 509 glyphs. نجح بناء OPL من المصدر المثبّت وبناء TEa.G3.ELF.
+- [x] نُزّلت artifacts من تشغيل master وفُحصت محلياً؛ SHA-256 المحلي لكل ZIP يطابق GitHub digest، و`unzip -t` نجح للأربعة:
+  - TEa.G3 launcher — artifact `15227291315`, الحجم 4,289,127 بايت، SHA-256 `19e48b08b81e9d0d8e28bc9a754f38605194955f1649b4ef387f1710a29685c8`.
+  - OPL runtime — artifact `15227316136`, الحجم 2,539,789 بايت، SHA-256 `a24ed41f977dc9f1efb4228f0334542f0574f384df82ce89609a53ad6b4a0804`.
+  - Integration test bundle — artifact `15226882865`, الحجم 17,786,867 بايت، SHA-256 `ebcb113720a10dc6192ade4264b194c1bbf9988adf70f6c5766b5523467ff42f`.
+  - Build log — artifact `15227461140`, الحجم 1,864 بايت، SHA-256 `439f5c2516c999c56b4f304d27d03bdcb170ab73a8e9d00cd016520de4228732`.
+- [x] فُك integration bundle وفُحصت الملفات: `TEa.G3.ELF` حجمه 9,573,908 بايت، SHA-256 `b34fabf39a3052f6de91a0d7316d29559325f4c0aa3109ef878a7bbd3516d9ec`؛ و`OPL.ELF` حجمه 5,792,496 بايت، SHA-256 `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`. بيان runtime يعلن `files=1` وOPL فقط، وCRC32 `aa490716` مطابق للبيان.
+- [x] الحزمة الداخلية `TEa.G3-Complete-Package.zip` حجمها 6,708,457 بايت، وبصمتها `eae980c35e527f686a25ce2e663e9f15e2f7d76e2e4fa4339693f92411175da8` مطابقة لـ `SHA256SUMS.txt`؛ وبصمة ELF داخل الحزمة تطابق ملف ELF المستخرج.
+- [x] فحص ELF: مقطع LOAD له `MemSiz=0xacc71c` أي 11,323,164 بايت تقريباً 10.80 MiB. **سعة 8MB المعتادة هي سعة بطاقة الذاكرة للتخزين وليست RAM الجهاز**؛ ملف ELF حجمه 9.57MB لذلك لا يتسع على بطاقة 8MB، لكنه يُشغّل من USB. ذاكرة PS2 الرئيسية 32MiB؛ لا تخلط حجم الملف مع RAM.
+- [x] OPL هو محرك ألعاب PS2 الوحيد؛ لا يوجد Neutrino runtime مضمّن. ملف المستخدم الوحيد هو `TEa.G3.ELF`، و`OPL.ELF` في الحزمة ملف تشخيص مستقل.
+- [x] PR #29 ما زال مدمجاً بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
+- [x] الصفحات النشطة `site/index.html` و`site/manual.html` و`site/opl-lab.html` خالية من Nuld/ORBIT/danielnuld. تبقى مفاتيح تاريخية في `site/i18n.js` ومسارات ترحيل داخل المصدر للتوافق، ولم تُحذف.
+- [ ] بيانات المستودع الإدارية ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage باسم `https://danielnuld.github.io/nuld/`، وحماية master غير مفعلة. يتطلب تعديل هذه الإعدادات وتفعيل Branch protection/Ruleset إجراءً من مالك/مدير المستودع.
+- [ ] إلغاء HTTP صار يغطي القراءة وTCP connect/send، لكن `net_ready()/net_up()` ما زالت تهيئة متزامنة وانتظار link/DHCP دون callback للإلغاء. يلزم إكمال إلغاء تهيئة الشبكة واختبار connect/send على جهاز PS2 قبل تفعيل live refresh.
+- [ ] الفهرسة الحية ما زالت معطلة وغير مربوطة بالمشغّل: بناء candidate المنفصل، وترحيل كل Sidecars، وإعادة بناء cache العرض `shown_box/wave/pos/order`، والتبديل على render thread بين الإطارات، وsource polling، واختبارات إزالة/إعادة USB ما زالت مطلوبة.
+- [ ] ISO وZSO وUL اجتازت اختبارات آلية فقط؛ HDD/APA اجتاز اختبارات مضيف فقط. SMB/UDPBD/UDPFS وMMCE كمصادر ألعاب معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق لإثبات إقلاع الألعاب والقراءة المستمرة.
 - [ ] أحدث Release منشور ما زال `arabic-v1.3.13`. لم يُنشأ Release جديد ولم تتغير روابط الموقع؛ artifacts الحديثة هي artifacts CI وليست إصداراً منشوراً. لا يُحدّث رابط التنزيل حتى تُجهّز حزمة إصدار موثقة ويُحسم قبول العتاد.
 
-**الخطوة الفنية التالية:** استكمال الإلغاء المحدود لتهيئة الشبكة وTCP connect/send مع اختبارات مضيف، ثم توصيل مسح candidate وتطبيقه بأمان على render thread. تبقى اختبارات semaphore والتزامن وإزالة الوسائط على PS2 شرطاً قبل تفعيل المراقبة.
+**المرحلة التالية:** جعل `net_ready()/net_up()` قابلة للإلغاء دون تسريب أو إعادة تهيئة غير آمنة، ثم إكمال candidate scan/apply على render thread. تبقى اختبارات semaphore والتزامن وإزالة الوسائط على PS2 شرطاً قبل تفعيل المراقبة.
 
 ## 1. سجل أدلة سابق — 27 نوفمبر 2026 (master: 5d6c189)
 
