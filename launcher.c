@@ -1529,11 +1529,12 @@ static void disc_thread(void *arg)
 	int last = -1, said = -1, initialized = 0; // said: the language the title was written in (the setup panel changes it)
 	for (;;) {
 		sleep(1);
-		if (!background_work_begin(&disc_busy)) continue;
+		/* Disc polling, config reads and cover I/O do not need a catalog pointer. */
+		if (!background_io_begin(&disc_busy)) continue;
 		if (!initialized) sceCdInit(SCECdINoD), initialized = 1;
 		int st = disc_state(sceCdGetDiskType());
 		if ((st == last && lang == said) || disc_new) {
-			background_work_end(&disc_busy);
+			background_io_end(&disc_busy);
 			continue;
 		}
 		said = lang;
@@ -1549,13 +1550,17 @@ static void disc_thread(void *arg)
 		const char *what = st == D_NONE ? L("No disc") : st == D_READING ? L("Reading disc...") : st == D_OTHER ?
 		                   L("Unsupported disc") : st == D_PS2 ? L("PS2 disc") : L("PS1 disc");
 		snprintf(d->title, sizeof(d->title), "%s", what);
+		/* Only the title lookup touches cv[]. I/O activity stays set while the
+		   short reader lease is acquired and released around that lookup. */
+		catalog_reader_wait_begin();
 		for (int i = 1; i < ncv && *d->serial; i++) // the same game on the USB lends its title
 			if (!strcmp(cv[i].serial, d->serial)) snprintf(d->title, sizeof(d->title), "%s", cv[i].title);
+		catalog_reader_end();
 		load_covers(d, &disc_cover_big, &disc_cover_small, &disc_cover_half); // by serial, if the USB has them
 		printf("disc: state %d, %s %s boot %s\n", st, d->serial, d->title, d->boot);
 		last = st;
 		disc_new = 1;
-		background_work_end(&disc_busy);
+		background_io_end(&disc_busy);
 	}
 }
 
@@ -2180,9 +2185,9 @@ static char upd_base[160];
 
 static void update_check(void) // loader thread; the network is up for the covers anyway
 {
-	if (!background_work_begin(&update_busy)) return;
+	if (!background_io_begin(&update_busy)) return;
 	if (strcasecmp(ini_get(&cfg, "actualizaciones", "buscar", "si"), "si") || net_busy || net_ready() < 0) {
-		background_work_end(&update_busy);
+		background_io_end(&update_busy);
 		return;
 	}
 	snprintf(upd_base, sizeof(upd_base), "%s", ini_get(&cfg, "actualizaciones", "url", UPD_URL)); // url: tests only
@@ -2201,7 +2206,7 @@ static void update_check(void) // loader thread; the network is up for the cover
 	if (lf) fprintf(lf, "TEa.G3 update: %s %d, sig %d %s, latest %s, this %s%s (%s)\n", upd_base, st, ss, sig ? "ok" : "BAD",
 	                sig ? upd.version : "?", TEAG3_VERSION, upd_avail ? ": NEWER" : "", net_why), fclose(lf);
 	free(t), free(g);
-	background_work_end(&update_busy);
+	background_io_end(&update_busy);
 }
 
 static u8 loader_stack[0x20000] __attribute__((aligned(16)));
