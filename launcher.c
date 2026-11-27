@@ -1754,13 +1754,13 @@ static int catalog_live_apply_frame(void)
 	}
 	if (status != CATALOG_STAGE_OK) {
 		if (catalog_live_retire_called) {
-			/* The new generation is active, but the old sidecars were not fully retired. */
+			/* The publisher rolled back the swap; discard borrowed candidate pointers
+			   without freeing resources still owned by the active generation. */
+			catalog_live_candidate_discard();
 			catalog_active_snapshot_ready = 1;
-			catalog_live_candidate_ready = 0;
-			catalog_live_apply_requested = 0;
 			catalog_live_faulted = 1;
-			printf("catalog live: old-generation retirement failed (%d); monitor stopped\n", status);
-			return 1;
+			printf("catalog live: retirement failed (%d); old generation restored, monitor stopped\n", status);
+			return 0;
 		}
 		printf("catalog live: apply rejected (%d); active generation kept\n", status);
 		catalog_live_candidate_discard();
