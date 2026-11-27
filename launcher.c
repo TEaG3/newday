@@ -717,28 +717,42 @@ static void background_work_end(volatile int *busy)
 /* Storage-only jobs keep launch/apply activity visible without pinning a catalog generation. */
 static int background_io_begin(volatile int *busy)
 {
-	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return 0;
-	int allowed = !ra_launching;
-	if (allowed) *busy = 1;
-	if (SignalSema(cover_lock) < 0) {
-		(void)catalog_activity_update(0);
-		return 0; // retain busy state and publish I/O activity on lock failure
+	for (;;) {
+		int allowed, updated;
+		if (cover_lock < 0 || WaitSema(cover_lock) < 0) return 0;
+		allowed = !ra_launching;
+		if (allowed) *busy = 1;
+		/* Publish busy while the worker-state lock is still held. Otherwise an
+		   apply could observe a stale idle guard between the flag and its update. */
+		updated = allowed ? catalog_activity_update(0) : 0;
+		if (SignalSema(cover_lock) < 0) {
+			if (allowed) (void)catalog_activity_update(0);
+			return 0; // retain busy state and fail closed
+		}
+		if (!allowed) return 0;
+		if (updated) return 1;
+		/* A cancelled scan/download must be allowed to drain without this lock. */
+		usleep(1000);
 	}
-	if (!allowed) return 0;
-	while (!catalog_activity_update(0)) usleep(1000);
-	return 1;
 }
 
 static void background_io_end(volatile int *busy)
 {
-	if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
-	*busy = 0;
-	if (SignalSema(cover_lock) < 0) {
-		*busy = 1;
-		(void)catalog_activity_update(ra_launching);
-		return;
+	for (;;) {
+		int updated;
+		if (cover_lock < 0 || WaitSema(cover_lock) < 0) return;
+		*busy = 0;
+		/* Keep worker-state changes serialized until the guard sees the idle state. */
+		updated = catalog_activity_update(ra_launching);
+		if (SignalSema(cover_lock) < 0) {
+			*busy = 1;
+			(void)catalog_activity_update(ra_launching);
+			return;
+		}
+		if (updated) return;
+		/* Let cancelled background work acquire cover_lock and finish its cleanup. */
+		usleep(1000);
 	}
-	while (!catalog_activity_update(ra_launching)) usleep(1000);
 }
 
 static void cover_thread(void *arg) // woken by draw_cover
