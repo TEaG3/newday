@@ -30,6 +30,7 @@ typedef struct {
     void *sidecars;
     size_t sidecars_capacity; /* entry slots available in sidecars */
     size_t count;
+    int selected_index; /* -1 when empty; otherwise an index in snapshot */
     catalog_stage_snapshot *snapshot;
 } catalog_stage_bundle;
 

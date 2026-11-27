@@ -27,7 +27,7 @@ catalog_guard is a portable state machine whose lock/unlock callbacks must be ba
 
 ## Bundle preparation
 
-The bundle publisher may run a caller-supplied prepare callback after the apply gate is acquired and all active readers have drained, but before any active/candidate pointer moves. The callback may populate only candidate-side state (for example, migrate per-game sidecars by stable key). If preparation fails, the active bundle remains untouched and the apply gate is released; the candidate may be discarded or rebuilt. The callback must not mutate or free active resources. Ownership retirement remains the caller's responsibility after a successful swap.
+The bundle publisher validates and rebases the selected index by stable key after the apply gate is acquired and all active readers have drained; if the selected game was removed, it chooses the first candidate entry or `-1` for an empty catalog. It may then run a caller-supplied prepare callback before any active/candidate pointer moves. The callback may populate only candidate-side state (for example, migrate per-game sidecars by stable key). If preparation fails, the active bundle remains untouched and the apply gate is released; the candidate may be discarded or rebuilt. The callback must not mutate or free active resources. Ownership retirement remains the caller's responsibility after a successful swap.
 
 ## Sidecar ownership
 
@@ -38,7 +38,7 @@ The typed sidecar set groups VMC directory/count/state, save-icon pointer/state,
 - Poll only sources whose mount state can be safely queried. Use a conservative 3–5 second interval after device-specific behavior is verified; do not assume a PS2SDK hotplug event API exists.
 - Scan only when the console is idle and the media-I/O gate is clear. Pause catalog scans, cover downloads, and nonessential network work while a game is launching or running.
 - Source disappearance or read errors do not mean that user data should be deleted. Preserve the last known-good snapshot and report the source as unavailable until a complete replacement scan succeeds.
-- Preserve per-game settings, cover cache, achievements, queued worker requests, and the selected item by stable identity. The sidecar migration primitive now rebases worker request indices and the launcher stores them in the generation sidecar; the render-thread selection still requires its own stable-key restoration when the apply path is wired. Never reset user state because an entry moved in sort order.
+- Preserve per-game settings, cover cache, achievements, queued worker requests, and the selected item by stable identity. The sidecar migration primitive rebases worker request indices; the bundle publisher rebases the selected index and the render loop saves/restores it between frames. The live apply path itself remains disabled until candidate scanning and end-to-end target tests are complete. Never reset user state because an entry moved in sort order.
 
 ## Activation gates
 
