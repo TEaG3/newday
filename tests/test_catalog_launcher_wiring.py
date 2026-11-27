@@ -555,6 +555,12 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (cover_busy || scan_failed || selected < 0)", cover)
         self.assertIn("Reacquire the current generation for each requested cover", cover)
 
+    def test_live_apply_discards_candidate_when_activity_blocks_apply(self):
+        apply = function_body(LAUNCHER, "static int catalog_live_apply_frame(void)", "static void catalog_live_monitor_thread")
+        self.assertGreaterEqual(apply.count("catalog_live_candidate_discard();"), 4)
+        self.assertIn("Activity began after the source scan; discard this possibly stale candidate.", apply)
+        self.assertIn("A launch or I/O activity cancelled the pending apply; rescan after it drains.", apply)
+
     def test_live_monitor_thread_is_not_started_unless_build_gate_is_enabled(self):
         self.assertIn("#define CATALOG_LIVE_MONITOR_ENABLED 0", LAUNCHER)
         loader = function_body(LAUNCHER, "static void loader(void *arg)", "static int vmc_net_ask")
