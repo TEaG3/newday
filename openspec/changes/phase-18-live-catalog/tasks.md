@@ -33,12 +33,12 @@
 - [x] Build and validate the initial stable-key snapshot from that candidate, copy the complete initial catalog to cv[], and publish ncv only after the copy; retain a boot-only low-memory fallback before the render stage.
 - [x] Put active launcher entries behind a swappable pointer with a fixed boot-buffer fallback; verify no `sizeof(cv)` assumptions remain before bundle integration.
 - [x] Bind active entries, typed sidecars, count, and stable snapshot through one `catalog_stage_bundle` descriptor while preserving the boot buffer and disabled live-refresh behavior.
-- [ ] Add cancellation checks and guaranteed handle closure to every source adapter, including bounded cancellation during remote HTTP connect/send, before enabling live scans.
+- [x] Add cancellation checks and guaranteed handle closure to every source adapter, including bounded cancellation during remote HTTP connect/send, before enabling live scans.
 - [x] Make remote app-catalogue response reads cancellation-aware; close the HTTP socket and discard the whole partial candidate when cancellation arrives.
 - [x] Add optional cancellation callbacks to the local ISO/ZSO, UL, HDD/APA, and APPS candidate scanners; check between file operations and close active image, catalogue, and directory handles before returning.
 - [x] Report candidate snapshot readiness/status through caller-owned outputs so a failed or cancelled candidate cannot invalidate the active boot snapshot.
 - [x] Keep remote UDPFS app-catalogue data isolated: cancellation closes its HTTP socket and invalidates the entire partial candidate.
-- [ ] Bound and target-test cancellation during network initialization, TCP connect and send before enabling live refresh.
+- [ ] Make network module initialization and link/DHCP waits cancellation-aware; target-test initialization, TCP connect and send on a real PS2 before enabling live refresh.
 - [x] Probe every configured local source root before and after candidate scanning; treat ENOENT for an optional DVD/CD/POPS folder as empty only when the root still opens. Keep HDL and remote UDPFS on their source-specific paths. Host-test missing, non-directory, and overlong roots; this is not source polling or media-identity detection.
 - [x] Add a host end-to-end candidate/apply regression: a cancelled scan leaves the active bundle untouched; a successful scan exercises stable-key diff, typed sidecar migration, guarded bundle swap, selection/worker-index rebasing, and old-generation resource retirement.
 - [ ] Wire the typed sidecar set and derived render-cache rebuild/reset into the live launcher candidate/apply path; keep live monitoring disabled until render-thread and target validation pass.
