@@ -7,7 +7,7 @@
 - [x] Add a sidecar migration primitive that preserves state only for unchanged stable keys and zeroes changed/new entries without touching output on validation errors.
 - [x] Add reader leases, scan cancellation, and a quiescent apply gate with caller-supplied locking.
 - [x] Add an apply-time bundle prepare hook so index-keyed sidecars can be migrated only after readers drain and before the active/candidate bundle swap; failed preparation releases the gate without publishing.
-- [x] Add typed per-game sidecar migration, candidate discard, and post-swap resource retirement with explicit pointer ownership tests; keep launcher wiring disabled until every reader and worker is integrated.
+- [x] Add typed per-game sidecar migration, candidate discard, and post-swap resource retirement with explicit pointer ownership tests; keep the periodic monitor default-off until target concurrency/hotplug tests pass.
 - [x] Move queued icon, VMC, achievements and achievements-list indices into the generation sidecar set; rebase only unchanged stable keys and clear removed/changed requests during migration.
 - [x] Store the render-thread selection in the active bundle; rebase it by stable key across reorder/content changes and fall back safely when the selected game is removed.
 - [x] Add host tests including a real concurrent reader held across an apply request.
@@ -18,7 +18,7 @@
 - [x] Gate the icon worker's memory-card installation, setup writes, local VMC reads, and save-icon I/O through the same semaphore; start it only after the gate exists.
 - [x] Gate disc detection, libcdvd reads, catalog title lookup, and disc-cover I/O; wait for it to finish before IOP hand-off.
 - [x] Wire render-frame and background-worker reader leases into the launcher; report worker I/O and IOP/game handoff through the guard activity state.
-- [x] Narrow long-running ART import and cover-download leases to one catalog entry at a time; re-read the current generation for each entry and keep the feature disabled until end-to-end apply tests pass.
+- [x] Narrow long-running ART import and cover-download leases to one catalog entry at a time; re-read the current generation for each entry and keep the periodic monitor default-off until target validation passes.
 - [x] Refresh the active stable snapshot when the render thread applies an optical-disc change; invalidate snapshot readiness on recapture failure and test that only changed disc sidecars are retired.
 - [x] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
 - [x] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
