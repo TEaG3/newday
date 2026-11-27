@@ -1343,6 +1343,177 @@ static void test_safe_bundle_publish(void)
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
+
+typedef struct {
+    catalog_guard *guard;
+    int calls;
+} typed_bundle_prepare_context;
+
+static int migrate_typed_bundle_sidecars(const catalog_stage_bundle *active,
+                                         catalog_stage_bundle *candidate,
+                                         void *opaque)
+{
+    typed_bundle_prepare_context *context = (typed_bundle_prepare_context *)opaque;
+    assert(context != NULL && context->guard != NULL);
+    assert(context->guard->applying);
+    assert(context->guard->readers == 0);
+    ++context->calls;
+    return catalog_stage_sidecar_set_migrate(
+        active->snapshot, candidate->snapshot,
+        (const catalog_stage_sidecar_set *)active->sidecars, active->sidecars_capacity,
+        (catalog_stage_sidecar_set *)candidate->sidecars, candidate->sidecars_capacity);
+}
+
+static void test_end_to_end_candidate_apply(void)
+{
+    mutex_context mutex;
+    catalog_guard guard;
+    catalog_stage_snapshot active_snapshot, candidate_snapshot;
+    catalog_stage_diff diff;
+    scan_fixture fixture;
+    int active_items[3] = {1, 2, 3};
+    int candidate_items[3] = {4, 5, 6};
+    catalog_stage_sidecar_set active_sidecars, candidate_sidecars;
+    catalog_stage_bundle active, candidate;
+    typed_bundle_prepare_context prepare = {&guard, 0};
+    sidecar_release_counts releases = {0, 0, 0};
+    void *alpha_vmc, *alpha_icon, *alpha_cover;
+    void *beta_vmc, *beta_icon, *beta_cover;
+    void *removed_vmc, *removed_icon, *removed_cover;
+
+    memset(&active_snapshot, 0, sizeof(active_snapshot));
+    memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
+    active_snapshot.count = 3;
+    set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Alpha.iso", 100, 11);
+    set_record(&active_snapshot.records[1], 1, 0, 1, "DVD/Beta.iso", 200, 22);
+    set_record(&active_snapshot.records[2], 1, 0, 1, "DVD/Removed.iso", 300, 33);
+
+    init_sidecar_set(&active_sidecars);
+    init_sidecar_set(&candidate_sidecars);
+    alpha_vmc = active_sidecars.vmc_dir[0] = test_resource();
+    alpha_icon = active_sidecars.gicon[0] = test_resource();
+    alpha_cover = active_sidecars.cover_big[0] = test_resource();
+    beta_vmc = active_sidecars.vmc_dir[1] = test_resource();
+    beta_icon = active_sidecars.gicon[1] = test_resource();
+    beta_cover = active_sidecars.cover_small[1] = test_resource();
+    removed_vmc = active_sidecars.vmc_dir[2] = test_resource();
+    removed_icon = active_sidecars.gicon[2] = test_resource();
+    removed_cover = active_sidecars.cover_half[2] = test_resource();
+    for (int i = 0; i < 3; ++i) {
+        active_sidecars.vmc_state[i] = 2;
+        active_sidecars.gicon_state[i] = 2;
+    }
+    active_sidecars.icon_want = 0;
+    active_sidecars.vmc_net_want = 1;
+    active_sidecars.ra_want = 2;
+    active_sidecars.ra_list_want = 0;
+    active_sidecars.ra_list_for = 0;
+    active_sidecars.cover_req[0] = 1;
+    active_sidecars.cover_done[0] = 4;
+    active_sidecars.cover_seen[0] = 5;
+
+    active.items = active_items;
+    active.items_capacity = 3;
+    active.sidecars = &active_sidecars;
+    active.sidecars_capacity = 3;
+    active.count = 3;
+    active.selected_index = 0; /* Alpha */
+    active.snapshot = &active_snapshot;
+
+    candidate.items = candidate_items;
+    candidate.items_capacity = 3;
+    candidate.sidecars = &candidate_sidecars;
+    candidate.sidecars_capacity = 3;
+    candidate.count = 0;
+    candidate.selected_index = -1;
+    candidate.snapshot = &candidate_snapshot;
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+
+    /* A cancelled scan leaves the published generation and its resources untouched. */
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = 1;
+    fixture.error_at = -1;
+    fixture.count = 3;
+    set_record(&fixture.records[0], 1, 0, 1, "DVD/Beta.iso", 200, 22);
+    set_record(&fixture.records[1], 1, 0, 1, "DVD/Alpha.iso", 100, 11);
+    set_record(&fixture.records[2], 1, 0, 1, "DVD/New.iso", 400, 44);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate_snapshot) ==
+           CATALOG_STAGE_SCAN_CANCELLED);
+    assert(candidate_snapshot.count == 0);
+    assert(!guard.scanning && !guard.apply_pending);
+    assert(active.items == active_items && active.sidecars == &active_sidecars);
+    assert(active.snapshot == &active_snapshot && active.count == 3);
+    assert(active_sidecars.vmc_dir[0] == alpha_vmc && active_sidecars.gicon[0] == alpha_icon);
+    assert(active_sidecars.vmc_dir[1] == beta_vmc && active_sidecars.gicon[1] == beta_icon);
+    assert(catalog_guard_set_activity(&guard, 0, 0));
+
+    /* Build a complete inactive snapshot, including a reorder, one removal and one addition. */
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.guard = &guard;
+    fixture.cancel_at = -1;
+    fixture.error_at = -1;
+    fixture.count = 3;
+    set_record(&fixture.records[0], 1, 0, 1, "DVD/Beta.iso", 200, 22);
+    set_record(&fixture.records[1], 1, 0, 1, "DVD/Alpha.iso", 100, 11);
+    set_record(&fixture.records[2], 1, 0, 1, "DVD/New.iso", 400, 44);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate_snapshot) ==
+           CATALOG_STAGE_SCAN_OK);
+    assert(candidate_snapshot.count == 3);
+    assert(catalog_stage_snapshot_diff(&active_snapshot, &candidate_snapshot, &diff) ==
+           CATALOG_STAGE_OK);
+    assert(diff.added_count == 1 && diff.removed_count == 1 && diff.changed_count == 0);
+    candidate.count = candidate_snapshot.count;
+
+    /* The real typed sidecar migration runs only after the reader gate reaches the safe point. */
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish_prepared(&guard, &active, &candidate,
+                                                  migrate_typed_bundle_sidecars, &prepare) ==
+           CATALOG_STAGE_OK);
+    assert(prepare.calls == 1);
+    assert(active.items == candidate_items && active.sidecars == &candidate_sidecars);
+    assert(active.snapshot == &candidate_snapshot && active.count == 3);
+    assert(active.selected_index == 1); /* Alpha follows its stable key after the reorder. */
+    assert(candidate.items == active_items && candidate.sidecars == &active_sidecars);
+    assert(candidate.snapshot == &active_snapshot && candidate.count == 3);
+    assert(candidate_sidecars.vmc_dir[1] == alpha_vmc && candidate_sidecars.gicon[1] == alpha_icon);
+    assert(candidate_sidecars.cover_big[1] == alpha_cover);
+    assert(candidate_sidecars.vmc_dir[0] == beta_vmc && candidate_sidecars.gicon[0] == beta_icon);
+    assert(candidate_sidecars.cover_small[0] == beta_cover);
+    assert(candidate_sidecars.vmc_dir[2] == NULL && candidate_sidecars.gicon[2] == NULL);
+    assert(candidate_sidecars.icon_want == 1 && candidate_sidecars.vmc_net_want == 0);
+    assert(candidate_sidecars.ra_want == -1);
+    assert(candidate_sidecars.ra_list_want == 1 && candidate_sidecars.ra_list_for == 1);
+    assert(candidate_sidecars.cover_req[1] == 0);
+    assert(candidate_sidecars.cover_done[1] == 4 && candidate_sidecars.cover_seen[1] == 5);
+    assert(!guard.apply_pending && !guard.applying);
+
+    /* Retire the old generation: only the removed game's resources are released. */
+    assert(catalog_stage_sidecar_set_retire(
+        candidate.snapshot, active.snapshot,
+        (catalog_stage_sidecar_set *)candidate.sidecars, candidate.sidecars_capacity,
+        (const catalog_stage_sidecar_set *)active.sidecars, active.sidecars_capacity,
+        release_vmc_resource, release_icon_resource, release_cover_resource, &releases) ==
+        CATALOG_STAGE_OK);
+    assert(releases.vmc_releases == 1 && releases.icon_releases == 1 && releases.cover_releases == 1);
+    assert(candidate_sidecars.vmc_dir[2] == NULL && candidate_sidecars.gicon[2] == NULL);
+    assert(removed_vmc != candidate_sidecars.vmc_dir[2]);
+    assert(removed_icon != candidate_sidecars.gicon[2]);
+    assert(removed_cover != candidate_sidecars.cover_half[2]);
+
+    free(alpha_vmc);
+    free(alpha_icon);
+    free(alpha_cover);
+    free(beta_vmc);
+    free(beta_icon);
+    free(beta_cover);
+    catalog_stage_sidecar_set_discard(&active_sidecars);
+    catalog_stage_sidecar_set_discard(&candidate_sidecars);
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
+}
+
 static void test_disc_slot_fingerprint_resets_only_disc_sidecars(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
@@ -1397,6 +1568,7 @@ int main(void)
     test_concurrent_scan_cancellation();
     test_safe_snapshot_publish();
     test_safe_bundle_publish();
+    test_end_to_end_candidate_apply();
     test_bundle_selection_rebase();
     test_path_and_validation();
     test_snapshot_append();
@@ -1410,6 +1582,6 @@ int main(void)
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
     test_download_gate();
-    puts("catalog stage: staged scan, append, map, sidecar and pending-index migration, bundle selection rebase, path, validation, diff, selection, safe snapshot publish, concurrent apply and download gates PASS");
+    puts("catalog stage: staged scan, end-to-end candidate/apply, typed sidecar retirement, append, map, bundle selection rebase, path, validation, diff, selection, safe snapshot publish, concurrent apply and download gates PASS");
     return 0;
 }
