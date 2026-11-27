@@ -134,6 +134,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("*busy = 1;", io_begin)
         self.assertIn("catalog_activity_update(0)", io_begin)
         self.assertIn("catalog_activity_update(ra_launching)", io_end)
+        self.assertIn("(void)catalog_activity_update(0);", io_begin)
+        self.assertIn("(void)catalog_activity_update(ra_launching);", io_end)
 
         icon = function_body(LAUNCHER, "static void icon_thread(void *arg)", "// ---- covers ----")
         begin_io = icon.index("background_io_begin(&icon_busy)")
