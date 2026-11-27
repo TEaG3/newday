@@ -189,6 +189,25 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertNotIn("background_work_end(&update_busy)", update)
 
 
+    def test_art_setup_and_download_summary_use_storage_io_gate(self):
+        art = function_body(LAUNCHER, "static void art_import(void)\\n{", "static void download_covers(void)")
+        art_begin = art.index("background_io_begin(&art_busy)")
+        art_mkdir = art.index("mkdir(path, 0777)")
+        art_end = art.index("background_io_end(&art_busy)")
+        art_items = art.index("background_work_begin(&art_busy)")
+        self.assertLess(art_begin, art_mkdir)
+        self.assertLess(art_mkdir, art_end)
+        self.assertLess(art_end, art_items)
+
+        download = function_body(LAUNCHER, "static void download_covers(void)\\n{", "// ---- achievements")
+        self.assertIn("download_cover_one(i, buf, max)", download)
+        summary_begin = download.rindex("background_io_begin(&dl_busy)")
+        summary_end = download.rindex("background_io_end(&dl_busy)")
+        self.assertLess(download.index("free(buf)"), summary_begin)
+        self.assertLess(summary_begin, summary_end)
+        self.assertIn("background_work_begin(&dl_busy)", download)
+
+
     def test_background_workers_hold_and_release_reader_leases(self):
         begin = function_body(
             LAUNCHER,
