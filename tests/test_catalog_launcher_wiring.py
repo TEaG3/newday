@@ -8,6 +8,7 @@ STAGE_HEADER = (ROOT / "catalog_stage.h").read_text(encoding="utf-8")
 SOURCES = (ROOT / "sources.c").read_text(encoding="utf-8")
 SOURCES_HDL = (ROOT / "sources_hdl.c").read_text(encoding="utf-8")
 SOURCES_HEADER = (ROOT / "sources.h").read_text(encoding="utf-8")
+UL_SOURCE = (ROOT / "ul.c").read_text(encoding="utf-8")
 MAKEFILE = (ROOT / "Makefile").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github" / "workflows" / "build-ps2.yml").read_text(encoding="utf-8")
 
@@ -180,6 +181,16 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("snapshot->count = 0;", load)
         self.assertIn("CATALOG_STAGE_SCAN_ERR_SOURCE", load)
         self.assertIn("catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK", load)
+
+    def test_ul_scan_rejects_valid_records_that_exceed_candidate_capacity(self):
+        ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
+        self.assertIn("for (int r = 0; r < records; r++)", ul)
+        self.assertIn("ul_catalog_capacity_fits(1u, (unsigned)n, MAXC)", ul)
+        self.assertIn("failed = 1;", ul)
+        self.assertIn("return -1;", ul)
+        self.assertIn("incoming <= capacity - existing", UL_SOURCE)
+        self.assertIn("assert(!ul_catalog_capacity_fits(1u, 1024u, 1024u));", UL_SOURCE)
+        self.assertIn("assert(!ul_catalog_capacity_fits(0u, 1025u, 1024u));", UL_SOURCE)
 
     def test_safe_publish_primitive_is_host_tested_but_not_enabled_in_launcher(self):
         self.assertIn("catalog_stage_snapshot_publish", STAGE)
