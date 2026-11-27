@@ -208,6 +208,32 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("background_work_begin(&dl_busy)", download)
 
 
+    def test_cover_download_releases_catalog_reader_during_network_setup(self):
+        download = function_body(LAUNCHER, "static void download_covers(void)\n{", "// ---- achievements")
+        reader_begin = download.index("background_work_begin(&dl_busy)")
+        count = download.index("dl_total = dl_done = dl_got = 0")
+        count_loop = download.index("dl_total += wants_cover(i)")
+        empty_end = download.index("background_work_end(&dl_busy);", count_loop)
+        empty_return = download.index("return;", empty_end)
+        reader_end = download.index("background_work_end(&dl_busy);", empty_return)
+        io_begin = download.index("background_io_begin(&dl_busy)", reader_end)
+        state = download.index("dl_state = 1", io_begin)
+        network = download.index("int r = net_ready()", state)
+        mkdir = download.index("mkdir(dir, 0777)", network)
+        io_end = download.index("background_io_end(&dl_busy);", mkdir)
+        self.assertLess(reader_begin, count)
+        self.assertLess(count, count_loop)
+        self.assertLess(count_loop, empty_end)
+        self.assertLess(empty_end, empty_return)
+        self.assertLess(empty_return, reader_end)
+        self.assertLess(reader_end, io_begin)
+        self.assertLess(io_begin, state)
+        self.assertLess(state, network)
+        self.assertLess(network, mkdir)
+        self.assertLess(mkdir, io_end)
+        self.assertNotIn("background_work_begin(&dl_busy)", download[reader_end:io_end])
+        self.assertIn("if (ra_launching) dl_state = 3;", download)
+
     def test_background_workers_hold_and_release_reader_leases(self):
         begin = function_body(
             LAUNCHER,
