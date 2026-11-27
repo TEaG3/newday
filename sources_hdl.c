@@ -36,7 +36,15 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
     if (fd < 0) return SRC_HDL_SCAN_ERR_OPEN;
     while ((read_result = fileXioDread(fd, &de)) > 0) {
         if (de.stat.mode != 0x1337 || (de.stat.attr & APA_FLAG_SUB)) continue;
-        if (de.stat.private_5 > 0xffffffffu - 2064u) continue;
+        if (de.stat.private_5 > 0xffffffffu - 2064u) {
+            status = SRC_HDL_SCAN_ERR_METADATA;
+            break;
+        }
+        u64 base_size_kb = de.stat.size / 2u;
+        if (base_size_kb > 0xffffffffu) {
+            status = SRC_HDL_SCAN_ERR_METADATA;
+            break;
+        }
         hddAtaTransfer_t a = {de.stat.private_5 + 2064u, 2};
         if (fileXioDevctl("hdd0:", HDIOC_READSECTOR, &a, sizeof(a), h, 1024) != 0) {
             status = SRC_HDL_SCAN_ERR_READ;
@@ -56,7 +64,7 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
         g->start_sector = a.lba;
         g->disc_type = *(u32 *)(h + 236);
         g->is_cd = ((u8)g->disc_type == 0x12 || (u8)g->disc_type == 0x13); // SCECdPS2CD / SCECdPS2CDDA
-        g->total_size_kb = de.stat.size / 2u; // OPL: (APA sectors / 4) * 2
+        g->total_size_kb = (u32)base_size_kb; // OPL: (APA sectors / 4) * 2
         *tail = g;
         tail = &g->next;
     }
@@ -77,11 +85,12 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
         if (de.stat.mode != 0x1337 || !(de.stat.attr & APA_FLAG_SUB)) continue;
         for (g = head; g; g = g->next) {
             if (!strncmp(g->part, de.name, APA_IDMAX)) {
-                u32 add_kb = de.stat.size / 2u;
-                if (!g->total_size_kb || g->total_size_kb > 0xffffffffu - add_kb) {
+                u64 add_kb64 = de.stat.size / 2u;
+                if (add_kb64 > 0xffffffffu || !g->total_size_kb ||
+                    g->total_size_kb > 0xffffffffu - (u32)add_kb64) {
                     status = SRC_HDL_SCAN_ERR_METADATA;
                 } else {
-                    g->total_size_kb += add_kb;
+                    g->total_size_kb += (u32)add_kb64;
                 }
                 break;
             }
