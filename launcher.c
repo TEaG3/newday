@@ -1910,7 +1910,7 @@ static void download_covers(void)
 	int ms = (int)((clock() - c0) * 1000 / CLOCKS_PER_SEC);
 	printf("covers: %d of %d downloaded in %d ms, state %d\n", dl_got, dl_total, ms, dl_state);
 	/* The summary file is also storage I/O, so give it a short independent lease. */
-	if (background_work_begin(&dl_busy)) {
+	if (!dl_busy && background_work_begin(&dl_busy)) {
 		FILE *fp = fopen(LOG_TXT, "a");
 		if (fp) fprintf(fp, "TEa.G3 covers: %d of %d downloaded in %d ms (%d ms per pair), state %d %s (me %s)\n",
 		                dl_got, dl_total, ms, dl_got ? ms / dl_got : 0, dl_state, net_why, net_ip()), fclose(fp);
