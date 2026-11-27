@@ -249,7 +249,7 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
     sidecar_old.ra_gid[3] = 55;
 
     assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
-                                             &sidecar_old, 3, &sidecar_new, 3) == CATALOG_STAGE_OK);
+                                             &sidecar_old, 4, &sidecar_new, 4) == CATALOG_STAGE_OK);
     assert(sidecar_new.vmc_dir[1] == old_a_vmc && sidecar_new.gicon[1] == old_a_icon);
     assert(sidecar_new.vmc_n[1] == 8 && sidecar_new.vmc_state[1] == 2);
     assert(sidecar_new.gicon_state[1] == 2);
@@ -264,7 +264,7 @@ static void test_typed_sidecar_set_migration_and_retirement(void)
     assert(sidecar_new.vmc_n[3] == 0 && sidecar_new.ra_count[3] == 0 && sidecar_new.ra_gid[3] == 0);
 
     assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
-                                            &sidecar_old, 3, &sidecar_new, 3,
+                                            &sidecar_old, 4, &sidecar_new, 4,
                                             release_vmc_resource, release_icon_resource,
                                             &releases) == CATALOG_STAGE_OK);
     assert(releases.vmc_releases == 3 && releases.icon_releases == 3);
