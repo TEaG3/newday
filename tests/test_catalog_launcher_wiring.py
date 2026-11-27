@@ -126,7 +126,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         )
         io_end = function_body(
             LAUNCHER,
-            "static void background_io_end(volatile int *busy)\\n{",
+            "static void background_io_end(volatile int *busy)\n{",
             "static void cover_thread(void *arg)",
         )
         self.assertNotIn("catalog_reader_wait_begin()", io_begin)
