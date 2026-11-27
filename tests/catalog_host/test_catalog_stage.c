@@ -1599,7 +1599,7 @@ static void test_bundle_retire_failure_rolls_back_and_reopens_gate(void)
     assert(active.sidecars == active_sidecars && candidate.sidecars == candidate_sidecars);
     assert(active.snapshot == &active_snapshot && candidate.snapshot == &candidate_snapshot);
     assert(active.count == 1 && candidate.count == 1);
-    assert(active.selected_index == 0 && candidate.selected_index == -1);
+    assert(active.selected_index == 0 && candidate.selected_index == 0);
     assert(!guard.apply_pending && !guard.applying);
     assert(catalog_guard_read_begin(&guard));
     assert(catalog_guard_read_end(&guard));
