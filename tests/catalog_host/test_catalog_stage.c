@@ -1383,6 +1383,11 @@ static void test_disc_slot_fingerprint_resets_only_disc_sidecars(void)
                                              release_cover_resource, &releases) == CATALOG_STAGE_OK);
     assert(releases.cover_releases == 3 && releases.icon_releases == 1);
     assert(sidecar_old.cover_big[0] == NULL && sidecar_old.gicon[0] == NULL);
+    /* The unchanged game's resources now belong to the new generation. */
+    free(sidecar_new.cover_big[1]);
+    free(sidecar_new.gicon[1]);
+    sidecar_new.cover_big[1] = NULL;
+    sidecar_new.gicon[1] = NULL;
     catalog_stage_sidecar_set_discard(&sidecar_new);
 }
 
