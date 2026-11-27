@@ -166,7 +166,6 @@ int http_location(const char *buf, int body, char *out, int n) // a redirect's "
 
 #ifndef SELFTEST
 #include <stdarg.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -175,6 +174,7 @@ int http_location(const char *buf, int body, char *out, int n) // a redirect's "
 #include <loadfile.h>
 #include <netman.h>
 #include <ps2ip.h>
+#include <fcntl.h> // Include after ps2ip.h so PS2SDK's tcpip.h socket flags stay authoritative.
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <wolfssl/options.h>
