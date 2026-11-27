@@ -1498,10 +1498,12 @@ static void test_end_to_end_candidate_apply(void)
         release_vmc_resource, release_icon_resource, release_cover_resource, &releases) ==
         CATALOG_STAGE_OK);
     assert(releases.vmc_releases == 1 && releases.icon_releases == 1 && releases.cover_releases == 1);
+    assert(active_sidecars.vmc_dir[2] == NULL && active_sidecars.gicon[2] == NULL);
+    assert(active_sidecars.cover_half[2] == NULL);
     assert(candidate_sidecars.vmc_dir[2] == NULL && candidate_sidecars.gicon[2] == NULL);
-    assert(removed_vmc != candidate_sidecars.vmc_dir[2]);
-    assert(removed_icon != candidate_sidecars.gicon[2]);
-    assert(removed_cover != candidate_sidecars.cover_half[2]);
+    assert(removed_vmc != active_sidecars.vmc_dir[2]);
+    assert(removed_icon != active_sidecars.gicon[2]);
+    assert(removed_cover != active_sidecars.cover_half[2]);
 
     free(alpha_vmc);
     free(alpha_icon);
