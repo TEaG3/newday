@@ -30,7 +30,7 @@ class ReleaseWorkflowRegressionTests(unittest.TestCase):
         self.assertIn('ROOT / "README-EN.md"', packager)
         self.assertNotIn("README-AR.txt", packager)
         self.assertIn("OPL is the only PS2 game engine", english)
-        self.assertIn("does not prove", english)
+        self.assertIn("does **not** prove", english)
 
     def test_release_version_is_synchronised(self) -> None:
         launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
