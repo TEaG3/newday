@@ -167,6 +167,28 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(read_sidecar, end_catalog)
         self.assertIn("if (icon_busy) continue;", icon)
 
+    def test_disc_and_update_workers_do_not_pin_catalog_reader_for_storage_io(self):
+        disc = function_body(LAUNCHER, "static void disc_thread(void *arg)", "// ---- config")
+        self.assertIn("background_io_begin(&disc_busy)", disc)
+        self.assertIn("catalog_reader_wait_begin();", disc)
+        self.assertIn("catalog_reader_end();", disc)
+        self.assertIn("background_io_end(&disc_busy);", disc)
+        self.assertNotIn("background_work_begin(&disc_busy)", disc)
+        self.assertNotIn("background_work_end(&disc_busy)", disc)
+        self.assertLess(disc.index("background_io_begin(&disc_busy)"), disc.index("sceCdInit"))
+        self.assertLess(disc.index("sceCdGetDiskType"), disc.index("catalog_reader_wait_begin();"))
+        self.assertLess(disc.index("catalog_reader_wait_begin();"), disc.index("for (int i = 1; i < ncv"))
+        self.assertLess(disc.index("for (int i = 1; i < ncv"), disc.index("catalog_reader_end();"))
+        self.assertLess(disc.index("catalog_reader_end();"), disc.index("load_covers("))
+        self.assertLess(disc.index("load_covers("), disc.index("background_io_end(&disc_busy);"))
+
+        update = function_body(LAUNCHER, "static void update_check(void)", "static u8 loader_stack")
+        self.assertIn("background_io_begin(&update_busy)", update)
+        self.assertIn("background_io_end(&update_busy)", update)
+        self.assertNotIn("background_work_begin(&update_busy)", update)
+        self.assertNotIn("background_work_end(&update_busy)", update)
+
+
     def test_background_workers_hold_and_release_reader_leases(self):
         begin = function_body(
             LAUNCHER,
