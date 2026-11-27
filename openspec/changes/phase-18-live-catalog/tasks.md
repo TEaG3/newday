@@ -38,7 +38,8 @@
 - [x] Add optional cancellation callbacks to the local ISO/ZSO, UL, HDD/APA, and APPS candidate scanners; check between file operations and close active image, catalogue, and directory handles before returning.
 - [x] Report candidate snapshot readiness/status through caller-owned outputs so a failed or cancelled candidate cannot invalidate the active boot snapshot.
 - [x] Keep remote UDPFS app-catalogue data isolated: cancellation closes its HTTP socket and invalidates the entire partial candidate.
-- [ ] Make network module initialization and link/DHCP waits cancellation-aware; target-test initialization, TCP connect and send on a real PS2 before enabling live refresh.
+- [x] Add a cancellable network-init entry point; sample cancellation between non-preemptible PS2SDK module/stack calls, poll link/DHCP every 20ms with a 10s bound, and roll back initialized stack state on cancellation or timeout.
+- [ ] Target-test module initialization, TCP connect/send, and semaphore lifecycle on a real PS2 before enabling live refresh.
 - [x] Probe every configured local source root before and after candidate scanning; treat ENOENT for an optional DVD/CD/POPS folder as empty only when the root still opens. Keep HDL and remote UDPFS on their source-specific paths. Host-test missing, non-directory, and overlong roots; this is not source polling or media-identity detection.
 - [x] Add a host end-to-end candidate/apply regression: a cancelled scan leaves the active bundle untouched; a successful scan exercises stable-key diff, typed sidecar migration, guarded bundle swap, selection/worker-index rebasing, and old-generation resource retirement.
 - [ ] Wire the typed sidecar set and derived render-cache rebuild/reset into the live launcher candidate/apply path; keep live monitoring disabled until render-thread and target validation pass.
