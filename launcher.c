@@ -1723,8 +1723,8 @@ static int catalog_live_apply_frame(void)
 			catalog_live_faulted = catalog_live_guard_faulted = 1;
 			return -1;
 		}
-		catalog_live_apply_requested = 0;
-		catalog_live_apply_retry = 30;
+		/* Activity began after the source scan; discard this possibly stale candidate. */
+		catalog_live_candidate_discard();
 		return 0;
 	}
 	catalog_live_retire_called = 0;
@@ -1741,8 +1741,8 @@ static int catalog_live_apply_frame(void)
 				catalog_live_faulted = catalog_live_guard_faulted = 1;
 				return -1;
 			}
-			catalog_live_apply_requested = 0;
-			catalog_live_apply_retry = 30;
+			/* A launch or I/O activity cancelled the pending apply; rescan after it drains. */
+			catalog_live_candidate_discard();
 		}
 		return 0;
 	}
