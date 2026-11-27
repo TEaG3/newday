@@ -95,9 +95,9 @@ int catalog_stage_sidecar_migrate(const catalog_stage_snapshot *old_snapshot,
                                   void *new_state, size_t new_state_capacity,
                                   size_t state_size);
 
-/* Typed launcher sidecars: only unchanged stable keys are copied. cover_req is
-   deliberately reset because it is a transient worker queue. Candidate pointer
-   fields must be empty; old resources remain owned by old_state until retirement. */
+/* Typed launcher sidecars: only unchanged stable keys are copied. cover_req and
+   in-flight worker states are reset. Candidate pointer fields must be empty; old
+   resources remain owned by old_state until retirement. */
 int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot,
                                       const catalog_stage_snapshot *new_snapshot,
                                       const catalog_stage_sidecar_set *old_state,
