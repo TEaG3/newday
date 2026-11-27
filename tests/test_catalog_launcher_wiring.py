@@ -75,7 +75,7 @@ class CatalogLauncherWiringTests(unittest.TestCase):
     def test_worker_request_indices_are_owned_by_the_active_generation(self):
         for name in ("icon_want", "vmc_net_want", "ra_want", "ra_list_want", "ra_list_for"):
             with self.subTest(name=name):
-                self.assertRegex(LAUNCHER, rf"(?m)^#define {name}\\s+\\(catalog_sidecars->{name}\\)$")
+                self.assertRegex(LAUNCHER, rf"(?m)^#define {name}\s+\(catalog_sidecars->{name}\)$")
                 self.assertNotIn(f"static volatile int {name}", LAUNCHER)
         init = function_body(LAUNCHER, "static void catalog_bundle_init(void)", "static void scan_cards(void)")
         self.assertIn("catalog_stage_sidecar_set_discard(&catalog_sidecar_boot);", init)
