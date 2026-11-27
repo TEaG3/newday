@@ -899,7 +899,6 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
         return CATALOG_STAGE_ERR_BUSY;
     }
 
-    candidate->selected_index = next_selected;
     previous = *active;
     *active = *candidate;
     *candidate = previous;
@@ -990,6 +989,7 @@ int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
         }
     }
 
+    candidate->selected_index = next_selected;
     previous = *active;
     *active = *candidate;
     *candidate = previous;
