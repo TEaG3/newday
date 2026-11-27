@@ -22,64 +22,6 @@ static void set_record(catalog_stage_record *record, uint8_t source,
     snprintf(record->path, sizeof(record->path), "%s", path);
 }
 
-static void test_bundle_selection_rebase(void)
-{
-    catalog_guard guard;
-    mutex_context mutex;
-    catalog_stage_snapshot old_snapshot, reordered_snapshot;
-    int old_items[2] = {1, 2}, new_items[2] = {2, 1};
-    int old_sidecars[2] = {10, 20}, new_sidecars[2] = {20, 10};
-    catalog_stage_bundle active, candidate;
-
-    memset(&old_snapshot, 0, sizeof(old_snapshot));
-    memset(&reordered_snapshot, 0, sizeof(reordered_snapshot));
-    set_record(&old_snapshot.records[0], 1, 0, 1, "DVD/Alpha.iso", 100, 11);
-    set_record(&old_snapshot.records[1], 1, 0, 1, "DVD/Beta.iso", 200, 22);
-    old_snapshot.count = 2;
-    set_record(&reordered_snapshot.records[0], 1, 0, 1, "DVD/Beta.iso", 200, 22);
-    set_record(&reordered_snapshot.records[1], 1, 0, 1, "DVD/Alpha.iso", 150, 99); /* same key, changed content */
-    reordered_snapshot.count = 2;
-
-    active.items = old_items;
-    active.items_capacity = 2;
-    active.sidecars = old_sidecars;
-    active.sidecars_capacity = 2;
-    active.count = 2;
-    active.selected_index = 0;
-    active.snapshot = &old_snapshot;
-    candidate.items = new_items;
-    candidate.items_capacity = 2;
-    candidate.sidecars = new_sidecars;
-    candidate.sidecars_capacity = 2;
-    candidate.count = 2;
-    candidate.selected_index = -1;
-    candidate.snapshot = &reordered_snapshot;
-
-    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
-    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
-    assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
-    assert(active.selected_index == 1); /* stable key survives reorder and content change */
-
-    /* If the selected key disappears, publish a valid first-item fallback. */
-    set_record(&old_snapshot.records[0], 1, 0, 1, "DVD/Beta.iso", 200, 22);
-    old_snapshot.count = 1;
-    candidate.count = 1;
-    active.selected_index = 1; /* Alpha is selected in the active reordered snapshot. */
-    assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
-    assert(active.selected_index == 0);
-
-    /* An invalid active index is rejected before any pointer or count moves. */
-    active.selected_index = 4;
-    assert(catalog_guard_request_apply(&guard));
-    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_INDEX);
-    assert(active.items == old_items && active.sidecars == old_sidecars);
-    assert(active.selected_index == 4);
-    assert(!guard.apply_pending && !guard.applying);
-    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
-}
-
 static void test_path_and_validation(void)
 {
     catalog_stage_snapshot snapshot;
@@ -1169,6 +1111,64 @@ static int migrate_bundle_sidecars(const catalog_stage_bundle *active,
                                            sizeof(int));
     if (status != CATALOG_STAGE_OK) return status;
     return context->fail ? CATALOG_STAGE_ERR_ARGUMENT : CATALOG_STAGE_OK;
+}
+
+static void test_bundle_selection_rebase(void)
+{
+    catalog_guard guard;
+    mutex_context mutex;
+    catalog_stage_snapshot active_snapshot, candidate_snapshot;
+    int old_items[2] = {1, 2}, new_items[2] = {2, 1};
+    int old_sidecars[2] = {10, 20}, new_sidecars[2] = {20, 10};
+    catalog_stage_bundle active, candidate;
+
+    memset(&active_snapshot, 0, sizeof(active_snapshot));
+    memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
+    set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Alpha.iso", 100, 11);
+    set_record(&active_snapshot.records[1], 1, 0, 1, "DVD/Beta.iso", 200, 22);
+    active_snapshot.count = 2;
+    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/Beta.iso", 200, 22);
+    set_record(&candidate_snapshot.records[1], 1, 0, 1, "DVD/Alpha.iso", 150, 99); /* same key, changed content */
+    candidate_snapshot.count = 2;
+
+    active.items = old_items;
+    active.items_capacity = 2;
+    active.sidecars = old_sidecars;
+    active.sidecars_capacity = 2;
+    active.count = 2;
+    active.selected_index = 0;
+    active.snapshot = &active_snapshot;
+    candidate.items = new_items;
+    candidate.items_capacity = 2;
+    candidate.sidecars = new_sidecars;
+    candidate.sidecars_capacity = 2;
+    candidate.count = 2;
+    candidate.selected_index = -1;
+    candidate.snapshot = &candidate_snapshot;
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(active.selected_index == 1); /* stable key survives reorder and content change */
+
+    /* If the selected key disappears, publish a valid first-item fallback. */
+    set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Beta.iso", 200, 22);
+    active_snapshot.count = 1;
+    candidate.count = 1;
+    active.selected_index = 1; /* Alpha is selected in the active reordered snapshot. */
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(active.selected_index == 0);
+
+    /* An invalid active index is rejected before any pointer or count moves. */
+    active.selected_index = 4;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_INDEX);
+    assert(active.items == old_items && active.sidecars == old_sidecars);
+    assert(active.selected_index == 4);
+    assert(!guard.apply_pending && !guard.applying);
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
 static void test_safe_bundle_publish(void)
