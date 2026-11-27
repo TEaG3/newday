@@ -1661,7 +1661,7 @@ int main(void)
     test_safe_snapshot_publish();
     test_safe_bundle_publish();
     test_end_to_end_candidate_apply();
-    test_bundle_retire_failure_reopens_gate();
+    test_bundle_retire_failure_rolls_back_and_reopens_gate();
     test_bundle_selection_rebase();
     test_path_and_validation();
     test_snapshot_append();
