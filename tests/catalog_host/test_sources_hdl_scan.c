@@ -171,6 +171,32 @@ static void test_close_error_publishes_nothing(void)
     assert(open_count == 1 && close_count == 1);
 }
 
+static void test_second_open_failure_publishes_nothing(void)
+{
+    reset_fixture();
+    set_base_partition(&entries[0][0], 2000);
+    entry_count[0] = 1;
+    open_error_fd = 2;
+    scan_result result = {0};
+    assert(src_hdl_scan(collect_game, &result) == SRC_HDL_SCAN_ERR_OPEN);
+    assert(result.calls == 0);
+    assert(open_count == 2 && close_count == 1);
+}
+
+static void test_second_close_error_publishes_nothing(void)
+{
+    reset_fixture();
+    set_base_partition(&entries[0][0], 2000);
+    entry_count[0] = 1;
+    set_sub_partition(&entries[1][0], 500);
+    entry_count[1] = 1;
+    close_error_fd = 2;
+    scan_result result = {0};
+    assert(src_hdl_scan(collect_game, &result) == SRC_HDL_SCAN_ERR_CLOSE);
+    assert(result.calls == 0);
+    assert(open_count == 2 && close_count == 2);
+}
+
 static void test_sector_read_error_publishes_nothing(void)
 {
     reset_fixture();
@@ -202,6 +228,8 @@ int main(void)
     test_first_directory_read_error_publishes_nothing();
     test_second_directory_read_error_publishes_nothing();
     test_close_error_publishes_nothing();
+    test_second_open_failure_publishes_nothing();
+    test_second_close_error_publishes_nothing();
     test_sector_read_error_publishes_nothing();
     test_subpartition_size_overflow_publishes_nothing();
     puts("HDL host scanner: PASS (APA aggregation, read/sector/close errors, overflow, no partial callbacks)");
