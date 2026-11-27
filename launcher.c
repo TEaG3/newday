@@ -1965,12 +1965,19 @@ static void download_covers(void)
 		background_work_end(&dl_busy);
 		return;
 	}
+	/* The count above reads the current catalog; network setup and mkdir do not. */
+	background_work_end(&dl_busy);
+	if (dl_busy) return;
+	if (!background_io_begin(&dl_busy)) {
+		if (ra_launching) dl_state = 3;
+		return;
+	}
 	dl_state = 1;
 	int r = net_ready();
 	char dir[24];
 	snprintf(dir, sizeof(dir), "%s/covers", homedev);
 	if (r >= 0 && !ra_launching) mkdir(dir, 0777);
-	background_work_end(&dl_busy);
+	background_io_end(&dl_busy);
 	if (dl_busy) return;
 	if (ra_launching) { dl_state = 3; return; }
 	if (r < 0) { dl_state = r; return; }
