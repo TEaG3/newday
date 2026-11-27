@@ -26,7 +26,8 @@ int iso_find(iso_read_fn read_at, void *f, const char *path, unsigned *lba_out, 
     if (!read_at(f, 16, buf, SECTOR) || buf[0] != 1 ||
         memcmp(buf + 1, "CD001", 5) || buf[6] != 1) return 0;
     /* Primary volume descriptor's root record must fit and describe a directory. */
-    if (buf[156] < 34 || buf[156] > SECTOR - 156 ||
+    /* The root-record length is one byte (max 255), below the 1892 bytes left in this sector. */
+    if (buf[156] < 34 ||
         buf[156 + 32] != 1 || buf[156 + 33] != 0 ||
         !(buf[156 + 25] & 0x02)) return 0;
     lba = le32(buf + 156 + 2), size = le32(buf + 156 + 10);
