@@ -41,6 +41,9 @@ typedef struct {
     volatile char vmc_state[CATALOG_STAGE_MAX_ITEMS];
     void *gicon[CATALOG_STAGE_MAX_ITEMS];
     volatile char gicon_state[CATALOG_STAGE_MAX_ITEMS];
+    void *cover_big[CATALOG_STAGE_MAX_ITEMS];
+    void *cover_small[CATALOG_STAGE_MAX_ITEMS];
+    void *cover_half[CATALOG_STAGE_MAX_ITEMS];
     volatile char cover_req[CATALOG_STAGE_MAX_ITEMS];
     volatile char cover_done[CATALOG_STAGE_MAX_ITEMS];
     int cover_seen[CATALOG_STAGE_MAX_ITEMS];
@@ -114,6 +117,7 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
                                      size_t new_state_capacity,
                                      catalog_stage_sidecar_release_fn release_vmc_dir,
                                      catalog_stage_sidecar_release_fn release_gicon,
+                                     catalog_stage_sidecar_release_fn release_cover,
                                      void *release_context);
 /* Discard an unpublished candidate whose pointer fields may alias active resources.
    This clears borrowed pointers without freeing anything. */
