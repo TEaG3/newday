@@ -37,7 +37,7 @@ int src_hdl_scan_cancelable(void (*cb)(void *ctx, const char *part, const char *
     static u8 h[1024] __attribute__((aligned(64)));
     iox_dirent_t de;
     hdl_scan_record *head = NULL, **tail = &head, *g;
-    int fd, n = 0, status = 0, read_result;
+    int fd, n = 0, status = 0, read_result = 0;
 
     if (hdl_scan_cancelled(cancelled, cancel_context))
         return SRC_HDL_SCAN_ERR_CANCELLED;
