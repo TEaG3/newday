@@ -23,7 +23,7 @@
 - [x] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
 - [x] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
 - [x] Add a five-second source poller with cancellation and pre/post mount-root checks; do not assume hotplug notifications.
-- [x] Wire typed sidecar migration/retirement and reset derived render caches after a successful generation swap.
+- [x] Wire typed sidecar migration and retire the old generation inside the apply gate before readers/workers resume; reset derived render caches after a successful generation swap.
 - [x] Keep the monitor behind CATALOG_LIVE_MONITOR_ENABLED=0 by default; the candidate/apply path is compiled but not activated.
 - [ ] Add target concurrency, USB removal/reinsert, HDD/APA, SMB and MMCE tests before enabling the monitor.
 - [ ] Keep the feature disabled until all target and hardware gates pass.
