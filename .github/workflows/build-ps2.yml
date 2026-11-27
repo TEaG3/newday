@@ -52,6 +52,10 @@ jobs:
           /tmp/catalog_guard_ps2_test
           cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST engine.c -o /tmp/engine_selftest
           /tmp/engine_selftest
+          cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST iso.c -o /tmp/iso_selftest
+          /tmp/iso_selftest
+          cc -std=gnu99 -Wall -Wextra -Werror -DSELFTEST ul.c -o /tmp/ul_selftest
+          /tmp/ul_selftest
           node tests/site-opl-demo.test.cjs
 
   launcher:
