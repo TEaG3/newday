@@ -120,6 +120,36 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertLess(pad, flip)
         self.assertLess(flip, release)
 
+    def test_live_candidate_scan_is_isolated_and_default_off(self):
+        self.assertIn("#define CATALOG_LIVE_MONITOR_ENABLED 0", LAUNCHER)
+        self.assertIn("catalog_candidate_bundle.items = catalog_candidate_items;", LAUNCHER)
+        self.assertIn("catalog_candidate_bundle.snapshot = &catalog_candidate_snapshot;", LAUNCHER)
+        scan = function_body(LAUNCHER, "static int catalog_live_scan_once(void)", "static int catalog_live_bundle_prepare")
+        self.assertIn("catalog_guard_scan_begin(&catalog_live_guard)", scan)
+        self.assertIn("load_games_into((entry *)catalog_candidate_bundle.items", scan)
+        self.assertIn("catalog_guard_ps2_scan_cancelled, &catalog_live_guard", scan)
+        self.assertIn("catalog_guard_scan_end(&catalog_live_guard)", scan)
+        self.assertNotIn("load_games_into(cv", scan)
+        self.assertIn("sleep(CATALOG_LIVE_MONITOR_INTERVAL_SEC)", LAUNCHER)
+
+    def test_live_candidate_apply_rebases_disc_and_retires_old_sidecars(self):
+        prepare = function_body(LAUNCHER, "static int catalog_live_bundle_prepare", "static void catalog_live_release_resource")
+        apply = function_body(LAUNCHER, "static int catalog_live_apply_frame(void)", "static void catalog_live_monitor_thread")
+        self.assertIn("catalog_stage_sidecar_set_migrate", prepare)
+        self.assertIn("((entry *)catalog_candidate_bundle.items)[0] = cv[0];", apply)
+        self.assertIn("catalog_snapshot_capture", apply)
+        self.assertIn("catalog_stage_snapshot_diff", apply)
+        self.assertIn("catalog_stage_bundle_publish_prepared_retire", apply)
+        self.assertIn("catalog_live_bundle_retire", apply)
+        self.assertIn("catalog_stage_sidecar_set_retire", LAUNCHER)
+        self.assertIn("catalog_live_release_resource", LAUNCHER)
+        self.assertIn("if (catalog_live_guard_faulted) return -1;", apply)
+        main = LAUNCHER[LAUNCHER.index("int main(int argc, char *argv[])"):]
+        self.assertLess(main.index("catalog_live_apply_frame()"), main.index("catalog_reader_try_begin()"))
+        self.assertIn("if (live_apply_status < 0)", main)
+        self.assertIn("do not inspect either bundle", main)
+        self.assertIn("booted = 0;", main)
+
     def test_icon_worker_keeps_storage_only_io_outside_catalog_reader_lease(self):
         io_begin = function_body(
             LAUNCHER,
@@ -525,9 +555,19 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (cover_busy || scan_failed || selected < 0)", cover)
         self.assertIn("Reacquire the current generation for each requested cover", cover)
 
-    def test_live_scan_and_apply_are_still_disabled(self):
-        self.assertNotIn("catalog_guard_scan_begin(", LAUNCHER)
-        self.assertNotIn("catalog_guard_request_apply(", LAUNCHER)
+    def test_live_apply_discards_candidate_when_activity_blocks_apply(self):
+        apply = function_body(LAUNCHER, "static int catalog_live_apply_frame(void)", "static void catalog_live_monitor_thread")
+        self.assertGreaterEqual(apply.count("catalog_live_candidate_discard();"), 4)
+        self.assertIn("Activity began after the source scan; discard this possibly stale candidate.", apply)
+        self.assertIn("A launch or I/O activity cancelled the pending apply; rescan after it drains.", apply)
+
+    def test_live_monitor_thread_is_not_started_unless_build_gate_is_enabled(self):
+        self.assertIn("#define CATALOG_LIVE_MONITOR_ENABLED 0", LAUNCHER)
+        loader = function_body(LAUNCHER, "static void loader(void *arg)", "static int vmc_net_ask")
+        self.assertIn("if (CATALOG_LIVE_MONITOR_ENABLED &&", loader)
+        self.assertIn("catalog_live_monitor_thread", loader)
+        self.assertIn("catalog_guard_scan_begin(", LAUNCHER)
+        self.assertIn("catalog_guard_request_apply(", LAUNCHER)
 
 
     def test_boot_only_fallback_log_uses_a_real_newline(self):

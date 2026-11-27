@@ -7,7 +7,7 @@
 - [x] Add a sidecar migration primitive that preserves state only for unchanged stable keys and zeroes changed/new entries without touching output on validation errors.
 - [x] Add reader leases, scan cancellation, and a quiescent apply gate with caller-supplied locking.
 - [x] Add an apply-time bundle prepare hook so index-keyed sidecars can be migrated only after readers drain and before the active/candidate bundle swap; failed preparation releases the gate without publishing.
-- [x] Add typed per-game sidecar migration, candidate discard, and post-swap resource retirement with explicit pointer ownership tests; keep launcher wiring disabled until every reader and worker is integrated.
+- [x] Add typed per-game sidecar migration, candidate discard, and post-swap resource retirement with explicit pointer ownership tests; keep the periodic monitor default-off until target concurrency/hotplug tests pass.
 - [x] Move queued icon, VMC, achievements and achievements-list indices into the generation sidecar set; rebase only unchanged stable keys and clear removed/changed requests during migration.
 - [x] Store the render-thread selection in the active bundle; rebase it by stable key across reorder/content changes and fall back safely when the selected game is removed.
 - [x] Add host tests including a real concurrent reader held across an apply request.
@@ -18,11 +18,13 @@
 - [x] Gate the icon worker's memory-card installation, setup writes, local VMC reads, and save-icon I/O through the same semaphore; start it only after the gate exists.
 - [x] Gate disc detection, libcdvd reads, catalog title lookup, and disc-cover I/O; wait for it to finish before IOP hand-off.
 - [x] Wire render-frame and background-worker reader leases into the launcher; report worker I/O and IOP/game handoff through the guard activity state.
-- [x] Narrow long-running ART import and cover-download leases to one catalog entry at a time; re-read the current generation for each entry and keep the feature disabled until end-to-end apply tests pass.
+- [x] Narrow long-running ART import and cover-download leases to one catalog entry at a time; re-read the current generation for each entry and keep the periodic monitor default-off until target validation passes.
 - [x] Refresh the active stable snapshot when the render thread applies an optical-disc change; invalidate snapshot readiness on recapture failure and test that only changed disc sidecars are retired.
-- [ ] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
-- [ ] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
-- [ ] Add source polling with cancellation and source-specific mount checks; never assume hotplug notifications.
+- [x] Build the inactive candidate catalog without touching cv[]; close handles and discard it on cancellation/error.
+- [x] Apply the pointer/count swap only on the render thread between frames; preserve selection and per-game state by stable key.
+- [x] Add a five-second source poller with cancellation and pre/post mount-root checks; do not assume hotplug notifications.
+- [x] Wire typed sidecar migration and retire the old generation inside the apply gate before readers/workers resume; reset derived render caches after a successful generation swap.
+- [x] Keep the monitor behind CATALOG_LIVE_MONITOR_ENABLED=0 by default; the candidate/apply path is compiled but not activated.
 - [ ] Add target concurrency, USB removal/reinsert, HDD/APA, SMB and MMCE tests before enabling the monitor.
 - [ ] Keep the feature disabled until all target and hardware gates pass.
 
@@ -42,6 +44,6 @@
 - [ ] Target-test module initialization, TCP connect/send, and semaphore lifecycle on a real PS2 before enabling live refresh.
 - [x] Probe every configured local source root before and after candidate scanning; treat ENOENT for an optional DVD/CD/POPS folder as empty only when the root still opens. Keep HDL and remote UDPFS on their source-specific paths. Host-test missing, non-directory, and overlong roots; this is not source polling or media-identity detection.
 - [x] Add a host end-to-end candidate/apply regression: a cancelled scan leaves the active bundle untouched; a successful scan exercises stable-key diff, typed sidecar migration, guarded bundle swap, selection/worker-index rebasing, and old-generation resource retirement.
-- [ ] Wire the typed sidecar set and derived render-cache rebuild/reset into the live launcher candidate/apply path; keep live monitoring disabled until render-thread and target validation pass.
+- [x] Wire the typed sidecar set and derived render-cache rebuild/reset into the live launcher candidate/apply path; keep live monitoring disabled until render-thread and target validation pass.
 
 - [x] Reject partial HD Loader/APA and USBExtreme UL source scans on directory read, sector read, malformed-length, and close failures; never mark the stable snapshot ready after an incomplete source scan.

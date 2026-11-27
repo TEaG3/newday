@@ -92,6 +92,10 @@ static int theme_of(const char *key)
 #define E ((LW - SW) / 2)      // extra room around the selected one
 #define CY 376                 // carousel centre line (design: Inicio board)
 #define MAXC 1024 // #3: 306 games on one HDD; covers stay COVER_CACHE at a time
+#ifndef CATALOG_LIVE_MONITOR_ENABLED
+#define CATALOG_LIVE_MONITOR_ENABLED 0 /* requires PS2 target concurrency and hotplug validation */
+#endif
+#define CATALOG_LIVE_MONITOR_INTERVAL_SEC 5
 #define WINDOW 600             // frames per measurement (10 s at 60 Hz)
 #define FRAME_US 16667
 #define HOLD 150               // splash: frames of black before the timeline (2.5 s)
@@ -124,9 +128,21 @@ static catalog_stage_bundle catalog_active_bundle;
 #define cv ((entry *)catalog_active_bundle.items)
 /* The bundle owns the authoritative count so it moves with items and sidecars. */
 #define ncv ((int)catalog_active_bundle.count)
-/* Stable-key baseline from the boot-time catalog; live rescans remain disabled. */
+/* Stable-key baseline for the active generation; the periodic monitor is default-off. */
 static catalog_stage_snapshot catalog_boot_snapshot;
-static int catalog_active_snapshot_ready;
+static volatile int catalog_active_snapshot_ready;
+/* The inactive generation is fully separate from cv[] and remains unpublished until a frame-safe apply. */
+static entry catalog_candidate_items[MAXC];
+static catalog_stage_snapshot catalog_candidate_snapshot;
+static catalog_stage_diff catalog_candidate_diff;
+static catalog_stage_bundle catalog_candidate_bundle;
+static catalog_stage_sidecar_set catalog_sidecar_candidate;
+static volatile int catalog_live_candidate_ready;
+static volatile int catalog_live_faulted;
+static volatile int catalog_live_guard_faulted; /* guard state unknown: render thread must not inspect either bundle */
+static int catalog_live_apply_requested;
+static int catalog_live_apply_retry;
+static int catalog_live_retire_called;
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
 static int is_ps1(int i) { return cv[i].kind == K_PS1 || (cv[i].kind == K_DISC && cv[i].disc == D_PS1); }
@@ -205,6 +221,7 @@ static catalog_stage_sidecar_set catalog_sidecar_boot;
 static void catalog_bundle_init(void)
 {
 	catalog_stage_sidecar_set_discard(&catalog_sidecar_boot);
+	catalog_stage_sidecar_set_discard(&catalog_sidecar_candidate);
 	catalog_active_bundle.items = catalog_boot_items;
 	catalog_active_bundle.items_capacity = MAXC;
 	catalog_active_bundle.sidecars = &catalog_sidecar_boot;
@@ -212,6 +229,14 @@ static void catalog_bundle_init(void)
 	catalog_active_bundle.count = 0;
 	catalog_active_bundle.selected_index = -1;
 	catalog_active_bundle.snapshot = &catalog_boot_snapshot;
+
+	catalog_candidate_bundle.items = catalog_candidate_items;
+	catalog_candidate_bundle.items_capacity = MAXC;
+	catalog_candidate_bundle.sidecars = &catalog_sidecar_candidate;
+	catalog_candidate_bundle.sidecars_capacity = CATALOG_STAGE_MAX_ITEMS;
+	catalog_candidate_bundle.count = 0;
+	catalog_candidate_bundle.selected_index = -1;
+	catalog_candidate_bundle.snapshot = &catalog_candidate_snapshot;
 }
 
 static void scan_cards(void)
@@ -486,6 +511,7 @@ static void wiz_job(void); // the setup wizard's memory card and config.ini work
 static int vmc_net_ask(int i);         // asks for it; 0 if there is no loader thread to ask
 
 static u8 icon_stack[0x10000] __attribute__((aligned(16)));
+static u8 catalog_monitor_stack[0x10000] __attribute__((aligned(16)));
 static volatile int ra_launching, cover_busy, icon_busy, disc_busy;
 static catalog_guard catalog_live_guard;
 static catalog_guard_ps2_context catalog_live_context;
@@ -1557,6 +1583,216 @@ static void load_games(void) // publish the initial scan only after a complete c
 	/* ncv reads the count from this active bundle; no parallel count can drift. */
 }
 
+
+/* Drop only the unpublished generation. After a successful swap this points at the retired
+   generation, whose resources must first pass catalog_stage_sidecar_set_retire(). */
+static void catalog_live_candidate_discard(void)
+{
+	if (catalog_candidate_bundle.sidecars)
+		catalog_stage_sidecar_set_discard((catalog_stage_sidecar_set *)catalog_candidate_bundle.sidecars);
+	if (catalog_candidate_bundle.snapshot)
+		catalog_candidate_bundle.snapshot->count = 0;
+	catalog_candidate_bundle.count = 0;
+	catalog_candidate_bundle.selected_index = -1;
+	catalog_live_candidate_ready = 0;
+	catalog_live_apply_requested = 0;
+	catalog_live_apply_retry = 0;
+}
+
+static int catalog_live_scan_once(void)
+{
+	int snapshot_ready = 0;
+	int scan_status = CATALOG_STAGE_SCAN_OK;
+	int count;
+	int scan_end;
+
+	if (!catalog_live_ready || !catalog_active_snapshot_ready || ra_launching ||
+	    catalog_live_candidate_ready || catalog_live_faulted)
+		return 0;
+	if (!catalog_guard_scan_begin(&catalog_live_guard)) {
+		if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0)
+			catalog_live_faulted = catalog_live_guard_faulted = 1;
+		return 0;
+	}
+
+	catalog_live_candidate_discard();
+	count = load_games_into((entry *)catalog_candidate_bundle.items,
+	                        catalog_candidate_bundle.snapshot,
+	                        &snapshot_ready, &scan_status,
+	                        catalog_guard_ps2_scan_cancelled, &catalog_live_guard);
+	scan_end = catalog_guard_scan_end(&catalog_live_guard);
+	if (scan_end < 0) {
+		catalog_live_faulted = catalog_live_guard_faulted = 1;
+		printf("catalog live: scan guard failed; monitor stopped\n");
+		catalog_live_candidate_discard();
+		return 0;
+	}
+	if (scan_end != 1 || scan_status != CATALOG_STAGE_SCAN_OK || !snapshot_ready ||
+	    count < 1 || count > MAXC || (size_t)count != catalog_candidate_bundle.snapshot->count) {
+		catalog_live_candidate_discard();
+		return 0;
+	}
+
+	catalog_candidate_bundle.count = (size_t)count;
+	catalog_candidate_bundle.selected_index = -1;
+	catalog_live_candidate_ready = 1;
+	printf("catalog live: isolated candidate ready (%u entries)\n", (unsigned)count);
+	return 1;
+}
+
+static int catalog_live_bundle_prepare(const catalog_stage_bundle *active,
+                                       catalog_stage_bundle *candidate,
+                                       void *context)
+{
+	(void)context;
+	return catalog_stage_sidecar_set_migrate(
+		active->snapshot, candidate->snapshot,
+		(const catalog_stage_sidecar_set *)active->sidecars, active->sidecars_capacity,
+		(catalog_stage_sidecar_set *)candidate->sidecars, candidate->sidecars_capacity);
+}
+
+static void catalog_live_release_resource(void *resource, void *context)
+{
+	(void)context;
+	free(resource); /* VMC directories, save icons and cover buffers all use malloc/memalign. */
+}
+
+/* Called by the publisher after the pointer swap but before the reader gate reopens. */
+static int catalog_live_bundle_retire(const catalog_stage_bundle *active,
+                                      catalog_stage_bundle *retired,
+                                      void *context)
+{
+	(void)context;
+	catalog_live_retire_called = 1;
+	return catalog_stage_sidecar_set_retire(
+		retired->snapshot, active->snapshot,
+		(catalog_stage_sidecar_set *)retired->sidecars, retired->sidecars_capacity,
+		(const catalog_stage_sidecar_set *)active->sidecars, active->sidecars_capacity,
+		catalog_live_release_resource, catalog_live_release_resource,
+		catalog_live_release_resource, NULL);
+}
+
+/* Render thread only: refresh the disc entry, diff stable keys, then swap between completed frames. */
+static int catalog_live_apply_frame(void)
+{
+	int status;
+
+	if (catalog_live_guard_faulted) return -1;
+	if (!catalog_live_ready || !catalog_live_candidate_ready || catalog_live_faulted)
+		return 0;
+	if (!catalog_live_apply_requested && catalog_live_apply_retry > 0) {
+		--catalog_live_apply_retry;
+		return 0;
+	}
+
+	if (!catalog_live_apply_requested) {
+		if (!catalog_reader_try_begin()) return 0;
+		if (catalog_candidate_bundle.count < 1 ||
+		    catalog_candidate_bundle.count > catalog_candidate_bundle.items_capacity) {
+			catalog_reader_end();
+			catalog_live_candidate_discard();
+			return 0;
+		}
+		/* load_games_into() starts with a placeholder disc; retain the current live disc. */
+		((entry *)catalog_candidate_bundle.items)[0] = cv[0];
+		status = catalog_snapshot_capture((const entry *)catalog_candidate_bundle.items,
+		                                  (int)catalog_candidate_bundle.count,
+		                                  catalog_candidate_bundle.snapshot);
+		if (status == CATALOG_STAGE_OK)
+			status = catalog_stage_snapshot_diff(catalog_active_bundle.snapshot,
+			                                     catalog_candidate_bundle.snapshot,
+			                                     &catalog_candidate_diff);
+		catalog_reader_end();
+		if (status != CATALOG_STAGE_OK) {
+			printf("catalog live: candidate validation/diff failed (%d); active generation kept\n", status);
+			catalog_live_candidate_discard();
+			return 0;
+		}
+		if (catalog_candidate_diff.added_count == 0 &&
+		    catalog_candidate_diff.removed_count == 0 &&
+		    catalog_candidate_diff.changed_count == 0) {
+			catalog_live_candidate_discard();
+			return 0;
+		}
+	}
+
+	/* A pending request is retried without taking a new reader lease. If gameplay or I/O
+	   cancelled it, request_apply() fails and the next attempt refreshes the disc and diff. */
+	if (!catalog_guard_request_apply(&catalog_live_guard)) {
+		if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0) {
+			catalog_live_faulted = catalog_live_guard_faulted = 1;
+			return -1;
+		}
+		/* Activity began after the source scan; discard this possibly stale candidate. */
+		catalog_live_candidate_discard();
+		return 0;
+	}
+	catalog_live_retire_called = 0;
+	catalog_live_apply_requested = 1;
+	status = catalog_stage_bundle_publish_prepared_retire(&catalog_live_guard,
+	                                                      &catalog_active_bundle,
+	                                                      &catalog_candidate_bundle,
+	                                                      catalog_live_bundle_prepare, NULL,
+	                                                      catalog_live_bundle_retire, NULL);
+	if (status == CATALOG_STAGE_ERR_BUSY) {
+		/* Keep the candidate while existing reader leases drain. */
+		if (!catalog_guard_request_apply(&catalog_live_guard)) {
+			if (catalog_guard_scan_cancelled(&catalog_live_guard) < 0) {
+				catalog_live_faulted = catalog_live_guard_faulted = 1;
+				return -1;
+			}
+			/* A launch or I/O activity cancelled the pending apply; rescan after it drains. */
+			catalog_live_candidate_discard();
+		}
+		return 0;
+	}
+	if (status == CATALOG_STAGE_ERR_GUARD) {
+		/* The publisher may have swapped before a semaphore-release fault; never inspect either bundle. */
+		catalog_live_faulted = catalog_live_guard_faulted = 1;
+		printf("catalog live: apply guard failed; render thread stopped fail-closed\n");
+		return -1;
+	}
+	if (status != CATALOG_STAGE_OK) {
+		if (catalog_live_retire_called) {
+			/* The new generation is active, but the old sidecars were not fully retired. */
+			catalog_active_snapshot_ready = 1;
+			catalog_live_candidate_ready = 0;
+			catalog_live_apply_requested = 0;
+			catalog_live_faulted = 1;
+			printf("catalog live: old-generation retirement failed (%d); monitor stopped\n", status);
+			return 1;
+		}
+		printf("catalog live: apply rejected (%d); active generation kept\n", status);
+		catalog_live_candidate_discard();
+		return 0;
+	}
+
+	catalog_active_snapshot_ready = 1;
+	catalog_live_candidate_discard(); /* old sidecars were retired under the gate; buffers are reusable */
+	printf("catalog live: published %u entries (added %u, removed %u, changed %u)\n",
+	       (unsigned)catalog_active_bundle.count,
+	       (unsigned)catalog_candidate_diff.added_count,
+	       (unsigned)catalog_candidate_diff.removed_count,
+	       (unsigned)catalog_candidate_diff.changed_count);
+	return 1;
+}
+
+static void catalog_live_monitor_thread(void *arg)
+{
+	(void)arg;
+	for (;;) {
+		if (catalog_live_guard_faulted || catalog_live_faulted) break;
+		sleep(CATALOG_LIVE_MONITOR_INTERVAL_SEC);
+		if (catalog_live_guard_faulted || catalog_live_faulted) break;
+		if (!catalog_live_ready || !catalog_active_snapshot_ready || ra_launching ||
+		    catalog_live_candidate_ready)
+			continue;
+		(void)catalog_live_scan_once();
+	}
+	ExitThread();
+}
+
+
 // ---- disc drive (phase 11): polled once a second off the render thread; a change is staged here and copied into
 // cv[0] by the render thread between frames, so cv[0] has one writer after boot ----
 static volatile int disc_new, disc_tid = -1;
@@ -2357,6 +2593,16 @@ static void loader(void *arg) // lower priority than the render thread: runs whi
 	if (usb) art_import(), download_covers(); // the home screen is already up: covers pop in as they arrive
 	int upd_left = usb; // the update check's HTTPS takes seconds: an achievements query waiting goes first
 	if (upd_left && ra_sema < 0) upd_left = 0, update_check();
+	if (CATALOG_LIVE_MONITOR_ENABLED && catalog_live_ready && catalog_active_snapshot_ready) {
+		ee_thread_t mt = { .func = catalog_live_monitor_thread, .stack = catalog_monitor_stack,
+		                   .stack_size = sizeof(catalog_monitor_stack), .gp_reg = &_gp,
+		                   .initial_priority = 0x50 };
+		int mtid = CreateThread(&mt);
+		if (mtid >= 0) StartThread(mtid, NULL);
+		else printf("catalog live: monitor thread could not start\n");
+	} else {
+		printf("catalog live: monitor disabled pending PS2 target validation\n");
+	}
 	if (ra_sema >= 0) ra_log("ra: worker up, covers state %d", dl_state);
 	while (ra_sema >= 0) { // achievements: woken by the render thread on a selection (phase 16)
 		if (!upd_left) WaitSema(ra_sema);
@@ -3495,6 +3741,16 @@ int main(int argc, char *argv[])
 	char text[1536];
 
 	for (int f = 0;; f++) {
+		/* The optional monitor can publish only here, after the previous frame released its reader lease. */
+		int live_apply_status = catalog_live_apply_frame();
+		if (live_apply_status < 0) { usleep(1000); continue; } /* fail-closed: do not inspect either bundle */
+		if (live_apply_status > 0) {
+			sel = catalog_active_bundle.selected_index >= 0 ? catalog_active_bundle.selected_index : 0;
+			s = 0;
+			gtop = ltop = 0;
+			switching = 0;
+			booted = 0; /* refilter() rebuilds pos/order; the first new frame rebuilds shown_box/wave. */
+		}
 		/* Apply only between frames; restore the generation's stable-key selection before reading it. */
 		if (catalog_active_bundle.selected_index >= 0 &&
 		    (size_t)catalog_active_bundle.selected_index < catalog_active_bundle.count)
