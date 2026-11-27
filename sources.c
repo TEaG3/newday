@@ -216,13 +216,14 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
         return status;
     }
 
-    for (g = head; g; ) {
-        hdl_scan_record *next = g->next;
+    for (g = head; g; g = g->next) {
         if (!g->total_size_kb) {
-            hdl_scan_free(next);
-            free(g);
+            hdl_scan_free(head);
             return SRC_HDL_SCAN_ERR_METADATA;
         }
+    }
+    for (g = head; g; ) {
+        hdl_scan_record *next = g->next;
         if (cb) cb(ctx, g->part, g->title, g->startup, g->start_sector,
                     g->total_size_kb, g->disc_type, g->is_cd);
         n++;
