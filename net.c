@@ -244,7 +244,7 @@ static int netman_module_loaded;
 static int smap_module_loaded;
 static int netman_initialized;
 static int ps2ip_initialized;
-static volatile int net_init_lock;
+static int net_init_sema = -1;
 
 int net_dev9(void)
 {
@@ -268,14 +268,23 @@ static void network_wait_poll(void *context, unsigned milliseconds)
 	usleep(milliseconds * 1000u);
 }
 
+int net_init_sync_init(void)
+{
+	ee_sema_t sema = { .init_count = 1, .max_count = 1 };
+	if (net_init_sema >= 0) return 1;
+	net_init_sema = CreateSema(&sema);
+	return net_init_sema >= 0;
+}
+
 static int net_init_lock_acquire(net_cancel_fn cancelled, void *cancel_context)
 {
-	while (__sync_lock_test_and_set(&net_init_lock, 1)) {
+	if (net_init_sema < 0) return -1;
+	while (PollSema(net_init_sema) < 0) {
 		if (cancelled && cancelled(cancel_context)) return 0;
 		usleep(20000);
 	}
 	if (cancelled && cancelled(cancel_context)) {
-		__sync_lock_release(&net_init_lock);
+		(void)SignalSema(net_init_sema);
 		return 0;
 	}
 	return 1;
@@ -405,10 +414,18 @@ static int net_up_locked(const char *ip, const char *mask, const char *gw, const
 int net_up_cancelable(const char *ip, const char *mask, const char *gw, const char *dns,
                       net_cancel_fn cancelled, void *cancel_context)
 {
-	int result;
-	if (!net_init_lock_acquire(cancelled, cancel_context)) return NET_ERR_CANCELLED;
+	int result, lock = net_init_lock_acquire(cancelled, cancel_context);
+	if (lock == 0) return NET_ERR_CANCELLED;
+	if (lock < 0) {
+		snprintf(net_why, sizeof(net_why), "network init semaphore unavailable");
+		return NET_ERR_MODULES;
+	}
 	result = net_up_locked(ip, mask, gw, dns, cancelled, cancel_context);
-	__sync_lock_release(&net_init_lock);
+	if (SignalSema(net_init_sema) < 0) {
+		net_abort_init();
+		snprintf(net_why, sizeof(net_why), "network init semaphore release failed");
+		return NET_ERR_MODULES;
+	}
 	return result;
 }
 
@@ -431,9 +448,9 @@ const char *net_ip(void) // the address the interface has now (fixed or the DHCP
 // on every boot) Black never started; deregistering the EE side stops the copies
 void net_down(void)
 {
-	while (__sync_lock_test_and_set(&net_init_lock, 1)) usleep(20000);
+	if (net_init_sema < 0 || WaitSema(net_init_sema) < 0) return;
 	if (net_on || ps2ip_initialized || netman_initialized) net_abort_init();
-	__sync_lock_release(&net_init_lock);
+	(void)SignalSema(net_init_sema);
 }
 
 static int tls_recv(WOLFSSL *ssl, char *b, int sz, void *ctx) // wolfSSL's reads: 8 s of silence and it gives up
