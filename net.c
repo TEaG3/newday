@@ -22,6 +22,46 @@ int http_parse(const char *buf, int n, int *status, int *body, int *clen)
 	return 1;
 }
 
+
+typedef int (*http_recv_fn)(void *context, int socket, void *buffer, int length, int flags);
+typedef void (*http_wait_fn)(void *context, unsigned milliseconds);
+
+static int http_read_cancelable(int socket, char *buffer, int capacity, int *received,
+                                net_cancel_fn cancelled, void *cancel_context,
+                                http_recv_fn recv_fn, http_wait_fn wait_fn, void *io_context,
+                                volatile int *progress)
+{
+    int used = 0, elapsed_ms = 0;
+    if (!buffer || capacity <= 0 || !received || !recv_fn || !wait_fn)
+        return NET_ERR_PROTO;
+    *received = 0;
+    if (progress) *progress = 0;
+    while (used < capacity && elapsed_ms < 5000) {
+        int r;
+        if (cancelled && cancelled(cancel_context)) {
+            *received = used;
+            return NET_ERR_CANCELLED;
+        }
+        r = recv_fn(io_context, socket, buffer + used, capacity - used, 0x08);
+        if (r == 0) break;
+        if (r > 0) {
+            if (r > capacity - used) {
+                *received = used;
+                return NET_ERR_PROTO;
+            }
+            used += r;
+            if (progress) *progress = used;
+            elapsed_ms = 0;
+        } else {
+            wait_fn(io_context, 20);
+            elapsed_ms += 20;
+        }
+    }
+    *received = used;
+    if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+    return 0;
+}
+
 // "https://host/path" or "http://host[:port]/path" (#15: update files) -> 1 https, 0 http, -1 not a URL
 int url_split(const char *url, char *host, int hn, int *port, char *path, int pn)
 {
@@ -247,35 +287,81 @@ int https_get(const char *host, const char *path, char *buf, int max, int *body,
 	return st;
 }
 
-// plain HTTP to a LAN host by IP (the achievements client's page, phase 16; the game catalog, phase 17): same
-// contract as https_get; method "GET" or "POST" (no body)
-int http_req(const char *method, const char *ip, int port, const char *path, char *buf, int max, int *body, int *len)
+// Plain HTTP to a LAN host. Cancellation is sampled before/after connect and send,
+// and between every nonblocking receive poll. A blocking connect/send can delay cancellation
+// until that syscall returns; live refresh remains disabled pending target validation.
+static int http_socket_recv(void *context, int socket, void *buffer, int length, int flags)
 {
-	struct sockaddr_in a = {0};
-	a.sin_family = AF_INET, a.sin_port = htons(port), a.sin_addr.s_addr = inet_addr(ip);
-	int s = socket(AF_INET, SOCK_STREAM, 0), r = s < 0 ? -1 : connect(s, (struct sockaddr *)&a, sizeof(a));
-	if (r < 0) { if (s >= 0) close(s); return NET_ERR_CONNECT; }
-	int st = NET_ERR_PROTO, n = snprintf(buf, max, "%s %s HTTP/1.0\r\nHost: %s\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-	                                     method, path, ip);
-	if (send(s, buf, n, 0) == n) {
-		// polled (lwIP's MSG_DONTWAIT is 0x08, and its sockets have no SO_RCVTIMEO): a silent server gives up after 5 s
-		// instead of holding the achievements worker, which a launch waits for
-		for (int ms = n = net_got = 0; n < max && ms < 5000;) {
-			r = recv(s, buf + n, max - n, 0x08);
-			if (r == 0) break; // closed: the whole answer is in
-			if (r > 0) net_got = n += r, ms = 0;
-			else usleep(20000), ms += 20;
-		}
-		int clen;
-		if (http_parse(buf, n, &st, body, &clen)) {
-			*len = n - *body;
-			if (st == 200 && clen >= 0 && clen != *len) st = NET_ERR_PROTO; // truncated, or bigger than buf
-		} else st = NET_ERR_PROTO;
-	}
-	close(s);
-	return st;
+    (void)context;
+    return (int)recv(socket, buffer, (size_t)length, flags);
 }
 
+static void http_socket_wait(void *context, unsigned milliseconds)
+{
+    (void)context;
+    usleep(milliseconds * 1000);
+}
+
+int http_req_cancelable(const char *method, const char *ip, int port, const char *path,
+                        char *buf, int max, int *body, int *len,
+                        net_cancel_fn cancelled, void *cancel_context)
+{
+    struct sockaddr_in a = {0};
+    int s, r, n, st = NET_ERR_PROTO;
+    if (!method || !ip || !path || !buf || max <= 0 || !body || !len)
+        return NET_ERR_PROTO;
+    *body = *len = 0;
+    if (cancelled && cancelled(cancel_context)) return NET_ERR_CANCELLED;
+    a.sin_family = AF_INET, a.sin_port = htons(port), a.sin_addr.s_addr = inet_addr(ip);
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) return NET_ERR_CONNECT;
+    r = connect(s, (struct sockaddr *)&a, sizeof(a));
+    if (r < 0) {
+        int result = cancelled && cancelled(cancel_context) ? NET_ERR_CANCELLED : NET_ERR_CONNECT;
+        close(s);
+        return result;
+    }
+    if (cancelled && cancelled(cancel_context)) {
+        close(s);
+        return NET_ERR_CANCELLED;
+    }
+    n = snprintf(buf, max, "%s %s HTTP/1.0\r\nHost: %s\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                 method, path, ip);
+    if (n < 0 || n >= max) {
+        close(s);
+        return NET_ERR_PROTO;
+    }
+    if (cancelled && cancelled(cancel_context)) {
+        close(s);
+        return NET_ERR_CANCELLED;
+    }
+    if (send(s, buf, (size_t)n, 0) != n) {
+        int result = cancelled && cancelled(cancel_context) ? NET_ERR_CANCELLED : NET_ERR_CONNECT;
+        close(s);
+        return result;
+    }
+    if (cancelled && cancelled(cancel_context)) {
+        close(s);
+        return NET_ERR_CANCELLED;
+    }
+    r = http_read_cancelable(s, buf, max, &n, cancelled, cancel_context,
+                             http_socket_recv, http_socket_wait, NULL, &net_got);
+    if (r != 0) {
+        close(s);
+        return r;
+    }
+    if (http_parse(buf, n, &st, body, &r)) {
+        *len = n - *body;
+        if (st == 200 && r >= 0 && r != *len) st = NET_ERR_PROTO;
+    } else st = NET_ERR_PROTO;
+    close(s);
+    return st;
+}
+
+int http_req(const char *method, const char *ip, int port, const char *path, char *buf, int max, int *body, int *len)
+{
+    return http_req_cancelable(method, ip, port, path, buf, max, body, len, NULL, NULL);
+}
 // a URL, following up to 4 redirects (GitHub's release downloads go to another host); same contract as https_get
 int net_fetch(const char *url, char *buf, int max, int *body, int *len)
 {
@@ -294,8 +380,52 @@ int net_fetch(const char *url, char *buf, int max, int *body, int *len)
 
 #else // host check: `make test`
 #include <assert.h>
+
+typedef struct { int cancelled, cancel_on_wait, calls, waits, mode; } http_fixture;
+static int fixture_cancel(void *context) { return ((http_fixture *)context)->cancelled; }
+static int fixture_recv(void *context, int socket, void *buffer, int length, int flags)
+{
+    http_fixture *f = (http_fixture *)context;
+    (void)socket; (void)flags; f->calls++;
+    if (f->mode == 1 && f->calls == 1) {
+        const char payload[] = "abc";
+        int count = length < 3 ? length : 3;
+        memcpy(buffer, payload, (size_t)count);
+        return count;
+    }
+    if (f->mode == 1) return 0;
+    return -1;
+}
+static void fixture_wait(void *context, unsigned milliseconds)
+{
+    http_fixture *f = (http_fixture *)context;
+    assert(milliseconds == 20);
+    f->waits++;
+    if (f->cancel_on_wait) f->cancelled = 1;
+}
+static void test_http_read_cancellation(void)
+{
+    char buffer[8] = {0};
+    int received = -1;
+    volatile int progress = -1;
+    http_fixture f = {0, 1, 0, 0, 0};
+    assert(http_read_cancelable(0, buffer, sizeof(buffer), &received,
+                                fixture_cancel, &f, fixture_recv, fixture_wait, &f, &progress) == NET_ERR_CANCELLED);
+    assert(received == 0 && f.calls == 1 && f.waits == 1);
+    f = (http_fixture){0, 0, 0, 0, 1};
+    received = -1; progress = -1;
+    assert(http_read_cancelable(0, buffer, sizeof(buffer), &received,
+                                fixture_cancel, &f, fixture_recv, fixture_wait, &f, &progress) == 0);
+    assert(received == 3 && progress == 3 && !memcmp(buffer, "abc", 3));
+    f.cancelled = 1; f.calls = 0;
+    assert(http_read_cancelable(0, buffer, sizeof(buffer), &received,
+                                fixture_cancel, &f, fixture_recv, fixture_wait, &f, &progress) == NET_ERR_CANCELLED);
+    assert(f.calls == 0);
+}
+
 int main(void)
 {
+	test_http_read_cancellation();
 	static const char ok[] = "HTTP/1.0 200 OK\r\nServer: x\r\ncontent-length: 5\r\n\r\nhello";
 	int st, body, clen;
 	assert(http_parse(ok, sizeof(ok) - 1, &st, &body, &clen) && st == 200 && clen == 5 && !memcmp(ok + body, "hello", 5));
