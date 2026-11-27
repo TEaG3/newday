@@ -1116,25 +1116,56 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 		}
 	}
 	if (src[0].type == SRC_USB) n = scan_dir(items, 0, 2, n, &incomplete); // PS1: POPStarter reads mass:
-	snprintf(path, sizeof(path), "%s/APPS", homedev);
-	DIR *d = opendir(path);
-	while (d && (e = readdir(d)) && n < MAXC) {
+	int apps_path_len = snprintf(path, sizeof(path), "%s/APPS", homedev);
+	DIR *d = NULL;
+	if (apps_path_len < 0 || apps_path_len >= (int)sizeof(path)) {
+		incomplete = 1;
+	} else {
+		errno = 0;
+		d = opendir(path);
+		if (!d && errno != ENOENT) incomplete = 1;
+	}
+	while (d) {
+		errno = 0;
+		e = readdir(d);
+		if (!e) {
+			if (errno != 0) incomplete = 1;
+			break;
+		}
 		if (e->d_name[0] == '.') continue;
+		if (n >= MAXC) {
+			printf("scan: catalogue capacity exceeded in APPS\\n");
+			incomplete = 1;
+			break;
+		}
 		memset(&items[n], 0, sizeof(items[n]));
 		done_n++;
 		if (has_ext(e->d_name, ".elf")) { // a loose ELF: titled by its name
-			snprintf(items[n].path, sizeof(items[n].path), "APPS/%s", e->d_name);
+			int app_len = snprintf(items[n].path, sizeof(items[n].path), "APPS/%s", e->d_name);
+			if (app_len < 0 || app_len >= (int)sizeof(items[n].path)) {
+				incomplete = 1;
+				continue;
+			}
 			iso_title(e->d_name, items[n].title, sizeof(items[n].title));
 		} else { // a folder with title.cfg
-			snprintf(path, sizeof(path), "%s/APPS/%s/title.cfg", homedev, e->d_name);
+			int cfg_len = snprintf(path, sizeof(path), "%s/APPS/%s/title.cfg", homedev, e->d_name);
+			if (cfg_len < 0 || cfg_len >= (int)sizeof(path)) {
+				incomplete = 1;
+				continue;
+			}
 			if (!ini_load(&cfg_app, path) || !*ini_get(&cfg_app, "", "boot", "")) continue;
-			snprintf(items[n].path, sizeof(items[n].path), "APPS/%s/%s", e->d_name, ini_get(&cfg_app, "", "boot", ""));
-			snprintf(items[n].title, sizeof(items[n].title), "%s", ini_get(&cfg_app, "", "title", e->d_name));
+			int app_len = snprintf(items[n].path, sizeof(items[n].path), "APPS/%s/%s", e->d_name, ini_get(&cfg_app, "", "boot", ""));
+			if (app_len < 0 || app_len >= (int)sizeof(items[n].path)) {
+				incomplete = 1;
+				continue;
+			}
+			if (snprintf(items[n].title, sizeof(items[n].title), "%s", ini_get(&cfg_app, "", "title", e->d_name)) >= (int)sizeof(items[n].title))
+				incomplete = 1;
 		}
 		items[n].kind = K_APP, items[n].src = 0;
 		n++;
 	}
-	if (d) closedir(d);
+	if (d && closedir(d) < 0) incomplete = 1;
 	qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
 	int snapshot_status;
 	if (incomplete) {
