@@ -1161,11 +1161,18 @@ static void test_bundle_selection_rebase(void)
     assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
     assert(active.selected_index == 0);
 
+    /* An empty candidate clears the selection rather than retaining an invalid index. */
+    candidate_snapshot.count = 0;
+    candidate.count = 0;
+    assert(catalog_guard_request_apply(&guard));
+    assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_OK);
+    assert(active.selected_index == -1);
+
     /* An invalid active index is rejected before any pointer or count moves. */
     active.selected_index = 4;
     assert(catalog_guard_request_apply(&guard));
     assert(catalog_stage_bundle_publish(&guard, &active, &candidate) == CATALOG_STAGE_ERR_INDEX);
-    assert(active.items == old_items && active.sidecars == old_sidecars);
+    assert(active.items == new_items && active.sidecars == new_sidecars);
     assert(active.selected_index == 4);
     assert(!guard.apply_pending && !guard.applying);
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
@@ -1237,6 +1244,7 @@ static void test_safe_bundle_publish(void)
                                                   migrate_bundle_sidecars, &prepare_context) == CATALOG_STAGE_ERR_ARGUMENT);
     assert(prepare_context.calls == 2);
     assert(active.items == candidate_items && active.sidecars == candidate_sidecars);
+    assert(active.selected_index == 0 && candidate.selected_index == 0);
     assert(!guard.apply_pending && !guard.applying);
     prepare_context.fail = 0;
 
