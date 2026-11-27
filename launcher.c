@@ -750,6 +750,7 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
     }
     int records = (int)(end / UL_CFG_RECORD_SIZE);
     int failed = 0;
+    int previous_done = done_n, previous_total = total_n;
     for (int r = 0; r < records && n < MAXC; r++) {
         unsigned char raw[UL_CFG_RECORD_SIZE];
         ul_game game;
@@ -775,7 +776,12 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
         n++, done_n++, total_n++;
     }
     if (fileXioClose(fd) < 0) failed = 1;
-    return failed ? -1 : n;
+    if (failed) {
+        done_n = previous_done;
+        total_n = previous_total;
+        return -1;
+    }
+    return n;
 }
 
 static int scan_dir(entry *items, int s, int k, int n) // ISOs (k 0 DVD, 1 CD) or VCDs (k 2 POPS, the USB only) of source s
@@ -1106,7 +1112,7 @@ static void load_games(void) // publish the initial scan only after a complete c
 
 	if (!candidate) {
 		/* Boot is still single-writer before stage 3; keep a safe low-memory fallback. */
-		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\n");
+		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\\n");
 		count = load_games_into(cv, &catalog_active_snapshot);
 	} else {
 		count = load_games_into(candidate, &catalog_active_snapshot);
