@@ -19,6 +19,7 @@ typedef gfx_vtx icon_vert; // x, y in pixels, z 0..1 (1 = nearest), u, v texels 
 int icon_sys_parse(const unsigned char *d, int n, icon *ic, char *list_name, int name_n); // lights + file name
 int icon_parse(const unsigned char *d, int n, icon *ic); // 1 if valid; nothing is read past d + n
 void icon_free(icon *ic);
+void icon_destroy(icon *ic); // destroy a heap-allocated icon and all of its members; accepts NULL
 // the icon at animation time t (frames) turned by angle (radians), fitted into a box x0, y0, size px; fills
 // 3 * (nv / 3) vertices in triangle order, back to front. Returns the vertex count.
 int icon_draw_list(const icon *ic, float t, float angle, float x0, float y0, float size, icon_vert *out);
