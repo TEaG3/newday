@@ -734,24 +734,30 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
     int path_len = snprintf(cfg_path, sizeof(cfg_path), "%s/ul.cfg", src[s].root);
     if (path_len < 0 || path_len >= (int)sizeof(cfg_path)) return n;
     int fd = fileXioOpen(cfg_path, FIO_O_RDONLY);
-    if (fd < 0) return n;
+    if (fd < 0) return n; /* no ul.cfg is a valid source with no UL games */
     s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
-    if (end <= 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
+    if (end < 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
         printf("UL: invalid ul.cfg size %lld\n", end);
-        fileXioClose(fd);
-        return n;
+        (void)fileXioClose(fd);
+        return -1;
+    }
+    if (end == 0) {
+        return fileXioClose(fd) < 0 ? -1 : n;
     }
     if (fileXioLseek64(fd, 0, FIO_SEEK_SET) < 0) {
-        fileXioClose(fd);
-        return n;
+        (void)fileXioClose(fd);
+        return -1;
     }
     int records = (int)(end / UL_CFG_RECORD_SIZE);
+    int failed = 0;
+    int previous_done = done_n, previous_total = total_n;
     for (int r = 0; r < records && n < MAXC; r++) {
         unsigned char raw[UL_CFG_RECORD_SIZE];
         ul_game game;
         int got = fileXioRead(fd, raw, sizeof(raw));
         if (got != (int)sizeof(raw)) {
             printf("UL: short read at record %d (%d/%u)\n", r, got, (unsigned)sizeof(raw));
+            failed = 1;
             break;
         }
         if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
@@ -769,7 +775,12 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
         e->parts = game.parts;
         n++, done_n++, total_n++;
     }
-    if (fileXioClose(fd) < 0) printf("UL: close failed for %s\n", cfg_path);
+    if (fileXioClose(fd) < 0) failed = 1;
+    if (failed) {
+        done_n = previous_done;
+        total_n = previous_total;
+        return -1;
+    }
     return n;
 }
 
@@ -1025,6 +1036,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 	struct dirent *e;
 	char path[300];
 	int n = 1; // items[0]: the disc drive, filled in by the disc thread
+	int incomplete = 0;
 	memset(&items[0], 0, sizeof(items[0]));
 	items[0].kind = K_DISC, items[0].disc = D_NONE;
 	snprintf(items[0].title, sizeof(items[0].title), L("No disc"));
@@ -1036,13 +1048,22 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 	for (int s = 0; s < nsrc; s++) {
 		if (src[s].type == SRC_HDL) {
 			hdl_ctx c = {s, n, items};
-			src_hdl_scan(hdl_add, &c);
-			n = c.n;
+			int hdl_status = src_hdl_scan(hdl_add, &c);
+			if (hdl_status < 0) {
+				printf("HDL: source scan incomplete (%d); stable snapshot disabled\n", hdl_status);
+				incomplete = 1;
+			} else n = c.n;
 		} else if (src[s].type == SRC_UDPFS && udpfs_cat)
 			n = catalog_load(items, s, n);
 		else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
 			n = scan_dir(items, s, 1, scan_dir(items, s, 0, n));
-			if (src[s].type == SRC_USB) n = scan_ul(items, s, n);
+			if (src[s].type == SRC_USB) {
+				int ul_count = scan_ul(items, s, n);
+				if (ul_count < 0) {
+					printf("UL: source scan incomplete; stable snapshot disabled\n");
+					incomplete = 1;
+				} else n = ul_count;
+			}
 		}
 	}
 	if (src[0].type == SRC_USB) n = scan_dir(items, 0, 2, n); // PS1: POPStarter reads mass:
@@ -1066,7 +1087,13 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 	}
 	if (d) closedir(d);
 	qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
-	int snapshot_status = catalog_snapshot_capture(items, n, snapshot);
+	int snapshot_status;
+	if (incomplete) {
+		snapshot->count = 0;
+		snapshot_status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+	} else {
+		snapshot_status = catalog_snapshot_capture(items, n, snapshot);
+	}
 	catalog_active_snapshot_ready = snapshot_status == CATALOG_STAGE_OK;
 	if (!catalog_active_snapshot_ready) {
 		snapshot->count = 0;
