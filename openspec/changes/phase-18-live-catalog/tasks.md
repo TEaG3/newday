@@ -29,6 +29,7 @@
 - [x] Refactor ISO/ZSO, UL, HDL, remote-app and local-app source adapters to populate a caller-owned candidate entry buffer instead of writing directly to the active cv[] array.
 - [x] Build and validate the initial stable-key snapshot from that candidate, copy the complete initial catalog to cv[], and publish ncv only after the copy; retain a boot-only low-memory fallback before the render stage.
 - [x] Put active launcher entries behind a swappable pointer with a fixed boot-buffer fallback; verify no `sizeof(cv)` assumptions remain before bundle integration.
+- [x] Bind active entries, typed sidecars, count, and stable snapshot through one `catalog_stage_bundle` descriptor while preserving the boot buffer and disabled live-refresh behavior.
 - [ ] Add cancellation checks and guaranteed handle closure to every source adapter, including cooperative cancellation for the remote HTTP app catalogue, before enabling live scans.
 - [x] Add optional cancellation callbacks to the local ISO/ZSO, UL, HDD/APA, and APPS candidate scanners; check between file operations and close active image, catalogue, and directory handles before returning.
 - [x] Report candidate snapshot readiness/status through caller-owned outputs so a failed or cancelled candidate cannot invalidate the active boot snapshot.
