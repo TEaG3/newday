@@ -28,3 +28,5 @@
 - [x] Build and validate the initial stable-key snapshot from that candidate, copy the complete initial catalog to cv[], and publish ncv only after the copy; retain a boot-only low-memory fallback before the render stage.
 - [ ] Add cancellation checks and guaranteed handle closure to each source adapter before reusing the candidate builder for live scans.
 - [ ] Migrate all index-keyed sidecars and add end-to-end candidate/apply tests before enabling live monitoring.
+
+- [x] Reject partial HD Loader/APA and USBExtreme UL source scans on directory read, sector read, malformed-length, and close failures; never mark the stable snapshot ready after an incomplete source scan.
