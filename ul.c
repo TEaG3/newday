@@ -38,6 +38,11 @@ unsigned int ul_name_crc32(const char *name)
     return crc;
 }
 
+int ul_catalog_capacity_fits(unsigned int incoming, unsigned int existing, unsigned int capacity)
+{
+    return existing <= capacity && incoming <= capacity - existing;
+}
+
 static int valid_startup(const unsigned char *p)
 {
     int i;
@@ -127,6 +132,12 @@ int main(void)
     fake_parts parts = {0};
     char title[33] = "Test Game";
     unsigned int crc;
+
+    assert(ul_catalog_capacity_fits(1u, 1023u, 1024u));
+    assert(!ul_catalog_capacity_fits(1u, 1024u, 1024u));
+    assert(ul_catalog_capacity_fits(0u, 1024u, 1024u));
+    assert(!ul_catalog_capacity_fits(0u, 1025u, 1024u));
+    assert(!ul_catalog_capacity_fits(0xffffffffu, 1u, 1024u));
 
     make_record(record, title, "SLUS_209.46", 0x14, 2);
     memset(&game, 0, sizeof(game));
