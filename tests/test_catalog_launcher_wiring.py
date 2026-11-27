@@ -120,6 +120,8 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("if (errno != 0) incomplete = 1;", apps)
         self.assertIn("if (d && closedir(d) < 0)", apps)
         self.assertIn("incomplete = 1;", apps)
+        builder = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
+        self.assertIn("if (n > MAXC) n = MAXC, incomplete = 1;", builder)
 
     def test_all_source_scanners_write_only_to_the_supplied_candidate_buffer(self):
         ul = function_body(LAUNCHER, "static int scan_ul(", "static int scan_dir(")
