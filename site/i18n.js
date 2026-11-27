@@ -141,7 +141,7 @@
   "The achievements and your progress, from the xeRAbora client at home.": "قائمة الإنجازات ومستوى تقدمك، التي يوفّرها عميل xeRAbora على جهازك المنزلي.",
   "Per-game options: video mode, compatibility and memory card.": "إعدادات اللعبة: نمط الفيديو والتوافق وبطاقة الذاكرة.",
   "The setup wizard writes config.ini and FreeMcBoot autoboot settings.": "ينشئ معالج الإعداد ملف config.ini ويضبط إعدادات التشغيل التلقائي عبر FreeMcBoot.",
-  "One zip for the USB drive. Coming from ORBIT or legacy NULD? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.": "ملف ZIP واحد لنسخه إلى وحدة USB. هل تنتقل من ORBIT أو NULD القديم؟ عند التشغيل الأول ينقل TEa.G3 إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
+  "One zip for the USB drive. Upgrading from an older launcher? The first boot moves your legacy settings from orbit/ or nuld/ into tea_g3/ and keeps everything working.": "ملف ZIP واحد لنسخه إلى وحدة USB. عند الترقية من إصدار سابق، ينقل TEa.G3 إعداداتك من orbit/ أو nuld/ إلى tea_g3/ مع الحفاظ عليها.",
   "TEa.G3 complete package": "حزمة TEa.G3 الشاملة",
   "TEa.G3.ELF, the single embedded OPL engine, Arabic and English guides, USB folders, licenses and quick start": "تتضمن الحزمة ملف TEa.G3.ELF ومحرك OPL الوحيد المضمّن، ودليلي العربية والإنجليزية، ومجلدات USB، والتراخيص ودليل البدء السريع.",
   "all releases": "جميع الإصدارات",
@@ -161,7 +161,7 @@
   "trailer": "المقطع التعريفي",
   "and the": "و",
   "setup guide on a real PS2": "دليل الإعداد على جهاز PS2 حقيقي",
-  ", both recorded when NULD was still ORBIT.": "، وقد سُجّل المقطعان عندما كان اسم المشروع ORBIT، قبل اعتماد اسم TEa.G3.",
+  ", both recorded before the current TEa.G3 name was adopted.": "، وقد سُجّل المقطعان قبل اعتماد اسم TEa.G3 الحالي.",
   "Ships a fork of": "يتضمن نسخة متفرعة من مشروع",
   "(GPL-3.0). Covers from": " (بترخيص GPL-3.0). أما أغلفة الألعاب فمن مشروع",
   "PlayStation is a trademark of Sony Interactive Entertainment. TEa.G3 is not affiliated with Sony.": "PlayStation علامة تجارية لشركة Sony Interactive Entertainment. مشروع TEa.G3 غير تابع لشركة Sony.",
@@ -676,7 +676,7 @@
   Object.assign(dict, {
   "TEa.G3 is free software under GPL-3.0 and includes OPL as its only PS2 game runtime. Called ORBIT until v1.1.": "TEa.G3 برنامج مجاني مرخّص بموجب GPL-3.0، ويضم OPL بوصفه محرك ألعاب PS2 الوحيد. كان اسم المشروع ORBIT حتى الإصدار v1.1.",
   "mass0:/tea_g3/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)": "mass0:/tea_g3/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
-  "nombre = Ocaso ; the name in the setup panel base = nuld ; legacy key, displayed as Classic [colores] ; RRGGBB; what you leave out keeps the base's fondo = 0E0714 panel = 1A0F22 fila = 3A2140 borde = 6A4A66 tenue = 5A4458 texto = FFF4E8 texto2 = E8D2C4 etiqueta = C9A9A0 acento = FF8A3C acero = 2A1830 inverso = 0E0714": "nombre = Ocaso       ; اسم السمة في لوحة الإعداد\\nbase = nuld          ; المفتاح القديم ويظهر باسم Classic\\n\\n[colores]            ; قيم الألوان بصيغة RRGGBB\\n                     ; أي لون لا تحدده يحتفظ بلون السمة الأساسية\\nfondo = 0E0714\\npanel = 1A0F22\\nfila = 3A2140\\nborde = 6A4A66\\ntenue = 5A4458\\ntexto = FFF4E8\\ntexto2 = E8D2C4\\netiqueta = C9A9A0\\nacento = FF8A3C\\nacero = 2A1830\\ninverso = 0E0714",
+  "nombre = Ocaso ; the name in the setup panel base = classic ; current base theme [colores] ; RRGGBB; what you leave out keeps the base's fondo = 0E0714 panel = 1A0F22 fila = 3A2140 borde = 6A4A66 tenue = 5A4458 texto = FFF4E8 texto2 = E8D2C4 etiqueta = C9A9A0 acento = FF8A3C acero = 2A1830 inverso = 0E0714": "nombre = Ocaso       ; اسم السمة في لوحة الإعداد\\nbase = classic      ; اسم السمة الأساسية\\n\\n[colores]            ; قيم الألوان بصيغة RRGGBB\\n                     ; أي لون لا تحدده يحتفظ بلون السمة الأساسية\\nfondo = 0E0714\\npanel = 1A0F22\\nfila = 3A2140\\nborde = 6A4A66\\ntenue = 5A4458\\ntexto = FFF4E8\\ntexto2 = E8D2C4\\netiqueta = C9A9A0\\nacento = FF8A3C\\nacero = 2A1830\\ninverso = 0E0714",
   ", and keeps using": "، ويواصل استخدام",
   "from this zip's": "الموجود في هذه الحزمة داخل",
   ", or a folder with": "، أو مجلد يحتوي على",
@@ -1061,11 +1061,11 @@
     "candidate package":"حزمة مرشحة",
     "No PS2 game or ELF is executed.":"لا يتم تشغيل لعبة PS2 أو ملف ELF."
   });
-  // Current TEa.G3 theme-maker naming and data folder; keep the legacy theme key "nuld".
+  // Current TEa.G3 theme-maker naming and data folder; legacy theme-key migration stays in the launcher.
   Object.assign(dict, {
     "Classic":"الكلاسيكية",
     "TEa.G3 theme maker":"مصمم سمات TEa.G3",
-    "torres, nuld (legacy key shown as Classic), cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes":"أسماء السمات المدمجة أو مجلد سمة داخل tea_g3/themes",
+    "torres, Classic, cristal, aurora, liquid, onda, orbit, techstep, wireframe, neuro, fosforo, papel, or a folder of tea_g3/themes":"أسماء السمات المدمجة أو مجلد سمة داخل tea_g3/themes؛ ويُعرض المظهر الكلاسيكي باسم Classic",
     "mass0:/tea_g3/themes/ └── ocaso/ the folder's name is the theme's key ├── theme.ini name, base and colours └── fondo.jpg optional background, 1280 x 720 (or fondo.png)":"mass0:/tea_g3/themes/\\n└── ocaso/           اسم المجلد هو معرّف السمة\\n    ├── theme.ini    اسم السمة والسمة الأساسية والألوان\\n    └── fondo.jpg    صورة خلفية اختيارية، بدقة 1280×720 (أو fondo.png)",
     "Make a theme for TEa.G3, the PlayStation 2 game launcher, in the browser: pick the colours, add a background picture, see it on the home screen and download the folder for your USB drive.":"أنشئ سمة لمشغّل TEa.G3 في المتصفح: اختر الألوان وأضف صورة خلفية، ثم عاينها على الشاشة الرئيسية ونزّل المجلد إلى وحدة USB."
   });
