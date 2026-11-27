@@ -197,12 +197,26 @@ static int sidecar_sets_overlap(const catalog_stage_sidecar_set *a,
     return a_begin - b_begin < sizeof(*b);
 }
 
+static void *sidecar_resource_at(const catalog_stage_sidecar_set *state,
+                                 size_t index, unsigned kind)
+{
+    switch (kind) {
+    case 0: return state->vmc_dir[index];
+    case 1: return state->gicon[index];
+    case 2: return state->cover_big[index];
+    case 3: return state->cover_small[index];
+    default: return state->cover_half[index];
+    }
+}
+
 static int sidecar_set_has_resources(const catalog_stage_sidecar_set *state,
                                      size_t start, size_t end)
 {
     size_t i;
     for (i = start; i < end; ++i)
-        if (state->vmc_dir[i] != NULL || state->gicon[i] != NULL) return 1;
+        if (state->vmc_dir[i] != NULL || state->gicon[i] != NULL ||
+            state->cover_big[i] != NULL || state->cover_small[i] != NULL ||
+            state->cover_half[i] != NULL) return 1;
     return 0;
 }
 
@@ -212,17 +226,16 @@ static int sidecar_set_has_aliases(const catalog_stage_sidecar_set *state,
                                    size_t count)
 {
     size_t i, j;
+    unsigned kind, previous_kind;
     for (i = 0; i < count; ++i) {
-        void *vmc = state->vmc_dir[i];
-        void *icon = state->gicon[i];
-        if (vmc != NULL) {
-            if (vmc == icon) return 1;
+        for (kind = 0; kind < 5; ++kind) {
+            void *resource = sidecar_resource_at(state, i, kind);
+            if (resource == NULL) continue;
+            for (previous_kind = 0; previous_kind < kind; ++previous_kind)
+                if (resource == sidecar_resource_at(state, i, previous_kind)) return 1;
             for (j = 0; j < i; ++j)
-                if (vmc == state->vmc_dir[j] || vmc == state->gicon[j]) return 1;
-        }
-        if (icon != NULL) {
-            for (j = 0; j < i; ++j)
-                if (icon == state->vmc_dir[j] || icon == state->gicon[j]) return 1;
+                for (previous_kind = 0; previous_kind < 5; ++previous_kind)
+                    if (resource == sidecar_resource_at(state, j, previous_kind)) return 1;
         }
     }
     return 0;
@@ -238,6 +251,9 @@ void catalog_stage_sidecar_set_discard(catalog_stage_sidecar_set *state)
         state->vmc_state[i] = 0;
         state->gicon[i] = NULL;
         state->gicon_state[i] = 0;
+        state->cover_big[i] = NULL;
+        state->cover_small[i] = NULL;
+        state->cover_half[i] = NULL;
         state->cover_req[i] = 0;
         state->cover_done[i] = 0;
         state->cover_seen[i] = 0;
@@ -297,6 +313,9 @@ int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot
             new_state->gicon[next_index] = old_state->gicon[i];
             new_state->gicon_state[next_index] = old_state->gicon_state[i];
         }
+        new_state->cover_big[next_index] = old_state->cover_big[i];
+        new_state->cover_small[next_index] = old_state->cover_small[i];
+        new_state->cover_half[next_index] = old_state->cover_half[i];
         /* cover_req is a transient request queue and intentionally remains zero. */
         new_state->cover_done[next_index] = old_state->cover_done[i];
         new_state->cover_seen[next_index] = old_state->cover_seen[i];
@@ -317,6 +336,7 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
                                      size_t new_state_capacity,
                                      catalog_stage_sidecar_release_fn release_vmc_dir,
                                      catalog_stage_sidecar_release_fn release_gicon,
+                                     catalog_stage_sidecar_release_fn release_cover,
                                      void *release_context)
 {
     int16_t old_to_new[CATALOG_STAGE_MAX_ITEMS];
@@ -354,6 +374,9 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
         int old_index = new_to_old[i];
         void *expected_vmc = NULL;
         void *expected_icon = NULL;
+        void *expected_cover_big = NULL;
+        void *expected_cover_small = NULL;
+        void *expected_cover_half = NULL;
         if (old_index >= 0 &&
             sidecar_record_unchanged(&old_snapshot->records[old_index],
                                      &new_snapshot->records[i])) {
@@ -361,9 +384,15 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
                 expected_vmc = old_state->vmc_dir[old_index];
             if (old_state->gicon_state[old_index] != 1)
                 expected_icon = old_state->gicon[old_index];
+            expected_cover_big = old_state->cover_big[old_index];
+            expected_cover_small = old_state->cover_small[old_index];
+            expected_cover_half = old_state->cover_half[old_index];
         }
         if (new_state->vmc_dir[i] != expected_vmc ||
-            new_state->gicon[i] != expected_icon)
+            new_state->gicon[i] != expected_icon ||
+            new_state->cover_big[i] != expected_cover_big ||
+            new_state->cover_small[i] != expected_cover_small ||
+            new_state->cover_half[i] != expected_cover_half)
             return CATALOG_STAGE_ERR_ARGUMENT;
     }
 
@@ -375,9 +404,16 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
                                      &new_snapshot->records[next_index]);
         int keep_vmc = unchanged && old_state->vmc_dir[i] == new_state->vmc_dir[next_index];
         int keep_icon = unchanged && old_state->gicon[i] == new_state->gicon[next_index];
+        int keep_cover_big = unchanged && old_state->cover_big[i] == new_state->cover_big[next_index];
+        int keep_cover_small = unchanged && old_state->cover_small[i] == new_state->cover_small[next_index];
+        int keep_cover_half = unchanged && old_state->cover_half[i] == new_state->cover_half[next_index];
         if (old_state->vmc_dir[i] != NULL && !keep_vmc && release_vmc_dir == NULL)
             return CATALOG_STAGE_ERR_ARGUMENT;
         if (old_state->gicon[i] != NULL && !keep_icon && release_gicon == NULL)
+            return CATALOG_STAGE_ERR_ARGUMENT;
+        if (((old_state->cover_big[i] != NULL && !keep_cover_big) ||
+             (old_state->cover_small[i] != NULL && !keep_cover_small) ||
+             (old_state->cover_half[i] != NULL && !keep_cover_half)) && release_cover == NULL)
             return CATALOG_STAGE_ERR_ARGUMENT;
     }
 
@@ -388,11 +424,20 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
                                      &new_snapshot->records[next_index]);
         int keep_vmc = unchanged && old_state->vmc_dir[i] == new_state->vmc_dir[next_index];
         int keep_icon = unchanged && old_state->gicon[i] == new_state->gicon[next_index];
+        int keep_cover_big = unchanged && old_state->cover_big[i] == new_state->cover_big[next_index];
+        int keep_cover_small = unchanged && old_state->cover_small[i] == new_state->cover_small[next_index];
+        int keep_cover_half = unchanged && old_state->cover_half[i] == new_state->cover_half[next_index];
 
         if (old_state->vmc_dir[i] != NULL && !keep_vmc)
             release_vmc_dir(old_state->vmc_dir[i], release_context);
         if (old_state->gicon[i] != NULL && !keep_icon)
             release_gicon(old_state->gicon[i], release_context);
+        if (old_state->cover_big[i] != NULL && !keep_cover_big)
+            release_cover(old_state->cover_big[i], release_context);
+        if (old_state->cover_small[i] != NULL && !keep_cover_small)
+            release_cover(old_state->cover_small[i], release_context);
+        if (old_state->cover_half[i] != NULL && !keep_cover_half)
+            release_cover(old_state->cover_half[i], release_context);
     }
 
     catalog_stage_sidecar_set_discard(old_state);
