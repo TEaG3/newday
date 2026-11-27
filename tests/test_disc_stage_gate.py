@@ -30,7 +30,7 @@ class DiscStageGateTests(unittest.TestCase):
         self.assertIn("int missing = old == NULL;", body)
         self.assertLess(body.index("int missing = old == NULL;"), body.index("free(old);"))
         after_free = body[body.index("free(old);") + len("free(old);"):]
-        self.assertNotRegex(after_free, r"\\bold\\b")
+        self.assertNotRegex(after_free, r"\bold\b")
         self.assertIn("(missing && !create)", after_free)
 
     def test_heap_icon_destruction_reclaims_nested_buffers(self):
