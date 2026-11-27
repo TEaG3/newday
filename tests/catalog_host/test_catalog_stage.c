@@ -1535,6 +1535,73 @@ static void test_end_to_end_candidate_apply(void)
     assert(pthread_mutex_destroy(&mutex.mutex) == 0);
 }
 
+typedef struct {
+    catalog_guard *guard;
+    int calls;
+} retire_failure_context;
+
+static int fail_bundle_retire_after_swap(const catalog_stage_bundle *active,
+                                         catalog_stage_bundle *retired,
+                                         void *opaque)
+{
+    retire_failure_context *context = (retire_failure_context *)opaque;
+    (void)active;
+    (void)retired;
+    assert(context != NULL && context->guard != NULL);
+    assert(context->guard->applying && context->guard->apply_pending);
+    assert(context->guard->readers == 0);
+    assert(!catalog_guard_read_begin(context->guard));
+    ++context->calls;
+    return CATALOG_STAGE_ERR_ARGUMENT;
+}
+
+static void test_bundle_retire_failure_reopens_gate(void)
+{
+    mutex_context mutex;
+    catalog_guard guard;
+    catalog_stage_snapshot active_snapshot, candidate_snapshot;
+    int active_items[1] = {1}, candidate_items[1] = {2};
+    int active_sidecars[1] = {3}, candidate_sidecars[1] = {4};
+    catalog_stage_bundle active, candidate;
+    retire_failure_context context = {&guard, 0};
+
+    memset(&active_snapshot, 0, sizeof(active_snapshot));
+    memset(&candidate_snapshot, 0, sizeof(candidate_snapshot));
+    set_record(&active_snapshot.records[0], 1, 0, 1, "DVD/Old.iso", 100, 1);
+    set_record(&candidate_snapshot.records[0], 1, 0, 1, "DVD/New.iso", 200, 2);
+    active_snapshot.count = candidate_snapshot.count = 1;
+
+    active.items = active_items;
+    active.items_capacity = 1;
+    active.sidecars = active_sidecars;
+    active.sidecars_capacity = 1;
+    active.count = 1;
+    active.selected_index = 0;
+    active.snapshot = &active_snapshot;
+    candidate.items = candidate_items;
+    candidate.items_capacity = 1;
+    candidate.sidecars = candidate_sidecars;
+    candidate.sidecars_capacity = 1;
+    candidate.count = 1;
+    candidate.selected_index = -1;
+    candidate.snapshot = &candidate_snapshot;
+
+    assert(pthread_mutex_init(&mutex.mutex, NULL) == 0);
+    assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
+    assert(catalog_guard_request_apply(&guard));
+    /* Retirement failure is reported after the swap, but the gate is always reopened. */
+    assert(catalog_stage_bundle_publish_prepared_retire(
+        &guard, &active, &candidate, NULL, NULL,
+        fail_bundle_retire_after_swap, &context) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(context.calls == 1);
+    assert(active.items == candidate_items && candidate.items == active_items);
+    assert(active.snapshot == &candidate_snapshot && candidate.snapshot == &active_snapshot);
+    assert(!guard.apply_pending && !guard.applying);
+    assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_read_end(&guard));
+    assert(pthread_mutex_destroy(&mutex.mutex) == 0);
+}
+
 static void test_disc_slot_fingerprint_resets_only_disc_sidecars(void)
 {
     catalog_stage_snapshot old_snapshot, new_snapshot;
@@ -1590,6 +1657,7 @@ int main(void)
     test_safe_snapshot_publish();
     test_safe_bundle_publish();
     test_end_to_end_candidate_apply();
+    test_bundle_retire_failure_reopens_gate();
     test_bundle_selection_rebase();
     test_path_and_validation();
     test_snapshot_append();
