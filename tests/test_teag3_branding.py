@@ -15,6 +15,7 @@ class TEaG3BrandingTests(unittest.TestCase):
         cls.site_i18n = (ROOT / "site/i18n.js").read_text(encoding="utf-8")
         cls.site_index = (ROOT / "site/index.html").read_text(encoding="utf-8")
         cls.site_manual = (ROOT / "site/manual.html").read_text(encoding="utf-8")
+        cls.site_opl_lab_css = (ROOT / "site/opl-lab.css").read_text(encoding="utf-8")
         cls.acceptance = (ROOT / "docs/acceptance-tea-g3.md").read_text(encoding="utf-8")
         cls.theme_header = (ROOT / "theme.h").read_text(encoding="utf-8")
         cls.themes = (ROOT / "themes.c").read_text(encoding="utf-8")
@@ -110,6 +111,11 @@ class TEaG3BrandingTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertIn(f'"{key}"', self.site_i18n)
         self.assertIn('"TEa.G3 OPL-only manual"', self.site_i18n)
+
+    def test_opl_lab_rtl_selector_matches_the_teag3_language_toggle(self):
+        self.assertIn('document.body.classList.toggle("tea-g3-rtl", ar)', self.site_i18n)
+        self.assertIn(".tea-g3-rtl .opl-page", self.site_opl_lab_css)
+        self.assertNotIn(".nuld-rtl", self.site_opl_lab_css)
 
     def test_acceptance_record_matches_current_opl_only_and_monitoring_state(self):
         self.assertIn("### الإصدار المنشور arabic-v1.3.13", self.acceptance)
