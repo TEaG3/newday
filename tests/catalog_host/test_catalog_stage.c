@@ -615,7 +615,8 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_can_scan(&guard)); /* active readers do not block an inactive candidate scan */
     assert(catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_can_scan(&guard));
-    assert(catalog_guard_read_begin(&guard)); /* render may keep reading the active snapshot */
+    assert(catalog_guard_read_end(&guard)); /* the original lease can drain while scanning */
+    assert(catalog_guard_read_begin(&guard)); /* new render readers may also read the active snapshot */
     assert(catalog_guard_read_end(&guard));
     assert(!catalog_guard_set_activity(&guard, 1, 0)); /* hand-off cancels and drains the candidate scan */
     assert(catalog_guard_scan_cancelled(&guard));
