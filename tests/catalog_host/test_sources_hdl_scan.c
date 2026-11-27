@@ -125,7 +125,7 @@ static void test_success_aggregates_all_apa_parts(void)
     int count = src_hdl_scan(collect_game, &result);
     assert(count == 1);
     assert(result.calls == 1);
-    assert(strcmp(result.part, "PP.TEST0") == 0);
+    assert(strcmp(result.part, "PP.TEST01") == 0);
     assert(strcmp(result.title, "Test Game") == 0);
     assert(strcmp(result.startup, "SLUS_123.45") == 0);
     assert(result.start_sector == 2164);
