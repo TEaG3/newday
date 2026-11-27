@@ -1160,39 +1160,73 @@ static engine_decision engine_for(const entry *e)
     return engine_assess(format, source_type, "opl", exists(OPL_PATH), 1);
 }
 
-static int catalog_load(entry *items, int s, int n)
+static int catalog_load(entry *items, int s, int n,
+                          src_hdl_cancel_fn cancelled, void *cancel_context,
+                          int *status_out)
 {
-	const char *host = ini_get(&cfg, "juegos", "servidor", ""), *why = NULL;
-	static char detail[192];
-	int body, len, max = 256 << 10, got = 0, r = 0;
-	char *buf = malloc(max);
-	if (!buf || (r = net_ready()) < 0)
-		snprintf(detail, sizeof(detail), L("No network (%s): the server's game catalog was not read"), net_err(r)), why = detail;
-	else if ((r = http_get(host, 18290, "/catalog", buf, max - 1, &body, &len)) != 200)
-		snprintf(detail, sizeof(detail), L("The catalog at %s:18290 did not answer (%s): is the TEa.G3 catalog service running? (none: empty servidor)"),
-		         host, net_err(r)), why = detail;
-	else {
-		char *p = buf + body;
-		cat_ent e;
-		buf[body + len] = 0;
-		while (n < MAXC && catalog_next(&p, &e)) {
-			int app = !strncmp(e.path, "APPS/", 5); // the server's apps: path URL-quoted, size for the download
-			if (!app) continue; // OPL-only: remote catalog is for downloadable applications only
-			entry *c = &items[n++];
-			memset(c, 0, sizeof(*c));
-			snprintf(c->path, sizeof(c->path), "%s", e.path);
-			snprintf(c->title, sizeof(c->title), "%s", e.title);
-			if (!app) serial_dash(e.serial, c->serial);
-			if (strlen(e.hash) == 32) snprintf(c->hash, sizeof(c->hash), "%s", e.hash);
-			c->kind = K_APP, c->src = s, c->size = e.size;
-			done_n++, total_n++, got++; // the server's games are known only now: the splash's total grows with them
-		}
-	}
-	free(buf);
-	printf("catalog %s: %d games%s%s\n", host, got, why ? ", " : "", why ? why : "");
-	if (why && !src_why) src_why = why;
-	if (why) src_err[SRC_UDPFS] = why;
-	return n;
+    const char *host = ini_get(&cfg, "juegos", "servidor", ""), *why = NULL;
+    static char detail[192];
+    int body = 0, len = 0, max = 256 << 10, got = 0, r = 0;
+    int status = CATALOG_STAGE_SCAN_OK;
+    char *buf = malloc(max);
+    if (status_out) *status_out = CATALOG_STAGE_SCAN_OK;
+    if (scan_cancelled(cancelled, cancel_context)) {
+        status = CATALOG_STAGE_SCAN_CANCELLED;
+    } else if (!buf) {
+        why = L("Not enough memory to download the app");
+        status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+    } else if ((r = net_ready()) < 0) {
+        snprintf(detail, sizeof(detail), L("No network (%s): the server's game catalog was not read"), net_err(r));
+        why = detail;
+        status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+    } else if (scan_cancelled(cancelled, cancel_context)) {
+        status = CATALOG_STAGE_SCAN_CANCELLED;
+    } else if ((r = http_get_cancelable(host, 18290, "/catalog", buf, max - 1,
+                                        &body, &len, cancelled, cancel_context)) != 200) {
+        if (r == NET_ERR_CANCELLED || scan_cancelled(cancelled, cancel_context)) {
+            status = CATALOG_STAGE_SCAN_CANCELLED;
+        } else {
+            snprintf(detail, sizeof(detail), L("The catalog at %s:18290 did not answer (%s): is the TEa.G3 catalog service running? (none: empty servidor)"),
+                     host, net_err(r));
+            why = detail;
+            status = CATALOG_STAGE_SCAN_ERR_SOURCE;
+        }
+    } else {
+        char *p = buf + body;
+        cat_ent e;
+        buf[body + len] = 0;
+        while (n < MAXC && catalog_next(&p, &e)) {
+            int app;
+            if (scan_cancelled(cancelled, cancel_context)) {
+                status = CATALOG_STAGE_SCAN_CANCELLED;
+                break;
+            }
+            app = !strncmp(e.path, "APPS/", 5);
+            if (!app) continue;
+            entry *c = &items[n++];
+            memset(c, 0, sizeof(*c));
+            snprintf(c->path, sizeof(c->path), "%s", e.path);
+            snprintf(c->title, sizeof(c->title), "%s", e.title);
+            if (strlen(e.hash) == 32) snprintf(c->hash, sizeof(c->hash), "%s", e.hash);
+            c->kind = K_APP, c->src = s, c->size = e.size;
+            if (!cancelled) done_n++, total_n++;
+            got++;
+        }
+    }
+    free(buf);
+    if (status_out) *status_out = status;
+    if (status == CATALOG_STAGE_SCAN_CANCELLED) {
+        printf("catalog %s: cancelled; partial candidate discarded\n", host);
+        return n;
+    }
+    if (status != CATALOG_STAGE_SCAN_OK) {
+        printf("catalog %s: incomplete (%s); stable snapshot disabled\n", host, why ? why : "source error");
+        if (why && !src_why) src_why = why;
+        if (why) src_err[SRC_UDPFS] = why;
+        return n;
+    }
+    printf("catalog %s: %d apps\n", host, got);
+    return n;
 }
 
 typedef struct { int s, n; entry *items; int report_progress; } hdl_ctx;
@@ -1324,14 +1358,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot,
 	items[0].kind = K_DISC, items[0].disc = D_NONE;
 	snprintf(items[0].title, sizeof(items[0].title), L("No disc"));
 
-	/* The HTTP app catalogue has no cooperative cancellation API yet. Never omit it
-	   from a cancellable candidate and accidentally publish a catalogue without it. */
-	if (cancelled && udpfs_cat) {
-		snapshot->count = 0;
-		*scan_status = CATALOG_STAGE_SCAN_ERR_SOURCE;
-		printf("catalog: cancellable refresh deferred while remote app catalogue is enabled\n");
-		return n;
-	}
+	/* Remote app-catalogue reads observe cancellation; a cancelled or failed request invalidates the candidate. */
 
 	/* Never publish a candidate if a configured local source disappeared between polls. */
 	if (!catalog_source_roots_ready()) incomplete = 1;
@@ -1364,9 +1391,18 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot,
 			}
 			n = c.n;
 		} else if (src[s].type == SRC_UDPFS && udpfs_cat) {
-			/* Reached only during boot: cancellable refresh was rejected above. */
-			n = catalog_load(items, s, n);
-		} else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
+            int remote_status = CATALOG_STAGE_SCAN_OK;
+            n = catalog_load(items, s, n, cancelled, cancel_context, &remote_status);
+            if (remote_status == CATALOG_STAGE_SCAN_CANCELLED) {
+                was_cancelled = 1;
+                incomplete = 1;
+                break;
+            }
+            if (remote_status != CATALOG_STAGE_SCAN_OK) {
+                incomplete = 1;
+                break;
+            }
+        } else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
 			int source_cancelled = 0;
 			n = scan_dir(items, s, 0, n, &incomplete, cancelled, cancel_context, &source_cancelled);
 			if (source_cancelled) {
