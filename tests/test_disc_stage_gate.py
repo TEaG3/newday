@@ -19,6 +19,7 @@ class DiscStageGateTests(unittest.TestCase):
                 self.assertIn(flag, self.launcher)
         self.assertIn("if (!disc_new || background_workers_busy() || cover_lock < 0)", self.launcher)
         self.assertIn("if (disc_new && !background_workers_busy())", self.launcher)
+        self.assertIn("if (PollSema(cover_lock) < 0) return;", self.launcher)
         self.assertIn("disc_apply_pending();", self.launcher)
 
     def test_heap_icon_destruction_reclaims_nested_buffers(self):
