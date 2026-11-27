@@ -1105,7 +1105,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 			n = catalog_load(items, s, n);
 		else if (s || src_want & 1u << src[0].type) { // src[0] is the home: its PS2 games only if it is a source
 			n = scan_dir(items, s, 0, n, &incomplete);
-            n = scan_dir(items, s, 1, n, &incomplete);
+			n = scan_dir(items, s, 1, n, &incomplete);
 			if (src[s].type == SRC_USB) {
 				int ul_count = scan_ul(items, s, n);
 				if (ul_count < 0) {
@@ -1166,6 +1166,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 		n++;
 	}
 	if (d && closedir(d) < 0) incomplete = 1;
+	if (n > MAXC) n = MAXC, incomplete = 1;
 	qsort(items + 1, n - 1, sizeof(entry), by_title); // readdir order is the FAT order; the disc stays first
 	int snapshot_status;
 	if (incomplete) {
