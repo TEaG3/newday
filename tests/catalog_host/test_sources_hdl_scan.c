@@ -51,7 +51,7 @@ static void set_base_partition(iox_dirent_t *entry, u64 size)
 static void set_sub_partition(iox_dirent_t *entry, u64 size)
 {
     memset(entry, 0, sizeof(*entry));
-    strcpy(entry->name, "PP.TEST01.1");
+    strcpy(entry->name, "PP.TEST01"); /* APA sub-partitions retain the base partition ID. */
     entry->stat.mode = 0x1337;
     entry->stat.attr = APA_FLAG_SUB;
     entry->stat.size = size;
