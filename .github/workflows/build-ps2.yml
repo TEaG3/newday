@@ -43,7 +43,9 @@ jobs:
           /tmp/zso_ee_host_test
           cc -std=c99 -Wall -Wextra -Werror -Itests/catalog_host/ps2stub -I. sources_hdl.c tests/catalog_host/test_sources_hdl_scan.c -o /tmp/sources_hdl_test
           /tmp/sources_hdl_test
-          python3 -m unittest tests/test_nuld_catalog.py tests/test_release_version.py tests/test_launcher_handoff.py tests/test_catalog_launcher_wiring.py tests/test_ee_core_headroom.py tests/test_teag3_branding.py tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py tests/test_opl_source_policy.py tests/test_disc_stage_gate.py tests/test_release_workflow.py
+          cc -std=c99 -Wall -Wextra -Werror -D_POSIX_C_SOURCE=200809L -I. catalog_source_probe.c tests/catalog_host/test_catalog_source_probe.c -o /tmp/catalog_source_probe_test
+          /tmp/catalog_source_probe_test
+          python3 -m unittest tests/test_nuld_catalog.py tests/test_release_version.py tests/test_launcher_handoff.py tests/test_catalog_launcher_wiring.py tests/test_catalog_source_probe.py tests/test_ee_core_headroom.py tests/test_teag3_branding.py tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py tests/test_opl_source_policy.py tests/test_disc_stage_gate.py tests/test_release_workflow.py
           cc -std=c99 -Wall -Wextra -Werror -I. tests/catalog_host/test_app_payload.c -o /tmp/app_payload_test
           /tmp/app_payload_test
           cc -std=c99 -Wall -Wextra -Werror -pthread -I. catalog_stage.c tests/catalog_host/test_catalog_stage.c -o /tmp/catalog_stage_test
