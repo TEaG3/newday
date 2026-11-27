@@ -17,9 +17,14 @@ enum {
     SRC_HDL_SCAN_ERR_READ = -2,
     SRC_HDL_SCAN_ERR_CLOSE = -3,
     SRC_HDL_SCAN_ERR_MEMORY = -4,
-    SRC_HDL_SCAN_ERR_METADATA = -5
+    SRC_HDL_SCAN_ERR_METADATA = -5,
+    SRC_HDL_SCAN_ERR_CANCELLED = -6
 };
-/* Returns a game count only after both APA directory passes and all closes succeed.
-   Negative SRC_HDL_SCAN_ERR_* values mean the source is incomplete; no callbacks are made. */
+typedef int (*src_hdl_cancel_fn)(void *context);
+/* Cancellation is sampled during both directory passes. A cancelled or failed scan
+   closes its open directory and emits no callbacks. The legacy wrapper never cancels. */
+int src_hdl_scan_cancelable(void (*add)(void *ctx, const char *part, const char *title, const char *startup,
+                                        u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd),
+                            void *ctx, src_hdl_cancel_fn cancelled, void *cancel_context);
 int src_hdl_scan(void (*add)(void *ctx, const char *part, const char *title, const char *startup,
                              u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd), void *ctx);

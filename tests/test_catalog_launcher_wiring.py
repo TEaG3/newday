@@ -135,13 +135,17 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("load_games_into(cv, &catalog_active_snapshot)", publish)
 
     def test_hdl_scan_rejects_partial_directory_reads_and_closes_before_callbacks(self):
-        start = SOURCES_HDL.index("int src_hdl_scan(")
+        start = SOURCES_HDL.index("int src_hdl_scan_cancelable(")
         end = SOURCES_HDL.index("\n}", start) + 2
         body = SOURCES_HDL[start:end]
+        legacy = function_body(SOURCES_HDL, "int src_hdl_scan(", "\n}")
         self.assertIn("SRC_HDL_SCAN_ERR_OPEN", body)
         self.assertIn("SRC_HDL_SCAN_ERR_READ", body)
         self.assertIn("SRC_HDL_SCAN_ERR_CLOSE", body)
-        self.assertIn("while ((read_result = fileXioDread(fd, &de)) > 0)", body)
+        self.assertEqual(body.count("for (;;) {"), 2)
+        self.assertEqual(body.count("read_result = fileXioDread(fd, &de);"), 2)
+        self.assertEqual(body.count("if (read_result < 0)"), 2)
+        self.assertEqual(body.count("if (read_result == 0) break;"), 2)
         self.assertIn("if (read_result < 0 && status == 0)", body)
         self.assertIn("if (fileXioDclose(fd) < 0", body)
         self.assertIn("hdl_scan_free(head);", body)
@@ -150,6 +154,9 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("SRC_HDL_SCAN_ERR_METADATA", SOURCES_HEADER)
         self.assertIn("u64 base_size_kb", body)
         self.assertIn("u64 add_kb64", body)
+        self.assertIn("SRC_HDL_SCAN_ERR_CANCELLED", body)
+        self.assertIn("hdl_scan_cancelled(cancelled, cancel_context)", body)
+        self.assertIn("return src_hdl_scan_cancelable(cb, ctx, NULL, NULL);", legacy)
 
     def test_hdl_scanner_has_a_real_host_c_fixture(self):
         self.assertIn("sources_hdl.c tests/catalog_host/test_sources_hdl_scan.c", WORKFLOW)

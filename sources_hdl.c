@@ -24,18 +24,40 @@ static void hdl_scan_free(hdl_scan_record *head)
     }
 }
 
+static int hdl_scan_cancelled(src_hdl_cancel_fn cancelled, void *context)
+{
+    return cancelled != NULL && cancelled(context);
+}
+
 /* HD Loader metadata, matching upstream OPL's hddGetHDLGamelist() calculation.
    A partial directory/sector read is not a valid catalogue: do not call the consumer
    until both passes and their directory handles have completed successfully. */
-int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd), void *ctx)
+int src_hdl_scan_cancelable(void (*cb)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd), void *ctx, src_hdl_cancel_fn cancelled, void *cancel_context)
 {
     static u8 h[1024] __attribute__((aligned(64)));
     iox_dirent_t de;
     hdl_scan_record *head = NULL, **tail = &head, *g;
-    int fd = fileXioDopen("hdd0:"), n = 0, status = 0, read_result;
+    int fd, n = 0, status = 0, read_result = 0;
 
+    if (hdl_scan_cancelled(cancelled, cancel_context))
+        return SRC_HDL_SCAN_ERR_CANCELLED;
+    fd = fileXioDopen("hdd0:");
     if (fd < 0) return SRC_HDL_SCAN_ERR_OPEN;
-    while ((read_result = fileXioDread(fd, &de)) > 0) {
+    for (;;) {
+        if (hdl_scan_cancelled(cancelled, cancel_context)) {
+            status = SRC_HDL_SCAN_ERR_CANCELLED;
+            break;
+        }
+        read_result = fileXioDread(fd, &de);
+        if (read_result < 0) {
+            status = SRC_HDL_SCAN_ERR_READ;
+            break;
+        }
+        if (read_result == 0) break;
+        if (hdl_scan_cancelled(cancelled, cancel_context)) {
+            status = SRC_HDL_SCAN_ERR_CANCELLED;
+            break;
+        }
         if (de.stat.mode != 0x1337 || (de.stat.attr & APA_FLAG_SUB)) continue;
         if (de.stat.private_5 > 0xffffffffu - 2064u) {
             status = SRC_HDL_SCAN_ERR_METADATA;
@@ -49,6 +71,10 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
         hddAtaTransfer_t a = {de.stat.private_5 + 2064u, 2};
         if (fileXioDevctl("hdd0:", HDIOC_READSECTOR, &a, sizeof(a), h, 1024) != 0) {
             status = SRC_HDL_SCAN_ERR_READ;
+            break;
+        }
+        if (hdl_scan_cancelled(cancelled, cancel_context)) {
+            status = SRC_HDL_SCAN_ERR_CANCELLED;
             break;
         }
         if (*(u32 *)h != 0xDEADFEED) continue;
@@ -77,12 +103,30 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
     }
 
     /* OPL includes every APA sub-partition in total_size_in_kb; aggregate them by APA_IDMAX. */
+    if (hdl_scan_cancelled(cancelled, cancel_context)) {
+        hdl_scan_free(head);
+        return SRC_HDL_SCAN_ERR_CANCELLED;
+    }
     fd = fileXioDopen("hdd0:");
     if (fd < 0) {
         hdl_scan_free(head);
         return SRC_HDL_SCAN_ERR_OPEN;
     }
-    while ((read_result = fileXioDread(fd, &de)) > 0) {
+    for (;;) {
+        if (hdl_scan_cancelled(cancelled, cancel_context)) {
+            status = SRC_HDL_SCAN_ERR_CANCELLED;
+            break;
+        }
+        read_result = fileXioDread(fd, &de);
+        if (read_result < 0) {
+            status = SRC_HDL_SCAN_ERR_READ;
+            break;
+        }
+        if (read_result == 0) break;
+        if (hdl_scan_cancelled(cancelled, cancel_context)) {
+            status = SRC_HDL_SCAN_ERR_CANCELLED;
+            break;
+        }
         if (de.stat.mode != 0x1337 || !(de.stat.attr & APA_FLAG_SUB)) continue;
         for (g = head; g; g = g->next) {
             if (!strncmp(g->part, de.name, APA_IDMAX)) {
@@ -105,6 +149,10 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
         return status;
     }
 
+    if (hdl_scan_cancelled(cancelled, cancel_context)) {
+        hdl_scan_free(head);
+        return SRC_HDL_SCAN_ERR_CANCELLED;
+    }
     for (g = head; g; g = g->next) {
         if (!g->total_size_kb) {
             hdl_scan_free(head);
@@ -120,4 +168,9 @@ int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, cons
         g = next;
     }
     return n;
+}
+
+int src_hdl_scan(void (*cb)(void *ctx, const char *part, const char *title, const char *startup, u32 start_sector, u32 total_size_kb, u32 disc_type, int is_cd), void *ctx)
+{
+    return src_hdl_scan_cancelable(cb, ctx, NULL, NULL);
 }
