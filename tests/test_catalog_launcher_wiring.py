@@ -293,12 +293,14 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         art_loop = art[art.index("for (int i = 1; i < ncv && !ra_launching; i++)"):]
         self.assertLess(art.index("background_work_end(&art_busy);"), art.index("for (int i = 1; i < ncv && !ra_launching; i++)"))
         self.assertLess(art_loop.index("background_work_begin(&art_busy)"), art_loop.index("art_import_one(i, &net, max)"))
+        self.assertIn("if (!ra_launching && i < ncv) got += art_import_one(i, &net, max);", art_loop)
         self.assertLess(art_loop.index("art_import_one(i, &net, max)"), art_loop.index("background_work_end(&art_busy)"))
 
         download = function_body(LAUNCHER, "static void download_covers(void)", "// ---- achievements")
         download_loop = download[download.index("for (int i = 1; buf && i < ncv"): ]
         self.assertLess(download.index("background_work_end(&dl_busy);"), download.index("for (int i = 1; buf && i < ncv"))
         self.assertLess(download_loop.index("background_work_begin(&dl_busy)"), download_loop.index("download_cover_one(i, buf, max)"))
+        self.assertIn("if (!ra_launching && i < ncv && wants_cover(i))", download_loop)
         self.assertLess(download_loop.index("download_cover_one(i, buf, max)"), download_loop.index("background_work_end(&dl_busy)"))
         self.assertIn("if (!ra_launching) st = https_get", LAUNCHER)
         self.assertIn("Re-read the current generation under each short lease", download)
