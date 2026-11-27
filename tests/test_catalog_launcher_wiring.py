@@ -452,6 +452,14 @@ class CatalogLauncherWiringTests(unittest.TestCase):
         self.assertIn("http_req_cancelable", NET_HEADER)
         self.assertIn("test_http_read_cancellation();", NET)
 
+    def test_remote_app_catalog_connect_and_send_are_bounded_and_cancellable(self):
+        self.assertIn("http_connect_send", NET)
+        self.assertIn("O_NONBLOCK", NET)
+        self.assertIn("select(", NET)
+        self.assertIn("MSG_DONTWAIT", NET)
+        self.assertIn("http_socket_error", NET)
+        self.assertIn("test_http_connect_send_cancellation();", NET)
+
     def test_candidate_scan_reports_readiness_without_mutating_active_snapshot_state(self):
         builder = function_body(LAUNCHER, "static int load_games_into(", "static void load_games(void)")
         publish = function_body(LAUNCHER, "static void load_games(void)", "// ---- disc drive")
