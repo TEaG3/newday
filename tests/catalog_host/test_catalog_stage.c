@@ -361,6 +361,79 @@ static void test_typed_sidecar_set_discard_and_fail_closed(void)
     assert(releases.icon_releases == 1);
 }
 
+static void test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows(void)
+{
+    catalog_stage_snapshot old_snapshot, new_snapshot;
+    sidecar_release_counts releases = {0, 0};
+    void *shared, *vmc, *icon, *rogue;
+
+    memset(&old_snapshot, 0, sizeof(old_snapshot));
+    memset(&new_snapshot, 0, sizeof(new_snapshot));
+    memset(&sidecar_old, 0, sizeof(sidecar_old));
+    memset(&sidecar_new, 0, sizeof(sidecar_new));
+    old_snapshot.count = 2;
+    new_snapshot.count = 2;
+    set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Alpha.iso", 100, 11);
+    set_record(&old_snapshot.records[1], 1, 0, 0, "DVD/Beta.iso", 200, 22);
+    set_record(&new_snapshot.records[0], 1, 0, 0, "DVD/Alpha.iso", 100, 11);
+    set_record(&new_snapshot.records[1], 1, 0, 0, "DVD/Beta.iso", 200, 22);
+
+    /* One allocation cannot be owned by two entries or resource classes. */
+    shared = test_resource();
+    sidecar_old.vmc_dir[0] = shared;
+    sidecar_old.gicon[1] = shared;
+    assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
+                                             &sidecar_old, 2, &sidecar_new, 2) ==
+           CATALOG_STAGE_ERR_ARGUMENT);
+    assert(sidecar_old.vmc_dir[0] == shared && sidecar_old.gicon[1] == shared);
+    assert(sidecar_new.vmc_dir[0] == NULL && sidecar_new.gicon[1] == NULL);
+    free(shared);
+
+    memset(&sidecar_old, 0, sizeof(sidecar_old));
+    memset(&sidecar_new, 0, sizeof(sidecar_new));
+    old_snapshot.count = 1;
+    new_snapshot.count = 1;
+    set_record(&old_snapshot.records[0], 1, 0, 0, "DVD/Keep.iso", 100, 7);
+    set_record(&new_snapshot.records[0], 1, 0, 0, "DVD/Keep.iso", 100, 7);
+    vmc = sidecar_old.vmc_dir[0] = test_resource();
+    icon = sidecar_old.gicon[0] = test_resource();
+    assert(catalog_stage_sidecar_set_migrate(&old_snapshot, &new_snapshot,
+                                             &sidecar_old, 1, &sidecar_new, 1) ==
+           CATALOG_STAGE_OK);
+
+    /* A foreign candidate pointer must never survive retirement of the old generation. */
+    rogue = test_resource();
+    sidecar_new.gicon[0] = rogue;
+    assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
+                                            &sidecar_old, 1, &sidecar_new, 1,
+                                            release_vmc_resource, release_icon_resource,
+                                            &releases) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(sidecar_old.vmc_dir[0] == vmc && sidecar_old.gicon[0] == icon);
+    assert(releases.vmc_releases == 0 && releases.icon_releases == 0);
+    free(rogue);
+
+    /* Aliased candidate slots are rejected before any resource can be released. */
+    sidecar_new.gicon[0] = sidecar_new.vmc_dir[0];
+    assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
+                                            &sidecar_old, 1, &sidecar_new, 1,
+                                            release_vmc_resource, release_icon_resource,
+                                            &releases) == CATALOG_STAGE_ERR_ARGUMENT);
+    assert(sidecar_old.vmc_dir[0] == vmc && sidecar_old.gicon[0] == icon);
+    assert(releases.vmc_releases == 0 && releases.icon_releases == 0);
+
+    sidecar_new.gicon[0] = icon;
+    assert(catalog_stage_sidecar_set_retire(&old_snapshot, &new_snapshot,
+                                            &sidecar_old, 1, &sidecar_new, 1,
+                                            release_vmc_resource, release_icon_resource,
+                                            &releases) == CATALOG_STAGE_OK);
+    assert(sidecar_old.vmc_dir[0] == NULL && sidecar_old.gicon[0] == NULL);
+    assert(sidecar_new.vmc_dir[0] == vmc && sidecar_new.gicon[0] == icon);
+    assert(releases.vmc_releases == 0 && releases.icon_releases == 0);
+    free(vmc);
+    free(icon);
+    catalog_stage_sidecar_set_discard(&sidecar_new);
+}
+
 static void test_diff_detects_large_file_size_changes(void)
 {
     catalog_stage_snapshot old_snapshot;
@@ -1146,6 +1219,7 @@ int main(void)
     test_sidecar_migration();
     test_typed_sidecar_set_migration_and_retirement();
     test_typed_sidecar_set_discard_and_fail_closed();
+    test_typed_sidecar_set_rejects_aliases_and_unexpected_borrows();
     test_diff_detects_large_file_size_changes();
     test_diff_and_stable_selection();
     test_guard_and_concurrent_reader();
