@@ -40,7 +40,6 @@
         {ar:"إعداد الشبكة",en:"Network Config"},
         {ar:"تحديث الشبكة",en:"Network Update"},
         {ar:"حفظ التغييرات",en:"Save Changes"},
-        {ar:"بدء خادم HDL",en:"Start HDL Server"},
         {ar:"إعدادات الغش",en:"Cheat Settings"},
         {ar:"حول",en:"About"},
         {ar:"خروج",en:"Exit"},
