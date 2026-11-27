@@ -293,7 +293,7 @@ int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
     int status;
 
     if (old_snapshot == NULL || new_snapshot == NULL || old_state == NULL ||
-        new_state == NULL || old_state == new_state ||
+        new_state == NULL || sidecar_sets_overlap(old_state, new_state) ||
         old_snapshot == new_snapshot)
         return CATALOG_STAGE_ERR_ARGUMENT;
     if (old_state_capacity > CATALOG_STAGE_MAX_ITEMS ||
