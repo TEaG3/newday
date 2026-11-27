@@ -538,8 +538,9 @@ int catalog_guard_can_scan(catalog_guard *guard)
 {
     int allowed;
     if (!guard_lock(guard)) return 0;
+    /* Candidate scans use inactive storage; active snapshot readers may continue. */
     allowed = !guard->playing && !guard->io_busy && !guard->downloading && !guard->scanning &&
-              !guard->apply_pending && !guard->applying && guard->readers == 0;
+              !guard->apply_pending && !guard->applying;
     if (!guard_release(guard)) return 0;
     return allowed;
 }
@@ -548,8 +549,9 @@ int catalog_guard_scan_begin(catalog_guard *guard)
 {
     int allowed;
     if (!guard_lock(guard)) return 0;
+    /* Candidate scans use inactive storage; active snapshot readers may continue. */
     allowed = !guard->playing && !guard->io_busy && !guard->downloading && !guard->scanning &&
-              !guard->apply_pending && !guard->applying && guard->readers == 0;
+              !guard->apply_pending && !guard->applying;
     if (allowed) guard->scanning = 1, guard->scan_cancelled = 0;
     if (!guard_release(guard)) return 0;
     return allowed;

@@ -612,12 +612,11 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
     assert(catalog_guard_can_scan(&guard));
     assert(catalog_guard_read_begin(&guard));
-    assert(!catalog_guard_can_scan(&guard));
-    assert(!catalog_guard_scan_begin(&guard)); /* a scan cannot start while a reader holds the active snapshot */
-    assert(catalog_guard_read_end(&guard));
+    assert(catalog_guard_can_scan(&guard)); /* active readers do not block an inactive candidate scan */
     assert(catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_can_scan(&guard));
-    assert(catalog_guard_read_begin(&guard)); /* render may keep reading the active snapshot */
+    assert(catalog_guard_read_end(&guard)); /* the original lease can drain while scanning */
+    assert(catalog_guard_read_begin(&guard)); /* new render readers may also read the active snapshot */
     assert(catalog_guard_read_end(&guard));
     assert(!catalog_guard_set_activity(&guard, 1, 0)); /* hand-off cancels and drains the candidate scan */
     assert(catalog_guard_scan_cancelled(&guard));
@@ -773,12 +772,23 @@ static void test_staged_scan_builder(void)
     assert(catalog_stage_snapshot_validate(&candidate) == CATALOG_STAGE_OK);
     assert(!guard.scanning);
 
-    /* A reader prevents scan start; no partial candidate is exposed. */
+    /* Read-only active-snapshot leases may coexist with an inactive candidate scan. */
     assert(catalog_guard_read_begin(&guard));
+    assert(catalog_guard_can_scan(&guard));
+    fixture.index = 0;
     candidate.count = 9;
-    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_ERR_BUSY);
-    assert(candidate.count == 0);
+    assert(catalog_stage_scan(&guard, scan_fixture_next, &fixture, &candidate) == CATALOG_STAGE_SCAN_OK);
+    assert(candidate.count == 2);
+    assert(guard.readers == 1); /* the active reader remains protected throughout the scan */
+
+    /* Apply still waits for the reader to drain and blocks new readers once requested. */
+    assert(catalog_guard_request_apply(&guard));
+    assert(!catalog_guard_can_scan(&guard));
+    assert(!catalog_guard_try_apply(&guard));
+    assert(!catalog_guard_read_begin(&guard));
     assert(catalog_guard_read_end(&guard));
+    assert(catalog_guard_try_apply(&guard));
+    assert(catalog_guard_finish_apply(&guard));
 
     /* New storage I/O cancels the scan and must wait until the candidate is discarded. */
     memset(&fixture, 0, sizeof(fixture));
