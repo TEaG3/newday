@@ -2048,7 +2048,7 @@ static void disc_apply_pending(void)
 		    catalog_active_bundle.count > 0 &&
 		    catalog_snapshot_capture(cv, ncv, catalog_active_bundle.snapshot) != CATALOG_STAGE_OK) {
 			catalog_active_snapshot_ready = 0;
-			printf("disc: active catalog snapshot invalidated after disc-state update; refresh remains disabled\\n");
+			printf("disc: active catalog snapshot invalidated after disc-state update; refresh remains disabled\n");
 		}
 		disc_new = 0;
 		applied = 1;
