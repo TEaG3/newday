@@ -899,6 +899,7 @@ int catalog_stage_snapshot_publish(catalog_guard *guard,
         return CATALOG_STAGE_ERR_BUSY;
     }
 
+    candidate->selected_index = next_selected;
     previous = *active;
     *active = *candidate;
     *candidate = previous;
@@ -915,6 +916,8 @@ int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
                                           void *prepare_context)
 {
     catalog_stage_bundle previous;
+    int16_t old_to_new[CATALOG_STAGE_MAX_ITEMS];
+    int next_selected;
     int status;
 
     if (guard == NULL || active == NULL || candidate == NULL || active == candidate)
@@ -961,6 +964,22 @@ int catalog_stage_bundle_publish_prepared(catalog_guard *guard,
             return CATALOG_STAGE_ERR_GUARD;
         return CATALOG_STAGE_ERR_BUSY;
     }
+
+    if (active->selected_index < -1 ||
+        (active->selected_index >= 0 && (size_t)active->selected_index >= active->count)) {
+        if (!catalog_guard_finish_apply(guard))
+            return CATALOG_STAGE_ERR_GUARD;
+        return CATALOG_STAGE_ERR_INDEX;
+    }
+    status = catalog_stage_snapshot_map(active->snapshot, candidate->snapshot,
+                                        old_to_new, CATALOG_STAGE_MAX_ITEMS);
+    if (status != CATALOG_STAGE_OK) {
+        if (!catalog_guard_finish_apply(guard))
+            return CATALOG_STAGE_ERR_GUARD;
+        return status;
+    }
+    next_selected = active->selected_index >= 0 ? old_to_new[active->selected_index] : -1;
+    if (next_selected < 0 && candidate->count > 0) next_selected = 0;
 
     if (prepare != NULL) {
         status = prepare(active, candidate, prepare_context);
