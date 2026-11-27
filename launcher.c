@@ -737,9 +737,9 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
     if (fd < 0) return n; /* no ul.cfg is a valid source with no UL games */
     s64 end = fileXioLseek64(fd, 0, FIO_SEEK_END);
     if (end < 0 || end > (s64)MAXC * UL_CFG_RECORD_SIZE || end % UL_CFG_RECORD_SIZE) {
-        printf("UL: invalid ul.cfg size %lld\\n", end);
-        int closed = fileXioClose(fd);
-        return closed < 0 ? -1 : -1;
+        printf("UL: invalid ul.cfg size %lld\n", end);
+        (void)fileXioClose(fd);
+        return -1;
     }
     if (end == 0) {
         return fileXioClose(fd) < 0 ? -1 : n;
@@ -755,7 +755,7 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
         ul_game game;
         int got = fileXioRead(fd, raw, sizeof(raw));
         if (got != (int)sizeof(raw)) {
-            printf("UL: short read at record %d (%d/%u)\\n", r, got, (unsigned)sizeof(raw));
+            printf("UL: short read at record %d (%d/%u)\n", r, got, (unsigned)sizeof(raw));
             failed = 1;
             break;
         }
@@ -1044,7 +1044,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 			hdl_ctx c = {s, n, items};
 			int hdl_status = src_hdl_scan(hdl_add, &c);
 			if (hdl_status < 0) {
-				printf("HDL: source scan incomplete (%d); stable snapshot disabled\\n", hdl_status);
+				printf("HDL: source scan incomplete (%d); stable snapshot disabled\n", hdl_status);
 				incomplete = 1;
 			} else n = c.n;
 		} else if (src[s].type == SRC_UDPFS && udpfs_cat)
@@ -1054,7 +1054,7 @@ static int load_games_into(entry *items, catalog_stage_snapshot *snapshot) // PS
 			if (src[s].type == SRC_USB) {
 				int ul_count = scan_ul(items, s, n);
 				if (ul_count < 0) {
-					printf("UL: source scan incomplete; stable snapshot disabled\\n");
+					printf("UL: source scan incomplete; stable snapshot disabled\n");
 					incomplete = 1;
 				} else n = ul_count;
 			}
@@ -1106,7 +1106,7 @@ static void load_games(void) // publish the initial scan only after a complete c
 
 	if (!candidate) {
 		/* Boot is still single-writer before stage 3; keep a safe low-memory fallback. */
-		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\\n");
+		printf("catalog: candidate allocation failed; using boot-only active scan; live refresh remains disabled\n");
 		count = load_games_into(cv, &catalog_active_snapshot);
 	} else {
 		count = load_games_into(candidate, &catalog_active_snapshot);
