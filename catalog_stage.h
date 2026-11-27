@@ -33,6 +33,24 @@ typedef struct {
     catalog_stage_snapshot *snapshot;
 } catalog_stage_bundle;
 
+/* Per-game state currently kept in parallel launcher arrays. Pointer fields are
+   owned by exactly one published generation; migration borrows them until swap. */
+typedef struct {
+    void *vmc_dir[CATALOG_STAGE_MAX_ITEMS];
+    int vmc_n[CATALOG_STAGE_MAX_ITEMS];
+    volatile char vmc_state[CATALOG_STAGE_MAX_ITEMS];
+    void *gicon[CATALOG_STAGE_MAX_ITEMS];
+    volatile char gicon_state[CATALOG_STAGE_MAX_ITEMS];
+    volatile char cover_req[CATALOG_STAGE_MAX_ITEMS];
+    volatile char cover_done[CATALOG_STAGE_MAX_ITEMS];
+    int cover_seen[CATALOG_STAGE_MAX_ITEMS];
+    volatile char ra_state[CATALOG_STAGE_MAX_ITEMS];
+    short ra_count[CATALOG_STAGE_MAX_ITEMS];
+    int ra_gid[CATALOG_STAGE_MAX_ITEMS];
+} catalog_stage_sidecar_set;
+
+typedef void (*catalog_stage_sidecar_release_fn)(void *resource, void *context);
+
 /* Called under the apply gate after all readers drain and before any bundle pointer moves.
    The callback may populate candidate sidecars but must not mutate the active bundle. */
 typedef int (*catalog_stage_bundle_prepare_fn)(const catalog_stage_bundle *active,
@@ -76,6 +94,30 @@ int catalog_stage_sidecar_migrate(const catalog_stage_snapshot *old_snapshot,
                                   const void *old_state, size_t old_state_capacity,
                                   void *new_state, size_t new_state_capacity,
                                   size_t state_size);
+
+/* Typed launcher sidecars: only unchanged stable keys are copied. cover_req is
+   deliberately reset because it is a transient worker queue. Candidate pointer
+   fields must be empty; old resources remain owned by old_state until retirement. */
+int catalog_stage_sidecar_set_migrate(const catalog_stage_snapshot *old_snapshot,
+                                      const catalog_stage_snapshot *new_snapshot,
+                                      const catalog_stage_sidecar_set *old_state,
+                                      size_t old_state_capacity,
+                                      catalog_stage_sidecar_set *new_state,
+                                      size_t new_state_capacity);
+/* After a successful bundle swap, release old resources not transferred to new_state,
+   then clear old_state. Missing release callbacks are rejected before any mutation. */
+int catalog_stage_sidecar_set_retire(const catalog_stage_snapshot *old_snapshot,
+                                     const catalog_stage_snapshot *new_snapshot,
+                                     catalog_stage_sidecar_set *old_state,
+                                     size_t old_state_capacity,
+                                     const catalog_stage_sidecar_set *new_state,
+                                     size_t new_state_capacity,
+                                     catalog_stage_sidecar_release_fn release_vmc_dir,
+                                     catalog_stage_sidecar_release_fn release_gicon,
+                                     void *release_context);
+/* Discard an unpublished candidate whose pointer fields may alias active resources.
+   This clears borrowed pointers without freeing anything. */
+void catalog_stage_sidecar_set_discard(catalog_stage_sidecar_set *state);
 int catalog_stage_snapshot_map(const catalog_stage_snapshot *old_snapshot,
                                const catalog_stage_snapshot *new_snapshot,
                                int16_t *old_to_new, size_t map_capacity);
