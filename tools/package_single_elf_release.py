@@ -56,7 +56,7 @@ def main() -> None:
     elf, manifest = ROOT / "TEa.G3.ELF", ROOT / "runtime-manifest.txt"
     opl_license, opl_diagnostic = ROOT / "OPL-LICENSE.txt", ROOT / "runtime-input/OPL.ELF"
     required_files = (elf, manifest, ROOT / "INSTALL-AR.txt", ROOT / "INSTALL-EN.txt",
-                      ROOT / "README.md", ROOT / "LICENSE", opl_license)
+                      ROOT / "README.md", ROOT / "README-EN.md", ROOT / "LICENSE", opl_license)
     missing = [str(p.relative_to(ROOT)) for p in required_files if not p.is_file() or p.stat().st_size == 0]
     if missing:
         raise SystemExit("release inputs missing or empty: " + ", ".join(missing))
@@ -73,12 +73,12 @@ def main() -> None:
     DIST.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for src, dest in ((elf, "TEa.G3.ELF"), (ROOT / "INSTALL-AR.txt", "INSTALL-AR.txt"),
-                          (ROOT / "INSTALL-EN.txt", "INSTALL-EN.txt"), (ROOT / "README.md", "README.md"),
-                          (ROOT / "LICENSE", "LICENSE"), (opl_license, license_path)):
+                          (ROOT / "INSTALL-EN.txt", "INSTALL-EN.txt"), (ROOT / "README.md", "README-AR.md"),
+                          (ROOT / "README-EN.md", "README-EN.md"), (ROOT / "LICENSE", "LICENSE"),
+                          (opl_license, license_path)):
             z.write(src, dest)
         if opl_diagnostic.is_file():
             z.write(opl_diagnostic, "diagnostics/OPL-standalone.ELF")
-        z.writestr("README-AR.txt", "حزمة TEa.G3 بمحرك OPL فقط. انسخ TEa.G3.ELF ومجلدات الألعاب إلى جذر USB. راجع INSTALL-AR.txt.\n")
         z.writestr("QUICKSTART.txt", (ROOT / "INSTALL-AR.txt").read_text(encoding="utf-8"))
         z.writestr("DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب DVD هنا.\n")
         z.writestr("CD/ضع ألعاب CD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب CD هنا.\n")
@@ -95,7 +95,7 @@ def main() -> None:
     sums.write_text(f"{sha256(ZIP_PATH)}  {ZIP_PATH.name}\n{sha256(elf)}  {elf.name}\n", encoding="utf-8")
     with zipfile.ZipFile(ZIP_PATH) as z:
         bad = z.testzip()
-        required = {"TEa.G3.ELF", "INSTALL-AR.txt", "INSTALL-EN.txt",
+        required = {"TEa.G3.ELF", "INSTALL-AR.txt", "INSTALL-EN.txt", "README-AR.md", "README-EN.md",
                     "DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "CD/ضع ألعاب CD بصيغة ISO أو ZSO هنا.txt",
                     "POPS/ضع ألعاب PS1 المتوافقة هنا.txt", "APPS/ضع تطبيقات ELF هنا.txt"}
         missing_entries = required.difference(z.namelist())
