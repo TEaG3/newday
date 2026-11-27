@@ -142,6 +142,7 @@ static volatile int catalog_live_faulted;
 static volatile int catalog_live_guard_faulted; /* guard state unknown: render thread must not inspect either bundle */
 static int catalog_live_apply_requested;
 static int catalog_live_apply_retry;
+static int catalog_live_retire_called;
 enum { D_NONE, D_READING, D_PS2, D_PS1, D_OTHER };
 static int is_ps2(int i) { return cv[i].kind == K_PS2 || (cv[i].kind == K_DISC && cv[i].disc == D_PS2); }
 static int is_ps1(int i) { return cv[i].kind == K_PS1 || (cv[i].kind == K_DISC && cv[i].disc == D_PS1); }
@@ -1656,6 +1657,21 @@ static void catalog_live_release_resource(void *resource, void *context)
 	free(resource); /* VMC directories, save icons and cover buffers all use malloc/memalign. */
 }
 
+/* Called by the publisher after the pointer swap but before the reader gate reopens. */
+static int catalog_live_bundle_retire(const catalog_stage_bundle *active,
+                                      catalog_stage_bundle *retired,
+                                      void *context)
+{
+	(void)context;
+	catalog_live_retire_called = 1;
+	return catalog_stage_sidecar_set_retire(
+		retired->snapshot, active->snapshot,
+		(catalog_stage_sidecar_set *)retired->sidecars, retired->sidecars_capacity,
+		(const catalog_stage_sidecar_set *)active->sidecars, active->sidecars_capacity,
+		catalog_live_release_resource, catalog_live_release_resource,
+		catalog_live_release_resource, NULL);
+}
+
 /* Render thread only: refresh the disc entry, diff stable keys, then swap between completed frames. */
 static int catalog_live_apply_frame(void)
 {
@@ -1711,11 +1727,13 @@ static int catalog_live_apply_frame(void)
 		catalog_live_apply_retry = 30;
 		return 0;
 	}
+	catalog_live_retire_called = 0;
 	catalog_live_apply_requested = 1;
-	status = catalog_stage_bundle_publish_prepared(&catalog_live_guard,
-	                                               &catalog_active_bundle,
-	                                               &catalog_candidate_bundle,
-	                                               catalog_live_bundle_prepare, NULL);
+	status = catalog_stage_bundle_publish_prepared_retire(&catalog_live_guard,
+	                                                      &catalog_active_bundle,
+	                                                      &catalog_candidate_bundle,
+	                                                      catalog_live_bundle_prepare, NULL,
+	                                                      catalog_live_bundle_retire, NULL);
 	if (status == CATALOG_STAGE_ERR_BUSY) {
 		/* Keep the candidate while existing reader leases drain. */
 		if (!catalog_guard_request_apply(&catalog_live_guard)) {
@@ -1731,34 +1749,26 @@ static int catalog_live_apply_frame(void)
 	if (status == CATALOG_STAGE_ERR_GUARD) {
 		/* The publisher may have swapped before a semaphore-release fault; never inspect either bundle. */
 		catalog_live_faulted = catalog_live_guard_faulted = 1;
-		printf("catalog live: apply guard failed; render thread stopped fail-closed\n");
+		printf("catalog live: apply guard failed; render thread stopped fail-closed\\n");
 		return -1;
 	}
 	if (status != CATALOG_STAGE_OK) {
-		printf("catalog live: apply rejected (%d); active generation kept\n", status);
+		if (catalog_live_retire_called) {
+			/* The new generation is active, but the old sidecars were not fully retired. */
+			catalog_active_snapshot_ready = 1;
+			catalog_live_candidate_ready = 0;
+			catalog_live_apply_requested = 0;
+			catalog_live_faulted = 1;
+			printf("catalog live: old-generation retirement failed (%d); monitor stopped\\n", status);
+			return 1;
+		}
+		printf("catalog live: apply rejected (%d); active generation kept\\n", status);
 		catalog_live_candidate_discard();
 		return 0;
 	}
 
 	catalog_active_snapshot_ready = 1;
-	status = catalog_stage_sidecar_set_retire(
-		catalog_candidate_bundle.snapshot, catalog_active_bundle.snapshot,
-		(catalog_stage_sidecar_set *)catalog_candidate_bundle.sidecars,
-		catalog_candidate_bundle.sidecars_capacity,
-		(const catalog_stage_sidecar_set *)catalog_active_bundle.sidecars,
-		catalog_active_bundle.sidecars_capacity,
-		catalog_live_release_resource, catalog_live_release_resource,
-		catalog_live_release_resource, NULL);
-	if (status != CATALOG_STAGE_OK) {
-		/* The new generation is active; retain the old generation and stop further scans. */
-		catalog_live_candidate_ready = 0;
-		catalog_live_apply_requested = 0;
-		catalog_live_faulted = 1;
-		printf("catalog live: old-generation retirement failed (%d); monitor stopped\n", status);
-		return 1;
-	}
-
-	catalog_live_candidate_discard(); /* old sidecars are now retired; candidate buffers are reusable */
+	catalog_live_candidate_discard(); /* old sidecars were retired under the gate; buffers are reusable */
 	printf("catalog live: published %u entries (added %u, removed %u, changed %u)\n",
 	       (unsigned)catalog_active_bundle.count,
 	       (unsigned)catalog_candidate_diff.added_count,
