@@ -4,7 +4,7 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
-## 1. الأدلة الآلية الحالية — 27 نوفمبر 2026 (master: 176e770)
+## 1. الأدلة الآلية الحالية — 27 نوفمبر 2026 (master: 5d6c189)
 
 ### الإصدار المنشور arabic-v1.3.13
 
@@ -12,16 +12,17 @@
 - [x] روابط fallback في `site/index.html` و`site/manual.html` و`site/opl-lab.html` تشير جميعها إلى `arabic-v1.3.13/TEa.G3-Complete-Package.zip`.
 - [x] نُشر GitHub Pages بعد دمج PR #138: run [45912445005](https://github.com/TEaG3/newday/actions/runs/45912445005) على master commit `a49ba8aa985b30838d6a977e2608224cd78046b9`. نجحت وظيفتا التحقق والنشر. artifact `15160756772` حجمه 2,616,379 بايت وبصمته `1ac7d8500e100f81a8563f16f9f3bed81fcc915d7ac27aa90e07578c6d834661`; نُزّل وفُك وفُحص، واحتوى الرابط المنشور الصحيح. الصفحات النشطة index/manual/opl-lab لم تحتوِ على NULD أو ORBIT أو danielnuld أو nuld_catalog.
 - [x] دُمج PR #139 في master بالالتزام `176e770037d5853bf285259004b4021ad9e31144`. التغيير توثيقي ويحدّث README وملاحظات الإصدار المستقبلية؛ لا يغيّر ELF أو محرك OPL.
-- [x] أحدث تحقق PS2/CodeQL مكتمل لهذا المصدر كان على merge ref الخاص بـ PR #139 (`3204c54c0210d3caa0b0c32c1170fcc9020c7e1e`): [PS2 launcher build #45912473143](https://github.com/TEaG3/newday/actions/runs/45912473143) وجميع وظائفه الأربع ناجحة، و[CodeQL #45912473065](https://github.com/TEaG3/newday/actions/runs/45912473065) نجح في C/C++ وPython وJavaScript/TypeScript. لم تعرض واجهة السجل في هذا الفحص تشغيل push منفصلاً على commit master `176e770`؛ لذلك لا أصف تشغيل PR بأنه تشغيل master مستقل.
+- [x] دُمج PR #140 في master بالالتزام `5d6c189ab8661b8f40824193842b322ec6061cb4`: أضاف `items_capacity` و`sidecars_capacity` إلى bundle، ورفض أي نشر يتجاوز السعة قبل تبديل المؤشرات، مع اختبارات للسعة الناقصة في active وcandidate. لم يربط هذا التغيير المسح الحي بالمشغّل.
+- [x] تحقق CI مستقل بعد الدمج على master commit `5d6c189ab8661b8f40824193842b322ec6061cb4`: [PS2 launcher build #45919755516](https://github.com/TEaG3/newday/actions/runs/45919755516) نجح في الوظائف الأربع، و[CodeQL #45919755580](https://github.com/TEaG3/newday/actions/runs/45919755580) نجح في C/C++ وPython وJavaScript/TypeScript.
 - [x] سجل host tests في run #45912473143: `Ran 77 tests`; نجح ZSO host fixture وZSO EE scanner adapter، واختبارات catalog stage وsidecar migration وselection وconcurrent apply وdownload gates وPS2 semaphore adapter، ومصفوفة OPL-only ذات 12 تركيبة.
 - [x] سجل بناء المشغّل في job `140224251719`: `iso selftest ok` و`ul selftest ok`، إضافة إلى اختبارات font وgraphics وengine وnetwork وVMC وruntime installer وcover.
 - [x] بناء OPL من المصدر المثبّت نجح في job `140223873935`. فحص التعريب سجل 326/326 سلسلة عربية، 0 غير مترجمة، دون إدخالات إنجليزية فقط، مع حفظ placeholders ووجود الخط العربي؛ البناء استخدم `RTL=1` و`PADEMU=1`.
-- [x] Artifacts البناء غير منتهية الصلاحية وقت الفحص:
-  - Integration bundle — artifact `15161275631`, 17,762,840 بايت، SHA-256 `040b45400cc737d0bbc674b1bea965dce13138d47f37a3d3b7cb034f4e4acf05`.
-  - TEa.G3 launcher — artifact `15160781990`, 4,280,263 بايت، SHA-256 `87505938aea67c6bb2dca9866a58565bb2086ea541275f78fcf55bab937fe881`.
-  - OPL runtime — artifact `15160044286`, 2,539,789 بايت، SHA-256 `30d5c349ae3a69803da27b9ba87096c31d6922f0231914d1eef225cd78be5782`.
-  - Build log — artifact `15160522478`, 1,836 بايت، SHA-256 `0d6f9da43c62070e14ff9b8983ed1ef60b5e58090696f32d6d9f520d256d33ae`.
-- [x] نُزّل integration bundle وفُك محلياً؛ ZIP integrity ناجح وبصمة ZIP مطابقة لـ GitHub. يحتوي `TEa.G3.ELF` بحجم 9,557,908 بايت و`OPL.ELF` بحجم 5,792,496 بايت؛ كلاهما ELF 32-bit MIPS N32. `SHA256SUMS.txt` الداخلي أكد `TEa.G3-Complete-Package.zip` و`TEa.G3.ELF` (`OK`). بيان runtime يعلن `files=1` وOPL فقط، وCRC32 لمحرك OPL هو `aa490716` مطابق للبيان.
+- [x] Artifacts من تشغيل master بعد الدمج، غير منتهية الصلاحية وقت الفحص:
+  - Integration bundle — artifact `15164440995`, 17,763,263 بايت، SHA-256 `5ce139e809ac560ddf5281482bc1349f8e00e69bf08b74e9080508fd74b2af24`.
+  - TEa.G3 launcher — artifact `15164281321`, 4,280,329 بايت، SHA-256 `63c7234d6a6a4dfea1a60311f4320611b6a8899fe42ebac7db355c75d56b2737`.
+  - OPL runtime — artifact `15163912195`, 2,539,789 بايت، SHA-256 `ddd97bf378da3d515abc5b96fbaea79d5afe89d250d6ba2a586204e36c5d801b`.
+  - Build log — artifact `15164281325`, 1,836 بايت، SHA-256 `2c544c591f6ca7fc5b4f73a897850dd91ed565559db27f5406bcbef73ff74cac`.
+- [x] نُزّلت artifacts الخاصة بتشغيل master وفُكّت محلياً؛ ZIP integrity ناجح وبصمات الأرشيفات الأربع مطابقة لـ GitHub. يحتوي integration bundle على `TEa.G3.ELF` و`OPL.ELF` بصيغة ELF 32-bit MIPS N32. `SHA256SUMS.txt` الداخلي أكد `TEa.G3-Complete-Package.zip` و`TEa.G3.ELF` (`OK`). بيان runtime يعلن `files=1` وOPL فقط؛ حجم `OPL.ELF` هو 5,792,496 بايت وCRC32 هو `aa490716` مطابق للبيان.
 - [x] Neutrino ليس محرك تشغيل في هذه المعمارية: اختبار `tests/test_neutrino_ui_reference.py` يثبت `runtime_linked=false` و`game_engine=OPL` وعدم بناء أو ربط `neutrino.elf`. بقي مرجع الواجهة والأصول العربية فقط.
 - [x] PR #29 مدمج بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`؛ فرع `safety/io-and-runtime-guards` لم يعد موجوداً.
 - [x] بقايا Nuld في المسارات القديمة وملفات الترحيل وأجزاء changelog التاريخية محفوظة للتوافق؛ لم تُحذف. صفحات الموقع النشطة المنشورة خالية من تلك الأسماء.
