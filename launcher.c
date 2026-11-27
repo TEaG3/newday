@@ -751,7 +751,7 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
     int records = (int)(end / UL_CFG_RECORD_SIZE);
     int failed = 0;
     int previous_done = done_n, previous_total = total_n;
-    for (int r = 0; r < records && n < MAXC; r++) {
+    for (int r = 0; r < records; r++) {
         unsigned char raw[UL_CFG_RECORD_SIZE];
         ul_game game;
         int got = fileXioRead(fd, raw, sizeof(raw));
@@ -761,6 +761,11 @@ static int scan_ul(entry *items, int s, int n) // OPL USBExtreme catalogue: ul.c
             break;
         }
         if (!ul_decode_record(raw, &game, ul_part_exists, src[s].root)) continue;
+        if (!ul_catalog_capacity_fits(1u, (unsigned)n, MAXC)) {
+            printf("UL: catalogue capacity exceeded at record %d\n", r);
+            failed = 1;
+            break;
+        }
         entry *e = &items[n];
         memset(e, 0, sizeof(*e));
         if (snprintf(e->title, sizeof(e->title), "%s", game.name) >= (int)sizeof(e->title) ||
