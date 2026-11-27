@@ -6,6 +6,8 @@ typedef int (*net_cancel_fn)(void *context);
 int net_dev9(void);     // ps2dev9 once: shared by the cover download, the HDD and the UDP sources (phase 14); 1 if loaded
 extern volatile int net_busy; // 1 once udpbd / udpfs gave the adapter to Neutrino's own smap: no lwIP after that
 int net_up(const char *ip, const char *mask, const char *gw, const char *dns); // ip "dhcp" or dotted; 0 or NET_ERR_*
+int net_up_cancelable(const char *ip, const char *mask, const char *gw, const char *dns,
+                      net_cancel_fn cancelled, void *cancel_context);
 void net_down(void);        // before running another program: EE stack off netman (no frames DMAed into EE RAM)
 const char *net_ip(void);   // the interface's address now (fixed or DHCP), "" when down
 extern volatile int net_got; // bytes received so far by the running https_get / http_req (progress bars)
