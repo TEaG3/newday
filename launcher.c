@@ -118,7 +118,9 @@ typedef struct {
 	u32 hdl_start_sector, hdl_size_kb, hdl_disc_type;
 	void *big, *small, *half;
 } entry;
-static entry cv[MAXC];
+static entry catalog_boot_items[MAXC];
+static entry *catalog_items = catalog_boot_items;
+#define cv catalog_items /* active generation; future bundle swaps change this pointer only */
 /* Stable-key baseline from the boot-time catalog; live rescans remain disabled. */
 static catalog_stage_snapshot catalog_active_snapshot;
 static int catalog_active_snapshot_ready;
