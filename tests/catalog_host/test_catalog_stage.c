@@ -612,9 +612,7 @@ static void test_guard_and_concurrent_reader(void)
     assert(catalog_guard_init(&guard, guard_lock, guard_unlock, &mutex));
     assert(catalog_guard_can_scan(&guard));
     assert(catalog_guard_read_begin(&guard));
-    assert(!catalog_guard_can_scan(&guard));
-    assert(!catalog_guard_scan_begin(&guard)); /* a scan cannot start while a reader holds the active snapshot */
-    assert(catalog_guard_read_end(&guard));
+    assert(catalog_guard_can_scan(&guard)); /* active readers do not block an inactive candidate scan */
     assert(catalog_guard_scan_begin(&guard));
     assert(!catalog_guard_can_scan(&guard));
     assert(catalog_guard_read_begin(&guard)); /* render may keep reading the active snapshot */
