@@ -1844,7 +1844,7 @@ static void art_import(void)
 	/* Each item owns its own reader/I/O lease. A safe apply may occur between items. */
 	for (int i = 1; i < ncv && !ra_launching; i++) {
 		if (!background_work_begin(&art_busy)) break;
-		if (!ra_launching) got += art_import_one(i, &net, max);
+		if (!ra_launching && i < ncv) got += art_import_one(i, &net, max);
 		background_work_end(&art_busy);
 		if (art_busy) break; // a failed semaphore release leaves the guard fail-closed
 	}
@@ -1900,7 +1900,7 @@ static void download_covers(void)
 	for (int i = 1; buf && i < ncv && dl_state == 2 && !ra_launching; i++) {
 		if (!background_work_begin(&dl_busy)) break;
 		int keep_going = 1;
-		if (!ra_launching && wants_cover(i))
+		if (!ra_launching && i < ncv && wants_cover(i))
 			keep_going = download_cover_one(i, buf, max);
 		background_work_end(&dl_busy);
 		if (dl_busy || !keep_going) break;
