@@ -1568,7 +1568,8 @@ static int background_workers_busy(void)
 static int catalog_activity_update(int playing)
 {
 	if (!catalog_live_ready) return 1;
-	return catalog_guard_set_activity(&catalog_live_guard, playing, background_workers_busy());
+	int io_busy = ra_busy || art_busy || update_busy || dl_busy || icon_busy || disc_busy || cover_busy;
+	return catalog_guard_set_activity(&catalog_live_guard, playing, io_busy);
 }
 
 static void disc_apply_pending(void)
