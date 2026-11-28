@@ -183,7 +183,7 @@ jobs:
             test -s ui/neutrino-igr/menu_arabic.h
             grep -Fq "IGR_AR_BOX_WIDTH 216" ui/neutrino-igr/menu_arabic.h
             python3 tools/font.py --selftest
-            python3 -m unittest tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py
+            python3 -m unittest tests/test_runtime_manifest.py tests/test_neutrino_ui_reference.py tests/test_package_reproducibility.py
             make test
             python3 tools/theme_check.py
             make clean
