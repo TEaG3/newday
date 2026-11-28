@@ -4,6 +4,21 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
+
+## 0-A. تثبيت بيئة البناء والتحقق بعد PR #195 — 28 نوفمبر 2026
+
+- [x] دُمج PR #195، الذي يثبت صور أدوات البناء على digests غير قابلة للتغيير ويضيف اختبار منع الرجوع إلى وسوم `:latest` و`:main`. الالتزام الناتج في `master`: `b7208e5253ced1e2451798011b6e789562418146`؛ رأس PR كان `df80bce09430096db6b45d31df14270ae354f5ea`.
+- [x] صور البناء المثبتة: `ps2dev/ps2dev@sha256:c6c0c4d633fbe9b2ba9c326d86eddb238039915f5d4728b82c45a2b5f16d9afb` و`ghcr.io/ps2homebrew/ps2homebrew@sha256:00466c8333dee69d8e5ef7b927580ac3f2e010c6b29375b38d03fec2b7ccec36`. سجل بناء master السابق #46097755836 يؤكد أن الوسمين المتغيرين كانا يحلان إلى هذين الـ digests.
+- [x] فحوص PR: [PS2 build #46098506695](https://github.com/TEaG3/newday/actions/runs/46098506695) و[CodeQL #46098506765](https://github.com/TEaG3/newday/actions/runs/46098506765) نجحا. دُمج PR بعد اكتمال جميع الوظائف.
+- [x] تحقق ما بعد الدمج على الالتزام أعلاه: [PS2 build #46098828153](https://github.com/TEaG3/newday/actions/runs/46098828153) و[CodeQL #46098828166](https://github.com/TEaG3/newday/actions/runs/46098828166) نجحا؛ وظائف البناء الأربع اكتملت بنجاح وتحليلات C/C++ وPython وJavaScript/TypeScript الثلاث نجحت.
+- [x] سجل المضيف: 115 اختبار Python ناجحاً؛ ZSO raw/compressed/header/bounds/I/O/allocation fixtures، ZSO EE scanner adapter، HDL/APA scanner، source-root probe، candidate/apply وtyped sidecar retirement، PS2 semaphore host concurrency، ISO وUL selftests، ومصفوفة OPL-only ذات 12 تركيبة نجحت.
+- [x] بناء OPL من الصورة المثبتة نجح. `OPL.ELF` هو ELF32 MIPS N32، SHA-256 `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`. أرشيف artifact حجمه 2,539,789 بايت وبصمته `f2f7089e929a5b901b6f2133158a10c12904aa05af7f17f1d0ed8e94ad65eb92`.
+- [x] بناء `TEa.G3.ELF` بالصورة المثبتة نجح؛ سجل التكامل يثبت SHA-256 `d25459f981731f736b100d59d8b9f51e698874f0319aa8da7aa053516efef1da`. أرشيف launcher artifact حجمه 4,290,393 بايت وبصمته `3affae55f2e27e9decd039ad021e673836a1b289a17cf512406c748765efc757`.
+- [x] حزمة التكامل التجريبية `version=development` حجمها 6,711,536 بايت، SHA-256 `53a17563ce1ec7cae44b429e4da134d53f709a614b9ef4b2c8c6ac362a6b7f98`؛ `package_crc=PASS`، و`sha256sum -c` أكد `TEa.G3-Complete-Package.zip: OK` و`TEa.G3.ELF: OK`. أرشيف Integration artifact حجمه 17,792,176 بايت وبصمته `5066bf0bbadc869a8dbd2b1586e08eabf5e3f01e76e3453bf04b555cbd36eb84`.
+- [x] رسالة `runtime: failed integrity check/install for OPL.ELF` في `make test` هي الحالة السلبية المقصودة لاختبار رفض ملف staging غير السليم؛ تلتها رسائل نجاح تثبيت bundle والتحقق منه والحفاظ على ملفات staging الموجودة مسبقاً.
+- [ ] لم يُنشأ Release جديد ولم تتغير روابط الموقع؛ حزمة v1.3.14 المنشورة تبقى الإصدار المستقر. حزمة CI ذات `version=development` ليست إصداراً للمستخدم.
+- [ ] لم يُجرَ اختبار تشغيل على PS2 حقيقي. ISO/ZSO/UL وHDD/APA هنا نتائج اختبارات برمجية/مضيف فقط؛ SMB/UDPBD/UDPFS/MMCE ما زالت مغلقة كمصادر ألعاب، و`CATALOG_LIVE_MONITOR_ENABLED=0` حتى اختبار hotplug/semaphore/IGR على الجهاز.
+
 ## 0. إصدار v1.3.14 والتحقق الحالي — 28 نوفمبر 2026
 
 - [x] `master` قبل إصدار v1.3.14 كان عند الالتزام `342b1f6cf17c2e2b679a1a20f4a31da650e6c0a5`. PR #192 مدمج. PR #29 مدمج بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
