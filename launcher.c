@@ -47,7 +47,7 @@
 #include "catalog_source_probe.h"
 #include "app_payload.h"
 
-#define TEAG3_VERSION "v1.3.13" // tag: arabic-v1.3.13
+#define TEAG3_VERSION "v1.3.14" // tag: arabic-v1.3.14
 #include "lang.h"
 #include "achievements.h"
 #include <sys/stat.h>

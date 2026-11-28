@@ -29,6 +29,28 @@
     <p>Newest first. Called ORBIT until v1.1. Each version's zip and checksums are on its release page.</p>
   </header>
 
+  <section class="chapter" id="v1.3.14">
+    <header><b>1.3.14</b><h2 class="mono">2026-11-28 · <a href="https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.14">stable software release</a></h2></header>
+    <div>
+      <p>A single-ELF Arabic TEa.G3 software release with OPL as its only PS2 game engine. The package is published and its SHA-256 assets are available. Physical PS2 acceptance is intentionally not claimed.</p>
+      <h3>Included</h3>
+      <ul>
+        <li><b>Safe staged catalogue.</b> Candidate scans are isolated from the active list. Snapshot/Diff uses stable keys, migrates typed per-game sidecars, preserves selection and worker indices, and publishes between render frames only after readers drain. Failed retirement rolls back to the previous active generation.</li>
+        <li><b>Cancellation and activity gates.</b> Source scans and downloads cooperate with cancellation when gameplay or storage I/O begins. Incomplete candidates are discarded and cannot replace the active catalogue.</li>
+        <li><b>Single PS2 engine.</b> OPL is the only embedded PS2 game runtime. Neutrino remains an inactive UI reference; no second runtime or fallback is packaged.</li>
+        <li><b>Arabic and RTL.</b> The release pipeline checks the Arabic OPL translation and embeds the Arabic font; the font self-test passes with 509 glyphs.</li>
+        <li><b>Published package.</b> Download <a href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.14/TEa.G3-Complete-Package.zip">TEa.G3-Complete-Package.zip</a> and verify it with <a href="https://github.com/TEaG3/newday/releases/download/arabic-v1.3.14/SHA256SUMS.txt">SHA256SUMS.txt</a>.</li>
+      </ul>
+      <h3>Verification boundary</h3>
+      <ul>
+        <li>The release workflow built OPL, embedded one OPL runtime asset, built TEa.G3.ELF, and passed package CRC validation. The master baseline also passed 114 host tests and CodeQL.</li>
+        <li>ISO/ZSO/UL and HDD/APA evidence is automated or host-side only. No physical PS2 game boot or sustained-read success is claimed.</li>
+        <li>Periodic live catalogue monitoring remains disabled until target semaphore, USB removal/reinsert, IGR and concurrency tests pass.</li>
+        <li>SMB, UDPBD, UDPFS game streaming and MMCE game-source launching remain disabled.</li>
+      </ul>
+    </div>
+  </section>
+
   <section class="chapter" id="v1.3.13">
     <header><b>1.3.13</b><h2 class="mono">2026-11-26 · <a href="https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.13">stable software release</a></h2></header>
     <div>

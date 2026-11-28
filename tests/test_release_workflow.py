@@ -34,8 +34,8 @@ class ReleaseWorkflowRegressionTests(unittest.TestCase):
 
     def test_release_version_is_synchronised(self) -> None:
         launcher = (ROOT / "launcher.c").read_text(encoding="utf-8")
-        self.assertIn('#define TEAG3_VERSION "v1.3.13"', launcher)
-        self.assertIn('tag: arabic-v1.3.13', launcher)
+        self.assertIn('#define TEAG3_VERSION "v1.3.14"', launcher)
+        self.assertIn('tag: arabic-v1.3.14', launcher)
 
     def test_release_write_permission_is_limited_to_publish_job(self) -> None:
         workflow = (ROOT / ".github/workflows/publish-arabic-release.yml").read_text(encoding="utf-8")

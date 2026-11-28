@@ -4,32 +4,24 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
-## 0. أحدث تحقق بعد PR #188–#191 — 28 نوفمبر 2026
+## 0. إصدار v1.3.14 والتحقق الحالي — 28 نوفمبر 2026
 
-- [x] مرجع البناء والاختبارات الموثقة هنا هو `master` عند الالتزام `bb75b745ef331c208ef4c9ad855bfd40a3d1779e` بعد PR #191؛ PR #192 يحدّث هذا السجل فقط ولا يغيّر ملفات التشغيل. PR #29 مدمج بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
-- [x] PR #188 ربط مسار candidate مستقل بـ launcher: Snapshot/Diff، ترحيل typed sidecars، حفظ الاختيار بالـ stable key، إعادة بناء `pos/order` و`shown_box/wave`، والتبديل على render thread عند نقطة آمنة بين الإطارات.
-- [x] PR #189 نظّف نصوص الهوية النشطة. فحص README والصفحات النشطة (الرئيسية والدليل وOPL Lab) لم يجد اسم NULD أو ORBIT؛ بقيت إشارات ORBIT القديمة ومسارات `nuld/` في سجل changelog التاريخي ونصوص نقل الإعدادات، وهي توثيق/توافق وليست هوية العرض الحالية. لا تمحُ التاريخ أو مسارات الترحيل.
-- [x] PR #190 جعل فشل retirement قابلاً للرجوع: إذا فشل تحرير sidecars بعد تبديل الحزمة، يعيد الناشر الجيل القديم إلى active قبل فتح بوابة القراء. اختبارات الرجوع وفشل semaphore موجودة.
-- [x] PR #191 حدّث سجل القبول بعد #190؛ وPR #192 يزيل التناقضات في هذا الملخص ويضيف بصمات run #1348 ونتائج تدقيق التعريب. الفقرات اللاحقة تاريخية.
-- [x] أحدث بناء على `master`: [PS2 launcher build #46084717348](https://github.com/TEaG3/newday/actions/runs/46084717348) — الوظائف الأربع نجحت: ZSO host decoder fixture، بناء OPL من المصدر المثبّت، بناء TEa.G3 launcher، وتجميع حزمة التكامل.
-- [x] أحدث CodeQL: [#46084717341](https://github.com/TEaG3/newday/actions/runs/46084717341) — تحليلات C/C++ وPython وJavaScript/TypeScript الثلاث نجحت.
-- [x] سجل المضيف: `Ran 114 tests` ثم `OK`. نجحت ZSO raw/compressed وZSO EE scanner، وHDL/APA scanner، وsource-root probe، والتحقق من ELF payload، وcatalog stage وPS2 semaphore host concurrency، واختبارات ISO وUL الذاتية، ومصفوفة OPL-only ذات 12 تركيبة.
-- [x] العربية وRTL في بناء OPL: `check_arabic_translation.py` سجل 326/326 سلسلة، 0 غير مترجمة، وRTL=1 مع الخط المضمن. فحص المشغّل أكد العربية لغة البدء والرجوع الافتراضية، تغطية 38 محرفاً عربياً، واختبار الخط 509 glyphs؛ CSS يفعّل `.tea-g3-rtl` في OPL Lab.
-- [x] نُزّلت artifacts من run #46084717348 وفُكّت محلياً. نجح `unzip -t` لكل ZIP، وتطابقت SHA-256 المحسوبة محلياً مع GitHub artifact digests:
-  - Integration bundle — [artifact 15239080002](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15239080002)، 17,791,473 بايت، SHA-256 `ea9771d7f2c5ab019ad0856aaf0083f329adcc9e54c10fbe6e99c7698312dcbb`.
-  - Launcher artifact — [artifact 15238761980](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15238761980)، 4,290,393 بايت، SHA-256 `affcabb0165c5962af69ae6bdd570f97d6916fcfa0784b1fb3199c2a3ca81bd4`.
-  - OPL runtime — [artifact 15237889788](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15237889788)، 2,539,789 بايت، SHA-256 `cccb186734ee5fd3c68e3b660cce2e2c596005c1082d3e49260b1d81321c4242`.
-- [x] داخل integration bundle: `TEa.G3.ELF` حجمه 9,579,156 بايت، SHA-256 `48cefc8611803c39d386c8774ee3e16fa0dff721c055edde8b316d32b7f69420`؛ و`OPL.ELF` حجمه 5,792,496 بايت، SHA-256 `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`. أعادت قراءة ELF تأكيد ELF32 little-endian MIPS executable.
-- [x] حزمة المستخدم الداخلية `TEa.G3-Complete-Package.zip` حجمها 6,710,832 بايت، SHA-256 `15833c246258df8671af6ab69e6733b0d6c7c7a3d80d281c609bc05cef0289b6`. طابقت بصمة ELF الموجودة داخل الحزمة البصمة نفسها في integration bundle.
-- [x] `runtime-manifest.txt` يعلن `files=1` و`OPL.ELF` فقط. أُعيد حساب CRC32 لمحرك OPL فكانت `aa490716`، مطابقة للبيان. لا يوجد Neutrino ELF أو محرك ألعاب ثانٍ في الحزمة.
-- [x] مقطع `PT_LOAD` في ELF يطلب 11,982,620 بايت (11.43 MiB). بطاقة PS2 ذات 8MB هي مساحة تخزين وليست RAM؛ ذاكرة PS2 الرئيسية 32MiB. هذا قياس تحميل ELF وليس قياس استهلاك الذاكرة أثناء اللعب.
-- [ ] `CATALOG_LIVE_MONITOR_ENABLED=0` عمداً. مسار candidate/apply وsource polling وإلغاء المسح موجودة ومختبرة على المضيف، لكن لم تُجرَ اختبارات USB removal/reinsert ودورة حياة semaphore وIGR على PS2 حقيقي؛ لذلك لا تفعّل المراقبة.
-- [ ] USB ISO/ZSO وUSBExtreme UL اجتازت اختبارات آلية فقط؛ HDD/APA اجتازت اختبارات مضيف فقط. SMB وUDPBD وUDPFS وMMCE كمصادر ألعاب ما زالت معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق هنا لإثبات إقلاع لعبة أو استمرار قراءة القطاعات.
-- [ ] PRs #93 و#72 و#6 ما زالت Draft مفتوحة وقديمة؛ لم تُدمج ولم تُستخدم كبديل عن العمل المدمج في master.
-- [ ] بيانات المستودع ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage القديم `https://danielnuld.github.io/nuld/`. فرع `master` يظهر `protected=false`، وواجهة rulesets أعادت قائمة فارغة؛ لكن تفاصيل branch-protection endpoint نفسها ترجع 403. أدوات GitHub المتاحة هنا لا تتضمن تحديث metadata أو حماية الفرع؛ يلزم تعديل الوصف وHomepage والحماية من Settings.
-- [ ] آخر Release منشور ما زال `arabic-v1.3.13`. لم يُنشأ Release جديد ولم يُحوّل زر التنزيل إلى artifact مؤقت. ملف `site/release.js` يختار أحدث Release منشور يحتوي الحزمة المتوقعة، بينما fallback الثابت ما زال يشير إلى `arabic-v1.3.13`.
+- [x] `master` قبل إصدار v1.3.14 كان عند الالتزام `342b1f6cf17c2e2b679a1a20f4a31da650e6c0a5`. PR #192 مدمج. PR #29 مدمج بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
+- [x] أُنشئ فرع الإصدار `arabic-v1.3.14` من `master` مع مزامنة `TEAG3_VERSION` وREADME العربي والإنجليزي واختبار تزامن رقم الإصدار. Tag `arabic-v1.3.14` يشير إلى الالتزام `9f6fdef5ad057126fab40d084e9fd7f06570aae2`، وهو مبني على `master` دون تباعد.
+- [x] نُشر GitHub Release رقم `461233354` بتاريخ 28 نوفمبر 2026، وهو stable وليس draft أو prerelease: [arabic-v1.3.14](https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.14).
+- [x] مسارا النشر نجحا: [run #46096405172](https://github.com/TEaG3/newday/actions/runs/46096405172) و[run #46096461979](https://github.com/TEaG3/newday/actions/runs/46096461979). التشغيل الثاني حدّث release إلى commit `9f6fdef5` وأعاد رفع الأصول النهائية بنجاح.
+- [x] حزمة الإصدار `TEa.G3-Complete-Package.zip` حجمها 6,711,484 بايت، SHA-256 `e81374d9f8360af935e6ca54fda8c44c8c788fcdcc616efdb96ea06437189b55`. بصمة `TEa.G3.ELF` هي `a07cd374fadd6098274af41437e4a8b56deb08333418858f94289f1685c951b7`. أصل `SHA256SUMS.txt` حجمه 171 بايت وبصمة GitHub asset هي `786c3c2ec76fa56eb5b60be7217199a8ebf89a20fe404c402c8e5043783492b0`. أظهر سجل packager `package_crc=PASS`، وبصمة حزمة ZIP في السجل تطابق GitHub asset digest.
+- [x] تحقق بناء الإصدار من OPL المثبّت، ثم تحقق من embedding لملف runtime واحد (`OPL` فقط) وبناء `TEa.G3.ELF`. لا يوجد `Neutrino.ELF` أو محرك PS2 ثانٍ في الحزمة.
+- [x] سجل بناء الإصدار: 13 اختباراً لحزمة runtime/Neutrino UI reference نجحت؛ `font selftest` نجح مع 509 glyphs؛ و`iso selftest` و`ul selftest` و`net selftest` وOPL-only engine decision وruntime installer وcover tests نجحت. رسالة `runtime: failed integrity check/install for OPL.ELF` هي الحالة السلبية المقصودة لاختبار رفض ملف staging الموجود مسبقاً؛ تلاها `runtime: installed and verified bundle selftest-v1` و`runtime installer preserves pre-existing staging files`.
+- [x] تحقق master الأساسي قبل رفع رقم الإصدار: [PS2 build #46089647468](https://github.com/TEaG3/newday/actions/runs/46089647468) و[CodeQL #46089647459](https://github.com/TEaG3/newday/actions/runs/46089647459) نجحا. سجل المضيف أظهر 114 اختباراً ناجحاً، واختبارات ZSO وHDL/APA وsource-root وSnapshot/Diff وPS2 semaphore concurrency وISO وUL.
+- [x] نُقل fallback الثابت في الصفحة الرئيسية إلى حزمة v1.3.14، وأضيف سجل الإصدار الجديد في changelog ضمن PR #193؛ `site/release.js` يستمر باختيار أحدث Release منشور يحتوي الحزمة الصحيحة.
+- [ ] `CATALOG_LIVE_MONITOR_ENABLED=0` عمداً. candidate/Snapshot/Diff/sidecar migration/apply والـ source polling وإلغاء المسح موجودة ومختبرة على المضيف، لكن لا تُفعّل المراقبة قبل اختبارات semaphore وUSB removal/reinsert وIGR والتزامن على PS2 حقيقي.
+- [ ] USB ISO/ZSO وUSBExtreme UL اجتازت اختبارات آلية فقط؛ HDD/APA اجتازت اختبارات مضيف فقط. SMB وUDPBD وUDPFS وMMCE كمصادر ألعاب ما زالت معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق لإثبات إقلاع لعبة أو استمرار قراءة القطاعات.
+- [ ] Neutrino ليس محرك تشغيل في هذه النسخة؛ OPL هو محرك ألعاب PS2 الوحيد.
+- [ ] PRs #93 و#72 و#6 ما زالت Draft ومفتوحة ومتباعدة عن `master` (على الترتيب 276 و295 و820 التزاماً خلفه)؛ لم تُدمج لأنها تحتاج إعادة تأسيس ومراجعة.
+- [ ] بيانات المستودع ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage القديم `https://danielnuld.github.io/nuld/`. `master` غير محمي ولا توجد Rulesets؛ تعديل metadata وحماية الفرع يحتاج صلاحية Settings غير متاحة عبر أدوات GitHub الحالية.
 
-**المرحلة التالية:** اختبارات العتاد الفعلية فقط هي التي تفصل بين جاهزية البناء وقبول التشغيل. إبقاء المراقبة الحية ومصادر الشبكة معطلة هو السلوك الآمن إلى أن تتوفر سجلات PS2 موثوقة.
+**المرحلة التالية:** دمج PR #193 بعد نجاح فحوصه، ثم التحقق من نشر Pages على الرابط الجديد. تبقى اختبارات PS2 الحقيقية وإعدادات المستودع الإدارية بوابات قبول خارج بيئة CI.
 
 ## سجل تاريخي: التحقق بعد PR #185 وPR #186 — 27 نوفمبر 2026
 
