@@ -6,11 +6,11 @@
 
 ## 0. أحدث تحقق بعد PR #188–#191 — 28 نوفمبر 2026
 
-- [x] رأس `master` الحالي: `bb75b745ef331c208ef4c9ad855bfd40a3d1779e`، بعد دمج PR #191. PR #29 ما زال مدمجاً بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
+- [x] مرجع البناء والاختبارات الموثقة هنا هو `master` عند الالتزام `bb75b745ef331c208ef4c9ad855bfd40a3d1779e` بعد PR #191؛ PR #192 يحدّث هذا السجل فقط ولا يغيّر ملفات التشغيل. PR #29 مدمج بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
 - [x] PR #188 ربط مسار candidate مستقل بـ launcher: Snapshot/Diff، ترحيل typed sidecars، حفظ الاختيار بالـ stable key، إعادة بناء `pos/order` و`shown_box/wave`، والتبديل على render thread عند نقطة آمنة بين الإطارات.
 - [x] PR #189 نظّف نصوص الهوية النشطة. فحص README والصفحات النشطة (الرئيسية والدليل وOPL Lab) لم يجد اسم NULD أو ORBIT؛ بقيت إشارات ORBIT القديمة ومسارات `nuld/` في سجل changelog التاريخي ونصوص نقل الإعدادات، وهي توثيق/توافق وليست هوية العرض الحالية. لا تمحُ التاريخ أو مسارات الترحيل.
 - [x] PR #190 جعل فشل retirement قابلاً للرجوع: إذا فشل تحرير sidecars بعد تبديل الحزمة، يعيد الناشر الجيل القديم إلى active قبل فتح بوابة القراء. اختبارات الرجوع وفشل semaphore موجودة.
-- [x] PR #191 حدّث سجل القبول بعد #190. هذا القسم هو أحدث ملخص؛ لا تعتمد على الفقرات التاريخية أدناه إذا تعارضت مع هذه الحالة الحالية.
+- [x] PR #191 حدّث سجل القبول بعد #190؛ وPR #192 يزيل التناقضات في هذا الملخص ويضيف بصمات run #1348 ونتائج تدقيق التعريب. الفقرات اللاحقة تاريخية.
 - [x] أحدث بناء على `master`: [PS2 launcher build #46084717348](https://github.com/TEaG3/newday/actions/runs/46084717348) — الوظائف الأربع نجحت: ZSO host decoder fixture، بناء OPL من المصدر المثبّت، بناء TEa.G3 launcher، وتجميع حزمة التكامل.
 - [x] أحدث CodeQL: [#46084717341](https://github.com/TEaG3/newday/actions/runs/46084717341) — تحليلات C/C++ وPython وJavaScript/TypeScript الثلاث نجحت.
 - [x] سجل المضيف: `Ran 114 tests` ثم `OK`. نجحت ZSO raw/compressed وZSO EE scanner، وHDL/APA scanner، وsource-root probe، والتحقق من ELF payload، وcatalog stage وPS2 semaphore host concurrency، واختبارات ISO وUL الذاتية، ومصفوفة OPL-only ذات 12 تركيبة.
