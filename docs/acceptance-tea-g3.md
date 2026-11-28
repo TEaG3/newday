@@ -18,7 +18,7 @@
 - [ ] `CATALOG_LIVE_MONITOR_ENABLED=0` عمداً. candidate/Snapshot/Diff/sidecar migration/apply والـ source polling وإلغاء المسح موجودة ومختبرة على المضيف، لكن لا تُفعّل المراقبة قبل اختبارات semaphore وUSB removal/reinsert وIGR والتزامن على PS2 حقيقي.
 - [ ] USB ISO/ZSO وUSBExtreme UL اجتازت اختبارات آلية فقط؛ HDD/APA اجتازت اختبارات مضيف فقط. SMB وUDPBD وUDPFS وMMCE كمصادر ألعاب ما زالت معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق لإثبات إقلاع لعبة أو استمرار قراءة القطاعات.
 - [ ] Neutrino ليس محرك تشغيل في هذه النسخة؛ OPL هو محرك ألعاب PS2 الوحيد.
-- [ ] PRs #93 و#72 و#6 ما زالت Draft ومفتوحة ومتباعدة عن `master` (على الترتيب 276 و295 و820 التزاماً خلفه)؛ لم تُدمج لأنها تحتاج إعادة تأسيس ومراجعة.
+- [ ] PRs #93 و#72 و#6 ما زالت Draft ومفتوحة ومتباعدة عن `master` (على الترتيب 281 و300 و825 التزاماً خلفه)؛ لم تُدمج لأنها تحتاج إعادة تأسيس ومراجعة.
 - [ ] بيانات المستودع ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage القديم `https://danielnuld.github.io/nuld/`. `master` غير محمي ولا توجد Rulesets؛ تعديل metadata وحماية الفرع يحتاج صلاحية Settings غير متاحة عبر أدوات GitHub الحالية.
 
 **نتيجة ما بعد الدمج:** دُمج PR #193 بالالتزام `5fa0f0f645f4c2539c0614e4528917a02196f7e0`. بعد الدمج نجح [PS2 build #46097067446](https://github.com/TEaG3/newday/actions/runs/46097067446) و[CodeQL #46097067401](https://github.com/TEaG3/newday/actions/runs/46097067401) و[Website/Pages #46097067441](https://github.com/TEaG3/newday/actions/runs/46097067441). نُشر الموقع على https://teag3.github.io/newday/. تبقى اختبارات PS2 الحقيقية وإعدادات المستودع الإدارية بوابات قبول خارج CI.
