@@ -28,7 +28,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    container: ghcr.io/ps2homebrew/ps2homebrew:main
+    container: ghcr.io/ps2homebrew/ps2homebrew@sha256:00466c8333dee69d8e5ef7b927580ac3f2e010c6b29375b38d03fec2b7ccec36
     steps:
       - name: Check out TEa.G3 source
         uses: actions/checkout@v7
@@ -169,7 +169,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --rm -v "${GITHUB_WORKSPACE}:/src" -w /src ps2dev/ps2dev:latest sh -c '
+          docker run --rm -v "${GITHUB_WORKSPACE}:/src" -w /src ps2dev/ps2dev@sha256:c6c0c4d633fbe9b2ba9c326d86eddb238039915f5d4728b82c45a2b5f16d9afb sh -c '
             set -eu
             export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
             export PS2SDK="${PS2SDK:-$PS2DEV/ps2sdk}"

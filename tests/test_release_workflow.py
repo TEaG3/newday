@@ -60,5 +60,19 @@ class ReleaseWorkflowRegressionTests(unittest.TestCase):
         self.assertNotIn("ghcr.io/ps2homebrew/ps2homebrew:main", workflow)
 
 
+
+    def test_release_workflow_uses_the_same_immutable_ps2_toolchain_images(self) -> None:
+        workflow = (ROOT / ".github/workflows/publish-arabic-release.yml").read_text(encoding="utf-8")
+        self.assertIn(
+            "ps2dev/ps2dev@sha256:c6c0c4d633fbe9b2ba9c326d86eddb238039915f5d4728b82c45a2b5f16d9afb",
+            workflow,
+        )
+        self.assertIn(
+            "ghcr.io/ps2homebrew/ps2homebrew@sha256:00466c8333dee69d8e5ef7b927580ac3f2e010c6b29375b38d03fec2b7ccec36",
+            workflow,
+        )
+        self.assertNotIn("ps2dev/ps2dev:latest", workflow)
+        self.assertNotIn("ghcr.io/ps2homebrew/ps2homebrew:main", workflow)
+
 if __name__ == "__main__":
     unittest.main()
