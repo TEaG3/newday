@@ -8,12 +8,13 @@
 
 - [x] رأس `master` الحالي: `bb75b745ef331c208ef4c9ad855bfd40a3d1779e`، بعد دمج PR #191. PR #29 ما زال مدمجاً بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
 - [x] PR #188 ربط مسار candidate مستقل بـ launcher: Snapshot/Diff، ترحيل typed sidecars، حفظ الاختيار بالـ stable key، إعادة بناء `pos/order` و`shown_box/wave`، والتبديل على render thread عند نقطة آمنة بين الإطارات.
-- [x] PR #189 نظّف نصوص العلامة القديمة في الموقع. تبقى أسماء داخلية ومسارات ترحيل مثل `nuld/` و`nuld-site-lang` وأدوات الاختبارات القديمة لحماية إعدادات المستخدمين السابقة؛ لا تحذفها لمجرد إزالة اسم العلامة.
+- [x] PR #189 نظّف نصوص الهوية النشطة. فحص README والصفحات النشطة (الرئيسية والدليل وOPL Lab) لم يجد اسم NULD أو ORBIT؛ بقيت إشارات ORBIT القديمة ومسارات `nuld/` في سجل changelog التاريخي ونصوص نقل الإعدادات، وهي توثيق/توافق وليست هوية العرض الحالية. لا تمحُ التاريخ أو مسارات الترحيل.
 - [x] PR #190 جعل فشل retirement قابلاً للرجوع: إذا فشل تحرير sidecars بعد تبديل الحزمة، يعيد الناشر الجيل القديم إلى active قبل فتح بوابة القراء. اختبارات الرجوع وفشل semaphore موجودة.
 - [x] PR #191 حدّث سجل القبول بعد #190. هذا القسم هو أحدث ملخص؛ لا تعتمد على الفقرات التاريخية أدناه إذا تعارضت مع هذه الحالة الحالية.
 - [x] أحدث بناء على `master`: [PS2 launcher build #46084717348](https://github.com/TEaG3/newday/actions/runs/46084717348) — الوظائف الأربع نجحت: ZSO host decoder fixture، بناء OPL من المصدر المثبّت، بناء TEa.G3 launcher، وتجميع حزمة التكامل.
 - [x] أحدث CodeQL: [#46084717341](https://github.com/TEaG3/newday/actions/runs/46084717341) — تحليلات C/C++ وPython وJavaScript/TypeScript الثلاث نجحت.
 - [x] سجل المضيف: `Ran 114 tests` ثم `OK`. نجحت ZSO raw/compressed وZSO EE scanner، وHDL/APA scanner، وsource-root probe، والتحقق من ELF payload، وcatalog stage وPS2 semaphore host concurrency، واختبارات ISO وUL الذاتية، ومصفوفة OPL-only ذات 12 تركيبة.
+- [x] العربية وRTL في بناء OPL: `check_arabic_translation.py` سجل 326/326 سلسلة، 0 غير مترجمة، وRTL=1 مع الخط المضمن. فحص المشغّل أكد العربية لغة البدء والرجوع الافتراضية، تغطية 38 محرفاً عربياً، واختبار الخط 509 glyphs؛ CSS يفعّل `.tea-g3-rtl` في OPL Lab.
 - [x] نُزّلت artifacts من run #46084717348 وفُكّت محلياً. نجح `unzip -t` لكل ZIP، وتطابقت SHA-256 المحسوبة محلياً مع GitHub artifact digests:
   - Integration bundle — [artifact 15239080002](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15239080002)، 17,791,473 بايت، SHA-256 `ea9771d7f2c5ab019ad0856aaf0083f329adcc9e54c10fbe6e99c7698312dcbb`.
   - Launcher artifact — [artifact 15238761980](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15238761980)، 4,290,393 بايت، SHA-256 `affcabb0165c5962af69ae6bdd570f97d6916fcfa0784b1fb3199c2a3ca81bd4`.
@@ -25,11 +26,11 @@
 - [ ] `CATALOG_LIVE_MONITOR_ENABLED=0` عمداً. مسار candidate/apply وsource polling وإلغاء المسح موجودة ومختبرة على المضيف، لكن لم تُجرَ اختبارات USB removal/reinsert ودورة حياة semaphore وIGR على PS2 حقيقي؛ لذلك لا تفعّل المراقبة.
 - [ ] USB ISO/ZSO وUSBExtreme UL اجتازت اختبارات آلية فقط؛ HDD/APA اجتازت اختبارات مضيف فقط. SMB وUDPBD وUDPFS وMMCE كمصادر ألعاب ما زالت معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق هنا لإثبات إقلاع لعبة أو استمرار قراءة القطاعات.
 - [ ] PRs #93 و#72 و#6 ما زالت Draft مفتوحة وقديمة؛ لم تُدمج ولم تُستخدم كبديل عن العمل المدمج في master.
-- [ ] بيانات المستودع ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage القديم `https://danielnuld.github.io/nuld/`. وصلة GitHub الحالية تتيح قراءة metadata ولا تعرض إجراء تحديثها أو ضبط branch protection؛ يلزم تغييرها من Settings.
+- [ ] بيانات المستودع ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage القديم `https://danielnuld.github.io/nuld/`. فرع `master` يظهر `protected=false`، وواجهة rulesets أعادت قائمة فارغة؛ لكن تفاصيل branch-protection endpoint نفسها ترجع 403. أدوات GitHub المتاحة هنا لا تتضمن تحديث metadata أو حماية الفرع؛ يلزم تعديل الوصف وHomepage والحماية من Settings.
 - [ ] آخر Release منشور ما زال `arabic-v1.3.13`. لم يُنشأ Release جديد ولم يُحوّل زر التنزيل إلى artifact مؤقت. ملف `site/release.js` يختار أحدث Release منشور يحتوي الحزمة المتوقعة، بينما fallback الثابت ما زال يشير إلى `arabic-v1.3.13`.
 
 **المرحلة التالية:** اختبارات العتاد الفعلية فقط هي التي تفصل بين جاهزية البناء وقبول التشغيل. إبقاء المراقبة الحية ومصادر الشبكة معطلة هو السلوك الآمن إلى أن تتوفر سجلات PS2 موثوقة.
- 
+
 ## سجل تاريخي: التحقق بعد PR #185 وPR #186 — 27 نوفمبر 2026
 
 - [x] `master` الحالي هو `7b9e3c2813370f02525633d6f3f6ae355724bbfd`، بعد دمج PR #185 بالالتزام `9506e69fa7ae553faaecdcdab43ce260cd11d6a5` وPR #186 بالالتزام `7b9e3c2813370f02525633d6f3f6ae355724bbfd`.
