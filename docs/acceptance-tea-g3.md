@@ -14,14 +14,21 @@
 - [x] تحقق بناء الإصدار من OPL المثبّت، ثم تحقق من embedding لملف runtime واحد (`OPL` فقط) وبناء `TEa.G3.ELF`. لا يوجد `Neutrino.ELF` أو محرك PS2 ثانٍ في الحزمة.
 - [x] سجل بناء الإصدار: 13 اختباراً لحزمة runtime/Neutrino UI reference نجحت؛ `font selftest` نجح مع 509 glyphs؛ و`iso selftest` و`ul selftest` و`net selftest` وOPL-only engine decision وruntime installer وcover tests نجحت. رسالة `runtime: failed integrity check/install for OPL.ELF` هي الحالة السلبية المقصودة لاختبار رفض ملف staging الموجود مسبقاً؛ تلاها `runtime: installed and verified bundle selftest-v1` و`runtime installer preserves pre-existing staging files`.
 - [x] تحقق master الأساسي قبل رفع رقم الإصدار: [PS2 build #46089647468](https://github.com/TEaG3/newday/actions/runs/46089647468) و[CodeQL #46089647459](https://github.com/TEaG3/newday/actions/runs/46089647459) نجحا. سجل المضيف أظهر 114 اختباراً ناجحاً، واختبارات ZSO وHDL/APA وsource-root وSnapshot/Diff وPS2 semaphore concurrency وISO وUL.
-- [x] نُقل fallback الثابت في الصفحة الرئيسية إلى حزمة v1.3.14، وأضيف سجل الإصدار الجديد في changelog ضمن PR #193؛ `site/release.js` يستمر باختيار أحدث Release منشور يحتوي الحزمة الصحيحة.
+- [x] نُقلت روابط fallback الثابتة في الصفحة الرئيسية والدليل وOPL Lab إلى حزمة v1.3.14، وأضيف سجل الإصدار الجديد في changelog ضمن PR #193. نشر GitHub Pages نجح على الالتزام `5fa0f0f645f4c2539c0614e4528917a02196f7e0`: [run #46097067441](https://github.com/TEaG3/newday/actions/runs/46097067441)، وأُنتج artifact الموقع [15243946069](https://github.com/TEaG3/newday/actions/runs/46097067441/artifacts/15243946069) ببصمة SHA-256 `40b1c20fb401aef9e96a4d223ece857de536b13b813ae5261472fc119e999fb7`. `site/release.js` يستمر باختيار أحدث Release منشور يحتوي الحزمة الصحيحة.
 - [ ] `CATALOG_LIVE_MONITOR_ENABLED=0` عمداً. candidate/Snapshot/Diff/sidecar migration/apply والـ source polling وإلغاء المسح موجودة ومختبرة على المضيف، لكن لا تُفعّل المراقبة قبل اختبارات semaphore وUSB removal/reinsert وIGR والتزامن على PS2 حقيقي.
 - [ ] USB ISO/ZSO وUSBExtreme UL اجتازت اختبارات آلية فقط؛ HDD/APA اجتازت اختبارات مضيف فقط. SMB وUDPBD وUDPFS وMMCE كمصادر ألعاب ما زالت معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق لإثبات إقلاع لعبة أو استمرار قراءة القطاعات.
 - [ ] Neutrino ليس محرك تشغيل في هذه النسخة؛ OPL هو محرك ألعاب PS2 الوحيد.
-- [ ] PRs #93 و#72 و#6 ما زالت Draft ومفتوحة ومتباعدة عن `master` (على الترتيب 276 و295 و820 التزاماً خلفه)؛ لم تُدمج لأنها تحتاج إعادة تأسيس ومراجعة.
+- [ ] PRs #93 و#72 و#6 ما زالت Draft ومفتوحة ومتباعدة عن `master` (على الترتيب 281 و300 و825 التزاماً خلفه)؛ لم تُدمج لأنها تحتاج إعادة تأسيس ومراجعة.
 - [ ] بيانات المستودع ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage القديم `https://danielnuld.github.io/nuld/`. `master` غير محمي ولا توجد Rulesets؛ تعديل metadata وحماية الفرع يحتاج صلاحية Settings غير متاحة عبر أدوات GitHub الحالية.
 
-**المرحلة التالية:** دمج PR #193 بعد نجاح فحوصه، ثم التحقق من نشر Pages على الرابط الجديد. تبقى اختبارات PS2 الحقيقية وإعدادات المستودع الإدارية بوابات قبول خارج بيئة CI.
+**نتيجة ما بعد الدمج:** دُمج PR #193 بالالتزام `5fa0f0f645f4c2539c0614e4528917a02196f7e0`. بعد الدمج نجح [PS2 build #46097067446](https://github.com/TEaG3/newday/actions/runs/46097067446) و[CodeQL #46097067401](https://github.com/TEaG3/newday/actions/runs/46097067401) و[Website/Pages #46097067441](https://github.com/TEaG3/newday/actions/runs/46097067441). نُشر الموقع على https://teag3.github.io/newday/. تبقى اختبارات PS2 الحقيقية وإعدادات المستودع الإدارية بوابات قبول خارج CI.
+### Artifacts بعد دمج PR #193
+
+- [x] OPL runtime artifact [15244205483](https://github.com/TEaG3/newday/actions/runs/46097067446/artifacts/15244205483)، 2,539,789 بايت، SHA-256 للأرشيف `bde608b3ffe935110624528287f59adcf9dee384ae147481ee9e18afcd7c9ee4`. ملف `OPL.ELF` نفسه ELF32 MIPS N32، SHA-256 `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`.
+- [x] Launcher artifact [15243682408](https://github.com/TEaG3/newday/actions/runs/46097067446/artifacts/15243682408)، 4,290,393 بايت، SHA-256 للأرشيف `89c129c75173e84b7a4673339f10a929e08d3e4d6f0810c4e6a739f68233e94a`.
+- [x] Integration test bundle [15244175271](https://github.com/TEaG3/newday/actions/runs/46097067446/artifacts/15244175271)، 17,792,170 بايت، SHA-256 للأرشيف `c2ad1bcdc6f1e9b5ec78f45f7057d299d7e302a6fa1ebaf88133f6c8b6005c5a`؛ داخله `TEa.G3.ELF` SHA-256 `d25459f981731f736b100d59d8b9f51e698874f0319aa8da7aa053516efef1da`، وحزمة fixture SHA-256 `bb48f58a651bc4586a9ecb5dc5d6ed70b5088d50f3cc0a379ddcf1a3c0bffffd`. سجل التكامل أكد `package_crc=PASS` و`sha256sum -c` لكلا الملفين.
+- [x] هذه artifacts من CI بعد الدمج وليست بديلة عن حزمة Release المنشورة `arabic-v1.3.14`؛ بصمة حزمة المستخدم المنشورة تبقى `e81374d9f8360af935e6ca54fda8c44c8c788fcdcc616efdb96ea06437189b55`.
+
 
 ## سجل تاريخي: التحقق بعد PR #185 وPR #186 — 27 نوفمبر 2026
 

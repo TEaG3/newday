@@ -24,7 +24,11 @@
 - 114 اختبار مضيف نجحت، مع اختبارات ISO وUL وZSO وHDL/APA وsource-root وSnapshot/Diff وPS2 semaphore concurrency.
 - تعريب OPL: 326/326 سلسلة، RTL=1، والخط العربي مضمّن؛ اختبار الخط 509 glyphs.
 
-يجب أن ينجح بناء إصدار v1.3.14 نفسه في مسار النشر قبل اعتباره منشوراً.
+نجح مسار نشر الإصدار نفسه: [run #46096405172](https://github.com/TEaG3/newday/actions/runs/46096405172) و[run #46096461979](https://github.com/TEaG3/newday/actions/runs/46096461979). نُشر الإصدار المستقر [arabic-v1.3.14](https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.14) دون prerelease.
+
+- حزمة المستخدم: 6,711,484 بايت، SHA-256 `e81374d9f8360af935e6ca54fda8c44c8c788fcdcc616efdb96ea06437189b55`.
+- ملف `TEa.G3.ELF`: SHA-256 `a07cd374fadd6098274af41437e4a8b56deb08333418858f94289f1685c951b7`.
+- أصل `SHA256SUMS.txt`: SHA-256 من GitHub `786c3c2ec76fa56eb5b60be7217199a8ebf89a20fe404c402c8e5043783492b0`؛ سجل packager أكد `package_crc=PASS`.
 
 ## حدود القبول العتادي
 
