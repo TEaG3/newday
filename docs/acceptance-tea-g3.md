@@ -26,7 +26,7 @@
 
 - [x] OPL runtime artifact [15244205483](https://github.com/TEaG3/newday/actions/runs/46097067446/artifacts/15244205483)، 2,539,789 بايت، SHA-256 للأرشيف `bde608b3ffe935110624528287f59adcf9dee384ae147481ee9e18afcd7c9ee4`. ملف `OPL.ELF` نفسه ELF32 MIPS N32، SHA-256 `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`.
 - [x] Launcher artifact [15243682408](https://github.com/TEaG3/newday/actions/runs/46097067446/artifacts/15243682408)، 4,290,393 بايت، SHA-256 للأرشيف `89c129c75173e84b7a4673339f10a929e08d3e4d6f0810c4e6a739f68233e94a`.
-- [x] Integration test bundle [15244175271](https://github.com/TEaG3/newday/actions/runs/46097067446/artifacts/15244175271)، 17,792,170 بايت، SHA-256 للأرشيف `c2ad1bcdc6f1e9b5ec78f45f7057d299d7e302a6fa1ebaf88133f6c8b6005c5a`؛ داخله `TEa.G3.ELF` SHA-256 `d25459f981731f736b100d59d8b9f51e698874f0319aa8da7aa053516efe f1da`، وحزمة fixture SHA-256 `bb48f58a651bc4586a9ecb5dc5d6ed70b5088d50f3cc0a379ddcf1a3c0bffffd`. سجل التكامل أكد `package_crc=PASS` و`sha256sum -c` لكلا الملفين.
+- [x] Integration test bundle [15244175271](https://github.com/TEaG3/newday/actions/runs/46097067446/artifacts/15244175271)، 17,792,170 بايت، SHA-256 للأرشيف `c2ad1bcdc6f1e9b5ec78f45f7057d299d7e302a6fa1ebaf88133f6c8b6005c5a`؛ داخله `TEa.G3.ELF` SHA-256 `d25459f981731f736b100d59d8b9f51e698874f0319aa8da7aa053516efef1da`، وحزمة fixture SHA-256 `bb48f58a651bc4586a9ecb5dc5d6ed70b5088d50f3cc0a379ddcf1a3c0bffffd`. سجل التكامل أكد `package_crc=PASS` و`sha256sum -c` لكلا الملفين.
 - [x] هذه artifacts من CI بعد الدمج وليست بديلة عن حزمة Release المنشورة `arabic-v1.3.14`؛ بصمة حزمة المستخدم المنشورة تبقى `e81374d9f8360af935e6ca54fda8c44c8c788fcdcc616efdb96ea06437189b55`.
 
 
