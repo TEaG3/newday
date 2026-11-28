@@ -33,6 +33,17 @@
 - [ ] هذه حزمة CI بقيمة `version=development` وليست Release. لم يتغير الإصدار المنشور `arabic-v1.3.14` ولم يتغير رابط التنزيل في الموقع.
 - [ ] نجاح البناء لا يثبت تشغيل الألعاب على جهاز PS2. لا يزال اختبار الجهاز الحقيقي مطلوباً، و`CATALOG_LIVE_MONITOR_ENABLED=0`، ومصادر SMB/UDPBD/UDPFS/MMCE غير مفعلة.
 
+## 0-C. تثبيت صور مسار إصدار النشر — 28 نوفمبر 2026
+
+- [x] كشف التدقيق أن `.github/workflows/publish-arabic-release.yml` ظل يستخدم `ghcr.io/ps2homebrew/ps2homebrew:main` و`ps2dev/ps2dev:latest` رغم تثبيت الصور في مسار البناء المعتاد. دُمج PR #199 بالالتزام `3bd0986a1fa4402197806aa2f0b4eb6809f7ca24`، وأصبح مسار النشر يستخدم نفس digests الثابتة في `build-ps2.yml`.
+- [x] أضيف اختبار في `tests/test_release_workflow.py` يثبت وجود الصورتين بالـ digests المحددة ويرفض عودة الوسمين المتغيرين.
+- [x] فحوص PR #199: [PS2 build #46107099045](https://github.com/TEaG3/newday/actions/runs/46107099045) نجح بوظائفه الأربع، و[CodeQL #46107098982](https://github.com/TEaG3/newday/actions/runs/46107098982) نجح بتحليلات C/C++ وPython وJavaScript/TypeScript. سجل المضيف: 119 اختباراً ناجحاً.
+- [x] تحقق ما بعد الدمج على master: [PS2 build #46107315248](https://github.com/TEaG3/newday/actions/runs/46107315248) نجح بوظائفه الأربع، و[CodeQL #46107315236](https://github.com/TEaG3/newday/actions/runs/46107315236) نجح بالتحليلات الثلاث.
+- [x] نُزّلت artifacts من PR ومن master. بعد الدمج: Launcher ZIP ‏4,290,393 بايت وبصمة `7da4e768416bccb56422d35ef397ee6ea2f6d7fb37b3e71ff4e0953bc0d29441`؛ OPL ZIP ‏2,539,789 بايت وبصمة `37b44ebb9f0a9b5b018faf1a5d0001db1202aa8268b165c2648de4419b983cd0`؛ Integration ZIP ‏17,792,161 بايت وبصمة `5611340e7f8a034f280daab415ba5c506179e1ed898a38a8501e0552551a70ae`.
+- [x] الحزمة الداخلية قابلة لإعادة الإنتاج بين PR وmaster: ‏6,711,536 بايت، SHA-256 `877b8ccccd70d52a1bca28a753823c6a576fcae084c91b83abbd21457cc9de09`. بصمة `TEa.G3.ELF` هي `d25459f981731f736b100d59d8b9f51e698874f0319aa8da7aa053516efef1da`، وبصمة `OPL.ELF` هي `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`. `runtime-manifest.txt` يعلن `files=1` وCRC32 `aa490716` لـ OPL.
+- [ ] لم يُنشأ Release جديد ولم تتغير روابط الموقع؛ لا يوجد تغيير في runtime يبرر إصداراً جديداً.
+- [ ] لا يزال اختبار تشغيل الألعاب واختبار semaphore/hotplug على PS2 حقيقي مطلوبين. المراقبة الحية باقية معطلة، ومصادر SMB/UDPBD/UDPFS/MMCE ما زالت مغلقة.
+
 ## 0. إصدار v1.3.14 والتحقق الحالي — 28 نوفمبر 2026
 
 - [x] `master` قبل إصدار v1.3.14 كان عند الالتزام `342b1f6cf17c2e2b679a1a20f4a31da650e6c0a5`. PR #192 مدمج. PR #29 مدمج بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
