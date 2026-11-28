@@ -2,7 +2,9 @@
 """Build a single-ELF OPL-only TEa.G3 user package."""
 from __future__ import annotations
 import hashlib
+import os
 import re
+import time
 from pathlib import Path
 import sys
 import zipfile
@@ -48,6 +50,35 @@ def sha256(path: Path) -> str:
             h.update(chunk)
     return h.hexdigest().upper()
 
+def archive_timestamp() -> tuple[int, int, int, int, int, int]:
+    """Return a ZIP-safe UTC timestamp derived only from SOURCE_DATE_EPOCH."""
+    raw_epoch = os.environ.get("SOURCE_DATE_EPOCH", "315532800")
+    try:
+        epoch = int(raw_epoch)
+    except ValueError as exc:
+        raise ValueError("SOURCE_DATE_EPOCH must be an integer Unix timestamp") from exc
+    epoch = max(epoch, 315532800)  # ZIP cannot represent dates before 1980-01-01.
+    stamp = time.gmtime(epoch)
+    if stamp.tm_year > 2107:
+        raise ValueError("SOURCE_DATE_EPOCH is outside the ZIP timestamp range")
+    return (stamp.tm_year, stamp.tm_mon, stamp.tm_mday, stamp.tm_hour,
+            stamp.tm_min, stamp.tm_sec - (stamp.tm_sec % 2))
+
+def _archive_info(name: str) -> zipfile.ZipInfo:
+    info = zipfile.ZipInfo(name, date_time=archive_timestamp())
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    return info
+
+def add_archive_file(z: zipfile.ZipFile, src: Path, dest: str) -> None:
+    z.writestr(_archive_info(dest), src.read_bytes(),
+               compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+
+def add_archive_text(z: zipfile.ZipFile, dest: str, text: str) -> None:
+    z.writestr(_archive_info(dest), text.encode("utf-8"),
+               compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+
 def main() -> None:
     try:
         validate_release_version(VERSION, (ROOT / "launcher.c").read_text(encoding="utf-8"))
@@ -76,15 +107,15 @@ def main() -> None:
                           (ROOT / "INSTALL-EN.txt", "INSTALL-EN.txt"), (ROOT / "README.md", "README-AR.md"),
                           (ROOT / "README-EN.md", "README-EN.md"), (ROOT / "LICENSE", "LICENSE"),
                           (opl_license, license_path)):
-            z.write(src, dest)
+            add_archive_file(z, src, dest)
         if opl_diagnostic.is_file():
-            z.write(opl_diagnostic, "diagnostics/OPL-standalone.ELF")
-        z.writestr("QUICKSTART.txt", (ROOT / "INSTALL-AR.txt").read_text(encoding="utf-8"))
-        z.writestr("DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب DVD هنا.\n")
-        z.writestr("CD/ضع ألعاب CD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب CD هنا.\n")
-        z.writestr("POPS/ضع ألعاب PS1 المتوافقة هنا.txt", "ضع ملفات PS1 المتوافقة مع POPStarter هنا.\n")
-        z.writestr("APPS/ضع تطبيقات ELF هنا.txt", "ضع تطبيقات Homebrew بصيغة ELF هنا.\n")
-        z.writestr("PACKAGE-MANIFEST.txt",
+            add_archive_file(z, opl_diagnostic, "diagnostics/OPL-standalone.ELF")
+        add_archive_text(z, "QUICKSTART.txt", (ROOT / "INSTALL-AR.txt").read_text(encoding="utf-8"))
+        add_archive_text(z, "DVD/ضع ألعاب DVD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب DVD هنا.\n")
+        add_archive_text(z, "CD/ضع ألعاب CD بصيغة ISO أو ZSO هنا.txt", "ضع ألعاب CD هنا.\n")
+        add_archive_text(z, "POPS/ضع ألعاب PS1 المتوافقة هنا.txt", "ضع ملفات PS1 المتوافقة مع POPStarter هنا.\n")
+        add_archive_text(z, "APPS/ضع تطبيقات ELF هنا.txt", "ضع تطبيقات Homebrew بصيغة ELF هنا.\n")
+        add_archive_text(z, "PACKAGE-MANIFEST.txt",
             f"TEa.G3 OPL-only package\nVersion: {VERSION}\n"
             "Single user entry point: TEa.G3.ELF\n"
             "OPL is the only PS2 game engine embedded in the launcher.\n"
