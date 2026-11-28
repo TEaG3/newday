@@ -19,6 +19,20 @@
 - [ ] لم يُنشأ Release جديد ولم تتغير روابط الموقع؛ حزمة v1.3.14 المنشورة تبقى الإصدار المستقر. حزمة CI ذات `version=development` ليست إصداراً للمستخدم.
 - [ ] لم يُجرَ اختبار تشغيل على PS2 حقيقي. ISO/ZSO/UL وHDD/APA هنا نتائج اختبارات برمجية/مضيف فقط؛ SMB/UDPBD/UDPFS/MMCE ما زالت مغلقة كمصادر ألعاب، و`CATALOG_LIVE_MONITOR_ENABLED=0` حتى اختبار hotplug/semaphore/IGR على الجهاز.
 
+
+## 0-B. حزم ZIP قابلة لإعادة الإنتاج — 28 نوفمبر 2026
+
+- [x] كشف تدقيق PR #195 أن بناءين لهما ELF متطابق وحجم ZIP متطابق أنتجا بصمتَي ZIP مختلفتين؛ السبب أن `ZipFile.write()` كان يسجل أوقات ملفات checkout وأن `writestr()` كان يسجل الوقت الحالي.
+- [x] دُمج PR #197 بالالتزام `27d8dfaad448e77ffd93a054502fa63b0972025c`. وحّد `tools/package_single_elf_release.py` بيانات ZIP الوصفية عبر UTC timestamp مشتق من `SOURCE_DATE_EPOCH`، مع وقت افتراضي متوافق مع ZIP عند غياب المتغير، وتقريب الثواني إلى دقة ZIP، ووضع ملفات وضغط ثابتين.
+- [x] أضيفت ثلاثة اختبارات فعلية: ثبات البايتات عند تغيير mtime لملفات المصدر، تطبيع `SOURCE_DATE_EPOCH`، ورفض القيم غير الصالحة أو الخارجة عن المجال. شُغلت الاختبارات في PS2 CI وفي workflow نشر الإصدار قبل إنشاء الحزمة.
+- [x] فحوص PR: [PS2 build #46099310533](https://github.com/TEaG3/newday/actions/runs/46099310533) و[CodeQL #46099310639](https://github.com/TEaG3/newday/actions/runs/46099310639) نجحا؛ سجل المضيف أصبح 118 اختباراً ناجحاً.
+- [x] تحقق master بعد الدمج: [PS2 build #46099501974](https://github.com/TEaG3/newday/actions/runs/46099501974) و[CodeQL #46099501993](https://github.com/TEaG3/newday/actions/runs/46099501993) نجحا؛ جميع وظائف البناء الأربع وتحليلات CodeQL الثلاث اكتملت بنجاح.
+- [x] تحقق إعادة الإنتاج بين PR وmaster: في كلا البناءين كان `TEa.G3.ELF` SHA-256 `d25459f981731f736b100d59d8b9f51e698874f0319aa8da7aa053516efef1da`، وكانت حزمة التطوير 6,711,536 بايت وبصمة ZIP نفسها `877b8ccccd70d52a1bca28a753823c6a576fcae084c91b83abbd21457cc9de09`.
+- [x] تحقق الحزمة: `package_crc=PASS`، و`sha256sum -c` أكد `TEa.G3-Complete-Package.zip: OK` و`TEa.G3.ELF: OK`. بصمة `OPL.ELF` بقيت `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`.
+- [x] artifacts بعد الدمج: OPL archive بحجم 2,539,789 بايت وبصمة `4f66b690da739fa85c106429f65ece4a0540aacf19811ac611103886e8949909`؛ Launcher archive بحجم 4,290,393 بايت وبصمة `e581a9d9623c29919c5fd59e085534559ae272ae8ca7c08609a7830c13b68dce`؛ Integration bundle بحجم 17,792,161 بايت وبصمة `a78955cb23bdf433867b4e0c595d1daff8acfd4b3b93b3e08b7dc1a0b7ac226d`.
+- [ ] هذه حزمة CI بقيمة `version=development` وليست Release. لم يتغير الإصدار المنشور `arabic-v1.3.14` ولم يتغير رابط التنزيل في الموقع.
+- [ ] نجاح البناء لا يثبت تشغيل الألعاب على جهاز PS2. لا يزال اختبار الجهاز الحقيقي مطلوباً، و`CATALOG_LIVE_MONITOR_ENABLED=0`، ومصادر SMB/UDPBD/UDPFS/MMCE غير مفعلة.
+
 ## 0. إصدار v1.3.14 والتحقق الحالي — 28 نوفمبر 2026
 
 - [x] `master` قبل إصدار v1.3.14 كان عند الالتزام `342b1f6cf17c2e2b679a1a20f4a31da650e6c0a5`. PR #192 مدمج. PR #29 مدمج بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
