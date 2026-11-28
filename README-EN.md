@@ -4,7 +4,14 @@ TEa.G3 is an Arabic right-to-left interface for managing PlayStation 2 and PlayS
 
 ## Version
 
-The current launcher version on this branch is `v1.3.13` ([published Arabic release](https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.13)).
+The current launcher version on this branch is `v1.3.14` ([published Arabic release](https://github.com/TEaG3/newday/releases/tag/arabic-v1.3.14)).
+
+## v1.3.14 changes
+
+- Connected staged catalogue generations to the launcher: isolated candidates, stable-key Snapshot/Diff, typed sidecar migration, frame-boundary publication, and rollback on retirement failure.
+- Source scans and downloads cooperate with cancellation when gameplay or storage activity begins; incomplete scans are discarded without replacing the active catalogue.
+- OPL remains the only PS2 game engine in the single ELF. Neutrino is a UI reference only. Periodic live monitoring remains disabled until concurrency and USB hot-plug tests pass on real hardware.
+- Automated checks cover ISO, ZSO, UL, HDL/APA, and OPL Arabic localization (326/326 strings, RTL=1) plus the Arabic font. These results do not prove game boot on a physical PS2.
 
 ## v1.3.13 changes
 
