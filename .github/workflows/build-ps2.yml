@@ -82,7 +82,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --rm -v "${GITHUB_WORKSPACE}:/src" -w /src ps2dev/ps2dev:latest sh -c '
+          docker run --rm -v "${GITHUB_WORKSPACE}:/src" -w /src ps2dev/ps2dev@sha256:c6c0c4d633fbe9b2ba9c326d86eddb238039915f5d4728b82c45a2b5f16d9afb sh -c '
             set -eu
             set -o pipefail
             export PS2DEV="${PS2DEV:-/usr/local/ps2dev}"
@@ -138,7 +138,8 @@ jobs:
   opl-engine:
     name: Build TEaG3/OPL source runtime (pinned submodule)
     runs-on: ubuntu-latest
-    container: ghcr.io/ps2homebrew/ps2homebrew:main
+    # Immutable image digest captured from successful master build 46097755836.
+    container: ghcr.io/ps2homebrew/ps2homebrew@sha256:00466c8333dee69d8e5ef7b927580ac3f2e010c6b29375b38d03fec2b7ccec36
     steps:
       - name: Check out TEa.G3 with the complete OPL source submodule
         uses: actions/checkout@v7
