@@ -4,34 +4,32 @@
 >
 > نجاح CI يثبت البناء والاختبارات الآلية المحددة فقط؛ ولا يثبت إقلاع لعبة أو استمرار قراءة قطاعاتها على جهاز PlayStation 2 حقيقي.
 
-## 0. أحدث تحقق بعد PR #188–#190 — 28 نوفمبر 2026
+## 0. أحدث تحقق بعد PR #188–#191 — 28 نوفمبر 2026
 
-- [x] `master` الحالي هو `2582a0b54a3cd80c03df2e9feb930a0e2890d341`، ناتج دمج PR #190 بطريقة squash. PR #29 ما زال مدمجاً، والفرع `safety/io-and-runtime-guards` غير موجود.
-- [x] PR #188 ربط مسار الفهرسة المرشحة بـ launcher: candidate منفصل، Snapshot/Diff، ترحيل sidecars، تطبيق الحزمة عند نقطة آمنة على render thread، وإعادة بناء `pos/order` و`shown_box/wave` في أول إطار بعد التبديل. المراقبة نفسها لا تزال معطلة افتراضياً.
-- [x] PR #189 نظّف نصوص العلامة القديمة في الموقع. بقيت `nuld/` في رسالة الترقية كاسم مجلد قديم لنقل بيانات المستخدم، وبقي مفتاح التخزين المحلي `nuld-site-lang` ومسارات الاختبارات/الأدوات القديمة للتوافق؛ لا تحذفها لمجرد إزالة اسم العلامة.
-- [x] PR #190 أصلح حالة فشل خطيرة في النشر: إذا رفض callback تحرير sidecars بعد تبديل المؤشرات، يعيد الناشر الحزمة القديمة إلى خانة active قبل فتح بوابة القراء. عندها يمسح launcher مؤشرات sidecars المستعارة من candidate دون تحرير موارد الجيل النشط، ويوقف المراقبة مع إبقاء الجيل السليم.
-- [x] فشل أول CI لـ PR #190 في run `46083911285` كان بسبب توقع خاطئ في اختبارنا الجديد: `candidate.selected_index` يُعاد إلى 0 عند وجود عناصر، وليس -1. راجعت سجل الفشل، صححت التوقع فقط، وأعدت التشغيل؛ لم أغيّر شرطاً إنتاجياً ولم أضعف الاختبار.
-- [x] PR CI بعد التصحيح: [PS2 launcher build #46083940318](https://github.com/TEaG3/newday/actions/runs/46083940318) و[CodeQL #46083940323](https://github.com/TEaG3/newday/actions/runs/46083940323) — جميع الوظائف وفحوص C/C++ وPython وJavaScript/TypeScript نجحت.
-- [x] دُمج PR #190 بالالتزام `2582a0b54a3cd80c03df2e9feb930a0e2890d341`. تحقق ما بعد الدمج نجح: [PS2 launcher build #46084188718](https://github.com/TEaG3/newday/actions/runs/46084188718) و[CodeQL #46084188649](https://github.com/TEaG3/newday/actions/runs/46084188649).
-- [x] سجل المضيف بعد الدمج: `Ran 114 tests` ثم `OK`. نجحت ZSO host fixture، وZSO EE scanner adapter، وHDL/APA scanner، وcatalog source-root probe، وcatalog stage وPS2 semaphore concurrency، واختبارات ISO وUL الذاتية، ومصفوفة OPL-only ذات 12 تركيبة.
-- [x] بناء OPL من المصدر المثبّت، بناء `TEa.G3.ELF`، وتجميع حزمة التكامل نجحت جميعها بعد الدمج. لا يوجد Neutrino runtime؛ الاختبار يثبت أن Neutrino مرجع واجهة فقط وأن OPL محرك PS2 الوحيد.
-- [x] اختبار التعريب وRTL ضمن مجموعة الاختبارات نجح: العربية افتراضية، 509 محارف في اختبار الخط، ومصفوفة الموقع/المحاكي نجحت. لا يوجد تغيير في ملفات الموقع في PR #190، لذلك لم يحتج GitHub Pages إلى إعادة نشر.
-- [x] نُزّلت artifacts ما بعد الدمج وفُكّت محلياً؛ ZIP integrity وملف `SHA256SUMS.txt` الداخلي نجحا:
-  - Integration bundle — [artifact 15238168029](https://github.com/TEaG3/newday/actions/runs/46084188718/artifacts/15238168029)، 17,791,473 بايت، SHA-256 `b4959ca351a518a44121cd471cd29ac344a44c74341ee583a0792fce4abd12b2`.
-  - Launcher — [artifact 15238043110](https://github.com/TEaG3/newday/actions/runs/46084188718/artifacts/15238043110)، 4,290,393 بايت، SHA-256 `a9ea901c92242dc80516f9a2a39c3bb005eb49bb9a1a3c7d57c6b00261dcd607`.
-  - OPL runtime — [artifact 15238915578](https://github.com/TEaG3/newday/actions/runs/46084188718/artifacts/15238915578)، 2,539,789 بايت، SHA-256 `633fe12e334f6ac3a670162e29fd5455426950165406dbdbad112e9bb9cf2f73`.
-  - Build log — [artifact 15238202347](https://github.com/TEaG3/newday/actions/runs/46084188718/artifacts/15238202347)، 1,864 بايت، SHA-256 `4147bed88f8f69ac20f7f19e0278238ace8d7b61ef14b9e5f497583f3169e696`.
-- [x] داخل integration bundle: `TEa.G3.ELF` حجمه 9,579,156 بايت وبصمته `48cefc8611803c39d386c8774ee3e16fa0dff721c055edde8b316d32b7f69420`؛ و`OPL.ELF` حجمه 5,792,496 بايت وبصمته `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`.
-- [x] حزمة المستخدم الداخلية `TEa.G3-Complete-Package.zip` حجمها 6,710,832 بايت وبصمتها `b16013f5a215701ba182c7f3750a41014b4183c1fa4c941943408ec3aa461388`. بيان runtime يعلن `files=1` وOPL فقط، CRC32 `aa490716`.
-- [x] قياس ELF: مقطع `PT_LOAD` يطلب 11,982,620 بايت (11.43 MiB)، و`.bss` حجمه 2,586,140 بايت (2.47 MiB). بطاقة 8MB هي تخزين وليست RAM؛ ذاكرة PS2 الرئيسية 32MiB. هذه قراءة للـ ELF وليست اختباراً لاستهلاك الذاكرة أثناء اللعب.
-- [ ] `CATALOG_LIVE_MONITOR_ENABLED=0` عمداً. مسار candidate/apply موجود ومختبر على المضيف، لكن لا تفعّل المراقبة قبل اختبار دورة حياة semaphore وUSB removal/reinsert وHDD/APA والتزامن على جهاز PS2.
-- [ ] ISO وZSO وUL اختبارات آلية فقط؛ HDD/APA اختبارات مضيف فقط. SMB وUDPBD وUDPFS وMMCE كمصادر ألعاب معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق في هذا التشغيل لإثبات إقلاع لعبة أو قراءة مستمرة.
-- [ ] PRs #93 و#72 و#6 لا تزال Draft مفتوحة؛ لم أدمجها لأنها قديمة وتحتاج إعادة تأسيس ومراجعة مقابل master الحالي.
-- [ ] وصف المستودع ما زال `NULD (formerly ORBIT)` وHomepage ما زال `https://danielnuld.github.io/nuld/`. تحققت من `master` أنه غير محمي (`protected=false`) ولا توجد Rulesets. لا توجد عملية GitHub متاحة لتعديل metadata أو تفعيل حماية الفرع من هذه الوصلة؛ يلزم ذلك من Settings.
-- [ ] آخر Release منشور ما زال `arabic-v1.3.13`. لم أنشئ Release جديداً ولم أغيّر زر التنزيل؛ artifacts أعلاه مؤقتة من CI وليست إصداراً منشوراً.
+- [x] رأس `master` الحالي: `bb75b745ef331c208ef4c9ad855bfd40a3d1779e`، بعد دمج PR #191. PR #29 ما زال مدمجاً بالالتزام `c99ac8695293cf6eaeeb9d2a51247748a0c000db`، والفرع `safety/io-and-runtime-guards` غير موجود.
+- [x] PR #188 ربط مسار candidate مستقل بـ launcher: Snapshot/Diff، ترحيل typed sidecars، حفظ الاختيار بالـ stable key، إعادة بناء `pos/order` و`shown_box/wave`، والتبديل على render thread عند نقطة آمنة بين الإطارات.
+- [x] PR #189 نظّف نصوص العلامة القديمة في الموقع. تبقى أسماء داخلية ومسارات ترحيل مثل `nuld/` و`nuld-site-lang` وأدوات الاختبارات القديمة لحماية إعدادات المستخدمين السابقة؛ لا تحذفها لمجرد إزالة اسم العلامة.
+- [x] PR #190 جعل فشل retirement قابلاً للرجوع: إذا فشل تحرير sidecars بعد تبديل الحزمة، يعيد الناشر الجيل القديم إلى active قبل فتح بوابة القراء. اختبارات الرجوع وفشل semaphore موجودة.
+- [x] PR #191 حدّث سجل القبول بعد #190. هذا القسم هو أحدث ملخص؛ لا تعتمد على الفقرات التاريخية أدناه إذا تعارضت مع هذه الحالة الحالية.
+- [x] أحدث بناء على `master`: [PS2 launcher build #46084717348](https://github.com/TEaG3/newday/actions/runs/46084717348) — الوظائف الأربع نجحت: ZSO host decoder fixture، بناء OPL من المصدر المثبّت، بناء TEa.G3 launcher، وتجميع حزمة التكامل.
+- [x] أحدث CodeQL: [#46084717341](https://github.com/TEaG3/newday/actions/runs/46084717341) — تحليلات C/C++ وPython وJavaScript/TypeScript الثلاث نجحت.
+- [x] سجل المضيف: `Ran 114 tests` ثم `OK`. نجحت ZSO raw/compressed وZSO EE scanner، وHDL/APA scanner، وsource-root probe، والتحقق من ELF payload، وcatalog stage وPS2 semaphore host concurrency، واختبارات ISO وUL الذاتية، ومصفوفة OPL-only ذات 12 تركيبة.
+- [x] نُزّلت artifacts من run #46084717348 وفُكّت محلياً. نجح `unzip -t` لكل ZIP، وتطابقت SHA-256 المحسوبة محلياً مع GitHub artifact digests:
+  - Integration bundle — [artifact 15239080002](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15239080002)، 17,791,473 بايت، SHA-256 `ea9771d7f2c5ab019ad0856aaf0083f329adcc9e54c10fbe6e99c7698312dcbb`.
+  - Launcher artifact — [artifact 15238761980](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15238761980)، 4,290,393 بايت، SHA-256 `affcabb0165c5962af69ae6bdd570f97d6916fcfa0784b1fb3199c2a3ca81bd4`.
+  - OPL runtime — [artifact 15237889788](https://github.com/TEaG3/newday/actions/runs/46084717348/artifacts/15237889788)، 2,539,789 بايت، SHA-256 `cccb186734ee5fd3c68e3b660cce2e2c596005c1082d3e49260b1d81321c4242`.
+- [x] داخل integration bundle: `TEa.G3.ELF` حجمه 9,579,156 بايت، SHA-256 `48cefc8611803c39d386c8774ee3e16fa0dff721c055edde8b316d32b7f69420`؛ و`OPL.ELF` حجمه 5,792,496 بايت، SHA-256 `233089c24894e329d649142e70758ddfa44c458ab70ad6e88e17b839ad080e4f`. أعادت قراءة ELF تأكيد ELF32 little-endian MIPS executable.
+- [x] حزمة المستخدم الداخلية `TEa.G3-Complete-Package.zip` حجمها 6,710,832 بايت، SHA-256 `15833c246258df8671af6ab69e6733b0d6c7c7a3d80d281c609bc05cef0289b6`. طابقت بصمة ELF الموجودة داخل الحزمة البصمة نفسها في integration bundle.
+- [x] `runtime-manifest.txt` يعلن `files=1` و`OPL.ELF` فقط. أُعيد حساب CRC32 لمحرك OPL فكانت `aa490716`، مطابقة للبيان. لا يوجد Neutrino ELF أو محرك ألعاب ثانٍ في الحزمة.
+- [x] مقطع `PT_LOAD` في ELF يطلب 11,982,620 بايت (11.43 MiB). بطاقة PS2 ذات 8MB هي مساحة تخزين وليست RAM؛ ذاكرة PS2 الرئيسية 32MiB. هذا قياس تحميل ELF وليس قياس استهلاك الذاكرة أثناء اللعب.
+- [ ] `CATALOG_LIVE_MONITOR_ENABLED=0` عمداً. مسار candidate/apply وsource polling وإلغاء المسح موجودة ومختبرة على المضيف، لكن لم تُجرَ اختبارات USB removal/reinsert ودورة حياة semaphore وIGR على PS2 حقيقي؛ لذلك لا تفعّل المراقبة.
+- [ ] USB ISO/ZSO وUSBExtreme UL اجتازت اختبارات آلية فقط؛ HDD/APA اجتازت اختبارات مضيف فقط. SMB وUDPBD وUDPFS وMMCE كمصادر ألعاب ما زالت معطلة وتفشل مغلقاً. لا توجد بيئة PS2 أو محاكي موثوق هنا لإثبات إقلاع لعبة أو استمرار قراءة القطاعات.
+- [ ] PRs #93 و#72 و#6 ما زالت Draft مفتوحة وقديمة؛ لم تُدمج ولم تُستخدم كبديل عن العمل المدمج في master.
+- [ ] بيانات المستودع ما زالت تعرض Description باسم `NULD (formerly ORBIT)` وHomepage القديم `https://danielnuld.github.io/nuld/`. وصلة GitHub الحالية تتيح قراءة metadata ولا تعرض إجراء تحديثها أو ضبط branch protection؛ يلزم تغييرها من Settings.
+- [ ] آخر Release منشور ما زال `arabic-v1.3.13`. لم يُنشأ Release جديد ولم يُحوّل زر التنزيل إلى artifact مؤقت. ملف `site/release.js` يختار أحدث Release منشور يحتوي الحزمة المتوقعة، بينما fallback الثابت ما زال يشير إلى `arabic-v1.3.13`.
 
-**المرحلة التالية:** اختبار التشغيل والتزامن على PS2 فعلياً، ثم تفعيل المراقبة فقط بعد اجتياز بوابات القبول. لا يُعلن دعم SMB أو تشغيل ISO/ZSO/UL اعتماداً على نجاح CI وحده.
-
+**المرحلة التالية:** اختبارات العتاد الفعلية فقط هي التي تفصل بين جاهزية البناء وقبول التشغيل. إبقاء المراقبة الحية ومصادر الشبكة معطلة هو السلوك الآمن إلى أن تتوفر سجلات PS2 موثوقة.
+ 
 ## سجل تاريخي: التحقق بعد PR #185 وPR #186 — 27 نوفمبر 2026
 
 - [x] `master` الحالي هو `7b9e3c2813370f02525633d6f3f6ae355724bbfd`، بعد دمج PR #185 بالالتزام `9506e69fa7ae553faaecdcdab43ce260cd11d6a5` وPR #186 بالالتزام `7b9e3c2813370f02525633d6f3f6ae355724bbfd`.
