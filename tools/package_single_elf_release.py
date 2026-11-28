@@ -58,7 +58,10 @@ def archive_timestamp() -> tuple[int, int, int, int, int, int]:
     except ValueError as exc:
         raise ValueError("SOURCE_DATE_EPOCH must be an integer Unix timestamp") from exc
     epoch = max(epoch, 315532800)  # ZIP cannot represent dates before 1980-01-01.
-    stamp = time.gmtime(epoch)
+    try:
+        stamp = time.gmtime(epoch)
+    except (OverflowError, OSError, ValueError) as exc:
+        raise ValueError("SOURCE_DATE_EPOCH is outside the supported timestamp range") from exc
     if stamp.tm_year > 2107:
         raise ValueError("SOURCE_DATE_EPOCH is outside the ZIP timestamp range")
     return (stamp.tm_year, stamp.tm_mon, stamp.tm_mday, stamp.tm_hour,
