@@ -46,9 +46,11 @@ class PackageReproducibilityTests(unittest.TestCase):
             self.assertEqual(archive_timestamp(), (2026, 1, 1, 0, 0, 0))
 
     def test_invalid_source_date_epoch_is_rejected(self) -> None:
-        with patch.dict(os.environ, {"SOURCE_DATE_EPOCH": "not-an-integer"}):
-            with self.assertRaisesRegex(ValueError, "SOURCE_DATE_EPOCH"):
-                archive_timestamp()
+        for value in ("not-an-integer", "999999999999999999999999999999"):
+            with self.subTest(value=value):
+                with patch.dict(os.environ, {"SOURCE_DATE_EPOCH": value}):
+                    with self.assertRaisesRegex(ValueError, "SOURCE_DATE_EPOCH"):
+                        archive_timestamp()
 
 
 if __name__ == "__main__":
